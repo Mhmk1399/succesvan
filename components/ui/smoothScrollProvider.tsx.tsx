@@ -9,12 +9,19 @@ gsap.registerPlugin(ScrollTrigger);
 export default function SmoothScrollProvider() {
   useEffect(() => {
     const lenis = new Lenis({
-      duration: 1.2, // زمان نرم بودن اسکرول
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // انیمیشن نرم
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: "vertical",
       gestureOrientation: "vertical",
-      smoothWheel: true, // اسکرول چرخ ماوس نرم
+      smoothWheel: true,
       touchMultiplier: 2,
+      prevent: (node: Element) => {
+        return (
+          node.classList.contains("no-smooth-scroll") ||
+          node.classList.contains("overflow-y-auto") ||
+          node.classList.contains("overflow-x-auto")
+        );
+      },
     });
 
     function raf(time: number) {
@@ -22,7 +29,13 @@ export default function SmoothScrollProvider() {
       ScrollTrigger.update();
       requestAnimationFrame(raf);
     }
-    requestAnimationFrame(raf);
+
+    const animationId = requestAnimationFrame(raf);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      lenis.destroy();
+    };
   }, []);
 
   return null;

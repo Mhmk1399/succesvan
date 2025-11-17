@@ -15,7 +15,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { label: "HOME", href: "/" },
-  { label: "VAN HIRE", href: "/van-hire" },
+  { label: "BLOGS", href: "/blog" },
   {
     label: "SERVICES",
     href: "#services",
@@ -48,8 +48,8 @@ const menuItems: MenuItem[] = [
       },
     ],
   },
-  { label: "ABOUT US", href: "/about" },
-  { label: "CONTACT", href: "/contact" },
+  { label: "ABOUT US", href: "/aboutus" },
+  { label: "CONTACT", href: "/contact-us" },
 ];
 
 export default function Navbar() {

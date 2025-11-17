@@ -10,8 +10,6 @@ import {
   FiClock,
   FiArrowUp,
   FiHome,
-  FiTool,
-  FiMap,
   FiMessageCircle,
   FiInfo,
   FiHelpCircle,
@@ -22,6 +20,7 @@ import { FaFacebook, FaInstagram, FaYoutube, FaGithub } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -29,12 +28,14 @@ if (typeof window !== "undefined") {
 
 const menuLinks = [
   { name: "HOME", href: "/", icon: FiHome },
-  { name: "SERVICE", href: "/service", icon: FiTool },
-  { name: "AREAS", href: "/areas", icon: FiMap },
-  { name: "CONTACTS", href: "/contacts", icon: FiMessageCircle },
-  { name: "ABOUT", href: "/about", icon: FiInfo },
-  { name: "FAQ", href: "/faq", icon: FiHelpCircle },
-  { name: "TERMS & CONDITIONS", href: "/terms", icon: FiFileText },
+  { name: "CONTACTS", href: "/contact-us", icon: FiMessageCircle },
+  { name: "ABOUT", href: "/aboutus", icon: FiInfo },
+  { name: "BLOGS", href: "/blog", icon: FiHelpCircle },
+  {
+    name: "TERMS & CONDITIONS",
+    href: "/terms-and-conditions",
+    icon: FiFileText,
+  },
 ];
 
 const socialLinks = [
@@ -71,6 +72,7 @@ const socialLinks = [
 ];
 
 export default function Footer() {
+  const pathName = usePathname();
   const footerRef = useRef<HTMLDivElement>(null);
   const vanRef = useRef<SVGSVGElement>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -158,6 +160,10 @@ export default function Footer() {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  if(pathName === "/terms-and-conditions"){
+    return null
+  }
 
   return (
     <footer ref={footerRef} className="relative bg-[#0f172b] overflow-hidden">
