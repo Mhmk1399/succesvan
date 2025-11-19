@@ -168,7 +168,7 @@ export default function WhyUs() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="why-us-header text-center mb-16 lg:mb-24">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white mb-6 leading-tight">
+          <h2 className="text-2xl   lg:text-7xl   font-black text-white mb-6 leading-tight">
             Your Trusted Partner for
             <br />
             <span

@@ -191,13 +191,13 @@ export default function Testimonials({
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="testimonial-header text-center mb-16 lg:mb-20">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
+          <h2 className="text-2xl   lg:text-7xl  font-black text-white mb-6 leading-tight">
             What Our Clients
             <br />
             <span style={{ color: accentColor }}>Say About Us</span>
           </h2>
 
-          <p className="text-gray-400 text-lg max-w-3xl mx-auto">
+          <p className="text-gray-400 text-base md:text-lg max-w-3xl mx-auto">
             Don't just take our word for it - hear from our satisfied customers
           </p>
         </div>
@@ -279,12 +279,12 @@ function CarouselLayout({
         >
           {/* Quote Icon */}
           <div
-            className="absolute -top-6 left-8 w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl"
+            className="absolute -top-6 left-8 w-10 h-10 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shadow-2xl"
             style={{
               background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`,
             }}
           >
-            <BsQuote className="text-3xl text-white" />
+            <BsQuote className="text-xl md:text-3xl text-white" />
           </div>
 
           {/* Content */}
@@ -307,7 +307,7 @@ function CarouselLayout({
             )}
 
             {/* Message */}
-            <p className="text-gray-200 line-clamp-3  text-xl lg:text-2xl  mb-8 italic">
+            <p className="text-gray-200 line-clamp-2  text-base lg:text-2xl  mb-8 italic">
               {current.message}
             </p>
 
@@ -334,11 +334,13 @@ function CarouselLayout({
               </div>
 
               <div>
-                <h4 className="text-white font-black text-xl">
+                <h4 className="text-white font-black text-sm md:text-xl">
                   {current.name}
                 </h4>
                 {current.location && (
-                  <p className="text-gray-400 text-sm">{current.location}</p>
+                  <p className="text-gray-400 text-xs md:text-sm">
+                    {current.location}
+                  </p>
                 )}
               </div>
             </div>
@@ -357,7 +359,7 @@ function CarouselLayout({
       {/* Navigation Buttons */}
       <button
         onClick={prevTestimonial}
-        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 lg:-translate-x-16 w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white hover:scale-110 transition-all duration-300 group"
+        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 lg:translate-x-0 w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white hover:scale-110 transition-all duration-300 group"
         style={{
           boxShadow: `0 10px 30px ${accentColor}20`,
         }}
@@ -367,7 +369,7 @@ function CarouselLayout({
 
       <button
         onClick={nextTestimonial}
-        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 lg:translate-x-16 w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white hover:scale-110 transition-all duration-300 group"
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 lg:translate-x-0 w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white hover:scale-110 transition-all duration-300 group"
         style={{
           boxShadow: `0 10px 30px ${accentColor}20`,
         }}

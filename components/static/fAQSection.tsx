@@ -129,11 +129,11 @@ export default function FAQComponent({
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12 lg:mb-16">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight">
+          <h2 className="text-2xl   lg:text-7xl font-black text-white mb-4 leading-tight">
             {title}
           </h2>
 
-          <p className="text-gray-400 text-lg sm:text-xl max-w-2xl mx-auto">
+          <p className="text-gray-400 text-base md:text-xl max-w-2xl mx-auto">
             {subtitle}
           </p>
         </div>
@@ -249,7 +249,7 @@ export default function FAQComponent({
                       {/* Question Text */}
                       <div className="flex-1 min-w-0">
                         <h3
-                          className={`text-base sm:text-lg lg:text-xl font-bold transition-colors duration-300 ${
+                          className={`text-sm  md:text-xl font-bold transition-colors duration-300 ${
                             isOpen
                               ? "text-white"
                               : "text-gray-300 group-hover/btn:text-white"
@@ -305,7 +305,7 @@ export default function FAQComponent({
 
                           {/* Answer Text */}
                           <div className="prose prose-invert max-w-none">
-                            <p className="text-gray-300 text-base lg:text-lg leading-relaxed whitespace-pre-line">
+                            <p className="text-gray-300 text-sm lg:text-lg leading-relaxed whitespace-pre-line">
                               {faq.answer}
                             </p>
                           </div>
@@ -385,7 +385,7 @@ export default function FAQComponent({
                 borderColor: "rgba(255,255,255,0.1)",
               }}
             >
-              <h3 className="text-2xl font-black text-white mb-3">
+              <h3 className="text-xl md:text-3xl font-black text-white mb-3">
                 Still have questions?
               </h3>
               <p className="text-gray-400 mb-6">

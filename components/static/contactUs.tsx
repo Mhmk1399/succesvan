@@ -156,7 +156,7 @@ export default function ContactUs() {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full bg-[#0f172b] py-20   overflow-hidden"
+      className="relative w-full bg-[#0f172b] py-20 overflow-hidden"
     >
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">

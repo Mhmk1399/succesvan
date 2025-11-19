@@ -128,21 +128,21 @@ export default function AboutUs() {
         <div className="pt-20 ">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="about-header text-center mb-16">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white mb-6 leading-tight">
+              <h1 className="text-2xl   lg:text-7xl  font-black text-white mb-6 leading-tight">
                 What Do You Know
                 <br />
                 <span className="text-[#fe9a00]">About Us?</span>
               </h1>
 
               <div className="max-w-4xl mx-auto space-y-6">
-                <p className="text-gray-300 text-xl sm:text-2xl leading-relaxed">
+                <p className="text-gray-300 text-base sm:text-2xl leading-relaxed">
                   <span className="text-[#fe9a00] font-bold">
                     London's trusted van rental specialist
                   </span>{" "}
                   for over 15 years
                 </p>
 
-                <p className="text-gray-200 text-lg sm:text-xl leading-relaxed">
+                <p className="text-gray-200 text-base sm:text-2xl  leading-relaxed">
                   We provide{" "}
                   <span className="text-white font-semibold">
                     reliable, affordable van rentals
@@ -152,7 +152,7 @@ export default function AboutUs() {
                   , all maintained to the highest standards.
                 </p>
 
-                <p className="text-gray-200 text-lg sm:text-xl leading-relaxed">
+                <p className="text-gray-200 text-base sm:text-2xl  leading-relaxed">
                   From small deliveries to house moves, we offer{" "}
                   <span className="text-white font-semibold">
                     flexible solutions
@@ -162,7 +162,7 @@ export default function AboutUs() {
 
                 <div className="pt-6">
                   <div className="inline-block p-6 rounded-2xl bg-linear-to-r from-[#fe9a00]/20 to-[#fe9a00]/10 border border-[#fe9a00]/30 backdrop-blur-xl">
-                    <p className="text-white text-xl sm:text-2xl font-bold leading-relaxed">
+                    <p className="text-white text-sm sm:text-2xl font-bold leading-relaxed">
                       Self-drive with{" "}
                       <span className="text-[#fe9a00]">
                         complete peace of mind
@@ -180,10 +180,10 @@ export default function AboutUs() {
         <div className="py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="about-section text-center mb-16">
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-4">
+              <h2 className="text-2xl   lg:text-7xl  font-black text-white mb-4">
                 Our Company
               </h2>
-              <p className="text-gray-400 text-lg max-w-3xl mx-auto">
+              <p className="text-gray-400 text-base md:text-lg max-w-3xl mx-auto">
                 Comprehensive van rental solutions for all your needs
               </p>
             </div>
@@ -224,16 +224,16 @@ export default function AboutUs() {
         {/* Bottom CTA */}
         <div className=" pb-20  ">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h3 className="text-3xl sm:text-4xl font-black text-white mb-4">
+            <h3 className="text-xl sm:text-3xl font-black text-white mb-4">
               Ready to Rent Your Van?
             </h3>
-            <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
+            <p className="text-gray-300 text-sm mb-8 max-w-2xl mx-auto">
               Experience the Success Van Hire difference today
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 onClick={() => setIsReservationOpen(true)}
-                className="px-10 py-5 rounded-2xl font-bold text-lg text-white bg-linear-to-r from-[#fe9a00] to-[#d97900] hover:scale-105 transition-all duration-300 shadow-2xl"
+                className="md:px-10 md:py-5 px-7 py-3 rounded-2xl font-bold text-lg text-white bg-linear-to-r from-[#fe9a00] to-[#d97900] hover:scale-105 transition-all duration-300 shadow-2xl"
               >
                 Book Now
               </button>

@@ -193,6 +193,7 @@ export default function VanListing({
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("price-low");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedVan, setSelectedVan] = useState<VanData | null>(null);
 
   const categories = [
     "All",
@@ -279,7 +280,7 @@ export default function VanListing({
                   cardsRef.current[index] = el;
                 }}
               >
-                <VanCard van={van} />
+                <VanCard van={van} onBook={() => setSelectedVan(van)} />
               </div>
             ))}
           </div>
@@ -306,11 +307,226 @@ export default function VanListing({
           </div>
         )}
       </div>
+
+      {/* Reservation Panel */}
+      {selectedVan && (
+        <ReservationPanel
+          van={selectedVan}
+          onClose={() => setSelectedVan(null)}
+        />
+      )}
     </section>
   );
 }
 
-function VanCard({ van }: { van: VanData }) {
+function ReservationPanel({
+  van,
+  onClose,
+}: {
+  van: VanData;
+  onClose: () => void;
+}) {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    pickupDate: "",
+    returnDate: "",
+    pickupLocation: "",
+    notes: "",
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Reservation:", { van, ...formData });
+    onClose();
+  };
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
+        onClick={onClose}
+      />
+
+      {/* Panel */}
+      <div className="fixed right-0 top-0 h-screen w-full sm:w-96 bg-[#0f172b]/80 border-l border-white/10 z-50 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300">
+        {/* Header */}
+        <div className="sticky top-0 bg-[#0f172b]/80 border-b border-white/10 p-4 sm:p-6 flex items-center justify-between">
+          <h2 className="text-xl font-black text-white">Reserve Van</h2>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Van Summary */}
+        <div className="p-4 sm:p-6 border-b border-white/10">
+          <div className="flex gap-3 mb-3">
+            <div className="w-16 h-16 rounded-lg bg-white/5 border border-white/10  shrink-0 overflow-hidden">
+              <Image
+                src={van.image}
+                alt={van.name}
+                width={64}
+                height={64}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-white font-bold text-sm line-clamp-2">
+                {van.name}
+              </h3>
+              <p className="text-[#fe9a00] font-bold text-lg mt-1">
+                £{van.price}/{van.priceUnit}
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="bg-white/5 rounded p-2">
+              <p className="text-gray-400">Cargo</p>
+              <p className="text-white font-semibold">{van.cargo}</p>
+            </div>
+            <div className="bg-white/5 rounded p-2">
+              <p className="text-gray-400">Deposit</p>
+              <p className="text-white font-semibold">£{van.deposit}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+          <div>
+            <label className="block text-white text-sm font-semibold mb-2">
+              Full Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] transition-colors"
+              placeholder="Your name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-white text-sm font-semibold mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] transition-colors"
+              placeholder="your@email.com"
+            />
+          </div>
+
+          <div>
+            <label className="block text-white text-sm font-semibold mb-2">
+              Phone
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] transition-colors"
+              placeholder="+44 123 456 7890"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-white text-sm font-semibold mb-2">
+                Pickup Date
+              </label>
+              <input
+                type="date"
+                name="pickupDate"
+                value={formData.pickupDate}
+                onChange={handleChange}
+                required
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#fe9a00] transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-white text-sm font-semibold mb-2">
+                Return Date
+              </label>
+              <input
+                type="date"
+                name="returnDate"
+                value={formData.returnDate}
+                onChange={handleChange}
+                required
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#fe9a00] transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-white text-sm font-semibold mb-2">
+              Pickup Location
+            </label>
+            <input
+              type="text"
+              name="pickupLocation"
+              value={formData.pickupLocation}
+              onChange={handleChange}
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] transition-colors"
+              placeholder="London, UK"
+            />
+          </div>
+
+          <div>
+            <label className="block text-white text-sm font-semibold mb-2">
+              Additional Notes
+            </label>
+            <textarea
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] transition-colors resize-none h-20"
+              placeholder="Any special requirements?"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold py-3 rounded-lg transition-colors duration-300 mt-6"
+          >
+            Complete Reservation
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-lg transition-colors duration-300"
+          >
+            Cancel
+          </button>
+        </form>
+      </div>
+    </>
+  );
+}
+
+function VanCard({ van, onBook }: { van: VanData; onBook: () => void }) {
   return (
     <div className="group relative h-[500px] rounded-3xl overflow-hidden">
       {/* Image Background */}
@@ -385,6 +601,7 @@ function VanCard({ van }: { van: VanData }) {
             </div>
             <button
               disabled={!van.available}
+              onClick={onBook}
               className={`group/btn relative cursor-pointer border-2 rounded-md border-white/50 px-6 py-2.5   font-bold text-sm overflow-hidden transition-all duration-300 whitespace-nowrap ${
                 van.available
                   ? "  text-white hover:scale-105 shadow-lg  "

@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { FiMenu, FiX, FiChevronDown, FiUser, FiPhone } from "react-icons/fi";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface MenuItem {
   label: string;
@@ -53,6 +54,8 @@ const menuItems: MenuItem[] = [
 ];
 
 export default function Navbar() {
+  const pathname = usePathname();
+
   const navRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -103,6 +106,10 @@ export default function Navbar() {
       ease: "power3.in",
     });
   };
+
+  if (pathname === "/dashboard") {
+    return null;
+  }
 
   return (
     <>
@@ -247,7 +254,7 @@ export default function Navbar() {
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-700 space-y-4 bg-slate-950/50">
+        <div className="p-6 border-t border-slate-200 space-y-4  ">
           <div className="flex items-center space-x-3 text-[#fe9a00] text-sm">
             <FiPhone className="text-lg" />
             <span className="font-semibold">+44 20 3011 1198</span>
@@ -266,7 +273,7 @@ export default function Navbar() {
             </Link>
             <Link
               href="/reservation"
-              className="flex-1 px-4 py-2.5 bg-[#fe9a00] text-slate-900 font-bold rounded-lg hover:from-[#fe9a00] hover:to-amber-500 transition-all duration-300 text-sm"
+              className="flex-1 px-4 py-2.5 bg-[#fe9a00] text-slate-900 text-center font-bold rounded-lg hover:from-[#fe9a00] hover:to-amber-500 transition-all duration-300 text-sm"
               onClick={closeMenu}
             >
               RESERVE
