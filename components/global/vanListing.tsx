@@ -3,7 +3,20 @@
 import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
-import { FiUsers, FiPackage, FiCheckCircle, FiInfo } from "react-icons/fi";
+import {
+  FiUsers,
+  FiPackage,
+  FiCheckCircle,
+  FiInfo,
+  FiUser,
+  FiMail,
+  FiPhone,
+  FiCalendar,
+  FiMapPin,
+  FiMessageSquare,
+  FiClock,
+  FiAlertCircle,
+} from "react-icons/fi";
 import { BsFuelPump } from "react-icons/bs";
 import Image from "next/image";
 
@@ -334,192 +347,529 @@ function ReservationPanel({
     returnDate: "",
     pickupLocation: "",
     notes: "",
+    acceptTerms: false,
   });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [rentalDays, setRentalDays] = useState(0);
+  const [totalCost, setTotalCost] = useState(0);
+
+  // Calculate rental days and total cost
+  useEffect(() => {
+    if (formData.pickupDate && formData.returnDate) {
+      const pickup = new Date(formData.pickupDate);
+      const returnDate = new Date(formData.returnDate);
+      const diffTime = returnDate.getTime() - pickup.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 0) {
+        setRentalDays(diffDays);
+        setTotalCost(diffDays * van.price);
+        setErrors((prev) => ({ ...prev, returnDate: "" }));
+      } else {
+        setRentalDays(0);
+        setTotalCost(0);
+        setErrors((prev) => ({
+          ...prev,
+          returnDate: "Return date must be after pickup date",
+        }));
+      }
+    } else {
+      setRentalDays(0);
+      setTotalCost(0);
+    }
+  }, [formData.pickupDate, formData.returnDate, van.price]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    const newValue =
+      type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
+
+    setFormData((prev) => ({ ...prev, [name]: newValue }));
+
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Reservation:", { van, ...formData });
-    onClose();
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid";
+    }
+    if (!formData.phone.trim()) newErrors.phone = "Phone is required";
+    if (!formData.pickupDate) newErrors.pickupDate = "Pickup date is required";
+    if (!formData.returnDate) newErrors.returnDate = "Return date is required";
+    if (!formData.pickupLocation.trim())
+      newErrors.pickupLocation = "Pickup location is required";
+    if (!formData.acceptTerms)
+      newErrors.acceptTerms = "You must accept the terms";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    console.log("Reservation:", { van, ...formData, rentalDays, totalCost });
+
+    setIsSubmitting(false);
+    setIsSuccess(true);
+
+    // Close after showing success
+    setTimeout(() => {
+      onClose();
+    }, 2000);
+  };
+
+  // Get today's date for min attribute
+  const today = new Date().toISOString().split("T")[0];
+
+  if (isSuccess) {
+    return (
+      <>
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          onClick={onClose}
+        />
+        <div className="fixed right-0 top-0 h-screen w-full sm:w-96 bg-linear-to-br from-[#0f172b] to-[#1e293b] z-50 flex items-center justify-center animate-in slide-in-from-right duration-300">
+          <div className="text-center p-8">
+            <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6 animate-in zoom-in duration-500">
+              <FiCheckCircle className="text-5xl text-green-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-3">
+              Booking Confirmed!
+            </h3>
+            <p className="text-gray-400">
+              We'll send you a confirmation email shortly.
+            </p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300"
         onClick={onClose}
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 h-screen w-full sm:w-96 bg-[#0f172b]/80 border-l border-white/10 z-50 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300">
+      <div className="fixed right-0 top-0 h-screen w-full sm:max-w-md bg-linear-to-br from-[#0f172b] to-[#1e293b] border-l border-white/10 z-50 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
         {/* Header */}
-        <div className="sticky top-0 bg-[#0f172b]/80 border-b border-white/10 p-4 sm:p-6 flex items-center justify-between">
-          <h2 className="text-xl font-black text-white">Reserve Van</h2>
-          <button
-            onClick={onClose}
-            className="w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
-          >
-            ✕
-          </button>
+        <div className="sticky top-0 bg-linear-to-r from-[#0f172b] to-[#1e293b] backdrop-blur-xl border-b border-white/10 p-6 z-10">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-2xl font-black text-white">Complete Booking</h2>
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all hover:rotate-90 duration-300"
+            >
+              ✕
+            </button>
+          </div>
+          <p className="text-gray-400 text-sm">
+            Fill in your details to reserve this van
+          </p>
         </div>
 
-        {/* Van Summary */}
-        <div className="p-4 sm:p-6 border-b border-white/10">
-          <div className="flex gap-3 mb-3">
-            <div className="w-16 h-16 rounded-lg bg-white/5 border border-white/10  shrink-0 overflow-hidden">
+        {/* Van Summary Card */}
+        <div className="m-6 p-4 rounded-2xl bg-linear-to-br from-[#fe9a00]/10 to-[#fe9a00]/5 border border-[#fe9a00]/20 backdrop-blur-sm">
+          <div className="flex gap-4 mb-4">
+            <div className="w-20 h-20 rounded-xl bg-white/5 border border-white/10 shrink-0 overflow-hidden">
               <Image
                 src={van.image}
                 alt={van.name}
-                width={64}
-                height={64}
+                width={80}
+                height={80}
                 className="w-full h-full object-cover"
               />
             </div>
             <div className="flex-1">
-              <h3 className="text-white font-bold text-sm line-clamp-2">
+              <h3 className="text-white font-bold text-base line-clamp-2 mb-1">
                 {van.name}
               </h3>
-              <p className="text-[#fe9a00] font-bold text-lg mt-1">
-                £{van.price}/{van.priceUnit}
-              </p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-[#fe9a00] font-black text-2xl">
+                  £{van.price}
+                </span>
+                <span className="text-gray-400 text-xs">per day</span>
+              </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-white/5 rounded p-2">
-              <p className="text-gray-400">Cargo</p>
-              <p className="text-white font-semibold">{van.cargo}</p>
+
+          {/* Quick Info Grid */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
+              <FiPackage className="text-[#fe9a00] mx-auto mb-1 text-sm" />
+              <p className="text-white font-semibold text-xs">{van.cargo}</p>
+              <p className="text-gray-400 text-[10px]">Cargo</p>
             </div>
-            <div className="bg-white/5 rounded p-2">
-              <p className="text-gray-400">Deposit</p>
-              <p className="text-white font-semibold">£{van.deposit}</p>
+            <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
+              <BsFuelPump className="text-[#fe9a00] mx-auto mb-1 text-sm" />
+              <p className="text-white font-semibold text-xs">{van.fuelType}</p>
+              <p className="text-gray-400 text-[10px]">Fuel</p>
+            </div>
+            <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
+              <FiUsers className="text-[#fe9a00] mx-auto mb-1 text-sm" />
+              <p className="text-white font-semibold text-xs">{van.seats}</p>
+              <p className="text-gray-400 text-[10px]">Seats</p>
             </div>
           </div>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5">
+          {/* Personal Information Section */}
           <div>
-            <label className="block text-white text-sm font-semibold mb-2">
-              Full Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] transition-colors"
-              placeholder="Your name"
-            />
-          </div>
+            <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
+                1
+              </div>
+              Personal Information
+            </h3>
 
-          <div>
-            <label className="block text-white text-sm font-semibold mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] transition-colors"
-              placeholder="your@email.com"
-            />
-          </div>
+            <div className="space-y-3">
+              <div>
+                <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <FiUser className="text-[#fe9a00]" />
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className={`w-full bg-white/5 border ${
+                    errors.name ? "border-red-500" : "border-white/10"
+                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                  placeholder="John Doe"
+                />
+                {errors.name && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <FiAlertCircle className="text-xs" />
+                    {errors.name}
+                  </p>
+                )}
+              </div>
 
-          <div>
-            <label className="block text-white text-sm font-semibold mb-2">
-              Phone
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              required
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] transition-colors"
-              placeholder="+44 123 456 7890"
-            />
-          </div>
+              <div>
+                <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <FiMail className="text-[#fe9a00]" />
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full bg-white/5 border ${
+                    errors.email ? "border-red-500" : "border-white/10"
+                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                  placeholder="john@example.com"
+                />
+                {errors.email && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <FiAlertCircle className="text-xs" />
+                    {errors.email}
+                  </p>
+                )}
+              </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-white text-sm font-semibold mb-2">
-                Pickup Date
-              </label>
-              <input
-                type="date"
-                name="pickupDate"
-                value={formData.pickupDate}
-                onChange={handleChange}
-                required
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#fe9a00] transition-colors"
-              />
+              <div>
+                <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <FiPhone className="text-[#fe9a00]" />
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={`w-full bg-white/5 border ${
+                    errors.phone ? "border-red-500" : "border-white/10"
+                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                  placeholder="+44 123 456 7890"
+                />
+                {errors.phone && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <FiAlertCircle className="text-xs" />
+                    {errors.phone}
+                  </p>
+                )}
+              </div>
             </div>
-            <div>
-              <label className="block text-white text-sm font-semibold mb-2">
-                Return Date
-              </label>
-              <input
-                type="date"
-                name="returnDate"
-                value={formData.returnDate}
-                onChange={handleChange}
-                required
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-[#fe9a00] transition-colors"
-              />
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-white/10"></div>
+
+          {/* Rental Details Section */}
+          <div>
+            <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
+                2
+              </div>
+              Rental Details
+            </h3>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiCalendar className="text-[#fe9a00]" />
+                    Pickup Date
+                  </label>
+                  <input
+                    type="date"
+                    name="pickupDate"
+                    value={formData.pickupDate}
+                    onChange={handleChange}
+                    min={today}
+                    className={`w-full bg-white/5 border ${
+                      errors.pickupDate ? "border-red-500" : "border-white/10"
+                    } rounded-xl px-3 py-3 text-white focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all text-sm`}
+                  />
+                  {errors.pickupDate && (
+                    <p className="text-red-400 text-[10px] mt-1">Required</p>
+                  )}
+                </div>
+                <div>
+                  <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiCalendar className="text-[#fe9a00]" />
+                    Return Date
+                  </label>
+                  <input
+                    type="date"
+                    name="returnDate"
+                    value={formData.returnDate}
+                    onChange={handleChange}
+                    min={formData.pickupDate || today}
+                    className={`w-full bg-white/5 border ${
+                      errors.returnDate ? "border-red-500" : "border-white/10"
+                    } rounded-xl px-3 py-3 text-white focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all text-sm`}
+                  />
+                  {errors.returnDate && (
+                    <p className="text-red-400 text-[10px] mt-1">
+                      {errors.returnDate}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Rental Duration Display */}
+              {rentalDays > 0 && (
+                <div className="bg-linear-to-r from-[#fe9a00]/10 to-transparent border border-[#fe9a00]/20 rounded-xl p-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <FiClock className="text-[#fe9a00]" />
+                    <span className="text-white font-semibold">
+                      Rental Duration:{" "}
+                      <span className="text-[#fe9a00]">
+                        {rentalDays} {rentalDays === 1 ? "day" : "days"}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <FiMapPin className="text-[#fe9a00]" />
+                  Pickup Location
+                </label>
+                <input
+                  type="text"
+                  name="pickupLocation"
+                  value={formData.pickupLocation}
+                  onChange={handleChange}
+                  className={`w-full bg-white/5 border ${
+                    errors.pickupLocation ? "border-red-500" : "border-white/10"
+                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                  placeholder="London, UK"
+                />
+                {errors.pickupLocation && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <FiAlertCircle className="text-xs" />
+                    {errors.pickupLocation}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <FiMessageSquare className="text-[#fe9a00]" />
+                  Additional Notes{" "}
+                  <span className="text-gray-500 text-xs font-normal">
+                    (Optional)
+                  </span>
+                </label>
+                <textarea
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all resize-none"
+                  placeholder="Any special requirements or questions?"
+                  rows={3}
+                />
+              </div>
             </div>
           </div>
 
-          <div>
-            <label className="block text-white text-sm font-semibold mb-2">
-              Pickup Location
-            </label>
-            <input
-              type="text"
-              name="pickupLocation"
-              value={formData.pickupLocation}
-              onChange={handleChange}
-              required
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] transition-colors"
-              placeholder="London, UK"
-            />
+          {/* Divider */}
+          <div className="border-t border-white/10"></div>
+
+          {/* Cost Summary */}
+          <div className="bg-linear-to-br from-white/5 to-transparent border border-white/10 rounded-2xl p-4 space-y-3">
+            <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
+                3
+              </div>
+              Cost Summary
+            </h3>
+
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Daily Rate</span>
+                <span className="text-white font-semibold">£{van.price}</span>
+              </div>
+              {rentalDays > 0 && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Duration</span>
+                    <span className="text-white font-semibold">
+                      {rentalDays} {rentalDays === 1 ? "day" : "days"}
+                    </span>
+                  </div>
+                  <div className="border-t border-white/10 pt-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Rental Total</span>
+                      <span className="text-white font-semibold">
+                        £{totalCost}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Security Deposit</span>
+                <span className="text-white font-semibold">£{van.deposit}</span>
+              </div>
+              <div className="border-t border-[#fe9a00]/20 pt-2 mt-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-white font-bold">Total Due Today</span>
+                  <span className="text-[#fe9a00] font-black text-xl">
+                    £{totalCost > 0 ? totalCost + van.deposit : van.deposit}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mt-3">
+              <p className="text-blue-300 text-xs flex items-start gap-2">
+                <FiInfo className="text-sm mt-0.5 shrink-0" />
+                <span>
+                  Security deposit is fully refundable upon return of the van in
+                  good condition
+                </span>
+              </p>
+            </div>
           </div>
 
+          {/* Terms & Conditions */}
           <div>
-            <label className="block text-white text-sm font-semibold mb-2">
-              Additional Notes
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                name="acceptTerms"
+                checked={formData.acceptTerms}
+                onChange={handleChange}
+                className="mt-1 w-5 h-5 rounded border-2 border-white/20 bg-white/5 checked:bg-[#fe9a00] checked:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all cursor-pointer"
+              />
+              <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
+                I agree to the{" "}
+                <a
+                  href="#"
+                  className="text-[#fe9a00] hover:underline font-semibold"
+                >
+                  Terms & Conditions
+                </a>{" "}
+                and{" "}
+                <a
+                  href="#"
+                  className="text-[#fe9a00] hover:underline font-semibold"
+                >
+                  Privacy Policy
+                </a>
+              </span>
             </label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] transition-colors resize-none h-20"
-              placeholder="Any special requirements?"
-            />
+            {errors.acceptTerms && (
+              <p className="text-red-400 text-xs mt-2 flex items-center gap-1 ml-8">
+                <FiAlertCircle className="text-xs" />
+                {errors.acceptTerms}
+              </p>
+            )}
           </div>
 
-          <button
-            type="submit"
-            className="w-full bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold py-3 rounded-lg transition-colors duration-300 mt-6"
-          >
-            Complete Reservation
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-lg transition-colors duration-300"
-          >
-            Cancel
-          </button>
+          {/* Action Buttons */}
+          <div className="space-y-3 pt-2">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-lg shadow-[#fe9a00]/20 hover:shadow-[#fe9a00]/40 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <FiCheckCircle className="text-xl" />
+                  Confirm Reservation
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold py-4 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+          </div>
+
+          {/* Trust Indicators */}
+          <div className="flex items-center justify-center gap-4 text-xs text-gray-400 pt-2">
+            <div className="flex items-center gap-1">
+              <FiCheckCircle className="text-green-500" />
+              <span>Secure Booking</span>
+            </div>
+            <div className="w-1 h-1 rounded-full bg-gray-600"></div>
+            <div className="flex items-center gap-1">
+              <FiCheckCircle className="text-green-500" />
+              <span>Instant Confirmation</span>
+            </div>
+          </div>
         </form>
       </div>
     </>
@@ -537,9 +887,7 @@ function VanCard({ van, onBook }: { van: VanData; onBook: () => void }) {
           fill
           className="object-cover group-hover:scale-110 group-hover:blur-sm transition-all duration-500"
         />
-        <div className="absolute inset-0 bg-linear-to-b from-black/60 via-transparent to-black/90 group-hover:from-black/70 group-hover:via-black/50 group-hover:to-black/85 transition-all duration-500"></div>
-
-        {/* Gradient Overlays */}
+        <div className="absolute inset-0 bg-linear-to-b from-black/60 via-transparent to-black/90 group-hover:from-black/70 group-hover:via-black/50 group-hover:to-black/95 transition-all duration-500"></div>
       </div>
 
       {/* Content Overlay */}
@@ -568,7 +916,7 @@ function VanCard({ van, onBook }: { van: VanData; onBook: () => void }) {
             <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1.5">
               <FiUsers className="text-[#fe9a00] text-xs" />
               <span className="text-white text-xs font-semibold">
-                B / {van.seats}
+                {van.seats}
               </span>
             </div>
           </div>
@@ -577,9 +925,9 @@ function VanCard({ van, onBook }: { van: VanData; onBook: () => void }) {
         {/* Bottom Section */}
         <div className="space-y-2">
           {/* Mileage */}
-          <div className="flex items-center gap-2   text-xs font-semibold">
+          <div className="flex items-center gap-2 text-xs font-semibold">
             <FiCheckCircle className="text-xs text-green-500" />
-            <span className="text-gray-200 ">
+            <span className="text-gray-200">
               {van.mileage} kilometers included
             </span>
           </div>
@@ -596,15 +944,15 @@ function VanCard({ van, onBook }: { van: VanData; onBook: () => void }) {
                 </span>
               </div>
               <div className="text-gray-400 text-xs mt-1">
-                £{(van.price * 11).toFixed(2)} total
+                + £{van.deposit} deposit
               </div>
             </div>
             <button
               disabled={!van.available}
               onClick={onBook}
-              className={`group/btn relative cursor-pointer border-2 rounded-md border-white/50 px-6 py-2.5   font-bold text-sm overflow-hidden transition-all duration-300 whitespace-nowrap ${
+              className={`group/btn relative cursor-pointer border-2 rounded-md border-white/50 px-6 py-2.5 font-bold text-sm overflow-hidden transition-all duration-300 whitespace-nowrap ${
                 van.available
-                  ? "  text-white hover:scale-105 shadow-lg  "
+                  ? "text-white hover:scale-105 shadow-lg"
                   : "bg-gray-600 text-gray-400 cursor-not-allowed"
               }`}
             >
