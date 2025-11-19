@@ -67,7 +67,7 @@ export default function FAQComponent({
             opacity: 1,
             y: 0,
             scale: 1,
-            duration: 0.6,
+            duration: 0.3,
             ease: "power3.out",
             scrollTrigger: {
               trigger: faq,
@@ -126,7 +126,7 @@ export default function FAQComponent({
         ></div>
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12 lg:mb-16">
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight">
@@ -291,13 +291,8 @@ export default function FAQComponent({
                       </div>
                     </button>
 
-                    {/* Answer */}
-                    <div
-                      className="overflow-hidden transition-all duration-500 ease-in-out"
-                      style={{
-                        maxHeight: isOpen ? "1000px" : "0",
-                      }}
-                    >
+                    {/* Answer - Simplified toggle without maxHeight transition */}
+                    {isOpen && (
                       <div className="px-6 lg:px-7 pb-6 lg:pb-7 pt-0">
                         <div className="pl-0 lg:pl-[68px]">
                           {/* Divider */}
@@ -338,7 +333,7 @@ export default function FAQComponent({
                           </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               );

@@ -161,12 +161,15 @@ export default function Footer() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  if(pathName === "/terms-and-conditions"){
-    return null
+  if (pathName === "/terms-and-conditions" || pathName === "/register") {
+    return null;
   }
 
   return (
-    <footer ref={footerRef} className="relative bg-[#0f172b] overflow-hidden">
+    <footer
+      ref={footerRef}
+      className="relative bg-[#0f172b] overflow-hidden border-t border-[#fe9a00]/30"
+    >
       {/* Animated SVG Van Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <svg

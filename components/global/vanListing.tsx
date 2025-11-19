@@ -3,14 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
-import {
-  FiUsers,
-  FiPackage,
-  FiCheckCircle,
-  FiInfo,
-  FiChevronDown,
-  FiFilter,
-} from "react-icons/fi";
+import { FiUsers, FiPackage, FiCheckCircle, FiInfo } from "react-icons/fi";
 import { BsFuelPump } from "react-icons/bs";
 import Image from "next/image";
 
