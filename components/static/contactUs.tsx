@@ -170,7 +170,7 @@ export default function ContactUs() {
         <div className="text-center mb-16 lg:mb-20">
         
 
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
+          <h2 className="text-2xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
             Contact
             <br />
             <span
@@ -183,7 +183,7 @@ export default function ContactUs() {
             </span>
           </h2>
 
-          <p className="text-gray-300 text-lg sm:text-xl max-w-3xl mx-auto">
+          <p className="text-gray-300 text-sm sm:text-xl max-w-3xl mx-auto">
             We're here to help! Whether you have a question about our vans, need
             help with your booking, or want to discuss your hire needs in more
             detail — just get in touch.
@@ -207,7 +207,7 @@ export default function ContactUs() {
                   >
                     <a
                       href={info.action}
-                      className="block relative p-6 rounded-2xl border transition-all duration-500 hover:scale-105"
+                      className="block relative p-4 md:p-6 rounded-2xl border transition-all duration-500 hover:scale-105"
                       style={{
                         background: "rgba(15, 23, 42, 0.5)",
                         backdropFilter: "blur(30px)",
@@ -220,7 +220,7 @@ export default function ContactUs() {
                       <div className="relative flex items-start gap-5">
                         {/* Icon */}
                         <div
-                          className="w-16 h-16 rounded-xl flex items-center justify-center  shrink-0 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500"
+                          className="w-12 md:w-16 h-12 md:h-16 rounded-xl flex items-center justify-center  shrink-0 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500"
                           style={{
                             background:
                               "linear-gradient(135deg, #fe9a00, #d97900)",
@@ -232,7 +232,7 @@ export default function ContactUs() {
 
                         {/* Content */}
                         <div className="flex-1">
-                          <h3 className="text-xl font-black text-white mb-1">
+                          <h3 className="text-base md:text-xl font-black text-white mb-1">
                             {info.title}
                           </h3>
                           <p className="text-gray-400 text-sm mb-3">
@@ -241,7 +241,7 @@ export default function ContactUs() {
                           {info.details.map((detail, idx) => (
                             <p
                               key={idx}
-                              className="text-[#fe9a00] font-bold text-lg"
+                              className="text-[#fe9a00] font-bold text-sm md:text-base"
                             >
                               {detail}
                             </p>
@@ -259,7 +259,7 @@ export default function ContactUs() {
               ref={(el) => {
                 cardsRef.current[3] = el;
               }}
-              className="float-card relative p-6 rounded-2xl border"
+              className="float-card relative p-4 md:p-6 rounded-2xl border"
               style={{
                 background: "rgba(15, 23, 42, 0.5)",
                 backdropFilter: "blur(30px)",
@@ -268,7 +268,7 @@ export default function ContactUs() {
             >
               <div className="flex items-start gap-5 mb-6">
                 <div
-                  className="w-16 h-16 rounded-xl flex items-center justify-center  shrink-0"
+                  className="w-12 md:w-16 h-12 md:h-16 rounded-xl flex items-center justify-center  shrink-0"
                   style={{
                     background: "linear-gradient(135deg, #fe9a00, #d97900)",
                     boxShadow: "0 10px 40px rgba(254, 154, 0, 0.3)",
@@ -278,7 +278,7 @@ export default function ContactUs() {
                 </div>
 
                 <div className="flex-1">
-                  <h3 className="text-xl font-black text-white mb-1">
+                          <h3 className="text-base md:text-xl font-black text-white mb-1">
                     Visit Us
                   </h3>
                   <p className="text-gray-400 text-sm mb-3">
@@ -316,7 +316,7 @@ export default function ContactUs() {
               ref={(el) => {
                 cardsRef.current[4] = el;
               }}
-              className="float-card relative p-6 rounded-2xl border"
+              className="float-card relative p-4 md:p-6 rounded-2xl border"
               style={{
                 background: "rgba(15, 23, 42, 0.5)",
                 backdropFilter: "blur(30px)",
@@ -325,7 +325,7 @@ export default function ContactUs() {
             >
               <div className="flex items-start gap-5 mb-6">
                 <div
-                  className="w-16 h-16 rounded-xl flex items-center justify-center  shrink-0"
+                  className="w-12 md:w-16 h-12 md:h-16 rounded-xl flex items-center justify-center  shrink-0"
                   style={{
                     background: "linear-gradient(135deg, #fe9a00, #d97900)",
                     boxShadow: "0 10px 40px rgba(254, 154, 0, 0.3)",
@@ -335,7 +335,7 @@ export default function ContactUs() {
                 </div>
 
                 <div className="flex-1">
-                  <h3 className="text-xl font-black text-white mb-4">
+                          <h3 className="text-base md:text-xl font-black text-white mb-1">
                     Opening Hours
                   </h3>
                   <div className="space-y-3">
@@ -378,7 +378,7 @@ export default function ContactUs() {
               <div className="absolute inset-0 bg-linear-to-br from-[#fe9a00]/5 via-transparent to-transparent rounded-3xl"></div>
 
               <div className="relative">
-                <h3 className="text-3xl font-black text-white mb-3">
+                <h3 className="text-2xl font-black text-white mb-3">
                   Send us a Message
                 </h3>
                 <p className="text-gray-400 mb-8">

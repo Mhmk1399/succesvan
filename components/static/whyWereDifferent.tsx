@@ -60,10 +60,10 @@ const features = [
 ];
 
 const stats = [
-  { value: "10+", label: "Years Experience", icon: FiAward },
+  { value: "10+", label: "  Experience", icon: FiAward },
   { value: "50+", label: "Modern Vehicles", icon: FiTruck },
   { value: "5000+", label: "Happy Customers", icon: FiStar },
-  { value: "100%", label: "Satisfaction Rate", icon: FiCheckCircle },
+  { value: "100%", label: "  Rate", icon: FiCheckCircle },
 ];
 
 export default function WhyWereDifferent() {
@@ -157,7 +157,7 @@ export default function WhyWereDifferent() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16 lg:mb-20">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
+          <h2 className="text-2xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
             Why We Are
             <br />
             <span className="bg-[#fe9a00] bg-clip-text text-transparent">
@@ -181,7 +181,7 @@ export default function WhyWereDifferent() {
             <div className="absolute inset-0 bg-linear-to-br from-amber-500/5 via-transparent to-orange-500/5"></div>
 
             <div className="relative">
-              <p className="text-gray-200 text-lg sm:text-xl leading-relaxed mb-6">
+              <p className="text-gray-200 text-sm sm:text-xl leading-relaxed mb-6">
                 At Success van hire, we specialise in{" "}
                 <span className="text-[#fe9a00] font-bold">
                   reliable, flexible, and affordable
@@ -193,7 +193,7 @@ export default function WhyWereDifferent() {
                 comfort and ease.
               </p>
 
-              <p className="text-gray-200 text-lg sm:text-xl leading-relaxed mb-6">
+              <p className="text-gray-200 text-sm sm:text-xl leading-relaxed mb-6">
                 With{" "}
                 <span className="text-[#fe9a00] font-bold">
                   years of experience
@@ -206,7 +206,7 @@ export default function WhyWereDifferent() {
                 as possible.
               </p>
 
-              <p className="text-gray-200 text-lg sm:text-xl leading-relaxed">
+              <p className="text-gray-200 text-sm sm:text-xl leading-relaxed">
                 Whether you're a business owner needing a van for the day or a
                 family heading out on a road trip, we're here to help you{" "}
                 <span className="text-[#fe9a00] font-bold">
@@ -234,7 +234,7 @@ export default function WhyWereDifferent() {
                 className="group relative"
               >
                 <div
-                  className="relative h-full p-8 rounded-2xl border transition-all duration-500 hover:scale-105"
+                  className="relative h-full p-4 md:p-8 rounded-2xl border transition-all duration-500 hover:scale-105"
                   style={{
                     background: "rgba(15, 23, 42, 0.5)",
                     backdropFilter: "blur(30px)",
@@ -251,7 +251,7 @@ export default function WhyWereDifferent() {
 
                   <div className="relative">
                     <div
-                      className="w-14 h-14 rounded-xl bg-[#fe9a00] flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300"
+                      className="w-12 md:w-16 h-12 md:h-16 rounded-xl bg-[#fe9a00] flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300"
                       style={{
                         boxShadow: `0 10px 30px ${feature.color}30`,
                       }}
@@ -259,7 +259,7 @@ export default function WhyWereDifferent() {
                       <Icon className="text-2xl text-white" />
                     </div>
 
-                    <h3 className="text-xl font-black text-white mb-3">
+                    <h3 className="text-base md:text-xl font-black text-white mb-3">
                       {feature.title}
                     </h3>
                     <p className="text-gray-400 text-sm leading-relaxed">
@@ -285,7 +285,7 @@ export default function WhyWereDifferent() {
                 className="relative group"
               >
                 <div
-                  className="relative p-8 rounded-2xl border text-center transition-all duration-500 hover:scale-105"
+                  className="relative p-4 md:p-8 rounded-2xl border text-center transition-all duration-500 hover:scale-105"
                   style={{
                     background: "rgba(15, 23, 42, 0.5)",
                     backdropFilter: "blur(30px)",
@@ -293,10 +293,10 @@ export default function WhyWereDifferent() {
                   }}
                 >
                   <Icon className="text-4xl text-[#fe9a00] mx-auto mb-4" />
-                  <div className="text-4xl sm:text-5xl font-black text-white mb-2">
+                  <div className="text-2xl sm:text-5xl font-black text-white mb-2">
                     {stat.value}
                   </div>
-                  <div className="text-sm text-gray-400 font-semibold uppercase tracking-wide">
+                  <div className="text-xs md:text-sm text-gray-400 font-semibold uppercase tracking-wide">
                     {stat.label}
                   </div>
 

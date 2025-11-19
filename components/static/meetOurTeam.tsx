@@ -113,7 +113,7 @@ export default function MeetOurTeam() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16 lg:mb-24">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
+          <h2 className="text-2xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
             Meet Our
             <br />
             <span className="bg-[#fe9a00] bg-clip-text text-transparent">
@@ -121,7 +121,7 @@ export default function MeetOurTeam() {
             </span>
           </h2>
 
-          <p className="text-gray-300 text-lg sm:text-xl max-w-3xl mx-auto">
+          <p className="text-gray-300 text-sm sm:text-xl max-w-3xl mx-auto">
             Success Van Hire offers affordable van rental services in London,
             providing reliable options for individuals, businesses, and movers
             alike.

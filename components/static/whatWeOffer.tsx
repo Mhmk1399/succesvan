@@ -165,7 +165,7 @@ export default function WhatWeOffer() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16 lg:mb-20">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
+          <h2 className="text-2xl    lg:text-6xl font-black text-white mb-3 leading-tight">
             With Success Van Hire
             <br />
             <span className="bg-[#fe9a00] bg-clip-text text-transparent">
@@ -173,7 +173,7 @@ export default function WhatWeOffer() {
             </span>
           </h2>
 
-          <p className="text-gray-300 text-lg sm:text-xl max-w-3xl mx-auto">
+          <p className="text-gray-300 text-sm sm:text-xl max-w-3xl mx-auto">
             Everything you need for a seamless van hire experience
           </p>
         </div>
@@ -191,7 +191,7 @@ export default function WhatWeOffer() {
                 className="group relative"
               >
                 <div
-                  className="relative h-full p-8 rounded-2xl border transition-all duration-500 hover:scale-105 cursor-pointer"
+                  className="relative h-full p-4 md:p-8 rounded-2xl border transition-all duration-500 hover:scale-105 cursor-pointer"
                   style={{
                     background: "rgba(15, 23, 42, 0.5)",
                     backdropFilter: "blur(30px)",
@@ -209,7 +209,7 @@ export default function WhatWeOffer() {
                   <div className="relative">
                     {/* Icon */}
                     <div
-                      className="w-16 h-16 rounded-xl bg-[#fe9a00] flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-xl"
+                      className="w-12 md:w-16 h-12 md:h-16 rounded-xl bg-[#fe9a00] flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-xl"
                       style={{
                         boxShadow: `0 10px 40px ${item.color}30`,
                       }}
@@ -218,10 +218,10 @@ export default function WhatWeOffer() {
                     </div>
 
                     {/* Content */}
-                    <h3 className="text-xl font-black text-white mb-3">
+                    <h3 className="text-base md:text-xl font-black text-white mb-3">
                       {item.title}
                     </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed">
+                    <p className="text-gray-400 text-xs md:text-sm leading-relaxed">
                       {item.description}
                     </p>
                   </div>
@@ -253,10 +253,10 @@ export default function WhatWeOffer() {
             <div className="absolute inset-0 bg-linear-to-br from-[#fe9a00]/10 via-transparent to-orange-500/10"></div>
 
             <div className="relative">
-              <h3 className="text-3xl sm:text-4xl font-black text-white mb-4 text-center lg:text-left">
+              <h3 className="text-2xl sm:text-4xl font-black text-white mb-4 text-center lg:text-left">
                 Our Van Types
               </h3>
-              <p className="text-gray-300 text-lg mb-10 text-center lg:text-left max-w-2xl">
+              <p className="text-gray-300 text-sm md:text-lg mb-10 text-center lg:text-left max-w-2xl">
                 Different types of vans for all your requirements
               </p>
 
