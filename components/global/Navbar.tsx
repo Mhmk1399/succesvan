@@ -21,31 +21,56 @@ const menuItems: MenuItem[] = [
     label: "SERVICES",
     href: "#services",
     children: [
-      { label: "Coach Hire", href: "/coach-hire", category: "Hire Services" },
       {
-        label: "Minibus Hire",
-        href: "/minibus-hire",
-        category: "Hire Services",
+        label: "Reservation",
+        href: "/reservation",
+      },
+      { label: "Automatic Van Rental", href: "/automatic-van-hire-london" },
+    ],
+  },
+  {
+    label: "AREAS",
+    href: "#AREAS",
+    children: [
+      {
+        label: "Explore Our Van Hire",
+        href: "/van-hire-north-west-london",
       },
       {
-        label: "Party Bus Hire",
-        href: "/party-bus-hire",
-        category: "Hire Services",
+        label: "Brent Cross",
+        href: "/success-van-hire-van-rental-in-brent-cross-london-last-minute-bookings",
       },
       {
-        label: "Airport Transfers",
-        href: "/airport-transfers",
-        category: "Transfers",
+        label: "CAMDEN",
+        href: "/van-hire-wembley-2-2",
       },
       {
-        label: "Corporate Events",
-        href: "/corporate-events",
-        category: "Events",
+        label: "CRICKLEWOOD",
+        href: "/van-hire-cricklewood",
       },
       {
-        label: "Wedding Transport",
-        href: "/wedding-transport",
-        category: "Events",
+        label: "Golders Green",
+        href: "/van-hire-golders-green",
+      },
+      {
+        label: "Hampstead",
+        href: "/van-hire-hampstead",
+      },
+      {
+        label: "Hendon",
+        href: "/van-hire-hendon",
+      },
+      {
+        label: "Mill Hill",
+        href: "/van-hire-mill-hill",
+      },
+      {
+        label: "London",
+        href: "/car-hire-nw-london",
+      },
+      {
+        label: "Wembley",
+        href: "/van-hire-wembley",
       },
     ],
   },
@@ -226,8 +251,8 @@ export default function Navbar() {
                 >
                   {Array.from(
                     new Set(item.children.map((child) => child.category))
-                  ).map((category) => (
-                    <div key={category}>
+                  ).map((category, idx) => (
+                    <div key={idx}>
                       {category && (
                         <div className="px-3 py-1 text-xs text-[#fe9a00] font-semibold tracking-wider bg-slate-800/50 rounded">
                           {category}

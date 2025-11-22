@@ -356,6 +356,20 @@ function ReservationPanel({
   const [rentalDays, setRentalDays] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
 
+  // Lock body scroll when panel opens
+  useEffect(() => {
+    // Store original body overflow style
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+
+    // Lock scroll
+    document.body.style.overflow = "hidden";
+
+    // Cleanup function to restore scroll
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
   // Calculate rental days and total cost
   useEffect(() => {
     if (formData.pickupDate && formData.returnDate) {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FiHome,
   FiMapPin,
@@ -84,6 +84,17 @@ const menuItems: MenuItem[] = [
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [sidebarOpen]);
 
   return (
     <div className="min-h-screen bg-[#0f172b]">
