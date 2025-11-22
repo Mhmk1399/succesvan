@@ -6,10 +6,10 @@ import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import {
   FiMapPin,
   FiPhone,
-   FiCheckCircle,
+  FiCheckCircle,
   FiTruck,
   FiStar,
-   FiZap,
+  FiZap,
   FiNavigation,
   FiExternalLink,
 } from "react-icons/fi";
@@ -100,25 +100,20 @@ export default function VanRentalBrentCross() {
   ];
 
   return (
-<div ref={sectionRef} className="relative w-full bg-[#0f172b] py-20">      {/* Background Elements */}
+    <div ref={sectionRef} className="relative w-full bg-[#0f172b] py-28">
+      {" "}
+      {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5"></div>
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl"></div>
       </div>
-
       {/* Hero Section */}
       <section className="relative ">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 items-center">
             {/* Left Column */}
             <div>
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#fe9a00]/10 border border-[#fe9a00]/20 text-[#fe9a00] text-xs sm:text-sm font-bold mb-4 animate-pulse">
-                <FiZap className="text-sm" />
-                <span>LAST MINUTE BOOKINGS</span>
-              </div>
-
               {/* Main Heading */}
               <h1 className="text-3xl sm:text-4xl lg:text-6xl font-black text-white mb-4 lg:mb-6 leading-tight">
                 Van Rental in
@@ -226,7 +221,6 @@ export default function VanRentalBrentCross() {
           </div>
         </div>
       </section>
-
       {/* Features Section */}
       <section className="relative py-12 lg:py-20 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -269,7 +263,6 @@ export default function VanRentalBrentCross() {
           </div>
         </div>
       </section>
-
       {/* Last Minute Bookings Section */}
       <section className="relative py-12 lg:py-20 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -362,7 +355,6 @@ export default function VanRentalBrentCross() {
           </div>
         </div>
       </section>
-
       {/* Why Choose Us Section */}
       <section className="relative py-12 lg:py-20 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -469,7 +461,6 @@ export default function VanRentalBrentCross() {
           </div>
         </div>
       </section>
-
       {/* Google Rating Section */}
       <section className="relative py-10 lg:py-16 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -516,7 +507,6 @@ export default function VanRentalBrentCross() {
           </div>
         </div>
       </section>
-
       {/* Contact CTA Section */}
       <section className="relative py-12 lg:py-20 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">

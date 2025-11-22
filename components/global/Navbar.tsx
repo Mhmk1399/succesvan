@@ -140,7 +140,7 @@ export default function Navbar() {
     <>
       <nav
         ref={navRef}
-        className="fixed top-0 w-full z-50 bg-[#0f172b]/20 backdrop-blur-sm shadow-2xl"
+        className="fixed top-0 w-full z-50 bg-[#0f172b]/20 backdrop-blur-sm "
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">

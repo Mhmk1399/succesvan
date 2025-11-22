@@ -5,6 +5,7 @@ import Navbar from "@/components/global/Navbar";
 import Footer from "@/components/global/footer";
 import FloatingActionMenu from "@/components/ui/FloatingActionMenu";
 import SmoothScrollProvider from "@/components/ui/smoothScrollProvider.tsx";
+import Breadcrumbs from "@/components/global/breadcrumbs";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Navbar />
+        <Breadcrumbs />
         <SmoothScrollProvider />
         {children}
         <Footer />
