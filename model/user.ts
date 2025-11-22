@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
     phoneNumber: { type: String, required: true, unique: true },
     isVerified: { type: Boolean, default: false },
   },
-  password: { type: String, required: true },
+  password: { type: String },
   role: { type: String, enum: ["user", "admin"], default: "user" },
   licenceAttached: {
     front: { type: String },
