@@ -73,7 +73,7 @@ export default function Home() {
   return (
     <>
       <ReservationHero />
-      <VanListing showFilters={true} />
+      <VanListing   />
       <HeroSlider />
       <WhyUs />
       <Testimonials layout="carousel" autoPlay={true} autoPlayInterval={5000} />

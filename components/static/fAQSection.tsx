@@ -10,6 +10,7 @@ import {
   FiCheck,
   FiX,
 } from "react-icons/fi";
+import Link from "next/link";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -67,7 +68,7 @@ export default function FAQComponent({
             opacity: 1,
             y: 0,
             scale: 1,
-            duration: 0.3,
+            duration: 0.1,
             ease: "power3.out",
             scrollTrigger: {
               trigger: faq,
@@ -404,15 +405,15 @@ export default function FAQComponent({
                   <FiHelpCircle className="text-xl" />
                   Call Us Now
                 </a>
-                <a
-                  href="/contact"
+                <Link
+                  href="/contact-us"
                   className="w-full sm:w-auto px-8 py-4 rounded-xl font-bold text-white border transition-all duration-300 hover:bg-white/10"
                   style={{
                     borderColor: `${accentColor}40`,
                   }}
                 >
                   Contact Us
-                </a>
+                </Link>
               </div>
             </div>
           </div>
