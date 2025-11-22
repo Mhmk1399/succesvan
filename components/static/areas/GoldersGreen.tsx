@@ -135,25 +135,20 @@ export default function GoldersGreenVanHire() {
   }, []);
 
   return (
-<div ref={sectionRef} className="relative w-full bg-[#0f172b] py-20">      {/* Background Elements */}
+    <div ref={sectionRef} className="relative w-full bg-[#0f172b] py-28">
+      {" "}
+      {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5"></div>
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl"></div>
       </div>
-
       {/* Hero Section */}
       <section className="relative  ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Column */}
             <div>
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#fe9a00]/10 border border-[#fe9a00]/20 text-[#fe9a00] text-sm font-bold mb-6 animate-pulse">
-                <TbAutomaticGearbox className="text-lg" />
-                <span>AUTOMATIC VANS AVAILABLE</span>
-              </div>
-
               {/* Main Heading */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
                 Cheap Van Hire in
@@ -259,7 +254,6 @@ export default function GoldersGreenVanHire() {
           </div>
         </div>
       </section>
-
       {/* Features Section */}
       <section className="relative py-20 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -302,7 +296,6 @@ export default function GoldersGreenVanHire() {
           </div>
         </div>
       </section>
-
       {/* Automatic Van Highlight Section */}
       <section className="relative py-16 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -348,7 +341,6 @@ export default function GoldersGreenVanHire() {
           </div>
         </div>
       </section>
-
       {/* Google Rating Banner */}
       <section className="relative py-12 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -389,7 +381,6 @@ export default function GoldersGreenVanHire() {
           </div>
         </div>
       </section>
-
       {/* FAQ Section */}
       <FAQComponent
         title="Frequently Asked Questions"
@@ -400,7 +391,6 @@ export default function GoldersGreenVanHire() {
         accentColor="#fe9a00"
         backgroundColor="#0f172b"
       />
-
       {/* Contact CTA Section */}
       <section className="relative py-20 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

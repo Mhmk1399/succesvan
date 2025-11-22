@@ -9,8 +9,7 @@ import {
   FiCheckCircle,
   FiTruck,
   FiStar,
-  FiDollarSign,
-  FiExternalLink,
+   FiExternalLink,
   FiNavigation,
 } from "react-icons/fi";
 import Link from "next/link";
@@ -129,7 +128,7 @@ export default function HendonVanHire() {
   }, []);
 
   return (
-    <div ref={sectionRef} className="relative w-full bg-[#0f172b] py-20">
+    <div ref={sectionRef} className="relative w-full bg-[#0f172b] py-28">
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5"></div>
@@ -143,12 +142,6 @@ export default function HendonVanHire() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Column */}
             <div>
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-bold mb-6">
-                <FiDollarSign className="text-lg" />
-                <span>CHEAP VAN HIRE AVAILABLE</span>
-              </div>
-
               {/* Main Heading */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
                 Cheap Van Hire in

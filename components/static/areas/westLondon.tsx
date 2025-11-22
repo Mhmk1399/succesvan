@@ -14,7 +14,6 @@ import {
   FiCalendar,
   FiPackage,
   FiNavigation,
-  FiAward,
 } from "react-icons/fi";
 import Link from "next/link";
 
@@ -177,7 +176,7 @@ export default function WelcomePage() {
   ];
 
   return (
-    <div ref={sectionRef} className="relative w-full bg-[#0f172b] py-20">
+    <div ref={sectionRef} className="relative w-full bg-[#0f172b] py-28">
       {" "}
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -190,12 +189,6 @@ export default function WelcomePage() {
       <section className="relative  ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#fe9a00]/10 border border-[#fe9a00]/20 text-[#fe9a00] text-sm font-bold mb-6">
-              <FiAward className="text-lg" />
-              <span>TRUSTED VAN HIRE PARTNER</span>
-            </div>
-
             {/* Main Heading */}
             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white mb-6 leading-tight">
               Welcome to
