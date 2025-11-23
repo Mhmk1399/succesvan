@@ -53,9 +53,9 @@ const officeSchema = new mongoose.Schema({
       reason: { type: String }, // Optional, e.g., "Christmas Holiday"
     },
   ],
-  cars: [
+  vehicles: [
     {
-      car: { type: mongoose.Schema.Types.ObjectId, ref: "Car", required: true },
+      vehicle: { type: mongoose.Schema.Types.ObjectId, ref: "Vehicle", required: true },
       inventory: { type: Number, required: true, min: 0 },
     },
   ],

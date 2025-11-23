@@ -6,11 +6,11 @@ const categorySchema = new mongoose.Schema({
   image: { type: String },
   type: { type: String, enum: ["van", "minBus"], required: true },
   servicesPeriod:{
-    tire: {type:Date , required:true , default:Date.now()},
-    oil: {type:Date , required:true , default:Date.now()},
-    battery:{type:Date , required:true , default:Date.now()},
-    air: {type:Date , required:true , default:Date.now()},
-    service: {type:Date , required:true , default:Date.now()},
+    tire: {type: Number, required: true, min: 1},
+    oil: {type: Number, required: true, min: 1},
+    battery: {type: Number, required: true, min: 1},
+    air: {type: Number, required: true, min: 1},
+    service: {type: Number, required: true, min: 1}
   }
 }, { timestamps: true });
 

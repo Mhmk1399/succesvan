@@ -15,7 +15,15 @@ const vehicleSchema = new mongoose.Schema({
     name: { type: String, required: true },
     value: { type: String, required: true },
     }
- ]
+ ],
+ serviceHistory: {
+   tire: { type: Date, default: Date.now },
+   oil: { type: Date, default: Date.now },
+   battery: { type: Date, default: Date.now },
+   air: { type: Date, default: Date.now },
+   service: { type: Date, default: Date.now }
+ },
+ needsService: { type: Boolean, default: false }
 }, { timestamps: true });
 
 export default mongoose.models.Vehicle || mongoose.model("Vehicle", vehicleSchema);
