@@ -8,12 +8,15 @@ export async function GET(req: NextRequest) {
   try {
     const auth = requireAuth(req);
     await connect();
-    
+
     const user = await User.findById(auth.userId).select("-password");
     if (!user) return errorResponse("User not found", 404);
-    
+
     return successResponse(user);
   } catch (error: any) {
-    return errorResponse(error.message === "Unauthorized" ? "Unauthorized" : error.message, error.message === "Unauthorized" ? 401 : 500);
+    return errorResponse(
+      error.message === "Unauthorized" ? "Unauthorized" : error.message,
+      error.message === "Unauthorized" ? 401 : 500
+    );
   }
 }
