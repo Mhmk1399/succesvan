@@ -5,7 +5,7 @@ const categorySchema = new mongoose.Schema(
     name: { type: String, required: true, unique: true },
     description: { type: String },
     image: { type: String },
-    type: { type: String, enum: ["van", "minBus"], required: true },
+    type: { type:mongoose.Schema.Types.ObjectId, ref: "Type", required: true },
     servicesPeriod: {
       tire: { type: Number, required: true, min: 1 },
       oil: { type: Number, required: true, min: 1 },
