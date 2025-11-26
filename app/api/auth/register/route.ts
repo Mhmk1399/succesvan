@@ -9,16 +9,16 @@ export async function POST(req: NextRequest) {
   try {
     await connect();
     const body = await req.json();
-    
+
     const hashedPassword = await bcrypt.hash(body.password, 10);
     const user = await User.create({ ...body, password: hashedPassword });
-    
+
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET!,
-      { expiresIn: "7d" }
+      { expiresIn: "28d" }
     );
-    
+
     const { password, ...userWithoutPassword } = user.toObject();
     return successResponse({ token, user: userWithoutPassword }, 201);
   } catch (error: any) {

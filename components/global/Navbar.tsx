@@ -3,10 +3,34 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import gsap from "gsap";
-import { FiMenu, FiX, FiChevronDown, FiUser, FiPhone } from "react-icons/fi";
+import {
+  FiMenu,
+  FiX,
+  FiChevronDown,
+  FiUser,
+  FiPhone,
+  FiLogOut,
+  FiLayout,
+} from "react-icons/fi";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+const scrollbarStyles = `
+  .navbar-menu::-webkit-scrollbar {
+    width: 2px;
+  }
+  .navbar-menu::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .navbar-menu::-webkit-scrollbar-thumb {
+    background: #fe9a00;
+    border-radius: 10px;
+  }
+  .navbar-menu::-webkit-scrollbar-thumb:hover {
+    background: #ff8c00;
+  }
+`;
 
 interface MenuItem {
   label: string;
@@ -84,8 +108,13 @@ export default function Navbar() {
   const navRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [user, setUser] = useState<{ name: string; lastName: string } | null>(
+    null
+  );
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     gsap.from(navRef.current, {
@@ -94,6 +123,21 @@ export default function Navbar() {
       opacity: 0,
       ease: "power3.out",
     });
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          setUser({ name: userData.name, lastName: userData.lastName });
+        }
+      } catch (error) {
+        console.error("Failed to parse token:", error);
+      }
+    }
   }, []);
 
   const toggleMenu = () => {
@@ -132,6 +176,28 @@ export default function Navbar() {
     });
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    setShowDropdown(false);
+    window.location.href = "/";
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   if (pathname === "/dashboard") {
     return null;
   }
@@ -140,7 +206,7 @@ export default function Navbar() {
     <>
       <nav
         ref={navRef}
-        className="fixed top-0 w-full z-50 bg-[#0f172b]/20 backdrop-blur-sm "
+        className="fixed top-0 w-full z-9999 bg-[#0f172b]/20 backdrop-blur-sm "
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -183,13 +249,51 @@ export default function Navbar() {
 
             {/* Right Side: Login & Phone Buttons */}
             <div className="hidden md:flex items-center space-x-3">
-              <Link
-                href="/login"
-                className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg hover:text-[#fe9a00] transition-all duration-300 font-medium text-sm hover:bg-white/5"
-              >
-                <FiUser size={18} />
-                LOGIN
-              </Link>
+              {user ? (
+                <div ref={dropdownRef} className="relative">
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg hover:text-[#fe9a00] transition-all duration-300 font-medium text-sm hover:bg-white/5 border border-[#fe9a00]/30"
+                  >
+                    <FiUser size={18} />
+                    {user.name} {user.lastName}
+                    <FiChevronDown
+                      size={16}
+                      className={`transition-transform ${
+                        showDropdown ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {showDropdown && (
+                    <div className="absolute right-0 mt-2 w-48 bg-[#0f172b] border border-[#fe9a00]/30 rounded-lg shadow-xl overflow-hidden z-50">
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center gap-3 px-4 py-3 text-white hover:bg-[#fe9a00]/10 hover:text-[#fe9a00] transition-all duration-300"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <FiLayout size={18} />
+                        Dashboard
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-white hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 border-t border-[#fe9a00]/20"
+                      >
+                        <FiLogOut size={18} />
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href="/register"
+                  className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg hover:text-[#fe9a00] transition-all duration-300 font-medium text-sm hover:bg-white/5"
+                >
+                  <FiUser size={18} />
+                  LOGIN
+                </Link>
+              )}
               <Link
                 href="tel:+442030111198"
                 className="flex items-center gap-2 px-6 py-2.5 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-[#fe9a00] hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 text-sm"
@@ -209,10 +313,12 @@ export default function Navbar() {
         className="fixed inset-0 bg-black/60 z-30 opacity-0 pointer-events-none transition-opacity duration-300"
       />
 
+      <style>{scrollbarStyles}</style>
+
       {/* Slide-In Menu */}
       <div
         ref={menuRef}
-        className="fixed top-10 left-0 w-80 h-full bg-[#0f172b]/10 backdrop-blur-3xl transform -translate-x-full opacity-0 z-40 shadow-2xl overflow-y-auto"
+        className="navbar-menu fixed top-10 left-0 w-80 h-full bg-[#0f172b]/10 backdrop-blur-3xl transform -translate-x-full opacity-0 z-999 shadow-2xl overflow-y-auto"
       >
         {/* Menu Items */}
         <div className="flex flex-col space-y-2 p-6">
@@ -233,7 +339,7 @@ export default function Navbar() {
                 <Link href={item.href}>{item.label}</Link>
                 {item.children && (
                   <FiChevronDown
-                    className={`text-sm transition-transform ${
+                    className={`text-xs transition-transform ${
                       activeDropdown === item.label ? "rotate-180" : ""
                     }`}
                   />
@@ -243,7 +349,7 @@ export default function Navbar() {
               {/* Submenu Dropdown */}
               {item.children && (
                 <div
-                  className={`ml-4 mt-2 space-y-1 overflow-hidden transition-all duration-300 ${
+                  className={`ml-4  space-y-1 overflow-hidden transition-all duration-300 ${
                     activeDropdown === item.label
                       ? "max-h-96 opacity-100"
                       : "max-h-0 opacity-0"
@@ -279,7 +385,7 @@ export default function Navbar() {
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-200 space-y-4  ">
+        <div className="p-6 border-t border-slate-200 space-y-4 pb-12 ">
           <div className="flex items-center space-x-3 text-[#fe9a00] text-sm">
             <FiPhone className="text-lg" />
             <span className="font-semibold">+44 20 3011 1198</span>
@@ -289,20 +395,40 @@ export default function Navbar() {
             <span className="font-semibold">London, UK</span>
           </div>
           <div className="flex gap-3 pt-4">
-            <Link
-              href="/login"
-              className="flex-1 px-4 py-2.5 text-center text-white rounded-lg hover:text-[#fe9a00] transition-all duration-300 font-medium text-sm hover:bg-white/5"
-              onClick={closeMenu}
-            >
-              LOGIN
-            </Link>
-            <Link
-              href="/reservation"
-              className="flex-1 px-4 py-2.5 bg-[#fe9a00] text-slate-900 text-center font-bold rounded-lg hover:from-[#fe9a00] hover:to-amber-500 transition-all duration-300 text-sm"
-              onClick={closeMenu}
-            >
-              RESERVE
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="flex-1 px-4 py-2.5 text-center text-white rounded-lg hover:text-[#fe9a00] transition-all duration-300 font-medium text-sm hover:bg-white/5"
+                  onClick={closeMenu}
+                >
+                  DASHBOARD
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex-1 px-4 py-2.5 bg-red-500/20 text-red-400 text-center font-bold rounded-lg hover:bg-red-500/30 transition-all duration-300 text-sm"
+                >
+                  LOGOUT
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  className="flex-1 px-4 py-2.5 text-center text-white rounded-lg hover:text-[#fe9a00] transition-all duration-300 font-medium text-sm hover:bg-white/5"
+                  onClick={closeMenu}
+                >
+                  LOGIN
+                </Link>
+                <Link
+                  href="/reservation"
+                  className="flex-1 px-4 py-2.5 bg-[#fe9a00] text-slate-900 text-center font-bold rounded-lg hover:from-[#fe9a00] hover:to-amber-500 transition-all duration-300 text-sm"
+                  onClick={closeMenu}
+                >
+                  RESERVE
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

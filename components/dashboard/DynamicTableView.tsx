@@ -1,0 +1,354 @@
+"use client";
+
+import { useState, useMemo, useEffect, useCallback } from "react";
+import useSWR from "swr";
+import {
+  FiTrash2,
+  FiChevronLeft,
+  FiChevronRight,
+  FiEye,
+  FiX,
+  FiEdit2,
+} from "react-icons/fi";
+import { format } from "date-fns";
+import { showToast } from "@/lib/toast";
+
+interface DynamicTableViewProps<T> {
+  apiEndpoint: string;
+  title: string;
+  columns: {
+    key: keyof T;
+    label: string;
+    render?: (value: any) => React.ReactNode;
+  }[];
+  onEdit?: (item: T) => void;
+  onMutate?: (mutate: () => Promise<any>) => void;
+  itemsPerPage?: number;
+}
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+export default function DynamicTableView<
+  T extends { _id?: string; id?: string }
+>({
+  apiEndpoint,
+  title,
+  columns,
+  onEdit,
+  onMutate,
+  itemsPerPage = 10,
+}: DynamicTableViewProps<T>) {
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [viewingItem, setViewingItem] = useState<T | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { data, error, isLoading, mutate } = useSWR(apiEndpoint, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  });
+
+  useEffect(() => {
+    if (onMutate && mutate) {
+      onMutate(mutate);
+    }
+  }, [mutate, onMutate]);
+
+  const items = data?.data || [];
+  const totalPages = Math.ceil(items.length / itemsPerPage);
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return items.slice(start, start + itemsPerPage);
+  }, [items, currentPage, itemsPerPage]);
+
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+    setIsDeleteOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingId) return;
+    setIsDeleting(true);
+
+    try {
+      const res = await fetch(`${apiEndpoint}/${deletingId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Delete failed");
+
+      showToast.success("Deleted successfully!");
+      setIsDeleteOpen(false);
+      setDeletingId(null);
+      if (typeof mutate === "function") mutate(undefined, { revalidate: true });
+    } catch (error: any) {
+      showToast.error(error.message || "Delete failed");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  if (isLoading)
+    return <div className="text-white text-center py-8">Loading...</div>;
+  if (error)
+    return (
+      <div className="text-red-500 text-center py-8">Failed to load data</div>
+    );
+
+  return (
+    <div className="space-y-6">
+      <div className="overflow-x-auto    ">
+        <table className="w-full">
+          <thead className="  border-b border-white/50">
+            <tr>
+              {columns.map((col) => (
+                <th
+                  key={String(col.key)}
+                  className="px-6 py-4 text-left text-white font-semibold"
+                >
+                  {col.label}
+                </th>
+              ))}
+              <th className="px-6 py-4 text-left text-white font-semibold">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedItems.map((item: T, idx: number) => (
+              <tr
+                key={idx}
+                className="border-b border-white/10 hover:bg-white/5 transition-colors"
+              >
+                {columns.map((col) => (
+                  <td key={String(col.key)} className="px-6 py-2 text-gray-300">
+                    {col.render
+                      ? col.render(item[col.key])
+                      : String(item[col.key] || "-")}
+                  </td>
+                ))}
+                <td className="px-6 py-2 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setViewingItem(item);
+                      setIsViewOpen(true);
+                    }}
+                    className="p-2 hover:bg-green-500/20 rounded transition-colors"
+                  >
+                    <FiEye className="text-green-400" />
+                  </button>
+                  {onEdit && (
+                    <button
+                      onClick={() => onEdit(item)}
+                      className="p-2 hover:bg-blue-500/20 rounded transition-colors"
+                    >
+                      <FiEdit2 className="text-blue-400" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDeleteClick(item._id || item.id || "")}
+                    className="p-2 hover:bg-red-500/20 rounded transition-colors"
+                  >
+                    <FiTrash2 className="text-red-400" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="p-2 hover:bg-white/10 rounded disabled:opacity-50"
+          >
+            <FiChevronLeft className="text-white" />
+          </button>
+          <span className="text-white">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="p-2 hover:bg-white/10 rounded disabled:opacity-50"
+          >
+            <FiChevronRight className="text-white" />
+          </button>
+        </div>
+      )}
+
+      {isViewOpen && viewingItem && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a2847] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/10">
+            <div className="sticky top-0 flex items-center justify-between p-6 border-b border-white/10 bg-[#1a2847]">
+              <h2 className="text-2xl font-black text-white">View {title}</h2>
+              <button
+                onClick={() => setIsViewOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <FiX className="text-white text-xl" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              {columns.map((col) => (
+                <div key={String(col.key)}>
+                  <label className="text-sm font-semibold text-gray-400">
+                    {col.label}
+                  </label>
+                  <p className="text-white mt-1">
+                    {col.render
+                      ? col.render(viewingItem[col.key])
+                      : String(viewingItem[col.key] || "-")}
+                  </p>
+                </div>
+              ))}
+
+              {(viewingItem as any).category && (
+                <div>
+                  <label className="text-sm font-semibold text-gray-400">
+                    Category
+                  </label>
+                  <p className="text-white mt-1">
+                    {(viewingItem as any).category.name}
+                  </p>
+                </div>
+              )}
+
+              {(viewingItem as any).office && (
+                <div>
+                  <label className="text-sm font-semibold text-gray-400">
+                    Office
+                  </label>
+                  <p className="text-white mt-1">
+                    {(viewingItem as any).office.name}
+                  </p>
+                </div>
+              )}
+
+              {(viewingItem as any).workingTime &&
+                (viewingItem as any).workingTime.length > 0 && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-400">
+                      Working Hours
+                    </label>
+                    <div className="mt-2 space-y-2">
+                      {(viewingItem as any).workingTime.map(
+                        (wt: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="text-white text-sm bg-white/5 p-2 rounded"
+                          >
+                            <span className="font-semibold capitalize">
+                              {wt.day}:
+                            </span>{" "}
+                            {wt.isOpen
+                              ? `${wt.startTime} - ${wt.endTime}`
+                              : "Closed"}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              {(viewingItem as any).properties &&
+                (viewingItem as any).properties.length > 0 && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-400">
+                      Properties
+                    </label>
+                    <div className="mt-2 space-y-2">
+                      {(viewingItem as any).properties.map(
+                        (prop: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="text-white text-sm bg-white/5 p-2 rounded"
+                          >
+                            <span className="font-semibold">{prop.name}:</span>{" "}
+                            {prop.value}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              {(viewingItem as any).serviceHistory && (
+                <div>
+                  <label className="text-sm font-semibold text-gray-400">
+                    Service History
+                  </label>
+                  <div className="mt-2 space-y-2">
+                    {Object.entries((viewingItem as any).serviceHistory).map(
+                      ([key, value]: [string, any]) => (
+                        <div
+                          key={key}
+                          className="text-white text-sm bg-white/5 p-2 rounded"
+                        >
+                          <span className="font-semibold capitalize">
+                            {key}:
+                          </span>{" "}
+                          {format(new Date(value), "dd/MM/yyyy")}
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {(viewingItem as any).images &&
+                (viewingItem as any).images.length > 0 && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-400">
+                      Images
+                    </label>
+                    <div className="mt-2 space-y-1">
+                      {(viewingItem as any).images.map(
+                        (img: string, idx: number) => (
+                          <p key={idx} className="text-white text-sm break-all">
+                            {img}
+                          </p>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isDeleteOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a2847] rounded-2xl max-w-sm w-full border border-white/10">
+            <div className="p-6 space-y-4">
+              <h2 className="text-xl font-black text-white">Delete {title}?</h2>
+              <p className="text-gray-400">This action cannot be undone.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsDeleteOpen(false)}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors font-semibold disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors font-semibold disabled:opacity-50"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

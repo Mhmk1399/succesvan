@@ -7,13 +7,13 @@ import { successResponse, errorResponse } from "@/lib/api-response";
 export async function GET() {
   try {
     await connect();
-    
+
     const [offices, vehicles, addOns] = await Promise.all([
       Office.find().populate("cars.car"),
       Vehicle.find().populate("category"),
-      AddOn.find()
+      AddOn.find(),
     ]);
-    
+
     return successResponse({ offices, vehicles, addOns });
   } catch (error: any) {
     return errorResponse(error.message, 500);

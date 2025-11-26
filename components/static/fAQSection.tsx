@@ -75,7 +75,7 @@ export default function FAQComponent({
               start: "top 90%",
               once: true,
             },
-            delay: index * 0.08,
+            delay: index * 0.01,
           }
         );
       });

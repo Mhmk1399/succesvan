@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { FiLogOut } from "react-icons/fi";
 
 export default function LogoutButton() {
