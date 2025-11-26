@@ -10,6 +10,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const reservation = await Reservation.findById(id)
       .populate("user", "-password")
       .populate("office")
+      .populate("vehicle")
       .populate("addOns.addOn");
     if (!reservation) return errorResponse("Reservation not found", 404);
     return successResponse(reservation);
@@ -26,6 +27,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const reservation = await Reservation.findByIdAndUpdate(id, body, { new: true, runValidators: true })
       .populate("user", "-password")
       .populate("office")
+      .populate("vehicle")
       .populate("addOns.addOn");
     if (!reservation) return errorResponse("Reservation not found", 404);
     return successResponse(reservation);

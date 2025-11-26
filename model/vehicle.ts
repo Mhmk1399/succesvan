@@ -9,7 +9,9 @@ const vehicleSchema = new mongoose.Schema({
  fuel: { type: String, enum: ["gas", "diesel", "electric", "hybrid"], required: true },
  gear: { type: String, enum: ["automatic", "manual","manual,automatic"], required: true },
  seats: { type: Number, required: true },
+ LicensePlate: { type: String, required: true, unique: true },
  doors: { type: Number, required: true },
+ isAvailable: { type: Boolean, default: true },
  properties: [
     {
     name: { type: String, required: true },

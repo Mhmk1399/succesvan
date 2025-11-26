@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Office from "@/model/office";
+import Vehicle from "@/model/vehicle";
 import { successResponse, errorResponse } from "@/lib/api-response";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

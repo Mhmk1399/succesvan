@@ -1,12 +1,13 @@
 import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Office from "@/model/office";
+import Vehicle from "@/model/vehicle";
 import { successResponse, errorResponse } from "@/lib/api-response";
 
 export async function GET() {
   try {
     await connect();
-    const offices = await Office.find().populate("vehicles.vehicle");
+    const offices = await Office.find().populate({path:"vehicles.vehicle", model: Vehicle});
     return successResponse(offices);
   } catch (error: any) {
     return errorResponse(error.message, 500);

@@ -62,7 +62,6 @@ const officeSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Indexes for better query performance
-officeSchema.index({ "workingTime.day": 1 }, { unique: true }); // Prevent duplicate days in regular schedule
-officeSchema.index({ "specialDays.date": 1 }); // Speed up lookups for specific dates (note: not unique by default; enforce in app logic if needed)
+officeSchema.index({ "specialDays.date": 1 }); // Speed up lookups for specific dates
 
 export default mongoose.models.Office || mongoose.model("Office", officeSchema);
