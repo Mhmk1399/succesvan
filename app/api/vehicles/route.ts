@@ -6,7 +6,10 @@ import { successResponse, errorResponse } from "@/lib/api-response";
 export async function GET() {
   try {
     await connect();
-    const vehicles = await Vehicle.find().populate("category");
+    const vehicles = await Vehicle.find().populate("category").populate({
+      path: "office",
+      select: "name", // Adjust to whatever fields you need (e.g., 'name address')
+    });
     return successResponse(vehicles);
   } catch (error: any) {
     return errorResponse(error.message, 500);

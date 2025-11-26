@@ -3,7 +3,10 @@ import connect from "@/lib/data";
 import Office from "@/model/office";
 import { successResponse, errorResponse } from "@/lib/api-response";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connect();
     const { id } = await params;
@@ -15,12 +18,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connect();
     const { id } = await params;
     const body = await req.json();
-    const office = await Office.findByIdAndUpdate(id, body, { new: true, runValidators: true }).populate("vehicles.vehicle");
+    const office = await Office.findByIdAndUpdate(id, body, {
+      new: true,
+      runValidators: true,
+    }).populate("vehicles.vehicle");
     if (!office) return errorResponse("Office not found", 404);
     return successResponse(office);
   } catch (error: any) {
@@ -28,7 +37,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connect();
     const { id } = await params;

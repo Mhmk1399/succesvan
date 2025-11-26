@@ -16,6 +16,9 @@ import {
   FiX,
   FiExternalLink,
 } from "react-icons/fi";
+import OfficesContent from "./CreateOfficeForm";
+import VehiclesContent from "./CreateVehicleForm";
+import CategoriesContent from "./CreateCategoryForm";
 
 interface MenuItem {
   id: string;
@@ -98,7 +101,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#0f172b]">
-      {/* Sidebar */}
       <aside
         className={`fixed left-0 top-0 h-screen w-64 bg-[#1a2847] border-r border-white/10 z-50 transition-transform duration-300 flex flex-col ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -143,9 +145,7 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="lg:ml-64">
-        {/* Top Bar */}
         <div className="sticky top-0 bg-[#1a2847] border-b border-white/10 px-4 sm:px-6 py-4 flex items-center justify-between z-40">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -172,7 +172,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Content Area */}
         <div className="p-4 sm:p-6 lg:p-8">
           {activeTab === "dashboard" && <DashboardContent />}
           {activeTab === "offices" && <OfficesContent />}
@@ -186,7 +185,6 @@ export default function Dashboard() {
         </div>
       </main>
 
-      {/* Backdrop */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -289,77 +287,6 @@ function DashboardContent() {
   );
 }
 
-function OfficesContent() {
-  return (
-    <div className="space-y-6">
-      <button className="px-6 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold rounded-lg transition-colors">
-        + Add Office
-      </button>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6"
-          >
-            <h3 className="text-lg font-black text-white mb-2">Office {i}</h3>
-            <p className="text-gray-400 text-sm mb-4">
-              123 Main Street, London
-            </p>
-            <div className="flex gap-2">
-              <button className="flex-1 px-3 py-2 bg-[#fe9a00]/20 text-[#fe9a00] rounded-lg hover:bg-[#fe9a00]/30 transition-colors text-sm font-semibold">
-                Edit
-              </button>
-              <button className="flex-1 px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-semibold">
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function VehiclesContent() {
-  return (
-    <div className="space-y-6">
-      <button className="px-6 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold rounded-lg transition-colors">
-        + Add Vehicle
-      </button>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-white/10">
-            <tr>
-              <th className="px-4 py-3 text-gray-400 font-semibold">Vehicle</th>
-              <th className="px-4 py-3 text-gray-400 font-semibold">Type</th>
-              <th className="px-4 py-3 text-gray-400 font-semibold">Status</th>
-              <th className="px-4 py-3 text-gray-400 font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/10">
-            {[1, 2, 3, 4].map((i) => (
-              <tr key={i} className="hover:bg-white/5 transition-colors">
-                <td className="px-4 py-3 text-white font-semibold">Van {i}</td>
-                <td className="px-4 py-3 text-gray-400">Medium Van</td>
-                <td className="px-4 py-3">
-                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-semibold">
-                    Available
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <button className="text-[#fe9a00] hover:text-[#e68a00] font-semibold">
-                    Edit
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
 function HolidaysContent() {
   return (
     <div className="space-y-6">
@@ -379,41 +306,6 @@ function HolidaysContent() {
             <button className="w-full px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-semibold">
               Remove
             </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CategoriesContent() {
-  return (
-    <div className="space-y-6">
-      <button className="px-6 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold rounded-lg transition-colors">
-        + Add Category
-      </button>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[
-          "Small Van",
-          "Medium Van",
-          "Large Van",
-          "Luton Van",
-          "Specialist",
-          "Minibus",
-        ].map((cat, i) => (
-          <div
-            key={i}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6"
-          >
-            <h3 className="text-lg font-black text-white mb-4">{cat}</h3>
-            <div className="flex gap-2">
-              <button className="flex-1 px-3 py-2 bg-[#fe9a00]/20 text-[#fe9a00] rounded-lg hover:bg-[#fe9a00]/30 transition-colors text-sm font-semibold">
-                Edit
-              </button>
-              <button className="flex-1 px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-semibold">
-                Delete
-              </button>
-            </div>
           </div>
         ))}
       </div>

@@ -7,10 +7,10 @@ import {
   FiUser,
   FiEye,
   FiEyeOff,
-  FiCheck,
+  FiPhone,
 } from "react-icons/fi";
 import gsap from "gsap";
-import { useAuth } from "./AuthContext";
+import { showToast } from "@/lib/toast";
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -19,15 +19,17 @@ interface AuthFormProps {
 
 export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    lastName: "",
+    emailAddress: "",
+    phoneNumber: "",
     password: "",
     confirmPassword: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [success, setSuccess] = useState(false);
-  const { login, signup, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const formRef = useRef<HTMLDivElement>(null);
   const switchRef = useRef<HTMLDivElement>(null);
@@ -45,14 +47,18 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (mode === "signup" && !formData.name.trim()) {
-      newErrors.name = "Name is required";
+    if (mode === "signup") {
+      if (!formData.name.trim()) newErrors.name = "First name is required";
+      if (!formData.lastName.trim())
+        newErrors.lastName = "Last name is required";
+      if (!formData.phoneNumber.trim())
+        newErrors.phoneNumber = "Phone number is required";
     }
 
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
+    if (!formData.emailAddress.trim()) {
+      newErrors.emailAddress = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.emailAddress)) {
+      newErrors.emailAddress = "Email is invalid";
     }
 
     if (!formData.password) {
@@ -74,19 +80,53 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
 
     if (!validateForm()) return;
 
+    setIsLoading(true);
     try {
       if (mode === "login") {
-        await login(formData.email, formData.password);
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            emailAddress: formData.emailAddress,
+            password: formData.password,
+          }),
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || "Login failed");
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        showToast.success("Login successful! Redirecting...");
       } else {
-        await signup(formData.name, formData.email, formData.password);
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name,
+            lastName: formData.lastName,
+            emaildata: { emailAddress: formData.emailAddress },
+            phoneData: { phoneNumber: formData.phoneNumber },
+            password: formData.password,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Registration failed");
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        showToast.success("Account created successfully! Redirecting...");
       }
 
-      setSuccess(true);
       setTimeout(() => {
         window.location.href = "/";
       }, 1500);
-    } catch (error) {
-      setErrors({ general: "Authentication failed. Please try again." });
+    } catch (error: any) {
+      showToast.error(
+        error.message ||
+          (mode === "login"
+            ? "Login failed. Please try again."
+            : "Registration failed. Please try again.")
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -116,204 +156,246 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
       });
     }
     onModeChange(newMode);
-    setFormData({ name: "", email: "", password: "", confirmPassword: "" });
+    setFormData({
+      name: "",
+      lastName: "",
+      emailAddress: "",
+      phoneNumber: "",
+      password: "",
+      confirmPassword: "",
+    });
     setErrors({});
-    setSuccess(false);
   };
 
   return (
-    <div className="w-full max-w-md mx-auto mt-20">
-      <div ref={switchRef} className="mb-8">
-        <div className="relative bg-white/10 backdrop-blur-lg rounded-2xl p-2 border border-white/20">
-          <div
-            className="absolute top-2 bottom-2 bg-[#fe9a00] rounded-xl transition-all duration-300 ease-out"
-            style={{
-              left: mode === "login" ? "8px" : "50%",
-              right: mode === "login" ? "50%" : "8px",
-            }}
-          />
-          <div className="relative flex">
-            <button
-              onClick={() => switchMode("login")}
-              className={`flex-1 py-3 px-6 text-center font-semibold rounded-xl transition-colors duration-300 ${
-                mode === "login"
-                  ? "text-white"
-                  : "text-white/60 hover:text-white/80"
-              }`}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => switchMode("signup")}
-              className={`flex-1 py-3 px-6 text-center font-semibold rounded-xl transition-colors duration-300 ${
-                mode === "signup"
-                  ? "text-white"
-                  : "text-white/60 hover:text-white/80"
-              }`}
-            >
-              Sign Up
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div
-        ref={formRef}
-        className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 shadow-2xl"
-      >
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            {mode === "login" ? "Welcome Back" : "Create Account"}
-          </h1>
-          <p className="text-white/60">
-            {mode === "login"
-              ? "Sign in to your account to continue"
-              : "Join us and start your journey today"}
-          </p>
-        </div>
-
-        {errors.general && (
-          <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
-            {errors.general}
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-4 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm flex items-center">
-            <FiCheck className="mr-2" />
-            {mode === "login"
-              ? "Login successful! Redirecting..."
-              : "Account created successfully! Redirecting..."}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {mode === "signup" && (
-            <div className="relative">
-              <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Full Name"
-                required
-                className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
-                  errors.name
-                    ? "border-red-500/50 focus:border-red-500"
-                    : "border-white/20 focus:border-[#fe9a00]"
+    <>
+      <div className="w-full max-w-md mx-auto mt-20">
+        <div ref={switchRef} className="mb-8">
+          <div className="relative bg-white/10 backdrop-blur-lg rounded-2xl p-2 border border-white/20">
+            <div
+              className="absolute top-2 bottom-2 bg-[#fe9a00] rounded-xl transition-all duration-300 ease-out"
+              style={{
+                left: mode === "login" ? "8px" : "50%",
+                right: mode === "login" ? "50%" : "8px",
+              }}
+            />
+            <div className="relative flex">
+              <button
+                onClick={() => switchMode("login")}
+                className={`flex-1 py-3 px-6 text-center font-semibold rounded-xl transition-colors duration-300 ${
+                  mode === "login"
+                    ? "text-white"
+                    : "text-white/60 hover:text-white/80"
                 }`}
-              />
-              {errors.name && (
-                <p className="mt-1 text-red-400 text-sm">{errors.name}</p>
-              )}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => switchMode("signup")}
+                className={`flex-1 py-3 px-6 text-center font-semibold rounded-xl transition-colors duration-300 ${
+                  mode === "signup"
+                    ? "text-white"
+                    : "text-white/60 hover:text-white/80"
+                }`}
+              >
+                Sign Up
+              </button>
             </div>
-          )}
+          </div>
+        </div>
 
-          <div className="relative">
-            <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="Email Address"
-              required
-              className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
-                errors.email
-                  ? "border-red-500/50 focus:border-red-500"
-                  : "border-white/20 focus:border-[#fe9a00]"
-              }`}
-            />
-            {errors.email && (
-              <p className="mt-1 text-red-400 text-sm">{errors.email}</p>
-            )}
+        <div
+          ref={formRef}
+          className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 shadow-2xl"
+        >
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-white mb-2">
+              {mode === "login" ? "Welcome Back" : "Create Account"}
+            </h1>
+            <p className="text-white/60">
+              {mode === "login"
+                ? "Sign in to your account to continue"
+                : "Join us and start your journey today"}
+            </p>
           </div>
 
-          <div className="relative">
-            <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              placeholder="Password"
-              required
-              className={`w-full pl-12 pr-12 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
-                errors.password
-                  ? "border-red-500/50 focus:border-red-500"
-                  : "border-white/20 focus:border-[#fe9a00]"
-              }`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
-            >
-              {showPassword ? <FiEyeOff /> : <FiEye />}
-            </button>
-            {errors.password && (
-              <p className="mt-1 text-red-400 text-sm">{errors.password}</p>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {mode === "signup" && (
+              <>
+                <div className="relative">
+                  <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="First Name"
+                    required
+                    className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
+                      errors.name
+                        ? "border-red-500/50 focus:border-red-500"
+                        : "border-white/20 focus:border-[#fe9a00]"
+                    }`}
+                  />
+                  {errors.name && (
+                    <p className="mt-1 text-red-400 text-sm">{errors.name}</p>
+                  )}
+                </div>
+                <div className="relative">
+                  <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    placeholder="Last Name"
+                    required
+                    className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
+                      errors.lastName
+                        ? "border-red-500/50 focus:border-red-500"
+                        : "border-white/20 focus:border-[#fe9a00]"
+                    }`}
+                  />
+                  {errors.lastName && (
+                    <p className="mt-1 text-red-400 text-sm">
+                      {errors.lastName}
+                    </p>
+                  )}
+                </div>
+                <div className="relative">
+                  <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                    placeholder="Phone Number"
+                    required
+                    className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
+                      errors.phoneNumber
+                        ? "border-red-500/50 focus:border-red-500"
+                        : "border-white/20 focus:border-[#fe9a00]"
+                    }`}
+                  />
+                  {errors.phoneNumber && (
+                    <p className="mt-1 text-red-400 text-sm">
+                      {errors.phoneNumber}
+                    </p>
+                  )}
+                </div>
+              </>
             )}
-          </div>
 
-          {mode === "signup" && (
             <div className="relative">
-              <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+              <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
               <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
+                type="email"
+                name="emailAddress"
+                value={formData.emailAddress}
                 onChange={handleInputChange}
-                placeholder="Confirm Password"
+                placeholder="Email Address"
                 required
                 className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
-                  errors.confirmPassword
+                  errors.emailAddress
                     ? "border-red-500/50 focus:border-red-500"
                     : "border-white/20 focus:border-[#fe9a00]"
                 }`}
               />
-              {errors.confirmPassword && (
+              {errors.emailAddress && (
                 <p className="mt-1 text-red-400 text-sm">
-                  {errors.confirmPassword}
+                  {errors.emailAddress}
                 </p>
               )}
             </div>
-          )}
 
-          {mode === "login" && (
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center text-white/60">
-                <input type="checkbox" className="mr-2 rounded" />
-                Remember me
-              </label>
+            <div className="relative">
+              <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Password"
+                required
+                className={`w-full pl-12 pr-12 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
+                  errors.password
+                    ? "border-red-500/50 focus:border-red-500"
+                    : "border-white/20 focus:border-[#fe9a00]"
+                }`}
+              />
               <button
                 type="button"
-                className="text-[#fe9a00] hover:text-orange-300 transition-colors"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
               >
-                Forgot password?
+                {showPassword ? <FiEyeOff /> : <FiEye />}
               </button>
+              {errors.password && (
+                <p className="mt-1 text-red-400 text-sm">{errors.password}</p>
+              )}
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-4 bg-[#fe9a00] text-white font-semibold rounded-xl hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                {mode === "login" ? "Signing In..." : "Creating Account..."}
+            {mode === "signup" && (
+              <div className="relative">
+                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="Confirm Password"
+                  required
+                  className={`w-full pl-12 pr-12 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
+                    errors.confirmPassword
+                      ? "border-red-500/50 focus:border-red-500"
+                      : "border-white/20 focus:border-[#fe9a00]"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+                >
+                  {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+                {errors.confirmPassword && (
+                  <p className="mt-1 text-red-400 text-sm">
+                    {errors.confirmPassword}
+                  </p>
+                )}
               </div>
-            ) : mode === "login" ? (
-              "Sign In"
-            ) : (
-              "Create Account"
             )}
-          </button>
-        </form>
+
+            {mode === "login" && (
+              <div className="flex items-center justify-between text-sm">
+                <button
+                  type="button"
+                  className="text-[#fe9a00] hover:text-orange-300 transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-4 bg-[#fe9a00] text-white font-semibold rounded-xl hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                  {mode === "login" ? "Signing In..." : "Creating Account..."}
+                </div>
+              ) : mode === "login" ? (
+                "Log In"
+              ) : (
+                "Create Account"
+              )}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

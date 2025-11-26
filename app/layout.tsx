@@ -6,6 +6,7 @@ import Footer from "@/components/global/footer";
 import FloatingActionMenu from "@/components/ui/FloatingActionMenu";
 import SmoothScrollProvider from "@/components/ui/smoothScrollProvider.tsx";
 import Breadcrumbs from "@/components/global/breadcrumbs";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Navbar />
+        <Toaster position="bottom-center" />
+
         <Breadcrumbs />
         <SmoothScrollProvider />
         {children}

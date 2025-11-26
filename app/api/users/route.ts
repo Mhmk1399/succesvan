@@ -12,4 +12,3 @@ export async function GET() {
     return errorResponse(error.message, 500);
   }
 }
-
