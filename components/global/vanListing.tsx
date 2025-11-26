@@ -205,13 +205,7 @@ export default function VanListing({
   const [filteredVans, setFilteredVans] = useState(vans);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("price-low");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedVan, setSelectedVan] = useState<VanData | null>(null);
-
-  const categories = [
-    "All",
-    ...Array.from(new Set(vans.map((v) => v.category))),
-  ];
 
   useEffect(() => {
     let filtered = [...vans];
@@ -484,12 +478,12 @@ function ReservationPanel({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-99999 transition-opacity duration-300"
         onClick={onClose}
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 h-screen w-full sm:max-w-md bg-linear-to-br from-[#0f172b] to-[#1e293b] border-l border-white/10 z-50 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+      <div className="fixed right-0 top-0 h-screen w-full sm:max-w-md bg-linear-to-br from-[#0f172b] to-[#1e293b] border-l border-white/10 z-99999 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
         {/* Header */}
         <div className="sticky top-0 bg-linear-to-r from-[#0f172b] to-[#1e293b] backdrop-blur-xl border-b border-white/10 p-6 z-10">
           <div className="flex items-center justify-between mb-2">

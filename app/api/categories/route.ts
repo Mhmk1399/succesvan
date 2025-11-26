@@ -25,3 +25,30 @@ export async function POST(req: NextRequest) {
     return errorResponse(error.message, 400);
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    await connect();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    const body = await req.json();
+    const category = await Category.findByIdAndUpdate(id, body, {
+      new: true,
+    }).populate("type");
+    return successResponse(category);
+  } catch (error: any) {
+    return errorResponse(error.message, 400);
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    await connect();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    await Category.findByIdAndDelete(id);
+    return successResponse({ message: "Category deleted" });
+  } catch (error: any) {
+    return errorResponse(error.message, 400);
+  }
+}

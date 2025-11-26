@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
 import {
   FiTrash2,
@@ -12,19 +12,8 @@ import {
 } from "react-icons/fi";
 import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
-
-interface DynamicTableViewProps<T> {
-  apiEndpoint: string;
-  title: string;
-  columns: {
-    key: keyof T;
-    label: string;
-    render?: (value: any) => React.ReactNode;
-  }[];
-  onEdit?: (item: T) => void;
-  onMutate?: (mutate: () => Promise<any>) => void;
-  itemsPerPage?: number;
-}
+import "./tooltip.css";
+import { DynamicTableViewProps } from "@/types/type";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -99,9 +88,9 @@ export default function DynamicTableView<
 
   return (
     <div className="space-y-6">
-      <div className="overflow-x-auto    ">
+      <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="  border-b border-white/50">
+          <thead className="border-b border-white/50">
             <tr>
               {columns.map((col) => (
                 <th
@@ -125,7 +114,7 @@ export default function DynamicTableView<
                 {columns.map((col) => (
                   <td key={String(col.key)} className="px-6 py-2 text-gray-300">
                     {col.render
-                      ? col.render(item[col.key])
+                      ? col.render(item[col.key], item)
                       : String(item[col.key] || "-")}
                   </td>
                 ))}
@@ -135,21 +124,24 @@ export default function DynamicTableView<
                       setViewingItem(item);
                       setIsViewOpen(true);
                     }}
-                    className="p-2 hover:bg-green-500/20 rounded transition-colors"
+                    className="p-2 hover:bg-green-500/20 rounded transition-colors tooltip"
+                    data-tooltip="View"
                   >
                     <FiEye className="text-green-400" />
                   </button>
                   {onEdit && (
                     <button
                       onClick={() => onEdit(item)}
-                      className="p-2 hover:bg-blue-500/20 rounded transition-colors"
+                      className="p-2 hover:bg-blue-500/20 rounded transition-colors tooltip"
+                      data-tooltip="Edit"
                     >
                       <FiEdit2 className="text-blue-400" />
                     </button>
                   )}
                   <button
                     onClick={() => handleDeleteClick(item._id || item.id || "")}
-                    className="p-2 hover:bg-red-500/20 rounded transition-colors"
+                    className="p-2 hover:bg-red-500/20 rounded transition-colors tooltip"
+                    data-tooltip="Delete"
                   >
                     <FiTrash2 className="text-red-400" />
                   </button>
@@ -159,28 +151,6 @@ export default function DynamicTableView<
           </tbody>
         </table>
       </div>
-
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className="p-2 hover:bg-white/10 rounded disabled:opacity-50"
-          >
-            <FiChevronLeft className="text-white" />
-          </button>
-          <span className="text-white">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className="p-2 hover:bg-white/10 rounded disabled:opacity-50"
-          >
-            <FiChevronRight className="text-white" />
-          </button>
-        </div>
-      )}
 
       {isViewOpen && viewingItem && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -202,7 +172,7 @@ export default function DynamicTableView<
                   </label>
                   <p className="text-white mt-1">
                     {col.render
-                      ? col.render(viewingItem[col.key])
+                      ? col.render(viewingItem[col.key], viewingItem)
                       : String(viewingItem[col.key] || "-")}
                   </p>
                 </div>
@@ -278,6 +248,29 @@ export default function DynamicTableView<
                   </div>
                 )}
 
+              {(viewingItem as any).servicesPeriod && (
+                <div>
+                  <label className="text-sm font-semibold text-gray-400">
+                    Service Period (Days)
+                  </label>
+                  <div className="mt-2 space-y-2">
+                    {Object.entries((viewingItem as any).servicesPeriod).map(
+                      ([key, value]: [string, any]) => (
+                        <div
+                          key={key}
+                          className="text-white text-sm bg-white/5 p-2 rounded"
+                        >
+                          <span className="font-semibold capitalize">
+                            {key}:
+                          </span>{" "}
+                          {value}
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+
               {(viewingItem as any).serviceHistory && (
                 <div>
                   <label className="text-sm font-semibold text-gray-400">
@@ -340,13 +333,35 @@ export default function DynamicTableView<
                 <button
                   onClick={confirmDelete}
                   disabled={isDeleting}
-                  className="flex-1 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors font-semibold disabled:opacity-50"
+                  className="flex-1 px-4 py-3   hover:bg-red-500/30 text-red-400 rounded-lg transition-colors font-semibold disabled:opacity-50"
                 >
                   {isDeleting ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="p-2 hover:bg-white/10 rounded disabled:opacity-50"
+          >
+            <FiChevronLeft className="text-white" />
+          </button>
+          <span className="text-white">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="p-2 hover:bg-white/10 rounded disabled:opacity-50"
+          >
+            <FiChevronRight className="text-white" />
+          </button>
         </div>
       )}
     </div>

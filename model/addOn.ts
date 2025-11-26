@@ -24,6 +24,5 @@ const addOnSchema = new mongoose.Schema(
 );
 
 // Optional: Add a unique index on name to prevent duplicates
-addOnSchema.index({ name: 1 }, { unique: true });
 
 export default mongoose.models.AddOn || mongoose.model("AddOn", addOnSchema);

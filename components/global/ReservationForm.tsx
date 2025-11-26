@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DateRange, Range } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -11,8 +11,12 @@ import {
   FiMapPin,
   FiTruck,
   FiUser,
+  FiMessageSquare,
 } from "react-icons/fi";
 import { format } from "date-fns";
+import { showToast } from "@/lib/toast";
+import { Office, Category } from "@/types/type";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 interface ReservationFormProps {
   isModal?: boolean;
@@ -27,6 +31,10 @@ export default function ReservationForm({
 }: ReservationFormProps) {
   const [isListening, setIsListening] = useState(false);
   const [showDateRange, setShowDateRange] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [offices, setOffices] = useState<Office[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
   const [dateRange, setDateRange] = useState<Range[]>([
     {
       startDate: new Date(),
@@ -34,17 +42,37 @@ export default function ReservationForm({
       key: "selection",
     },
   ]);
+
   const [formData, setFormData] = useState({
     office: "",
+    category: "",
     pickupTime: "10:00",
     returnTime: "10:00",
-    vehicleType: "",
     driverAge: "",
+    message: "",
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [offRes, catRes] = await Promise.all([
+          fetch("/api/offices"),
+          fetch("/api/categories"),
+        ]);
+        const offData = await offRes.json();
+        const catData = await catRes.json();
+        setOffices(offData.data || []);
+        setCategories(catData.data || []);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleGlobalVoice = async () => {
     if (!("webkitSpeechRecognition" in window)) {
-      alert("Speech Recognition not supported");
+      showToast.error("Speech Recognition not supported");
       return;
     }
 
@@ -73,7 +101,7 @@ export default function ReservationForm({
           office: data.office || prev.office,
           pickupTime: data.pickupTime || prev.pickupTime,
           returnTime: data.returnTime || prev.returnTime,
-          vehicleType: data.vehicleType || prev.vehicleType,
+          category: data.category || prev.category,
           driverAge: data.driverAge || prev.driverAge,
         }));
 
@@ -103,7 +131,9 @@ export default function ReservationForm({
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -119,13 +149,52 @@ export default function ReservationForm({
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", {
-      ...formData,
-      pickupDate: dateRange[0].startDate,
-      returnDate: dateRange[0].endDate,
-    });
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        office: formData.office,
+        startDate: dateRange[0].startDate,
+        endDate: dateRange[0].endDate,
+        dirverAge: parseInt(formData.driverAge),
+        messege: formData.message,
+        addOns: [],
+      };
+
+      const res = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userData: {
+            name: "Guest",
+            lastName: "User",
+            email: "guest@example.com",
+            phoneNumber: "0000000000",
+          },
+          reservationData: payload,
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Reservation failed");
+
+      showToast.success("Reservation created successfully!");
+      setFormData({
+        office: "",
+        category: "",
+        pickupTime: "10:00",
+        returnTime: "10:00",
+        driverAge: "",
+        message: "",
+      });
+      if (onClose) onClose();
+    } catch (error: any) {
+      showToast.error(error.message || "Reservation failed");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -137,7 +206,6 @@ export default function ReservationForm({
           : "space-y-6"
       }
     >
-      {/* Desktop: Inline or Grid Layout */}
       <div
         className={
           isInline
@@ -154,53 +222,35 @@ export default function ReservationForm({
           >
             <FiMapPin className="text-amber-400 text-lg" /> Office
           </label>
-          <select
-            name="office"
+          <CustomSelect
+            options={offices}
             value={formData.office}
-            onChange={handleInputChange}
-            className={`w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors ${
-              isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
-            }`}
-          >
-            <option className="text-black" value="">
-              Select Office
-            </option>
-            <option className="text-black" value="london">
-              London
-            </option>
-            <option className="text-black" value="manchester">
-              Manchester
-            </option>
-          </select>
+            onChange={(val) =>
+              setFormData((prev) => ({ ...prev, office: val }))
+            }
+            placeholder="Select Office"
+            isInline={isInline}
+          />
         </div>
 
-        {/* Vehicle Type */}
+        {/* Category */}
         <div>
           <label
             className={`text-white font-semibold mb-2 flex items-center gap-2 ${
               isInline ? "text-xs mb-1" : "text-sm"
             }`}
           >
-            <FiTruck className="text-amber-400 text-lg" /> Vehicle
+            <FiTruck className="text-amber-400 text-lg" /> Category
           </label>
-          <select
-            name="vehicleType"
-            value={formData.vehicleType}
-            onChange={handleInputChange}
-            className={`w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors ${
-              isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
-            }`}
-          >
-            <option className="text-black" value="">
-              Select
-            </option>
-            <option className="text-black" value="van">
-              Van
-            </option>
-            <option className="text-black" value="minibus">
-              Minibus
-            </option>
-          </select>
+          <CustomSelect
+            options={categories}
+            value={formData.category}
+            onChange={(val) =>
+              setFormData((prev) => ({ ...prev, category: val }))
+            }
+            placeholder="Select Category"
+            isInline={isInline}
+          />
         </div>
 
         {/* Date Range */}
@@ -234,8 +284,8 @@ export default function ReservationForm({
             </button>
             {showDateRange && (
               <div
-                className={`absolute  left-0 mt-2 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 ${
-                  isInline ? " -top-64" : "-top-64"
+                className={`absolute left-0 mt-2 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 ${
+                  isInline ? "-top-64" : "-top-64"
                 }`}
               >
                 <DateRange
@@ -317,6 +367,7 @@ export default function ReservationForm({
             name="driverAge"
             value={formData.driverAge}
             onChange={handleInputChange}
+            required
             className={`w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors ${
               isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
             }`}
@@ -329,11 +380,12 @@ export default function ReservationForm({
         <div className={isInline ? "flex gap-2" : "col-span-2 flex gap-3"}>
           <button
             type="submit"
-            className={`bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 ${
-              isInline ? "px-4 py-1 text-xs  " : "flex-1 px-8 py-2 text-sm"
+            disabled={isSubmitting}
+            className={`bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 disabled:opacity-50 ${
+              isInline ? "px-4 py-1 text-xs" : "flex-1 px-8 py-2 text-sm"
             }`}
           >
-            {isInline ? "BOOK" : "RESERVE NOW"}
+            {isSubmitting ? "Booking..." : isInline ? "BOOK" : "RESERVE NOW"}
           </button>
 
           <div className="relative group">
@@ -362,22 +414,30 @@ export default function ReservationForm({
           <label className="text-white text-xs font-semibold mb-1 flex items-center gap-1">
             <FiMapPin className="text-amber-400" /> Office
           </label>
-          <select
-            name="office"
+          <CustomSelect
+            options={offices}
             value={formData.office}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors"
-          >
-            <option className="text-black" value="">
-              Select Office
-            </option>
-            <option className="text-black" value="london">
-              London
-            </option>
-            <option className="text-black" value="manchester">
-              Manchester
-            </option>
-          </select>
+            onChange={(val) =>
+              setFormData((prev) => ({ ...prev, office: val }))
+            }
+            placeholder="Select Office"
+            isInline={true}
+          />
+        </div>
+
+        <div>
+          <label className="text-white text-xs font-semibold mb-1 flex items-center gap-1">
+            <FiTruck className="text-amber-400" /> Category
+          </label>
+          <CustomSelect
+            options={categories}
+            value={formData.category}
+            onChange={(val) =>
+              setFormData((prev) => ({ ...prev, category: val }))
+            }
+            placeholder="Select Category"
+            isInline={true}
+          />
         </div>
 
         <div>
@@ -448,27 +508,6 @@ export default function ReservationForm({
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-white text-xs font-semibold mb-1 flex items-center gap-1">
-              <FiTruck className="text-amber-400" /> Vehicle
-            </label>
-            <select
-              name="vehicleType"
-              value={formData.vehicleType}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors"
-            >
-              <option className="text-black" value="">
-                Select
-              </option>
-              <option className="text-black" value="van">
-                Van
-              </option>
-              <option className="text-black" value="minibus">
-                Minibus
-              </option>
-            </select>
-          </div>
-          <div>
-            <label className="text-white text-xs font-semibold mb-1 flex items-center gap-1">
               <FiUser className="text-amber-400" /> Age
             </label>
             <input
@@ -476,9 +515,23 @@ export default function ReservationForm({
               name="driverAge"
               value={formData.driverAge}
               onChange={handleInputChange}
+              required
               className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors"
               placeholder="18+"
               min="18"
+            />
+          </div>
+          <div>
+            <label className="text-white text-xs font-semibold mb-1 flex items-center gap-1">
+              <FiMessageSquare className="text-amber-400" /> Message
+            </label>
+            <input
+              type="text"
+              name="message"
+              value={formData.message}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors"
+              placeholder="Optional"
             />
           </div>
         </div>
@@ -486,9 +539,10 @@ export default function ReservationForm({
         <div className="grid grid-cols-12 gap-1">
           <button
             type="submit"
-            className="w-full px-4 py-2.5 col-span-9 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 text-sm"
+            disabled={isSubmitting}
+            className="w-full px-4 py-2.5 col-span-9 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 text-sm disabled:opacity-50"
           >
-            RESERVE
+            {isSubmitting ? "Booking..." : "RESERVE"}
           </button>
           <button
             type="button"

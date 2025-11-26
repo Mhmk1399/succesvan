@@ -1,4 +1,4 @@
-// Office ----------------------------------------------
+// Office ----------------------------------------------------------------------------
 export interface WorkingTime {
   day:
     | "monday"
@@ -14,7 +14,8 @@ export interface WorkingTime {
 }
 
 export interface SpecialDay {
-  date: Date;
+  month: number;
+  day: number;
   isOpen: boolean;
   startTime?: string;
   endTime?: string;
@@ -42,7 +43,7 @@ export interface Office {
   updatedAt?: Date;
 }
 
-// Vehicle -------------------------------------------------------
+// Vehicle --------------------------------------------------------------------------------
 export interface ServiceHistory {
   tire: Date;
   oil: Date;
@@ -74,7 +75,7 @@ export interface Vehicle {
   updatedAt?: Date;
 }
 
-// Category --------------------------------------------------------------------------
+// Category -----------------------------------------------------------------------------------
 export interface ServicesPeriod {
   tire: number;
   oil: number;
@@ -88,8 +89,100 @@ export interface Category {
   name: string;
   description?: string;
   image?: string;
-  type: "van" | "minBus";
+  type: string | Type;
   servicesPeriod: ServicesPeriod;
+  pricePerHour: number;
+  fuel: "gas" | "diesel" | "electric" | "hybrid";
+  gear: "automatic" | "manual" | "manual,automatic";
+  seats: number;
+  doors: number;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+// Type -------------------------------------------------------------------------------------------
+
+export interface Type {
+  _id?: string;
+  name: string;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// dashboard
+export interface MenuItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+}
+
+export interface Stats {
+  vehicles: number;
+  offices: number;
+  reservations: number;
+  categories: number;
+}
+
+// AddOn ------------------------------------------------------------------------------------------
+export interface AddOn {
+  _id?: string;
+  name: string;
+  description?: string;
+  pricingType: "flat" | "tiered";
+  flatPrice?: number;
+  tiers?: Array<{
+    minDays: number;
+    maxDays: number;
+    price: number;
+  }>;
+}
+
+// Reservation ------------------------------------------------------------------------------------------
+export interface Reservation {
+  _id?: string;
+  user?: any;
+  office?: any;
+  startDate: Date;
+  endDate: Date;
+  totalPrice: number;
+  status: "pending" | "confirmed" | "canceled" | "completed";
+  dirverAge: number;
+  messege?: string;
+  addOns?: Array<{
+    addOn?: AddOn;
+    quantity: number;
+  }>;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// Table ------------------------------------------------------------------------------------
+export interface DynamicTableViewProps<T> {
+  apiEndpoint: string;
+  title: string;
+  columns: {
+    key: keyof T;
+    label: string;
+    render?: (value: any, item?: T) => React.ReactNode;
+  }[];
+  onEdit?: (item: T) => void;
+  onMutate?: (mutate: () => Promise<any>) => void;
+  itemsPerPage?: number;
+}
+
+// custom Select -------------------------------------------------------------------
+interface Option {
+  _id?: string;
+  name: string;
+}
+
+export interface CustomSelectProps {
+  options: Option[];
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  icon?: React.ReactNode;
+  isInline?: boolean;
 }

@@ -10,19 +10,7 @@ const vehicleSchema = new mongoose.Schema(
       ref: "Category",
       required: true,
     },
-    pricePerHour: { type: Number, required: true },
-    fuel: {
-      type: String,
-      enum: ["gas", "diesel", "electric", "hybrid"],
-      required: true,
-    },
-    gear: {
-      type: String,
-      enum: ["automatic", "manual", "manual,automatic"],
-      required: true,
-    },
-    seats: { type: Number, required: true },
-    doors: { type: Number, required: true },
+
     office: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Office",
