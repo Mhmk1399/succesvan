@@ -186,3 +186,67 @@ export interface CustomSelectProps {
   icon?: React.ReactNode;
   isInline?: boolean;
 }
+
+// Testimonial -------------------------------------------------------------------------------
+export interface Testimonial {
+  id: number;
+  name: string;
+  role?: string;
+  company?: string;
+  message: string;
+  rating: number;
+  image?: string;
+  date?: string;
+  location?: string;
+}
+
+export interface TestimonialsProps {
+  testimonials?: Testimonial[];
+  layout?: "carousel" | "grid" | "masonry";
+  autoPlay?: boolean;
+  autoPlayInterval?: number;
+  showRating?: boolean;
+  accentColor?: string;
+}
+
+// User -----------------------------------------------------------------------------------------
+export interface User {
+  _id: string;
+  name: string;
+  lastName: string;
+  emaildata: string;
+  phoneData: string;
+  createdAt: Date;
+}
+
+// van --------------------------------------------------------------------------------------------
+// Van data type
+export interface VanData {
+  _id?: string;
+  name: string;
+  description?: string;
+  image: string;
+  type?: string;
+  servicesPeriod?: {
+    tire: number;
+    oil: number;
+    battery: number;
+    air: number;
+    service: number;
+  };
+  pricePerHour: number;
+  fuel: "gas" | "diesel" | "electric" | "hybrid";
+  gear: "automatic" | "manual" | "manual,automatic";
+  seats: number;
+  doors: number;
+  id?: number;
+  category?: string;
+  transmission?: "Manual" | "Automatic";
+  cargo?: string;
+  features?: string[];
+  popular?: boolean;
+  available?: boolean;
+  deposit?: number;
+  mileage?: string;
+  priceUnit?: string;
+}

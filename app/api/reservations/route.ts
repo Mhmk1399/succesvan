@@ -2,18 +2,19 @@ import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Reservation from "@/model/reservation";
 import User from "@/model/user";
-import Office from "@/model/office";
-import AddOn from "@/model/addOn";
 import bcrypt from "bcryptjs";
 import { successResponse, errorResponse } from "@/lib/api-response";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     await connect();
-    const reservations = await Reservation.find()
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+    
+    const query = userId ? { user: userId } : {};
+    const reservations = await Reservation.find(query)
       .populate("user", "-password")
-      .populate("office")
-      // .populate("addOns.addOn");
+      .populate("office");
     return successResponse(reservations);
   } catch (error: any) {
     return errorResponse(error.message, 500);

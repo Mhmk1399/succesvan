@@ -3,7 +3,10 @@ import connect from "@/lib/data";
 import Reservation from "@/model/reservation";
 import { successResponse, errorResponse } from "@/lib/api-response";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connect();
     const { id } = await params;
@@ -19,12 +22,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connect();
     const { id } = await params;
     const body = await req.json();
-    const reservation = await Reservation.findByIdAndUpdate(id, body, { new: true, runValidators: true })
+    const reservation = await Reservation.findByIdAndUpdate(id, body, {
+      new: true,
+      runValidators: true,
+    })
       .populate("user", "-password")
       .populate("office")
       .populate("vehicle")
@@ -36,7 +45,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connect();
     const { id } = await params;

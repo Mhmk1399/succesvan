@@ -3,14 +3,7 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
-import {
-  FiCheckCircle,
-  FiUsers,
-  FiTruck,
-  FiAward,
-  FiPhone,
-  FiMail,
-} from "react-icons/fi";
+import { FiUsers, FiTruck } from "react-icons/fi";
 import { MdOutlineLocalParking } from "react-icons/md";
 import { TbAutomaticGearbox } from "react-icons/tb";
 
@@ -109,16 +102,6 @@ export default function SuccessVanHire() {
     },
   ];
 
-  const benefits = [
-    "Clean, modern, and well-maintained vehicles",
-    "Competitive daily, weekly, and long-term hire rates",
-    "Automatic and manual options",
-    "Free on-site car parking while you hire",
-    "Flexible pick-up and drop-off times",
-    "Friendly and helpful support team",
-    "Fully insured vehicles with optional extras",
-  ];
-
   return (
     <section
       ref={sectionRef}
@@ -187,65 +170,6 @@ export default function SuccessVanHire() {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Why Choose Us Section */}
-        <div className="relative">
-          {/* Background Card */}
-          <div className="absolute inset-0 bg-linear-to-br from-white/5 to-transparent rounded-3xl"></div>
-
-          <div className="relative bg-linear-to-br from-[#1e293b] to-[#0f172b] border border-white/10 rounded-3xl p-8 lg:p-12">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              {/* Left Column - Title & Description */}
-              <div>
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#fe9a00]/10 border border-[#fe9a00]/20 text-[#fe9a00] text-sm font-bold mb-6">
-                  <FiAward className="text-lg" />
-                  <span>WHY CHOOSE US</span>
-                </div>
-
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-6 leading-tight">
-                  Your Trusted Partner for{" "}
-                  <span className="text-[#fe9a00]">Vehicle Hire</span>
-                </h2>
-
-                <p className="text-gray-300 text-lg mb-8 leading-relaxed">
-                  Book today and enjoy a hassle-free experience from start to
-                  finish. We're committed to providing exceptional service and
-                  quality vehicles for all your transportation needs.
-                </p>
-
-                {/* CTA Buttons */}
-                <div className="flex flex-wrap gap-4">
-                  <button className="group px-8 py-4 rounded-xl bg-linear-to-r from-[#fe9a00] to-orange-500 text-white font-bold shadow-lg shadow-[#fe9a00]/20 hover:shadow-[#fe9a00]/40 hover:scale-105 transition-all duration-300 flex items-center gap-2">
-                    <FiPhone className="text-lg group-hover:rotate-12 transition-transform" />
-                    Book Now
-                  </button>
-                  <button className="px-8 py-4 rounded-xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 hover:border-[#fe9a00]/30 transition-all duration-300 flex items-center gap-2">
-                    <FiMail className="text-lg" />
-                    Contact Us
-                  </button>
-                </div>
-              </div>
-
-              {/* Right Column - Benefits List */}
-              <div className="space-y-4">
-                {benefits.map((benefit, index) => (
-                  <div
-                    key={index}
-                    ref={(el) => {
-                      benefitsRef.current[index] = el;
-                    }}
-                    className="group flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#fe9a00]/30 transition-all duration-300"
-                  >
-                    <div className="shrink-0 w-8 h-8 rounded-lg bg-linear-to-br from-[#fe9a00] to-orange-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <FiCheckCircle className="text-white text-lg" />
-                    </div>
-                    <p className="text-white font-semibold pt-1">{benefit}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>

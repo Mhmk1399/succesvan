@@ -67,7 +67,12 @@ export default function Footer() {
   const pathname = usePathname();
 
   // Hide footer on specific routes
-  if (pathname === "/terms-and-conditions" || pathname === "/register" || pathname === "/dashboard") {
+  if (
+    pathname === "/terms-and-conditions" ||
+    pathname === "/register" ||
+    pathname === "/dashboard" ||
+    pathname === "/customerDashboard"
+  ) {
     return null;
   }
 

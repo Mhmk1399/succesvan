@@ -198,7 +198,11 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (pathname === "/dashboard") {
+  if (
+    pathname === "/dashboard" ||
+    pathname === "/customerDashboard" ||
+    pathname === "/register"
+  ) {
     return null;
   }
 
@@ -206,7 +210,7 @@ export default function Navbar() {
     <>
       <nav
         ref={navRef}
-        className="fixed top-0 w-full z-9999 bg-[#0f172b]/20 backdrop-blur-sm "
+        className="fixed top-0 w-full z-9999   backdrop-blur-xs "
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">

@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import { BsCheckCircleFill } from "react-icons/bs";
+import { showToast } from "@/lib/toast";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -68,11 +69,11 @@ export default function ContactUs() {
     name: "",
     email: "",
     message: "",
+    rating: 5,
   });
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Animate contact cards
       cardsRef.current.forEach((card, index) => {
         if (!card) return;
 
@@ -99,17 +100,6 @@ export default function ContactUs() {
         );
       });
 
-      // Floating animation
-      gsap.to(".float-card", {
-        y: -10,
-        duration: 2.5,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-        stagger: 0.3,
-      });
-
-      // Background animations
       gsap.to(".bg-orb-contact-1", {
         x: 100,
         y: -100,
@@ -140,17 +130,28 @@ export default function ContactUs() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const res = await fetch("/api/testimonials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+      const data = await res.json();
+      if (!data.success)
+        throw new Error(data.error || "Failed to send message");
 
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setFormData({ name: "", email: "", message: "" });
-    }, 3000);
+      showToast.success("Message sent successfully!");
+      setIsSubmitted(true);
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setFormData({ name: "", email: "", message: "", rating: 5 });
+      }, 3000);
+    } catch (error: any) {
+      showToast.error(error.message || "Failed to send message");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -158,7 +159,6 @@ export default function ContactUs() {
       ref={sectionRef}
       className="relative w-full bg-[#0f172b] py-20 overflow-hidden"
     >
-      {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5"></div>
         <div className="bg-orb-contact-1 absolute top-1/4 right-1/4 w-[600px] h-[600px] rounded-full blur-3xl opacity-20 bg-[#fe9a00]"></div>
@@ -166,10 +166,7 @@ export default function ContactUs() {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="text-center mb-16 lg:mb-20">
-        
-
           <h2 className="text-2xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
             Contact
             <br />
@@ -191,9 +188,7 @@ export default function ContactUs() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 mb-16">
-          {/* Left: Contact Information */}
           <div className="space-y-8">
-            {/* Contact Methods */}
             <div className="space-y-6">
               {contactInfo.map((info, index) => {
                 const Icon = info.icon;
@@ -214,13 +209,11 @@ export default function ContactUs() {
                         borderColor: "rgba(255,255,255,0.15)",
                       }}
                     >
-                      {/* Hover gradient */}
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl bg-linear-to-r from-[#fe9a00]/10 to-transparent"></div>
 
                       <div className="relative flex items-start gap-5">
-                        {/* Icon */}
                         <div
-                          className="w-12 md:w-16 h-12 md:h-16 rounded-xl flex items-center justify-center  shrink-0 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500"
+                          className="w-12 md:w-16 h-12 md:h-16 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500"
                           style={{
                             background:
                               "linear-gradient(135deg, #fe9a00, #d97900)",
@@ -230,7 +223,6 @@ export default function ContactUs() {
                           <Icon className="text-2xl text-white" />
                         </div>
 
-                        {/* Content */}
                         <div className="flex-1">
                           <h3 className="text-base md:text-xl font-black text-white mb-1">
                             {info.title}
@@ -254,7 +246,6 @@ export default function ContactUs() {
               })}
             </div>
 
-            {/* Location Card */}
             <div
               ref={(el) => {
                 cardsRef.current[3] = el;
@@ -268,7 +259,7 @@ export default function ContactUs() {
             >
               <div className="flex items-start gap-5 mb-6">
                 <div
-                  className="w-12 md:w-16 h-12 md:h-16 rounded-xl flex items-center justify-center  shrink-0"
+                  className="w-12 md:w-16 h-12 md:h-16 rounded-xl flex items-center justify-center shrink-0"
                   style={{
                     background: "linear-gradient(135deg, #fe9a00, #d97900)",
                     boxShadow: "0 10px 40px rgba(254, 154, 0, 0.3)",
@@ -278,7 +269,7 @@ export default function ContactUs() {
                 </div>
 
                 <div className="flex-1">
-                          <h3 className="text-base md:text-xl font-black text-white mb-1">
+                  <h3 className="text-base md:text-xl font-black text-white mb-1">
                     Visit Us
                   </h3>
                   <p className="text-gray-400 text-sm mb-3">
@@ -296,7 +287,6 @@ export default function ContactUs() {
                 </div>
               </div>
 
-              {/* Google Maps Button */}
               <a
                 href="https://maps.google.com/?q=34+Waterloo+Road+London+NW2+7UH"
                 target="_blank"
@@ -311,7 +301,6 @@ export default function ContactUs() {
               </a>
             </div>
 
-            {/* Opening Hours */}
             <div
               ref={(el) => {
                 cardsRef.current[4] = el;
@@ -325,7 +314,7 @@ export default function ContactUs() {
             >
               <div className="flex items-start gap-5 mb-6">
                 <div
-                  className="w-12 md:w-16 h-12 md:h-16 rounded-xl flex items-center justify-center  shrink-0"
+                  className="w-12 md:w-16 h-12 md:h-16 rounded-xl flex items-center justify-center shrink-0"
                   style={{
                     background: "linear-gradient(135deg, #fe9a00, #d97900)",
                     boxShadow: "0 10px 40px rgba(254, 154, 0, 0.3)",
@@ -335,7 +324,7 @@ export default function ContactUs() {
                 </div>
 
                 <div className="flex-1">
-                          <h3 className="text-base md:text-xl font-black text-white mb-1">
+                  <h3 className="text-base md:text-xl font-black text-white mb-1">
                     Opening Hours
                   </h3>
                   <div className="space-y-3">
@@ -358,7 +347,6 @@ export default function ContactUs() {
             </div>
           </div>
 
-          {/* Right: Contact Form */}
           <div
             ref={(el) => {
               cardsRef.current[5] = el;
@@ -374,7 +362,6 @@ export default function ContactUs() {
                 boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
               }}
             >
-              {/* Decorative gradient */}
               <div className="absolute inset-0 bg-linear-to-br from-[#fe9a00]/5 via-transparent to-transparent rounded-3xl"></div>
 
               <div className="relative">
@@ -392,9 +379,8 @@ export default function ContactUs() {
                     onSubmit={handleSubmit}
                     className="space-y-6"
                   >
-                    {/* Name Input */}
                     <div>
-                      <label className="  text-white font-semibold mb-2 flex items-center gap-2">
+                      <label className="text-white font-semibold mb-2 flex items-center gap-2">
                         <FiUser className="text-[#fe9a00]" />
                         Name <span className="text-[#fe9a00]">*</span>
                       </label>
@@ -413,9 +399,8 @@ export default function ContactUs() {
                       />
                     </div>
 
-                    {/* Email Input */}
                     <div>
-                      <label className="  text-white font-semibold mb-2 flex items-center gap-2">
+                      <label className="text-white font-semibold mb-2 flex items-center gap-2">
                         <FiMail className="text-[#fe9a00]" />
                         Email <span className="text-[#fe9a00]">*</span>
                       </label>
@@ -434,9 +419,8 @@ export default function ContactUs() {
                       />
                     </div>
 
-                    {/* Message Textarea */}
                     <div>
-                      <label className="  text-white font-semibold mb-2 flex items-center gap-2">
+                      <label className="text-white font-semibold mb-2 flex items-center gap-2">
                         <FiMessageSquare className="text-[#fe9a00]" />
                         Message <span className="text-[#fe9a00]">*</span>
                       </label>
@@ -445,7 +429,7 @@ export default function ContactUs() {
                         value={formData.message}
                         onChange={handleInputChange}
                         required
-                        rows={6}
+                        rows={4}
                         placeholder="Tell us how we can help you..."
                         className="w-full px-5 py-4 rounded-xl border bg-white/5 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] transition-all duration-300 resize-none"
                         style={{
@@ -455,7 +439,34 @@ export default function ContactUs() {
                       ></textarea>
                     </div>
 
-                    {/* Submit Button */}
+                    <div>
+                      <label className="text-white font-semibold mb-3 block">
+                        Rating <span className="text-[#fe9a00]">*</span>
+                      </label>
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() =>
+                              setFormData((prev) => ({ ...prev, rating: star }))
+                            }
+                            className="text-3xl transition-all duration-200 hover:scale-110"
+                          >
+                            <span
+                              className={`${
+                                star <= formData.rating
+                                  ? "text-[#fe9a00]"
+                                  : "text-gray-500"
+                              }`}
+                            >
+                              ★
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
                     <button
                       type="submit"
                       disabled={isSubmitting}
@@ -478,12 +489,10 @@ export default function ContactUs() {
                           </>
                         )}
                       </span>
-                      {/* Shine effect */}
                       <span className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
                     </button>
                   </form>
                 ) : (
-                  // Success Message
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <div
                       className="w-20 h-20 rounded-full flex items-center justify-center mb-6 animate-bounce"
@@ -505,7 +514,6 @@ export default function ContactUs() {
                 )}
               </div>
 
-              {/* Decorative corner glow */}
               <div
                 className="absolute -top-20 -right-20 w-60 h-60 rounded-full blur-3xl opacity-20 pointer-events-none"
                 style={{

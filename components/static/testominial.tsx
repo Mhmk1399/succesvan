@@ -7,22 +7,10 @@ import { FiChevronLeft, FiChevronRight, FiStar } from "react-icons/fi";
 import { BsQuote } from "react-icons/bs";
 import Image from "next/image";
 import Link from "next/link";
+import { Testimonial, TestimonialsProps } from "@/types/type";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
-}
-
-// Testimonial data type
-export interface Testimonial {
-  id: number;
-  name: string;
-  role?: string;
-  company?: string;
-  message: string;
-  rating: number;
-  image?: string;
-  date?: string;
-  location?: string;
 }
 
 // Default testimonials data
@@ -69,15 +57,6 @@ export const defaultTestimonials: Testimonial[] = [
   },
 ];
 
-interface TestimonialsProps {
-  testimonials?: Testimonial[];
-  layout?: "carousel" | "grid" | "masonry";
-  autoPlay?: boolean;
-  autoPlayInterval?: number;
-  showRating?: boolean;
-  accentColor?: string;
-}
-
 export default function Testimonials({
   testimonials = defaultTestimonials,
   layout = "carousel",
@@ -89,13 +68,41 @@ export default function Testimonials({
   const sectionRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(autoPlay);
+  const [displayTestimonials, setDisplayTestimonials] = useState(testimonials);
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const fetchApprovedTestimonials = async () => {
+      try {
+        const res = await fetch("/api/testimonials");
+        const data = await res.json();
+        if (data.success) {
+          const approved = data.data.filter(
+            (t: any) => t.status === "approved"
+          );
+          if (approved.length > 0) {
+            setDisplayTestimonials(
+              approved.map((t: any) => ({
+                id: t._id,
+                name: t.name,
+                message: t.message,
+                rating: t.rating,
+              }))
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch testimonials", error);
+      }
+    };
+    fetchApprovedTestimonials();
+  }, []);
 
   // Auto-play logic
   useEffect(() => {
     if (isAutoPlaying && layout === "carousel") {
       autoPlayRef.current = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+        setCurrentIndex((prev) => (prev + 1) % displayTestimonials.length);
       }, autoPlayInterval);
     }
 
@@ -104,7 +111,7 @@ export default function Testimonials({
         clearInterval(autoPlayRef.current);
       }
     };
-  }, [isAutoPlaying, testimonials.length, autoPlayInterval, layout]);
+  }, [isAutoPlaying, displayTestimonials.length, autoPlayInterval, layout]);
 
   // Animations
   useEffect(() => {
@@ -154,13 +161,14 @@ export default function Testimonials({
   }, [layout]);
 
   const nextTestimonial = () => {
-    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+    setCurrentIndex((prev) => (prev + 1) % displayTestimonials.length);
     setIsAutoPlaying(false);
   };
 
   const prevTestimonial = () => {
     setCurrentIndex(
-      (prev) => (prev - 1 + testimonials.length) % testimonials.length
+      (prev) =>
+        (prev - 1 + displayTestimonials.length) % displayTestimonials.length
     );
     setIsAutoPlaying(false);
   };
@@ -205,7 +213,7 @@ export default function Testimonials({
         {/* Render based on layout */}
         {layout === "carousel" && (
           <CarouselLayout
-            testimonials={testimonials}
+            testimonials={displayTestimonials}
             currentIndex={currentIndex}
             nextTestimonial={nextTestimonial}
             prevTestimonial={prevTestimonial}
@@ -217,7 +225,7 @@ export default function Testimonials({
 
         {layout === "grid" && (
           <GridLayout
-            testimonials={testimonials}
+            testimonials={displayTestimonials}
             showRating={showRating}
             accentColor={accentColor}
           />
@@ -225,7 +233,7 @@ export default function Testimonials({
 
         {layout === "masonry" && (
           <MasonryLayout
-            testimonials={testimonials}
+            testimonials={displayTestimonials}
             showRating={showRating}
             accentColor={accentColor}
           />
@@ -264,6 +272,7 @@ function CarouselLayout({
   accentColor,
 }: any) {
   const current = testimonials[currentIndex];
+  if (!current) return null;
 
   return (
     <div className="relative">

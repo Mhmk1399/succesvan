@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
+import Image from "next/image";
 import {
   FiTrash2,
   FiChevronLeft,
@@ -9,6 +10,7 @@ import {
   FiEye,
   FiX,
   FiEdit2,
+  FiInbox,
 } from "react-icons/fi";
 import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
@@ -85,6 +87,13 @@ export default function DynamicTableView<
     return (
       <div className="text-red-500 text-center py-8">Failed to load data</div>
     );
+  if (items.length === 0)
+    return (
+      <div className="flex flex-col items-center justify-center py-16">
+        <FiInbox className="text-gray-400 text-6xl mb-4" />
+        <p className="text-gray-400 text-lg">No data available yet</p>
+      </div>
+    );
 
   return (
     <div className="space-y-6">
@@ -92,15 +101,15 @@ export default function DynamicTableView<
         <table className="w-full">
           <thead className="border-b border-white/50">
             <tr>
-              {columns.map((col) => (
+              {columns.map((col, colIdx) => (
                 <th
-                  key={String(col.key)}
-                  className="px-6 py-4 text-left text-white font-semibold"
+                  key={`${colIdx}-${String(col.key)}`}
+                  className="px-3 py-4 text-left text-white font-semibold"
                 >
                   {col.label}
                 </th>
               ))}
-              <th className="px-6 py-4 text-left text-white font-semibold">
+              <th className="px-3 py-4 text-left text-white font-semibold">
                 Actions
               </th>
             </tr>
@@ -111,20 +120,23 @@ export default function DynamicTableView<
                 key={idx}
                 className="border-b border-white/10 hover:bg-white/5 transition-colors"
               >
-                {columns.map((col) => (
-                  <td key={String(col.key)} className="px-6 py-2 text-gray-300">
+                {columns.map((col, colIdx) => (
+                  <td
+                    key={`${colIdx}-${String(col.key)}`}
+                    className="px-3 py-2 text-gray-300"
+                  >
                     {col.render
                       ? col.render(item[col.key], item)
                       : String(item[col.key] || "-")}
                   </td>
                 ))}
-                <td className="px-6 py-2 flex gap-2">
+                <td className="px-3 py-2 flex gap-2">
                   <button
                     onClick={() => {
                       setViewingItem(item);
                       setIsViewOpen(true);
                     }}
-                    className="p-2 hover:bg-green-500/20 rounded transition-colors tooltip"
+                    className="p-2 hover:bg-green-500/20 cursor-pointer rounded transition-colors tooltip"
                     data-tooltip="View"
                   >
                     <FiEye className="text-green-400" />
@@ -132,7 +144,7 @@ export default function DynamicTableView<
                   {onEdit && (
                     <button
                       onClick={() => onEdit(item)}
-                      className="p-2 hover:bg-blue-500/20 rounded transition-colors tooltip"
+                      className="p-2 hover:bg-blue-500/20 rounded cursor-pointer transition-colors tooltip"
                       data-tooltip="Edit"
                     >
                       <FiEdit2 className="text-blue-400" />
@@ -140,7 +152,7 @@ export default function DynamicTableView<
                   )}
                   <button
                     onClick={() => handleDeleteClick(item._id || item.id || "")}
-                    className="p-2 hover:bg-red-500/20 rounded transition-colors tooltip"
+                    className="p-2 hover:bg-red-500/20 rounded cursor-pointer transition-colors tooltip"
                     data-tooltip="Delete"
                   >
                     <FiTrash2 className="text-red-400" />
@@ -165,16 +177,16 @@ export default function DynamicTableView<
               </button>
             </div>
             <div className="p-6 space-y-4">
-              {columns.map((col) => (
-                <div key={String(col.key)}>
+              {columns.map((col, colIdx) => (
+                <div key={`${colIdx}-${String(col.key)}`}>
                   <label className="text-sm font-semibold text-gray-400">
                     {col.label}
                   </label>
-                  <p className="text-white mt-1">
+                  <div className="text-white mt-1">
                     {col.render
                       ? col.render(viewingItem[col.key], viewingItem)
                       : String(viewingItem[col.key] || "-")}
-                  </p>
+                  </div>
                 </div>
               ))}
 
@@ -183,9 +195,21 @@ export default function DynamicTableView<
                   <label className="text-sm font-semibold text-gray-400">
                     Category
                   </label>
-                  <p className="text-white mt-1">
-                    {(viewingItem as any).category.name}
-                  </p>
+                  <div className="text-white mt-1">
+                    <p className="mb-2">{(viewingItem as any).category.name}</p>
+                    {(viewingItem as any).category?.image && (
+                      <div className="mt-2">
+                        <Image
+                          src={(viewingItem as any).category.image}
+                          alt="Category"
+                          width={200}
+                          height={150}
+                          className="rounded-lg object-cover"
+                          unoptimized
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -300,12 +324,17 @@ export default function DynamicTableView<
                     <label className="text-sm font-semibold text-gray-400">
                       Images
                     </label>
-                    <div className="mt-2 space-y-1">
+                    <div className="mt-2 grid grid-cols-2 gap-2">
                       {(viewingItem as any).images.map(
                         (img: string, idx: number) => (
-                          <p key={idx} className="text-white text-sm break-all">
-                            {img}
-                          </p>
+                          <Image
+                            key={idx}
+                            src={img}
+                            alt={`Image ${idx + 1}`}
+                            width={150}
+                            height={120}
+                            className="rounded-lg object-cover"
+                          />
                         )
                       )}
                     </div>

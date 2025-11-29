@@ -22,7 +22,7 @@ export default function ReservationHero() {
     <>
       {/* Fixed Search Bar */}
       {isScrolled && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-[#0f172b]/20 backdrop-blur-2xl shadow-2xl border-b border-white/10">
+        <div className="fixed top-0 left-0 right-0 z-9999 bg-[#0f172b]/20 backdrop-blur-2xl shadow-2xl border-b border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
             <div className="group cursor-pointer">
               <Link href="/">

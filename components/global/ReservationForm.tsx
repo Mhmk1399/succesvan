@@ -12,6 +12,8 @@ import {
   FiTruck,
   FiUser,
   FiMessageSquare,
+  FiMail,
+  FiPhone,
 } from "react-icons/fi";
 import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
@@ -34,6 +36,8 @@ export default function ReservationForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [offices, setOffices] = useState<Office[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
 
   const [dateRange, setDateRange] = useState<Range[]>([
     {
@@ -50,7 +54,31 @@ export default function ReservationForm({
     returnTime: "10:00",
     driverAge: "",
     message: "",
+    name: "",
+    email: "",
+    phoneNumber: "",
   });
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+
+    if (token && user) {
+      try {
+        const parsedUser = JSON.parse(user);
+        setIsAuthenticated(true);
+        setUserData(parsedUser);
+        setFormData((prev) => ({
+          ...prev,
+          name: parsedUser.name || "",
+          email: parsedUser.emaildata?.emailAddress || "",
+          phoneNumber: parsedUser.phoneData?.phoneNumber || "",
+        }));
+      } catch (error) {
+        console.error("Failed to parse user data");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -163,16 +191,22 @@ export default function ReservationForm({
         addOns: [],
       };
 
+      const requestUserData = isAuthenticated
+        ? {
+            userId: userData?._id,
+          }
+        : {
+            name: formData.name,
+            lastName: "",
+            email: formData.email,
+            phoneNumber: formData.phoneNumber,
+          };
+
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userData: {
-            name: "Guest",
-            lastName: "User",
-            email: "guest@example.com",
-            phoneNumber: "0000000000",
-          },
+          userData: requestUserData,
           reservationData: payload,
         }),
       });
@@ -188,6 +222,9 @@ export default function ReservationForm({
         returnTime: "10:00",
         driverAge: "",
         message: "",
+        name: "",
+        email: "",
+        phoneNumber: "",
       });
       if (onClose) onClose();
     } catch (error: any) {
@@ -206,6 +243,53 @@ export default function ReservationForm({
           : "space-y-6"
       }
     >
+      {!isAuthenticated && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white/5 p-4 rounded-lg border border-white/10">
+          <div>
+            <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+              <FiUser className="text-amber-400" /> Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors text-sm"
+              placeholder="Your name"
+            />
+          </div>
+          <div>
+            <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+              <FiMail className="text-amber-400" /> Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors text-sm"
+              placeholder="your@email.com"
+            />
+          </div>
+          <div>
+            <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+              <FiPhone className="text-amber-400" /> Phone
+            </label>
+            <input
+              type="tel"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors text-sm"
+              placeholder="+44 123 456 7890"
+            />
+          </div>
+        </div>
+      )}
+
       <div
         className={
           isInline

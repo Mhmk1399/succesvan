@@ -17,6 +17,7 @@ import {
   FiExternalLink,
   FiLayers,
   FiGift,
+  FiCommand,
 } from "react-icons/fi";
 import { useStats } from "@/hooks/useStats";
 import OfficesContent from "./CreateOfficeForm";
@@ -26,6 +27,8 @@ import TypesManagement from "./TypesManagement";
 import SpecialDaysManagement from "./SpecialDaysManagement";
 import AddOnsContent from "./CreateAddOnForm";
 import ReservationsManagement from "./ReservationsManagement";
+import TestimonialsManagement from "./TestimonialsManagement";
+import ContactsManagement from "./ContactsManagement";
 import { MenuItem } from "@/types/type";
 
 const menuItems: MenuItem[] = [
@@ -85,6 +88,12 @@ const menuItems: MenuItem[] = [
     color: "from-indigo-500 to-indigo-600",
   },
   {
+    id: "Testimonial",
+    label: "Testimonials",
+    icon: <FiCommand />,
+    color: "from-cyan-500 to-cyan-600",
+  },
+  {
     id: "contacts",
     label: "Contacts",
     icon: <FiUsers />,
@@ -112,11 +121,29 @@ export default function Dashboard() {
       document.body.style.overflow = "unset";
     };
   }, [sidebarOpen]);
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      if (hash && menuItems.some((item) => item.id === hash)) {
+        setActiveTab(hash);
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    window.location.hash = tabId;
+    setSidebarOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#0f172b]">
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-[#1a2847] border-r border-white/10 z-50 transition-transform duration-300 flex flex-col ${
+        className={`fixed left-0 top-0 h-screen w-54 bg-[#1a2847] border-r border-white/10 z-50 transition-transform duration-300 flex flex-col ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -130,18 +157,21 @@ export default function Dashboard() {
           {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => {
-                setActiveTab(item.id);
-                setSidebarOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-300 ${
+              onClick={() => handleTabChange(item.id)}
+              className={`w-full flex items-center gap-3 cursor-pointer px-4 py-2.5 rounded-lg transition-all duration-300 ${
                 activeTab === item.id
                   ? "bg-[#fe9a00] text-white shadow-lg"
                   : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
             >
-              <span className="text-xl">{item.icon}</span>
-              <span className="font-semibold">{item.label}</span>
+              <span
+                className={`text-lg  ${
+                  activeTab === item.id ? "text-white" : "text-[#fe9a00]"
+                } `}
+              >
+                {item.icon}
+              </span>
+              <span className="font-semibold text-sm">{item.label}</span>
             </button>
           ))}
         </nav>
@@ -159,7 +189,7 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      <main className="lg:ml-64">
+      <main className="lg:ml-54">
         <div className="sticky top-0 bg-[#1a2847] border-b border-white/10 px-4 sm:px-6 py-4 flex items-center justify-between z-40">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -196,7 +226,8 @@ export default function Dashboard() {
           {activeTab === "addons" && <AddOnsContent />}
           {activeTab === "notifications" && <NotificationsContent />}
           {activeTab === "reserves" && <ReservesContent />}
-          {activeTab === "contacts" && <ContactsContent />}
+          {activeTab === "Testimonial" && <TestimonialsManagement />}
+          {activeTab === "contacts" && <ContactsManagement />}
           {activeTab === "documents" && <DocumentsContent />}
         </div>
       </main>
