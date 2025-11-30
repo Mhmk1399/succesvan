@@ -104,7 +104,7 @@ export default function OfficesContent() {
     setIsSubmitting(true);
 
     try {
-      const method = editingId ? "PUT" : "POST";
+      const method = editingId ? "PATCH" : "POST";
       const url = editingId ? `/api/offices/${editingId}` : "/api/offices";
 
       const payload = {
