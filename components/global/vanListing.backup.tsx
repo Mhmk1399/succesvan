@@ -31,7 +31,7 @@ interface VanListingProps {
   vans?: VanData[];
 }
 
-export default function VanListing({ vans = [] }: VanListingProps) {
+export default function VanListingHome({ vans = [] }: VanListingProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const [categories, setCategories] = useState<Category[]>(vans as Category[]);
@@ -44,6 +44,15 @@ export default function VanListing({ vans = [] }: VanListingProps) {
       setCategories(vans as Category[]);
     }
   }, [vans.length]);
+
+  useEffect(() => {
+    if (categories.length === 0 && vans.length === 0) {
+      fetch("/api/categories")
+        .then((res) => res.json())
+        .then((data) => data.success && setCategories(data.data))
+        .catch((err) => console.error("Failed to fetch categories", err));
+    }
+  }, []);
 
   const setCardRef = useCallback((index: number, el: HTMLDivElement | null) => {
     cardsRef.current[index] = el;

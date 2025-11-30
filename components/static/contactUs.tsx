@@ -160,7 +160,7 @@ export default function ContactUs() {
       className="relative w-full bg-[#0f172b] py-20 overflow-hidden"
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5"></div>
+         
         <div className="bg-orb-contact-1 absolute top-1/4 right-1/4 w-[600px] h-[600px] rounded-full blur-3xl opacity-20 bg-[#fe9a00]"></div>
         <div className="absolute bottom-1/4 left-1/4 w-[600px] h-[600px] rounded-full blur-3xl opacity-20 bg-[#fe9a00]"></div>
       </div>

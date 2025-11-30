@@ -10,6 +10,7 @@ const vehicleSchema = new mongoose.Schema(
       ref: "Category",
       required: true,
     },
+    number: { type: String, required: true },
 
     office: {
       type: mongoose.Schema.Types.ObjectId,

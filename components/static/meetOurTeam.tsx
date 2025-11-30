@@ -105,7 +105,7 @@ export default function MeetOurTeam() {
     >
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5"></div>
+         
         <div className="absolute top-1/3 left-1/3 w-[600px] h-[600px] bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-1/3 right-1/3 w-[600px] h-[600px] bg-orange-500/10 rounded-full blur-3xl"></div>
       </div>

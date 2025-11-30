@@ -164,7 +164,7 @@ export default function NWLondonCarHire() {
       {" "}
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5"></div>
+         
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl"></div>
       </div>

@@ -22,10 +22,10 @@ export interface SpecialDay {
   reason?: string;
 }
 
-export interface Vehicle {
-  vehicle: string;
-  inventory: number;
-}
+// export interface Vehicle {
+//   vehicle: string;
+//   inventory: number;
+// }
 
 export interface Office {
   _id?: string;
@@ -73,6 +73,7 @@ export interface Vehicle {
   needsService: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  number: number;
 }
 
 // Category -----------------------------------------------------------------------------------

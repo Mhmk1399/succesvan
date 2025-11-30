@@ -7,7 +7,7 @@ import { successResponse, errorResponse } from "@/lib/api-response";
 export async function GET() {
   try {
     await connect();
-    const categories = await Category.find().populate("type");
+    const categories = await Category.find();
     return successResponse(categories);
   } catch (error: any) {
     return errorResponse(error.message, 500);
@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
     await connect();
     const body = await req.json();
     const category = await Category.create(body);
-    await category.populate("type");
     return successResponse(category, 201);
   } catch (error: any) {
     return errorResponse(error.message, 400);
@@ -34,7 +33,7 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const category = await Category.findByIdAndUpdate(id, body, {
       new: true,
-    }).populate("type");
+    });
     return successResponse(category);
   } catch (error: any) {
     return errorResponse(error.message, 400);

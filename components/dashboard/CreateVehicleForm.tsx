@@ -28,6 +28,7 @@ export default function VehiclesContent() {
     title: "",
     description: "",
     images: "",
+    number: "",
     category: "",
     office: "",
     properties: [{ name: "", value: "" }],
@@ -69,12 +70,10 @@ export default function VehiclesContent() {
   ) => {
     const { name, value, type } = e.target;
     if (type === "checkbox") {
-      setFormData((prev) => (
-        {
-          ...prev,
-          [name]: (e.target as HTMLInputElement).checked,
-        }
-      ));
+      setFormData((prev) => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked,
+      }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -93,30 +92,24 @@ export default function VehiclesContent() {
   };
 
   const addProperty = () => {
-    setFormData((prev) => (
-      {
-        ...prev,
-        properties: [...prev.properties, { name: "", value: "" }],
-      }
-    ));
+    setFormData((prev) => ({
+      ...prev,
+      properties: [...prev.properties, { name: "", value: "" }],
+    }));
   };
 
   const removeProperty = (index: number) => {
-    setFormData((prev) => (
-      {
-        ...prev,
-        properties: prev.properties.filter((_, i) => i !== index),
-      }
-    ));
+    setFormData((prev) => ({
+      ...prev,
+      properties: prev.properties.filter((_, i) => i !== index),
+    }));
   };
 
   const handleServiceDateChange = (field: string, date: Date) => {
-    setFormData((prev) => (
-      {
-        ...prev,
-        serviceHistory: { ...prev.serviceHistory, [field]: date },
-      }
-    ));
+    setFormData((prev) => ({
+      ...prev,
+      serviceHistory: { ...prev.serviceHistory, [field]: date },
+    }));
     setShowServiceDatePicker(null);
   };
 
@@ -125,6 +118,7 @@ export default function VehiclesContent() {
       title: "",
       description: "",
       images: "",
+      number: "",
       category: "",
       office: "",
       properties: [{ name: "", value: "" }],
@@ -145,6 +139,7 @@ export default function VehiclesContent() {
       title: item.title,
       description: item.description,
       images: Array.isArray(item.images) ? item.images.join(", ") : item.images,
+      number: (item as any).number || "",
       category:
         typeof item.category === "string"
           ? item.category
@@ -179,6 +174,7 @@ export default function VehiclesContent() {
         title: formData.title,
         description: formData.description,
         images: formData.images.split(",").map((img) => img.trim()),
+        number: formData.number,
         category: formData.category,
         office: formData.office,
         properties: formData.properties.filter((p) => p.name && p.value),
@@ -271,13 +267,25 @@ export default function VehiclesContent() {
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
 
+              <input
+                type="text"
+                name="number"
+                placeholder="Vehicle Number"
+                value={formData.number}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+              />
+
               <CustomSelect
                 options={offices}
                 value={formData.office}
                 onChange={(val) =>
                   setFormData((prev) => ({ ...prev, office: val }))
                 }
-                placeholder={loadingOffices ? "Loading offices..." : "Select Office"}
+                placeholder={
+                  loadingOffices ? "Loading offices..." : "Select Office"
+                }
               />
 
               <CustomSelect
@@ -286,7 +294,11 @@ export default function VehiclesContent() {
                 onChange={(val) =>
                   setFormData((prev) => ({ ...prev, category: val }))
                 }
-                placeholder={loadingCategories ? "Loading categories..." : "Select Category"}
+                placeholder={
+                  loadingCategories
+                    ? "Loading categories..."
+                    : "Select Category"
+                }
               />
 
               <div className="space-y-3">
@@ -434,6 +446,7 @@ export default function VehiclesContent() {
         title="Vehicle"
         columns={[
           { key: "title", label: "Title" },
+          { key: "number", label: "Number" },
           {
             key: "office" as any,
             label: "Office",

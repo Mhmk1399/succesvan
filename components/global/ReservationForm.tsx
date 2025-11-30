@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { DateRange, Range } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -31,6 +32,7 @@ export default function ReservationForm({
   isInline = false,
   onClose,
 }: ReservationFormProps) {
+  const router = useRouter();
   const [isListening, setIsListening] = useState(false);
   const [showDateRange, setShowDateRange] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -227,6 +229,9 @@ export default function ReservationForm({
         phoneNumber: "",
       });
       if (onClose) onClose();
+      
+      const url = `/reservation?category=${formData.category}&office=${formData.office}`;
+      router.push(url);
     } catch (error: any) {
       showToast.error(error.message || "Reservation failed");
     } finally {
