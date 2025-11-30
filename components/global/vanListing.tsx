@@ -359,7 +359,7 @@ function ReservationPanel({
               <div>
                 <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
                   <FiUser className="text-[#fe9a00]" />
-                  Full Name
+                  First Name
                 </label>
                 <input
                   type="text"
@@ -369,7 +369,29 @@ function ReservationPanel({
                   className={`w-full bg-white/5 border ${
                     errors.name ? "border-red-500" : "border-white/10"
                   } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
-                  placeholder="John Doe"
+                  placeholder="John  "
+                />
+                {errors.name && (
+                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                    <FiAlertCircle className="text-xs" />
+                    {errors.name}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <FiUser className="text-[#fe9a00]" />
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className={`w-full bg-white/5 border ${
+                    errors.name ? "border-red-500" : "border-white/10"
+                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                  placeholder="  Doe"
                 />
                 {errors.name && (
                   <p className="text-red-400 text-xs mt-1 flex items-center gap-1">

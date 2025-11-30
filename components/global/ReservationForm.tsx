@@ -254,11 +254,6 @@ export default function ReservationForm({
     return { start: "00:00", end: "23:59", info: "" };
   };
 
-  const isTimeOutOfRange = (time: string, date: Date) => {
-    const slots = getAvailableTimeSlots(date);
-    return time < slots.start || time > slots.end;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -515,8 +510,12 @@ export default function ReservationForm({
               }-${dateRange[0].startDate.toDateString()}`}
               value={formData.pickupTime}
               onChange={(time) => handleTimeChange("pickupTime", time)}
-              minTime={getAvailableTimeSlots(dateRange[0].startDate).start}
-              maxTime={getAvailableTimeSlots(dateRange[0].startDate).end}
+              minTime={
+                getAvailableTimeSlots(dateRange[0].startDate).start || "00:00"
+              }
+              maxTime={
+                getAvailableTimeSlots(dateRange[0].startDate).end || "23:59"
+              }
               isInline={isInline}
             />
           )}
@@ -543,8 +542,12 @@ export default function ReservationForm({
               }-${dateRange[0].endDate.toDateString()}`}
               value={formData.returnTime}
               onChange={(time) => handleTimeChange("returnTime", time)}
-              minTime={getAvailableTimeSlots(dateRange[0].endDate).start}
-              maxTime={getAvailableTimeSlots(dateRange[0].endDate).end}
+              minTime={
+                getAvailableTimeSlots(dateRange[0].endDate).start || "00:00"
+              }
+              maxTime={
+                getAvailableTimeSlots(dateRange[0].endDate).end || "23:59"
+              }
               isInline={isInline}
             />
           )}
@@ -689,8 +692,12 @@ export default function ReservationForm({
                 }-${dateRange[0].startDate.toDateString()}`}
                 value={formData.pickupTime}
                 onChange={(time) => handleTimeChange("pickupTime", time)}
-                minTime={getAvailableTimeSlots(dateRange[0].startDate).start}
-                maxTime={getAvailableTimeSlots(dateRange[0].startDate).end}
+                minTime={
+                  getAvailableTimeSlots(dateRange[0].startDate).start || "00:00"
+                }
+                maxTime={
+                  getAvailableTimeSlots(dateRange[0].startDate).end || "23:59"
+                }
                 isInline={true}
               />
             )}
@@ -711,8 +718,12 @@ export default function ReservationForm({
                 }-${dateRange[0].endDate.toDateString()}`}
                 value={formData.returnTime}
                 onChange={(time) => handleTimeChange("returnTime", time)}
-                minTime={getAvailableTimeSlots(dateRange[0].endDate).start}
-                maxTime={getAvailableTimeSlots(dateRange[0].endDate).end}
+                minTime={
+                  getAvailableTimeSlots(dateRange[0].endDate).start || "00:00"
+                }
+                maxTime={
+                  getAvailableTimeSlots(dateRange[0].endDate).end || "23:59"
+                }
                 isInline={true}
               />
             )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FiChevronUp, FiChevronDown } from "react-icons/fi";
 
 interface TimePickerInputProps {
@@ -32,77 +32,78 @@ export default function TimePickerInput({
   useEffect(() => {
     setHours(value.split(":")[0]);
     setMinutes(value.split(":")[1]);
-  }, [value, minTime, maxTime]);
+  }, [value]);
 
-  const updateTime = (h: string, m: string) => {
-    const hNum = parseInt(h);
-    const mNum = parseInt(m);
-    const timeNum = hNum * 60 + mNum;
-    const minNum = minHour * 60 + minMinute;
-    const maxNum = maxHour * 60 + maxMinute;
+  const updateTime = useCallback(
+    (h: string, m: string) => {
+      const hNum = parseInt(h);
+      const mNum = parseInt(m);
+      const timeNum = hNum * 60 + mNum;
+      const minNum = minHour * 60 + minMinute;
+      const maxNum = maxHour * 60 + maxMinute;
 
-    if (timeNum >= minNum && timeNum <= maxNum) {
-      setHours(h);
-      setMinutes(m);
-      onChange(`${h}:${m}`);
-    }
-  };
+      if (timeNum >= minNum && timeNum <= maxNum) {
+        setHours(h);
+        setMinutes(m);
+        onChange(`${h.padStart(2, "0")}:${m.padStart(2, "0")}`);
+      }
+    },
+    [minHour, minMinute, maxHour, maxMinute, onChange]
+  );
 
-  const incrementHour = () => {
+  const incrementHour = useCallback(() => {
     const h = parseInt(hours);
     const m = parseInt(minutes);
     const currentTime = h * 60 + m;
-    const maxTime = maxHour * 60 + maxMinute;
+    const maxTimeNum = maxHour * 60 + maxMinute;
 
-    if (currentTime < maxTime) {
-      const newH = h + 1;
-      updateTime(String(newH).padStart(2, "0"), minutes);
+    if (currentTime < maxTimeNum) {
+      updateTime(`${h + 1}`, minutes);
     }
-  };
+  }, [hours, minutes, maxHour, maxMinute, updateTime]);
 
-  const decrementHour = () => {
+  const decrementHour = useCallback(() => {
     const h = parseInt(hours);
     const m = parseInt(minutes);
     const currentTime = h * 60 + m;
-    const minTime = minHour * 60 + minMinute;
+    const minTimeNum = minHour * 60 + minMinute;
 
-    if (currentTime > minTime) {
-      const newH = h - 1;
-      updateTime(String(newH).padStart(2, "0"), minutes);
+    if (currentTime > minTimeNum) {
+      updateTime(`${h - 1}`, minutes);
     }
-  };
+  }, [hours, minutes, minHour, minMinute, updateTime]);
 
-  const incrementMinute = () => {
+  const incrementMinute = useCallback(() => {
     const h = parseInt(hours);
     const m = parseInt(minutes);
     const currentTime = h * 60 + m;
-    const maxTime = maxHour * 60 + maxMinute;
+    const maxTimeNum = maxHour * 60 + maxMinute;
 
-    if (currentTime + 15 <= maxTime) {
+    if (currentTime + 15 <= maxTimeNum) {
       const newM = m + 15;
       if (newM <= 59) {
-        updateTime(hours, String(newM).padStart(2, "0"));
+        updateTime(hours, `${newM}`);
       } else {
-        updateTime(String(h + 1).padStart(2, "0"), "00");
+        updateTime(`${h + 1}`, "00");
       }
     }
-  };
+  }, [hours, minutes, maxHour, maxMinute, updateTime]);
 
-  const decrementMinute = () => {
+  const decrementMinute = useCallback(() => {
     const h = parseInt(hours);
     const m = parseInt(minutes);
     const currentTime = h * 60 + m;
-    const minTime = minHour * 60 + minMinute;
+    const minTimeNum = minHour * 60 + minMinute;
 
-    if (currentTime - 15 >= minTime) {
+    if (currentTime - 15 >= minTimeNum) {
       const newM = m - 15;
       if (newM >= 0) {
-        updateTime(hours, String(newM).padStart(2, "0"));
+        updateTime(hours, `${newM}`);
       } else {
-        updateTime(String(h - 1).padStart(2, "0"), "45");
+        updateTime(`${h - 1}`, "45");
       }
     }
-  };
+  }, [hours, minutes, minHour, minMinute, updateTime]);
 
   return (
     <div className="relative">
@@ -112,6 +113,7 @@ export default function TimePickerInput({
         className={`w-full bg-white/10 border border-white/20 rounded-lg text-white text-left focus:outline-none focus:border-amber-400 transition-colors ${
           isInline ? "px-2 py-[7px] text-xs" : "px-4 py-[7px] text-sm"
         } ${className}`}
+        aria-label="Time picker"
       >
         {value}
       </button>
@@ -124,6 +126,7 @@ export default function TimePickerInput({
                 type="button"
                 onClick={incrementHour}
                 className="p-1 hover:bg-white/20 rounded transition-colors"
+                aria-label="Increase hour"
               >
                 <FiChevronUp className="text-white text-lg" />
               </button>
@@ -134,6 +137,7 @@ export default function TimePickerInput({
                 type="button"
                 onClick={decrementHour}
                 className="p-1 hover:bg-white/20 rounded transition-colors"
+                aria-label="Decrease hour"
               >
                 <FiChevronDown className="text-white text-lg" />
               </button>
@@ -146,6 +150,7 @@ export default function TimePickerInput({
                 type="button"
                 onClick={incrementMinute}
                 className="p-1 hover:bg-white/20 rounded transition-colors"
+                aria-label="Increase minute"
               >
                 <FiChevronUp className="text-white text-lg" />
               </button>
@@ -156,6 +161,7 @@ export default function TimePickerInput({
                 type="button"
                 onClick={decrementMinute}
                 className="p-1 hover:bg-white/20 rounded transition-colors"
+                aria-label="Decrease minute"
               >
                 <FiChevronDown className="text-white text-lg" />
               </button>
