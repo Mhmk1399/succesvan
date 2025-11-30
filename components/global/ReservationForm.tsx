@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
 import { Office, Category } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
+import TimePickerInput from "@/components/ui/TimePickerInput";
 
 interface ReservationFormProps {
   isModal?: boolean;
@@ -179,6 +180,85 @@ export default function ReservationForm({
     }));
   };
 
+  const getSelectedOffice = () => {
+    return offices.find((o) => o._id === formData.office);
+  };
+
+  const isDateDisabled = (date: Date) => {
+    const office = getSelectedOffice();
+    if (!office) return false;
+
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayName = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ][date.getDay()];
+
+    // Check special days first
+    const specialDay = office.specialDays?.find(
+      (sd) => sd.month === month && sd.day === day
+    );
+    if (specialDay && !specialDay.isOpen) return true;
+
+    // Check working hours
+    const workingDay = office.workingTime?.find((w) => w.day === dayName);
+    if (workingDay && !workingDay.isOpen) return true;
+
+    return false;
+  };
+
+  const getAvailableTimeSlots = (date: Date) => {
+    const office = getSelectedOffice();
+    if (!office) return { start: "00:00", end: "23:59", info: "" };
+
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayName = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ][date.getDay()];
+
+    // Check special days first
+    const specialDay = office.specialDays?.find(
+      (sd) => sd.month === month && sd.day === day
+    );
+    if (specialDay && specialDay.isOpen) {
+      return {
+        start: specialDay.startTime,
+        end: specialDay.endTime,
+        info: `Special day: ${specialDay.reason} (${specialDay.startTime} - ${specialDay.endTime})`,
+      };
+    }
+
+    // Use working hours
+    const workingDay = office.workingTime?.find((w) => w.day === dayName);
+    if (workingDay && workingDay.isOpen) {
+      return {
+        start: workingDay.startTime,
+        end: workingDay.endTime,
+        info: `${workingDay.day}: ${workingDay.startTime} - ${workingDay.endTime}`,
+      };
+    }
+
+    return { start: "00:00", end: "23:59", info: "" };
+  };
+
+  const isTimeOutOfRange = (time: string, date: Date) => {
+    const slots = getAvailableTimeSlots(date);
+    return time < slots.start || time > slots.end;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -229,7 +309,7 @@ export default function ReservationForm({
         phoneNumber: "",
       });
       if (onClose) onClose();
-      
+
       const url = `/reservation?category=${formData.category}&office=${formData.office}`;
       router.push(url);
     } catch (error: any) {
@@ -391,6 +471,15 @@ export default function ReservationForm({
                   }}
                   minDate={new Date()}
                   rangeColors={["#fbbf24"]}
+                  disabledDates={
+                    formData.office
+                      ? (Array.from({ length: 365 }, (_, i) => {
+                          const date = new Date();
+                          date.setDate(date.getDate() + i);
+                          return isDateDisabled(date) ? date : null;
+                        }).filter(Boolean) as Date[])
+                      : []
+                  }
                 />
                 <button
                   type="button"
@@ -406,6 +495,11 @@ export default function ReservationForm({
 
         {/* Pickup Time */}
         <div>
+          {dateRange[0].startDate && (
+            <p className="text-amber-300 text-xs mb-1">
+              {getAvailableTimeSlots(dateRange[0].startDate).info}
+            </p>
+          )}
           <label
             className={`text-white font-semibold mb-2 flex items-center gap-2 ${
               isInline ? "text-xs mb-1" : "text-sm"
@@ -413,18 +507,28 @@ export default function ReservationForm({
           >
             <FiClock className="text-amber-400 text-lg" /> From
           </label>
-          <input
-            type="time"
-            value={formData.pickupTime}
-            onChange={(e) => handleTimeChange("pickupTime", e.target.value)}
-            className={`w-full bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-amber-400 transition-colors ${
-              isInline ? "px-2 py-[7px] text-xs" : "px-4 py-[7px] text-sm"
-            }`}
-          />
+
+          {dateRange[0].startDate && (
+            <TimePickerInput
+              key={`pickup-${
+                formData.office
+              }-${dateRange[0].startDate.toDateString()}`}
+              value={formData.pickupTime}
+              onChange={(time) => handleTimeChange("pickupTime", time)}
+              minTime={getAvailableTimeSlots(dateRange[0].startDate).start}
+              maxTime={getAvailableTimeSlots(dateRange[0].startDate).end}
+              isInline={isInline}
+            />
+          )}
         </div>
 
         {/* Return Time */}
         <div>
+          {dateRange[0].endDate && (
+            <p className="text-amber-300  text-xs mb-1">
+              {getAvailableTimeSlots(dateRange[0].endDate).info}
+            </p>
+          )}
           <label
             className={`text-white font-semibold mb-2 flex items-center gap-2 ${
               isInline ? "text-xs mb-1" : "text-sm"
@@ -432,14 +536,18 @@ export default function ReservationForm({
           >
             <FiClock className="text-amber-400 text-lg" /> To
           </label>
-          <input
-            type="time"
-            value={formData.returnTime}
-            onChange={(e) => handleTimeChange("returnTime", e.target.value)}
-            className={`w-full bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-amber-400 transition-colors ${
-              isInline ? "px-2 py-[7px] text-xs" : "px-4 py-[7px] text-sm"
-            }`}
-          />
+          {dateRange[0].endDate && (
+            <TimePickerInput
+              key={`return-${
+                formData.office
+              }-${dateRange[0].endDate.toDateString()}`}
+              value={formData.returnTime}
+              onChange={(time) => handleTimeChange("returnTime", time)}
+              minTime={getAvailableTimeSlots(dateRange[0].endDate).start}
+              maxTime={getAvailableTimeSlots(dateRange[0].endDate).end}
+              isInline={isInline}
+            />
+          )}
         </div>
 
         {/* Driver Age */}
@@ -574,23 +682,45 @@ export default function ReservationForm({
             <label className="block text-white text-xs font-semibold mb-1">
               Pickup Time
             </label>
-            <input
-              type="time"
-              value={formData.pickupTime}
-              onChange={(e) => handleTimeChange("pickupTime", e.target.value)}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs focus:outline-none focus:border-amber-400 transition-colors"
-            />
+            {dateRange[0].startDate && (
+              <TimePickerInput
+                key={`mobile-pickup-${
+                  formData.office
+                }-${dateRange[0].startDate.toDateString()}`}
+                value={formData.pickupTime}
+                onChange={(time) => handleTimeChange("pickupTime", time)}
+                minTime={getAvailableTimeSlots(dateRange[0].startDate).start}
+                maxTime={getAvailableTimeSlots(dateRange[0].startDate).end}
+                isInline={true}
+              />
+            )}
+            {dateRange[0].startDate && (
+              <p className="text-amber-300 text-xs mt-0.5">
+                {getAvailableTimeSlots(dateRange[0].startDate).info}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-white text-xs font-semibold mb-1">
               Return Time
             </label>
-            <input
-              type="time"
-              value={formData.returnTime}
-              onChange={(e) => handleTimeChange("returnTime", e.target.value)}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs focus:outline-none focus:border-amber-400 transition-colors"
-            />
+            {dateRange[0].endDate && (
+              <TimePickerInput
+                key={`mobile-return-${
+                  formData.office
+                }-${dateRange[0].endDate.toDateString()}`}
+                value={formData.returnTime}
+                onChange={(time) => handleTimeChange("returnTime", time)}
+                minTime={getAvailableTimeSlots(dateRange[0].endDate).start}
+                maxTime={getAvailableTimeSlots(dateRange[0].endDate).end}
+                isInline={true}
+              />
+            )}
+            {dateRange[0].endDate && (
+              <p className="text-amber-300 text-xs mt-0.5">
+                {getAvailableTimeSlots(dateRange[0].endDate).info}
+              </p>
+            )}
           </div>
         </div>
 
