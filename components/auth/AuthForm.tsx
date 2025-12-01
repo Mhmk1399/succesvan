@@ -1,32 +1,20 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
-  FiMail,
-  FiLock,
-  FiUser,
-  FiEye,
-  FiEyeOff,
-  FiPhone,
-} from "react-icons/fi";
+import { FiMail, FiUser, FiPhone } from "react-icons/fi";
 import gsap from "gsap";
 import { showToast } from "@/lib/toast";
 
-interface AuthFormProps {
-  mode: "login" | "signup";
-  onModeChange: (mode: "login" | "signup") => void;
-}
+interface AuthFormProps {}
 
-export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+export default function AuthForm({}: AuthFormProps) {
+  const [step, setStep] = useState<"phone" | "code" | "register">("phone");
   const [formData, setFormData] = useState({
     name: "",
     lastName: "",
     emailAddress: "",
     phoneNumber: "",
-    password: "",
-    confirmPassword: "",
+    code: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -42,89 +30,113 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
         { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "power3.out" }
       );
     }
-  }, [mode]);
+  }, [step]);
 
-  const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
-
-    if (mode === "signup") {
-      if (!formData.name.trim()) newErrors.name = "First name is required";
-      if (!formData.lastName.trim())
-        newErrors.lastName = "Last name is required";
-      if (!formData.phoneNumber.trim())
-        newErrors.phoneNumber = "Phone number is required";
+  const handleSendCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.phoneNumber.trim()) {
+      setErrors({ phoneNumber: "Phone number is required" });
+      return;
     }
 
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send-code", phoneNumber: formData.phoneNumber }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Failed to send code");
+      showToast.success("Code sent to your phone!");
+      setStep("code");
+    } catch (error: any) {
+      showToast.error(error.message || "Failed to send code");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.code.trim()) {
+      setErrors({ code: "Code is required" });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "verify",
+          phoneNumber: formData.phoneNumber,
+          code: formData.code,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Verification failed");
+      
+      if (data.data.userExists) {
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        showToast.success("Welcome back! Redirecting...");
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
+      } else {
+        showToast.success("Phone verified! Please complete registration.");
+        setStep("register");
+      }
+    } catch (error: any) {
+      showToast.error(error.message || "Verification failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCompleteRegistration = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.name.trim()) newErrors.name = "First name is required";
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
     if (!formData.emailAddress.trim()) {
       newErrors.emailAddress = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.emailAddress)) {
       newErrors.emailAddress = "Email is invalid";
     }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
     }
-
-    if (mode === "signup" && formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
 
     setIsLoading(true);
     try {
-      if (mode === "login") {
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            emailAddress: formData.emailAddress,
-            password: formData.password,
-          }),
-        });
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || "Login failed");
-        localStorage.setItem("token", data.data.token);
-        localStorage.setItem("user", JSON.stringify(data.data.user));
-        showToast.success("Login successful! Redirecting...");
-      } else {
-        const res = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: formData.name,
-            lastName: formData.lastName,
-            emaildata: { emailAddress: formData.emailAddress },
-            phoneData: { phoneNumber: formData.phoneNumber },
-            password: formData.password,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Registration failed");
-        localStorage.setItem("token", data.data.token);
-        localStorage.setItem("user", JSON.stringify(data.data.user));
-        showToast.success("Account created successfully! Redirecting...");
-      }
-
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "register",
+          phoneNumber: formData.phoneNumber,
+          name: formData.name,
+          lastName: formData.lastName,
+          emailAddress: formData.emailAddress,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Registration failed");
+      
+      localStorage.setItem("token", data.data.token);
+      localStorage.setItem("user", JSON.stringify(data.data.user));
+      showToast.success("Account created! Redirecting...");
+      
       setTimeout(() => {
         window.location.href = "/";
       }, 1500);
     } catch (error: any) {
-      showToast.error(
-        error.message ||
-          (mode === "login"
-            ? "Login failed. Please try again."
-            : "Registration failed. Please try again.")
-      );
+      showToast.error(error.message || "Registration failed");
     } finally {
       setIsLoading(false);
     }
@@ -145,64 +157,11 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
     }
   };
 
-  const switchMode = (newMode: "login" | "signup") => {
-    if (switchRef.current) {
-      gsap.to(switchRef.current, {
-        scale: 0.95,
-        duration: 0.1,
-        yoyo: true,
-        repeat: 1,
-        ease: "power2.inOut",
-      });
-    }
-    onModeChange(newMode);
-    setFormData({
-      name: "",
-      lastName: "",
-      emailAddress: "",
-      phoneNumber: "",
-      password: "",
-      confirmPassword: "",
-    });
-    setErrors({});
-  };
+
 
   return (
     <>
       <div className="w-full max-w-md mx-auto mt-20">
-        <div ref={switchRef} className="mb-8">
-          <div className="relative bg-white/10 backdrop-blur-lg rounded-2xl p-2 border border-white/20">
-            <div
-              className="absolute top-2 bottom-2 bg-[#fe9a00] rounded-xl transition-all duration-300 ease-out"
-              style={{
-                left: mode === "login" ? "8px" : "50%",
-                right: mode === "login" ? "50%" : "8px",
-              }}
-            />
-            <div className="relative flex">
-              <button
-                onClick={() => switchMode("login")}
-                className={`flex-1 py-3 px-6 text-center font-semibold rounded-xl transition-colors duration-300 ${
-                  mode === "login"
-                    ? "text-white"
-                    : "text-white/60 hover:text-white/80"
-                }`}
-              >
-                Login
-              </button>
-              <button
-                onClick={() => switchMode("signup")}
-                className={`flex-1 py-3 px-6 text-center font-semibold rounded-xl transition-colors duration-300 ${
-                  mode === "signup"
-                    ? "text-white"
-                    : "text-white/60 hover:text-white/80"
-                }`}
-              >
-                Sign Up
-              </button>
-            </div>
-          </div>
-        </div>
 
         <div
           ref={formRef}
@@ -210,17 +169,75 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
         >
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white mb-2">
-              {mode === "login" ? "Welcome Back" : "Create Account"}
+              {step === "register" ? "Complete Profile" : "Welcome"}
             </h1>
             <p className="text-white/60">
-              {mode === "login"
-                ? "Sign in to your account to continue"
-                : "Join us and start your journey today"}
+              {step === "register" 
+                ? "Just a few more details"
+                : step === "code"
+                ? "Enter the code sent to your phone"
+                : "Enter your phone number to continue"}
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {mode === "signup" && (
+          <form 
+            onSubmit={step === "phone" ? handleSendCode : step === "code" ? handleVerifyCode : handleCompleteRegistration} 
+            className="space-y-6"
+          >
+            {step === "phone" && (
+              <div className="relative">
+                <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleInputChange}
+                  placeholder="Phone Number"
+                  required
+                  className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
+                    errors.phoneNumber
+                      ? "border-red-500/50 focus:border-red-500"
+                      : "border-white/20 focus:border-[#fe9a00]"
+                  }`}
+                />
+                {errors.phoneNumber && (
+                  <p className="mt-1 text-red-400 text-sm">{errors.phoneNumber}</p>
+                )}
+              </div>
+            )}
+
+            {step === "code" && (
+              <>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="code"
+                    value={formData.code}
+                    onChange={handleInputChange}
+                    placeholder="Enter 6-digit code"
+                    maxLength={6}
+                    required
+                    className={`w-full px-4 py-4 bg-white/5 border rounded-xl text-white text-center text-2xl tracking-widest placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
+                      errors.code
+                        ? "border-red-500/50 focus:border-red-500"
+                        : "border-white/20 focus:border-[#fe9a00]"
+                    }`}
+                  />
+                  {errors.code && (
+                    <p className="mt-1 text-red-400 text-sm text-center">{errors.code}</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStep("phone")}
+                  className="text-[#fe9a00] hover:text-orange-300 transition-colors text-sm"
+                >
+                  Change phone number
+                </button>
+              </>
+            )}
+
+            {step === "register" && (
               <>
                 <div className="relative">
                   <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
@@ -257,124 +274,29 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
                     }`}
                   />
                   {errors.lastName && (
-                    <p className="mt-1 text-red-400 text-sm">
-                      {errors.lastName}
-                    </p>
+                    <p className="mt-1 text-red-400 text-sm">{errors.lastName}</p>
                   )}
                 </div>
                 <div className="relative">
-                  <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                  <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
                   <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
+                    type="email"
+                    name="emailAddress"
+                    value={formData.emailAddress}
                     onChange={handleInputChange}
-                    placeholder="Phone Number"
+                    placeholder="Email Address"
                     required
                     className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
-                      errors.phoneNumber
+                      errors.emailAddress
                         ? "border-red-500/50 focus:border-red-500"
                         : "border-white/20 focus:border-[#fe9a00]"
                     }`}
                   />
-                  {errors.phoneNumber && (
-                    <p className="mt-1 text-red-400 text-sm">
-                      {errors.phoneNumber}
-                    </p>
+                  {errors.emailAddress && (
+                    <p className="mt-1 text-red-400 text-sm">{errors.emailAddress}</p>
                   )}
                 </div>
               </>
-            )}
-
-            <div className="relative">
-              <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
-              <input
-                type="email"
-                name="emailAddress"
-                value={formData.emailAddress}
-                onChange={handleInputChange}
-                placeholder="Email Address"
-                required
-                className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
-                  errors.emailAddress
-                    ? "border-red-500/50 focus:border-red-500"
-                    : "border-white/20 focus:border-[#fe9a00]"
-                }`}
-              />
-              {errors.emailAddress && (
-                <p className="mt-1 text-red-400 text-sm">
-                  {errors.emailAddress}
-                </p>
-              )}
-            </div>
-
-            <div className="relative">
-              <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Password"
-                required
-                className={`w-full pl-12 pr-12 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
-                  errors.password
-                    ? "border-red-500/50 focus:border-red-500"
-                    : "border-white/20 focus:border-[#fe9a00]"
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
-              >
-                {showPassword ? <FiEyeOff /> : <FiEye />}
-              </button>
-              {errors.password && (
-                <p className="mt-1 text-red-400 text-sm">{errors.password}</p>
-              )}
-            </div>
-
-            {mode === "signup" && (
-              <div className="relative">
-                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  placeholder="Confirm Password"
-                  required
-                  className={`w-full pl-12 pr-12 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
-                    errors.confirmPassword
-                      ? "border-red-500/50 focus:border-red-500"
-                      : "border-white/20 focus:border-[#fe9a00]"
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
-                >
-                  {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
-                </button>
-                {errors.confirmPassword && (
-                  <p className="mt-1 text-red-400 text-sm">
-                    {errors.confirmPassword}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {mode === "login" && (
-              <div className="flex items-center justify-between text-sm">
-                <button
-                  type="button"
-                  className="text-[#fe9a00] hover:text-orange-300 transition-colors"
-                >
-                  Forgot password?
-                </button>
-              </div>
             )}
 
             <button
@@ -385,12 +307,14 @@ export default function AuthForm({ mode, onModeChange }: AuthFormProps) {
               {isLoading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                  {mode === "login" ? "Signing In..." : "Creating Account..."}
+                  {step === "phone" ? "Sending Code..." : step === "code" ? "Verifying..." : "Creating Account..."}
                 </div>
-              ) : mode === "login" ? (
-                "Log In"
+              ) : step === "phone" ? (
+                "Send Code"
+              ) : step === "code" ? (
+                "Verify Code"
               ) : (
-                "Create Account"
+                "Complete Registration"
               )}
             </button>
           </form>
