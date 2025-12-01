@@ -2,7 +2,6 @@
 
 import { CustomSelectProps } from "@/types/type";
 import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { FiChevronDown, FiSearch } from "react-icons/fi";
 
 export default function CustomSelect({
@@ -16,8 +15,6 @@ export default function CustomSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const portalRef = useRef<HTMLDivElement>(null);
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
 
   const filtered = options.filter((opt) =>
     opt.name.toLowerCase().includes(search.toLowerCase())
@@ -29,9 +26,7 @@ export default function CustomSelect({
     const handleClickOutside = (e: MouseEvent) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node) &&
-        portalRef.current &&
-        !portalRef.current.contains(e.target as Node)
+        !dropdownRef.current.contains(e.target as Node)
       ) {
         setIsOpen(false);
       }
@@ -40,17 +35,6 @@ export default function CustomSelect({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    if (isOpen && dropdownRef.current) {
-      const rect = dropdownRef.current.getBoundingClientRect();
-      setDropdownPos({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width,
-      });
-    }
-  }, [isOpen]);
 
   return (
     <div ref={dropdownRef} className="relative w-full">
@@ -70,16 +54,9 @@ export default function CustomSelect({
         />
       </button>
 
-      {isOpen &&
-        createPortal(
+      {isOpen && (
           <div
-            ref={portalRef}
-            className="fixed bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg z-50"
-            style={{
-              top: `${dropdownPos.top + 8}px`,
-              left: `${dropdownPos.left}px`,
-              width: `${dropdownPos.width}px`,
-            }}
+            className="absolute top-full left-0 right-0 mt-2 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg z-50"
           >
             <div className="p-2 border-b border-white/10 flex items-center gap-2 bg-white/5">
               <FiSearch className="text-amber-400 text-sm shrink-0" />
@@ -120,8 +97,7 @@ export default function CustomSelect({
                 </div>
               )}
             </div>
-          </div>,
-          document.body
+          </div>
         )}
     </div>
   );

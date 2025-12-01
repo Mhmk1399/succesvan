@@ -259,6 +259,19 @@ export default function ReservationForm({
     setIsSubmitting(true);
 
     try {
+      // Store rental details in sessionStorage
+      const rentalDetails = {
+        office: formData.office,
+        pickupDate: dateRange[0].startDate?.toISOString(),
+        returnDate: dateRange[0].endDate?.toISOString(),
+        pickupTime: formData.pickupTime,
+        returnTime: formData.returnTime,
+        pickupLocation: offices.find(o => o._id === formData.office)?.name || "",
+        driverAge: formData.driverAge,
+        message: formData.message,
+      };
+      sessionStorage.setItem("rentalDetails", JSON.stringify(rentalDetails));
+
       const payload = {
         office: formData.office,
         startDate: dateRange[0].startDate,
@@ -404,7 +417,7 @@ export default function ReservationForm({
               isInline ? "text-xs mb-1" : "text-sm"
             }`}
           >
-            <FiTruck className="text-amber-400 text-lg" /> Category
+            <FiTruck className="text-amber-400 text-lg relative" /> Category
           </label>
           <CustomSelect
             options={categories}

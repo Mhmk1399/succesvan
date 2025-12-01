@@ -134,6 +134,7 @@ function ReservationPanel({
 }) {
   const [formData, setFormData] = useState({
     name: "",
+    lastName: "",
     email: "",
     phone: "",
     pickupDate: "",
@@ -148,6 +149,21 @@ function ReservationPanel({
   const [isSuccess, setIsSuccess] = useState(false);
   const [rentalDays, setRentalDays] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
+
+  // Load rental details from sessionStorage
+  useEffect(() => {
+    const stored = sessionStorage.getItem("rentalDetails");
+    if (stored) {
+      const details = JSON.parse(stored);
+      setFormData((prev) => ({
+        ...prev,
+        pickupDate: details.pickupDate ? new Date(details.pickupDate).toISOString().split("T")[0] : "",
+        returnDate: details.returnDate ? new Date(details.returnDate).toISOString().split("T")[0] : "",
+        pickupLocation: details.pickupLocation || "",
+        notes: details.message || "",
+      }));
+    }
+  }, []);
 
   // Lock body scroll when panel opens
   useEffect(() => {
@@ -385,8 +401,8 @@ function ReservationPanel({
                 </label>
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="lastName"
+                  value={formData.lastName}
                   onChange={handleChange}
                   className={`w-full bg-white/5 border ${
                     errors.name ? "border-red-500" : "border-white/10"
@@ -452,7 +468,8 @@ function ReservationPanel({
           {/* Divider */}
           <div className="border-t border-white/10"></div>
 
-          {/* Rental Details Section */}
+          {/* Rental Details Section - Hidden if pre-filled */}
+          {!formData.pickupDate && (
           <div>
             <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
@@ -562,9 +579,10 @@ function ReservationPanel({
               </div>
             </div>
           </div>
+          )}
 
           {/* Divider */}
-          <div className="border-t border-white/10"></div>
+          {!formData.pickupDate && <div className="border-t border-white/10"></div>}
 
           {/* Cost Summary */}
           <div className="bg-linear-to-br from-white/5 to-transparent border border-white/10 rounded-2xl p-4 space-y-3">
