@@ -1,21 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FiX, FiPlus } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
-import { Category } from "@/types/type";
+import { Category, Type } from "@/types/type";
 import DynamicTableView from "./DynamicTableView";
+import CustomSelect from "@/components/ui/CustomSelect";
 
 export default function CategoriesContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [mutate, setMutate] = useState<any>(null);
+  const mutateRef = useRef<(() => Promise<any>) | null>(null);
+  const [types, setTypes] = useState<Type[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     image: "",
-    type: "van" as "van" | "minBus",
+    type: "",
+    pricePerHour: "",
+    fuel: "",
+    gear: "",
+    seats: "",
+    doors: "",
     servicesPeriod: {
       tire: "",
       oil: "",
@@ -25,13 +32,28 @@ export default function CategoriesContent() {
     },
   });
 
+  useEffect(() => {
+    const fetchTypes = async () => {
+      try {
+        const res = await fetch("/api/types");
+        const data = await res.json();
+        if (data.success) setTypes(data.data);
+      } catch (error) {
+        console.error("Failed to fetch types", error);
+      }
+    };
+    fetchTypes();
+  }, []);
+
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name !== "type") {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleServiceChange = (field: string, value: string) => {
@@ -46,7 +68,12 @@ export default function CategoriesContent() {
       name: "",
       description: "",
       image: "",
-      type: "van",
+      type: "",
+      pricePerHour: "",
+      fuel: "",
+      gear: "",
+      seats: "",
+      doors: "",
       servicesPeriod: {
         tire: "",
         oil: "",
@@ -59,11 +86,18 @@ export default function CategoriesContent() {
   };
 
   const handleEdit = (item: Category) => {
+    const typeId =
+      typeof item.type === "string" ? item.type : item.type._id || "";
     setFormData({
       name: item.name,
       description: item.description || "",
       image: item.image || "",
-      type: item.type,
+      type: typeId,
+      pricePerHour: String(item.pricePerHour || ""),
+      fuel: item.fuel || "",
+      gear: item.gear || "",
+      seats: String(item.seats || ""),
+      doors: String(item.doors || ""),
       servicesPeriod: {
         tire: String(item.servicesPeriod?.tire || ""),
         oil: String(item.servicesPeriod?.oil || ""),
@@ -81,14 +115,21 @@ export default function CategoriesContent() {
     setIsSubmitting(true);
 
     try {
-      const method = editingId ? "PUT" : "POST";
-      const url = editingId ? `/api/categories/${editingId}` : "/api/categories";
+      const method = editingId ? "PATCH" : "POST";
+      const url = editingId
+        ? `/api/categories/${editingId}`
+        : "/api/categories";
 
       const payload = {
         name: formData.name,
         description: formData.description,
         image: formData.image,
         type: formData.type,
+        pricePerHour: parseFloat(formData.pricePerHour),
+        fuel: formData.fuel,
+        gear: formData.gear,
+        seats: parseInt(formData.seats),
+        doors: parseInt(formData.doors),
         servicesPeriod: {
           tire: parseInt(formData.servicesPeriod.tire),
           oil: parseInt(formData.servicesPeriod.oil),
@@ -107,18 +148,14 @@ export default function CategoriesContent() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Operation failed");
 
-      showToast.success(`Category ${editingId ? "updated" : "created"} successfully!`);
+      showToast.success(
+        `Category ${editingId ? "updated" : "created"} successfully!`
+      );
       resetForm();
       setIsFormOpen(false);
-      if (typeof mutate === "function") {
-        try {
-          await mutate(undefined, { revalidate: true });
-        } catch (err) {
-          console.error("Mutate error:", err);
-        }
-      }
-    } catch (error: any) {
-      showToast.error(error.message || "Operation failed");
+      if (mutateRef.current) mutateRef.current();
+    } catch {
+      showToast.error("Operation failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -179,15 +216,78 @@ export default function CategoriesContent() {
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
 
-              <select
-                name="type"
+              <CustomSelect
+                options={types}
                 value={formData.type}
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, type: val }))
+                }
+                placeholder="Select Type"
+              />
+
+              <input
+                type="number"
+                name="pricePerHour"
+                placeholder="Price Per Hour"
+                value={formData.pricePerHour}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#fe9a00]"
-              >
-                <option value="van">Van</option>
-                <option value="minBus">MinBus</option>
-              </select>
+                required
+                step="0.01"
+                min="0"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <CustomSelect
+                  options={[
+                    { _id: "gas", name: "Gas" },
+                    { _id: "diesel", name: "Diesel" },
+                    { _id: "electric", name: "Electric" },
+                    { _id: "hybrid", name: "Hybrid" },
+                  ]}
+                  value={formData.fuel}
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, fuel: val }))
+                  }
+                  placeholder="Select Fuel"
+                />
+
+                <CustomSelect
+                  options={[
+                    { _id: "automatic", name: "Automatic" },
+                    { _id: "manual", name: "Manual" },
+                    { _id: "manual,automatic", name: "Manual & Automatic" },
+                  ]}
+                  value={formData.gear}
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, gear: val }))
+                  }
+                  placeholder="Select Gear"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="number"
+                  name="seats"
+                  placeholder="Seats"
+                  value={formData.seats}
+                  onChange={handleInputChange}
+                  required
+                  min="1"
+                  className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                />
+                <input
+                  type="number"
+                  name="doors"
+                  placeholder="Doors"
+                  value={formData.doors}
+                  onChange={handleInputChange}
+                  required
+                  min="1"
+                  className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                />
+              </div>
 
               <div className="space-y-3">
                 <h3 className="text-white font-semibold">
@@ -275,10 +375,20 @@ export default function CategoriesContent() {
         columns={[
           { key: "name", label: "Name" },
           { key: "description", label: "Description" },
-          { key: "type", label: "Type" },
+          {
+            key: "type",
+            label: "Type",
+            render: (value: string | Type) =>
+              typeof value === "string" ? value : value?.name || "-",
+          },
+          { key: "pricePerHour", label: "Price/Hour" },
+          { key: "fuel", label: "Fuel" },
+          { key: "gear", label: "Gear" },
+          { key: "seats", label: "Seats" },
+          { key: "doors", label: "Doors" },
         ]}
         onEdit={handleEdit}
-        onMutate={setMutate}
+        onMutate={(mutate) => (mutateRef.current = mutate)}
       />
     </div>
   );

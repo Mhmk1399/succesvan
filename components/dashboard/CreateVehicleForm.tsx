@@ -1,25 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FiX, FiPlus, FiCalendar } from "react-icons/fi";
 import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
-import { Category, Vehicle } from "@/types/type";
+import { Category, Office, Vehicle } from "@/types/type";
 import DynamicTableView from "./DynamicTableView";
-
-interface Office {
-  _id: string;
-  name: string;
-}
+import CustomSelect from "@/components/ui/CustomSelect";
 
 export default function VehiclesContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [mutate, setMutate] = useState<any>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [offices, setOffices] = useState<Office[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -27,17 +22,15 @@ export default function VehiclesContent() {
   const [showServiceDatePicker, setShowServiceDatePicker] = useState<
     string | null
   >(null);
+  const mutateRef = useRef<(() => Promise<any>) | null>(null);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     images: "",
+    number: "",
     category: "",
     office: "",
-    pricePerHour: "",
-    fuel: "gas",
-    gear: "automatic",
-    seats: "",
-    doors: "",
     properties: [{ name: "", value: "" }],
     needsService: false,
     serviceHistory: {
@@ -125,13 +118,9 @@ export default function VehiclesContent() {
       title: "",
       description: "",
       images: "",
+      number: "",
       category: "",
       office: "",
-      pricePerHour: "",
-      fuel: "gas",
-      gear: "automatic",
-      seats: "",
-      doors: "",
       properties: [{ name: "", value: "" }],
       needsService: false,
       serviceHistory: {
@@ -150,6 +139,7 @@ export default function VehiclesContent() {
       title: item.title,
       description: item.description,
       images: Array.isArray(item.images) ? item.images.join(", ") : item.images,
+      number: (item as any).number || "",
       category:
         typeof item.category === "string"
           ? item.category
@@ -158,11 +148,6 @@ export default function VehiclesContent() {
         typeof (item as any).office === "string"
           ? (item as any).office
           : (item as any).office?._id || "",
-      pricePerHour: String(item.pricePerHour),
-      fuel: item.fuel,
-      gear: item.gear,
-      seats: String(item.seats),
-      doors: String(item.doors),
       properties: item.properties || [{ name: "", value: "" }],
       needsService: item.needsService,
       serviceHistory: item.serviceHistory || {
@@ -189,13 +174,9 @@ export default function VehiclesContent() {
         title: formData.title,
         description: formData.description,
         images: formData.images.split(",").map((img) => img.trim()),
+        number: formData.number,
         category: formData.category,
         office: formData.office,
-        pricePerHour: parseFloat(formData.pricePerHour),
-        fuel: formData.fuel,
-        gear: formData.gear,
-        seats: parseInt(formData.seats),
-        doors: parseInt(formData.doors),
         properties: formData.properties.filter((p) => p.name && p.value),
         needsService: formData.needsService,
         serviceHistory: {
@@ -221,15 +202,9 @@ export default function VehiclesContent() {
       );
       resetForm();
       setIsFormOpen(false);
-      if (typeof mutate === "function") {
-        try {
-          await mutate(undefined, { revalidate: true });
-        } catch (err) {
-          console.error("Mutate error:", err);
-        }
-      }
-    } catch (error: any) {
-      showToast.error(error.message || "Operation failed");
+      if (mutateRef.current) mutateRef.current();
+    } catch {
+      showToast.error("Operation failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -292,96 +267,38 @@ export default function VehiclesContent() {
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
 
-              <select
-                name="office"
+              <input
+                type="text"
+                name="number"
+                placeholder="Vehicle Number"
+                value={formData.number}
+                onChange={handleInputChange}
+                required
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+              />
+
+              <CustomSelect
+                options={offices}
                 value={formData.office}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#fe9a00]"
-              >
-                <option value="">Select Office</option>
-                {loadingOffices ? (
-                  <option disabled>Loading offices...</option>
-                ) : (
-                  offices.map((off) => (
-                    <option key={off._id} value={off._id}>
-                      {off.name}
-                    </option>
-                  ))
-                )}
-              </select>
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, office: val }))
+                }
+                placeholder={
+                  loadingOffices ? "Loading offices..." : "Select Office"
+                }
+              />
 
-              <select
-                name="category"
+              <CustomSelect
+                options={categories}
                 value={formData.category}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#fe9a00]"
-              >
-                <option value="">Select Category</option>
-                {loadingCategories ? (
-                  <option disabled>Loading categories...</option>
-                ) : (
-                  categories.map((cat) => (
-                    <option key={cat._id} value={cat._id}>
-                      {cat.name}
-                    </option>
-                  ))
-                )}
-              </select>
-
-              <input
-                type="number"
-                name="pricePerHour"
-                placeholder="Price Per Hour"
-                value={formData.pricePerHour}
-                onChange={handleInputChange}
-                required
-                step="0.01"
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-              />
-
-              <select
-                name="fuel"
-                value={formData.fuel}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#fe9a00]"
-              >
-                <option value="gas">Gas</option>
-                <option value="diesel">Diesel</option>
-                <option value="electric">Electric</option>
-                <option value="hybrid">Hybrid</option>
-              </select>
-
-              <select
-                name="gear"
-                value={formData.gear}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#fe9a00]"
-              >
-                <option value="automatic">Automatic</option>
-                <option value="manual">Manual</option>
-                <option value="manual,automatic">Manual & Automatic</option>
-              </select>
-
-              <input
-                type="number"
-                name="seats"
-                placeholder="Number of Seats"
-                value={formData.seats}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-              />
-
-              <input
-                type="number"
-                name="doors"
-                placeholder="Number of Doors"
-                value={formData.doors}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, category: val }))
+                }
+                placeholder={
+                  loadingCategories
+                    ? "Loading categories..."
+                    : "Select Category"
+                }
               />
 
               <div className="space-y-3">
@@ -529,15 +446,12 @@ export default function VehiclesContent() {
         title="Vehicle"
         columns={[
           { key: "title", label: "Title" },
+          { key: "number", label: "Number" },
           {
             key: "office" as any,
             label: "Office",
-            render: (value) => (value?.name || "-"),
+            render: (value) => value?.name || "-",
           },
-          { key: "fuel", label: "Fuel" },
-          { key: "gear", label: "Gear" },
-          { key: "seats", label: "Seats" },
-          { key: "pricePerHour", label: "Price/Hour" },
           {
             key: "needsService",
             label: "Needs Service",
@@ -545,7 +459,7 @@ export default function VehiclesContent() {
           },
         ]}
         onEdit={handleEdit}
-        onMutate={setMutate}
+        onMutate={(mutate) => (mutateRef.current = mutate)}
       />
 
       <style jsx global>{`

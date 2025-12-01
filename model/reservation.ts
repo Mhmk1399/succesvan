@@ -23,7 +23,6 @@ const reservationSchema = new mongoose.Schema(
         addOn: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "AddOn",
-          required: true,
         },
         quantity: { type: Number, required: true, min: 1 },
       },

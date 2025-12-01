@@ -156,7 +156,7 @@ export default function WhyUs() {
 
         {/* Gradient Overlays */}
         <div className="absolute inset-0 bg-linear-to-b from-[#0f172b]/95 via-[#0f172b]/80 to-[#0f172b]/95"></div>
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5"></div>
+         
 
         {/* Animated Gradient Orbs */}
         <div className="absolute top-0 left-0 w-full h-full">

@@ -1,5 +1,5 @@
 import SEODescription from "@/components/global/seoDesc";
-import VanListing from "@/components/global/vanListing";
+ import VanListingHome from "@/components/global/vanListing.backup";
 import AboutUs from "@/components/static/aboutHome";
 import FAQComponent from "@/components/static/fAQSection";
 import HeroSlider from "@/components/static/HeroSlider";
@@ -73,7 +73,7 @@ export default function Home() {
   return (
     <>
       <ReservationHero />
-      <VanListing   />
+      <VanListingHome />
       <HeroSlider />
       <WhyUs />
       <Testimonials layout="carousel" autoPlay={true} autoPlayInterval={5000} />

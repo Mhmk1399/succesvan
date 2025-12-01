@@ -46,7 +46,7 @@ export default function FloatingActionMenu() {
       {showReservationModal && (
         <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm overflow-y-auto">
           <div className="min-h-screen flex items-center justify-center p-4">
-            <div className="w-full max-w-7xl bg-black/40 backdrop-blur-2xl border border-white/20 rounded-2xl p-6 md:p-8 shadow-2xl">
+            <div className="w-full max-w-4xl bg-black/40 backdrop-blur-2xl border border-white/20 rounded-2xl p-6 md:p-8 shadow-2xl">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">
                   Complete Your Reservation
@@ -76,7 +76,7 @@ export default function FloatingActionMenu() {
       )}
 
       {/* Menu Container */}
-      <div className="fixed bottom-8 left-8 z-50 flex flex-col items-end gap-4">
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-4">
         {/* Accordion Items */}
         {menuItems.map((item, index) => {
           const Icon = item.icon;
@@ -111,7 +111,7 @@ export default function FloatingActionMenu() {
                           <SubIcon className="text-white text-xl" />
                         </a>
                         {hoveredItem === subItemId && (
-                          <div className="absolute left-full mr-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg whitespace-nowrap shadow-lg animate-fadeIn">
+                          <div className="absolute right-full mr-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg whitespace-nowrap shadow-lg animate-fadeIn">
                             {subItem.label}
                           </div>
                         )}
@@ -161,7 +161,7 @@ export default function FloatingActionMenu() {
                     </a>
                   )}
                   {hoveredItem === item.id && (
-                    <div className="absolute left-full mr-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg whitespace-nowrap shadow-lg animate-fadeIn">
+                    <div className="absolute right-full mr-3 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg whitespace-nowrap shadow-lg animate-fadeIn">
                       {item.label}
                     </div>
                   )}
@@ -174,7 +174,7 @@ export default function FloatingActionMenu() {
         {/* Main Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="group relative w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-2xl"
+          className="group relative w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-2xl"
           style={{
             background: "linear-gradient(135deg, #fe9a00, #d97900)",
             boxShadow: "0 10px 40px rgba(254, 154, 0, 0.4)",

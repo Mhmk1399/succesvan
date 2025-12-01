@@ -147,7 +147,6 @@ export default function AutomaticVanHire() {
     <div ref={sectionRef} className="relative w-full bg-[#0f172b]  py-20">
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5"></div>
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-1/3 left-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 right-1/3 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-3xl"></div>

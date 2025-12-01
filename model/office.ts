@@ -30,36 +30,37 @@ const officeSchema = new mongoose.Schema(
           required: function () {
             return this.isOpen;
           },
-          match: /^([01]\d|2[0-3]):([0-5]\d)$/, // Validates HH:MM format
+          match: /^([01]\d|2[0-3]):([0-5]\d)$/,
         },
         endTime: {
           type: String,
           required: function () {
             return this.isOpen;
           },
-          match: /^([01]\d|2[0-3]):([0-5]\d)$/, // Validates HH:MM format
+          match: /^([01]\d|2[0-3]):([0-5]\d)$/,
         },
       },
     ],
     specialDays: [
       {
-        date: { type: Date, required: true }, // Store as UTC date (e.g., new Date('2025-12-25'))
-        isOpen: { type: Boolean, required: true, default: false }, // Defaults to closed for holidays
+        month: { type: Number, required: true, min: 1, max: 12 },
+        day: { type: Number, required: true, min: 1, max: 31 },
+        isOpen: { type: Boolean, required: true, default: false },
         startTime: {
           type: String,
           required: function () {
             return this.isOpen;
           },
-          match: /^([01]\d|2[0-3]):([0-5]\d)$/, // Validates HH:MM format
+          match: /^([01]\d|2[0-3]):([0-5]\d)$/,
         },
         endTime: {
           type: String,
           required: function () {
             return this.isOpen;
           },
-          match: /^([01]\d|2[0-3]):([0-5]\d)$/, // Validates HH:MM format
+          match: /^([01]\d|2[0-3]):([0-5]\d)$/,
         },
-        reason: { type: String }, // Optional, e.g., "Christmas Holiday"
+        reason: { type: String },
       },
     ],
     vehicles: [
@@ -76,11 +77,6 @@ const officeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
- 
-
 const Office = mongoose.models.Office || mongoose.model("Office", officeSchema);
-
-// Drop the old unique index if it exists
- 
 
 export default Office;

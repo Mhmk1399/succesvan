@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FiX, FiPlus } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import { Office } from "@/types/type";
@@ -10,7 +10,7 @@ export default function OfficesContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [mutate, setMutate] = useState<any>(null);
+  const mutateRef = useRef<(() => Promise<any>) | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -104,7 +104,7 @@ export default function OfficesContent() {
     setIsSubmitting(true);
 
     try {
-      const method = editingId ? "PUT" : "POST";
+      const method = editingId ? "PATCH" : "POST";
       const url = editingId ? `/api/offices/${editingId}` : "/api/offices";
 
       const payload = {
@@ -129,15 +129,9 @@ export default function OfficesContent() {
       );
       resetForm();
       setIsFormOpen(false);
-      if (typeof mutate === "function") {
-        try {
-          await mutate(undefined, { revalidate: true });
-        } catch (err) {
-          console.error("Mutate error:", err);
-        }
-      }
-    } catch (error: any) {
-      showToast.error(error.message || "Operation failed");
+      if (mutateRef.current) mutateRef.current();
+    } catch {
+      showToast.error("Operation failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -317,7 +311,7 @@ export default function OfficesContent() {
           { key: "phone", label: "Phone" },
         ]}
         onEdit={handleEdit}
-        onMutate={setMutate}
+        onMutate={(mutate) => (mutateRef.current = mutate)}
       />
     </div>
   );

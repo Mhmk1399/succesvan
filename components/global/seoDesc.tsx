@@ -64,7 +64,7 @@ const SEODescription: React.FC<SEODescriptionProps> = ({
 
   return (
     <div className="w-full mx-auto px-4 md:px-6 py-8 bg-linear-to-b from-[#0f172b] to-[#0f172b]">
-      <div className="relative bg-white/5 backdrop-blur-xl border border-white/10 text-white overflow-hidden p-6 md:p-8 rounded-2xl max-w-4xl mx-auto">
+      <div className="relative   backdrop-blur-xl border border-white/10 text-white overflow-hidden p-6 md:p-8 rounded-2xl max-w-4xl mx-auto">
         {/* Invisible measuring block */}
         <div
           ref={fullTextRef}

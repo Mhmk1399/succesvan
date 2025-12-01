@@ -23,3 +23,28 @@ export async function POST(req: NextRequest) {
     return errorResponse(error.message, 400);
   }
 }
+
+export async function PATCH(req: NextRequest) {
+  try {
+    await connect();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    const body = await req.json();
+    const addOn = await AddOn.findByIdAndUpdate(id, body, { new: true });
+    return successResponse(addOn);
+  } catch (error: any) {
+    return errorResponse(error.message, 400);
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    await connect();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    await AddOn.findByIdAndDelete(id);
+    return successResponse({ message: "AddOn deleted" });
+  } catch (error: any) {
+    return errorResponse(error.message, 400);
+  }
+}

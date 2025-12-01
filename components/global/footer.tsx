@@ -67,7 +67,12 @@ export default function Footer() {
   const pathname = usePathname();
 
   // Hide footer on specific routes
-  if (pathname === "/terms-and-conditions" || pathname === "/register" || pathname === "/dashboard") {
+  if (
+    pathname === "/terms-and-conditions" ||
+    pathname === "/register" ||
+    pathname === "/dashboard" ||
+    pathname === "/customerDashboard"
+  ) {
     return null;
   }
 
@@ -617,11 +622,7 @@ export default function Footer() {
         <div className="absolute bottom-1/3 left-1/4 w-2 h-2 rounded-full bg-[#fe9a00] opacity-40 animate-pulse delay-1000" />
       </div>
 
-      {/* Grid Pattern Overlay */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-[0.04]"
-      />
+      
 
       {/* Gradient Overlays */}
       <div className="absolute inset-0 bg-linear-to-t from-[#020617]/50 via-transparent to-transparent" />

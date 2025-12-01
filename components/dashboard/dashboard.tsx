@@ -15,17 +15,21 @@ import {
   FiMenu,
   FiX,
   FiExternalLink,
+  FiLayers,
+  FiGift,
+  FiCommand,
 } from "react-icons/fi";
+import { useStats } from "@/hooks/useStats";
 import OfficesContent from "./CreateOfficeForm";
 import VehiclesContent from "./CreateVehicleForm";
 import CategoriesContent from "./CreateCategoryForm";
-
-interface MenuItem {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  color: string;
-}
+import TypesManagement from "./TypesManagement";
+import SpecialDaysManagement from "./SpecialDaysManagement";
+import AddOnsContent from "./CreateAddOnForm";
+import ReservationsManagement from "./ReservationsManagement";
+import TestimonialsManagement from "./TestimonialsManagement";
+import ContactsManagement from "./ContactsManagement";
+import { MenuItem } from "@/types/type";
 
 const menuItems: MenuItem[] = [
   {
@@ -35,10 +39,22 @@ const menuItems: MenuItem[] = [
     color: "from-blue-500 to-blue-600",
   },
   {
+    id: "type",
+    label: "Types",
+    icon: <FiLayers />,
+    color: "from-purple-500 to-blue-600",
+  },
+  {
     id: "offices",
     label: "Offices",
     icon: <FiMapPin />,
     color: "from-green-500 to-green-600",
+  },
+  {
+    id: "categories",
+    label: "Categories",
+    icon: <FiTag />,
+    color: "from-pink-500 to-pink-600",
   },
   {
     id: "vehicles",
@@ -52,11 +68,12 @@ const menuItems: MenuItem[] = [
     icon: <FiCalendar />,
     color: "from-purple-500 to-purple-600",
   },
+
   {
-    id: "categories",
-    label: "Categories",
-    icon: <FiTag />,
-    color: "from-pink-500 to-pink-600",
+    id: "addons",
+    label: "AddOns",
+    icon: <FiGift />,
+    color: "from-teal-500 to-teal-600",
   },
   {
     id: "notifications",
@@ -69,6 +86,12 @@ const menuItems: MenuItem[] = [
     label: "Reserves",
     icon: <FiClipboard />,
     color: "from-indigo-500 to-indigo-600",
+  },
+  {
+    id: "Testimonial",
+    label: "Testimonials",
+    icon: <FiCommand />,
+    color: "from-cyan-500 to-cyan-600",
   },
   {
     id: "contacts",
@@ -98,11 +121,29 @@ export default function Dashboard() {
       document.body.style.overflow = "unset";
     };
   }, [sidebarOpen]);
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      if (hash && menuItems.some((item) => item.id === hash)) {
+        setActiveTab(hash);
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    window.location.hash = tabId;
+    setSidebarOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#0f172b]">
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-[#1a2847] border-r border-white/10 z-50 transition-transform duration-300 flex flex-col ${
+        className={`fixed left-0 top-0 h-screen w-54 bg-[#1a2847] border-r border-white/10 z-50 transition-transform duration-300 flex flex-col ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -112,22 +153,25 @@ export default function Dashboard() {
           </h1>
         </div>
 
-        <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
+        <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
           {menuItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => {
-                setActiveTab(item.id);
-                setSidebarOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+              onClick={() => handleTabChange(item.id)}
+              className={`w-full flex items-center gap-3 cursor-pointer px-4 py-2.5 rounded-lg transition-all duration-300 ${
                 activeTab === item.id
                   ? "bg-[#fe9a00] text-white shadow-lg"
                   : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
             >
-              <span className="text-xl">{item.icon}</span>
-              <span className="font-semibold">{item.label}</span>
+              <span
+                className={`text-lg  ${
+                  activeTab === item.id ? "text-white" : "text-[#fe9a00]"
+                } `}
+              >
+                {item.icon}
+              </span>
+              <span className="font-semibold text-sm">{item.label}</span>
             </button>
           ))}
         </nav>
@@ -145,7 +189,7 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      <main className="lg:ml-64">
+      <main className="lg:ml-54">
         <div className="sticky top-0 bg-[#1a2847] border-b border-white/10 px-4 sm:px-6 py-4 flex items-center justify-between z-40">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -174,13 +218,16 @@ export default function Dashboard() {
 
         <div className="p-4 sm:p-6 lg:p-8">
           {activeTab === "dashboard" && <DashboardContent />}
+          {activeTab === "type" && <TypesManagement />}
           {activeTab === "offices" && <OfficesContent />}
           {activeTab === "vehicles" && <VehiclesContent />}
           {activeTab === "holidays" && <HolidaysContent />}
           {activeTab === "categories" && <CategoriesContent />}
+          {activeTab === "addons" && <AddOnsContent />}
           {activeTab === "notifications" && <NotificationsContent />}
           {activeTab === "reserves" && <ReservesContent />}
-          {activeTab === "contacts" && <ContactsContent />}
+          {activeTab === "Testimonial" && <TestimonialsManagement />}
+          {activeTab === "contacts" && <ContactsManagement />}
           {activeTab === "documents" && <DocumentsContent />}
         </div>
       </main>
@@ -196,37 +243,39 @@ export default function Dashboard() {
 }
 
 function DashboardContent() {
-  const stats = [
+  const { stats, isLoading } = useStats();
+
+  const statCards = [
     {
       label: "Total Vehicles",
-      value: "24",
+      value: stats.vehicles,
       icon: <FiTruck />,
       color: "from-orange-500 to-orange-600",
     },
     {
-      label: "Active Reserves",
-      value: "12",
+      label: "All Reserves",
+      value: stats.reservations,
       icon: <FiClipboard />,
       color: "from-indigo-500 to-indigo-600",
     },
     {
       label: "Offices",
-      value: "3",
+      value: stats.offices,
       icon: <FiMapPin />,
       color: "from-green-500 to-green-600",
     },
     {
-      label: "Notifications",
-      value: "5",
-      icon: <FiBell />,
-      color: "from-red-500 to-red-600",
+      label: "Categories",
+      value: stats.categories,
+      icon: <FiTag />,
+      color: "from-pink-500 to-pink-600",
     },
   ];
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
+        {statCards.map((stat, index) => (
           <div
             key={index}
             className={`bg-linear-to-br ${stat.color} p-6 rounded-2xl border border-white/10 text-white`}
@@ -235,7 +284,9 @@ function DashboardContent() {
               <span className="text-2xl">{stat.icon}</span>
             </div>
             <p className="text-gray-200 text-sm mb-1">{stat.label}</p>
-            <p className="text-4xl font-black text-white">{stat.value}</p>
+            <p className="text-4xl font-black text-white">
+              {isLoading ? "-" : stat.value}
+            </p>
           </div>
         ))}
       </div>
@@ -288,29 +339,7 @@ function DashboardContent() {
 }
 
 function HolidaysContent() {
-  return (
-    <div className="space-y-6">
-      <button className="px-6 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold rounded-lg transition-colors">
-        + Add Holiday
-      </button>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6"
-          >
-            <h3 className="text-lg font-black text-white mb-2">Holiday {i}</h3>
-            <p className="text-gray-400 text-sm mb-4">
-              Dec {20 + i} - Dec {25 + i}, 2024
-            </p>
-            <button className="w-full px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-semibold">
-              Remove
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return <SpecialDaysManagement />;
 }
 
 function NotificationsContent() {
@@ -339,48 +368,7 @@ function NotificationsContent() {
 }
 
 function ReservesContent() {
-  return (
-    <div className="space-y-6">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-white/10">
-            <tr>
-              <th className="px-4 py-3 text-gray-400 font-semibold">
-                Reserve ID
-              </th>
-              <th className="px-4 py-3 text-gray-400 font-semibold">
-                Customer
-              </th>
-              <th className="px-4 py-3 text-gray-400 font-semibold">Vehicle</th>
-              <th className="px-4 py-3 text-gray-400 font-semibold">Status</th>
-              <th className="px-4 py-3 text-gray-400 font-semibold">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/10">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <tr key={i} className="hover:bg-white/5 transition-colors">
-                <td className="px-4 py-3 text-white font-semibold">
-                  #RES{1000 + i}
-                </td>
-                <td className="px-4 py-3 text-gray-400">Customer {i}</td>
-                <td className="px-4 py-3 text-gray-400">Van {i}</td>
-                <td className="px-4 py-3">
-                  <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-semibold">
-                    Confirmed
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <button className="text-[#fe9a00] hover:text-[#e68a00] font-semibold">
-                    View
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+  return <ReservationsManagement />;
 }
 
 function ContactsContent() {

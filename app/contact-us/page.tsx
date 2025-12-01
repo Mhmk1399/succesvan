@@ -1,7 +1,6 @@
 import ContactUs from "@/components/static/contactUs";
 import FAQComponent from "@/components/static/fAQSection";
-import FAQSection from "@/components/static/fAQSection";
-
+ 
 export default function Contact() {
   const vanHireFAQs = [
     {
