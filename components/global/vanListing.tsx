@@ -132,26 +132,47 @@ function ReservationPanel({
   van: VanData;
   onClose: () => void;
 }) {
+  const [step, setStep] = useState<"auth" | "details">("auth");
+  const [authStep, setAuthStep] = useState<"phone" | "code" | "register">("phone");
   const [formData, setFormData] = useState({
     name: "",
     lastName: "",
     email: "",
     phone: "",
+    code: "",
     pickupDate: "",
     returnDate: "",
     pickupLocation: "",
     notes: "",
     acceptTerms: false,
+    office: "",
+    category: van._id,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
   const [rentalDays, setRentalDays] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
 
-  // Load rental details from sessionStorage
+  // Check if user is logged in
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+    
+    if (token && user) {
+      const userData = JSON.parse(user);
+      setFormData((prev) => ({
+        ...prev,
+        name: userData.name || "",
+        lastName: userData.lastName || "",
+        email: userData.emaildata?.emailAddress || "",
+        phone: userData.phoneData?.phoneNumber || "",
+      }));
+      setStep("details");
+    }
+
     const stored = sessionStorage.getItem("rentalDetails");
     if (stored) {
       const details = JSON.parse(stored);
@@ -161,6 +182,7 @@ function ReservationPanel({
         returnDate: details.returnDate ? new Date(details.returnDate).toISOString().split("T")[0] : "",
         pickupLocation: details.pickupLocation || "",
         notes: details.message || "",
+        office: details.office || "",
       }));
     }
   }, []);
@@ -241,6 +263,103 @@ function ReservationPanel({
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleSendCode = async () => {
+    if (!formData.phone.trim()) {
+      setErrors({ phone: "Phone number required" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send-code", phoneNumber: formData.phone }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      setAuthStep("code");
+    } catch (error: any) {
+      setErrors({ phone: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!formData.code.trim()) {
+      setErrors({ code: "Code required" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "verify", phoneNumber: formData.phone, code: formData.code }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+
+      if (data.data.userExists) {
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        setFormData((prev) => ({
+          ...prev,
+          name: data.data.user.name,
+          lastName: data.data.user.lastName,
+          email: data.data.user.emaildata?.emailAddress || "",
+        }));
+        setStep("details");
+      } else {
+        setAuthStep("register");
+      }
+    } catch (error: any) {
+      setErrors({ code: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.trim()) newErrors.name = "Name required";
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name required";
+    if (!formData.email.trim()) newErrors.email = "Email required";
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "register",
+          phoneNumber: formData.phone,
+          name: formData.name,
+          lastName: formData.lastName,
+          emailAddress: formData.email,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+
+      localStorage.setItem("token", data.data.token);
+      localStorage.setItem("user", JSON.stringify(data.data.user));
+      setIsNewUser(true);
+      setStep("details");
+    } catch (error: any) {
+      setErrors({ submit: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -248,18 +367,65 @@ function ReservationPanel({
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const token = localStorage.getItem("token");
+      const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!) : null;
 
-    console.log("Reservation:", { van, ...formData, rentalDays, totalCost });
+      if (!token || !user) {
+        setErrors({ submit: "Please login first" });
+        setStep("auth");
+        return;
+      }
 
-    setIsSubmitting(false);
-    setIsSuccess(true);
+      const payload = {
+        userData: {
+          userId: user._id,
+          name: formData.name,
+          lastName: formData.lastName,
+          email: formData.email,
+          phoneNumber: formData.phone,
+        },
+        reservationData: {
+          office: formData.office,
+          category: formData.category,
+          startDate: new Date(formData.pickupDate),
+          endDate: new Date(formData.returnDate),
+          totalPrice: totalCost + (van.deposit || 0),
+          dirverAge: 25,
+          messege: formData.notes,
+          status: "pending",
+        },
+      };
 
-    // Close after showing success
-    setTimeout(() => {
-      onClose();
-    }, 2000);
+      const res = await fetch("/api/reservations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Reservation failed");
+
+      setIsSuccess(true);
+      
+      if (isNewUser) {
+        setTimeout(() => {
+          window.location.href = "/dashboard?uploadLicense=true";
+        }, 2000);
+      } else {
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      }
+    } catch (error: any) {
+      console.error("Reservation error:", error);
+      setErrors({ submit: error.message || "Failed to create reservation" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Get today's date for min attribute
@@ -281,7 +447,9 @@ function ReservationPanel({
               Booking Confirmed!
             </h3>
             <p className="text-gray-400">
-              We'll send you a confirmation email shortly.
+              {isNewUser 
+                ? "Please upload your license in the dashboard to finalize your request."
+                : "We'll send you a confirmation email shortly."}
             </p>
           </div>
         </div>
@@ -360,7 +528,136 @@ function ReservationPanel({
           </div>
         </div>
 
+        {/* Auth Step */}
+        {step === "auth" && (
+          <div className="px-6 pb-6 space-y-5">
+            <div className="text-center mb-4">
+              <h3 className="text-white font-bold text-lg mb-2">Login or Sign Up</h3>
+              <p className="text-gray-400 text-sm">Verify your phone to continue</p>
+            </div>
+
+            {authStep === "phone" && (
+              <div>
+                <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <FiPhone className="text-[#fe9a00]" />
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={`w-full bg-white/5 border ${errors.phone ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                  placeholder="+44 123 456 7890"
+                />
+                {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  disabled={isSubmitting}
+                  className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? "Sending..." : "Send Code"}
+                </button>
+              </div>
+            )}
+
+            {authStep === "code" && (
+              <div>
+                <label className="text-white text-sm font-semibold mb-2 block text-center">
+                  Enter Verification Code
+                </label>
+                <input
+                  type="text"
+                  name="code"
+                  value={formData.code}
+                  onChange={handleChange}
+                  maxLength={6}
+                  className={`w-full bg-white/5 border ${errors.code ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white text-center text-2xl tracking-widest placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                  placeholder="000000"
+                />
+                {errors.code && <p className="text-red-400 text-xs mt-1 text-center">{errors.code}</p>}
+                <button
+                  type="button"
+                  onClick={handleVerifyCode}
+                  disabled={isSubmitting}
+                  className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? "Verifying..." : "Verify Code"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthStep("phone")}
+                  className="w-full mt-2 text-[#fe9a00] text-sm hover:underline"
+                >
+                  Change phone number
+                </button>
+              </div>
+            )}
+
+            {authStep === "register" && (
+              <div className="space-y-3">
+                <p className="text-white text-sm text-center mb-4">Complete your profile</p>
+                <div>
+                  <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiUser className="text-[#fe9a00]" />
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border ${errors.name ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    placeholder="John"
+                  />
+                  {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+                </div>
+                <div>
+                  <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiUser className="text-[#fe9a00]" />
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border ${errors.lastName ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    placeholder="Doe"
+                  />
+                  {errors.lastName && <p className="text-red-400 text-xs mt-1">{errors.lastName}</p>}
+                </div>
+                <div>
+                  <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiMail className="text-[#fe9a00]" />
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border ${errors.email ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    placeholder="john@example.com"
+                  />
+                  {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRegister}
+                  disabled={isSubmitting}
+                  className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? "Creating Account..." : "Complete Registration"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Form */}
+        {step === "details" && (
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5">
           {/* Personal Information Section */}
           <div>
@@ -725,6 +1022,7 @@ function ReservationPanel({
             </div>
           </div>
         </form>
+        )}
       </div>
     </>
   );

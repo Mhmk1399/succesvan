@@ -8,6 +8,7 @@ const reservationSchema = new mongoose.Schema(
       ref: "Office",
       required: true,
     },
+    category:{ type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     totalPrice: { type: Number, required: true },

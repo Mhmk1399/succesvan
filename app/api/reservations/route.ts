@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
     const query = userId ? { user: userId } : {};
     const reservations = await Reservation.find(query)
       .populate("user", "-password")
-      .populate("office");
+      .populate("office")
+      .populate("category","-image");
     return successResponse(reservations);
   } catch (error: any) {
     return errorResponse(error.message, 500);
