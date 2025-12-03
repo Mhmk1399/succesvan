@@ -413,7 +413,7 @@ function ReservationPanel({
       
       if (isNewUser) {
         setTimeout(() => {
-          window.location.href = "/dashboard?uploadLicense=true";
+          window.location.href = "/customerDashboard?uploadLicense=true";
         }, 2000);
       } else {
         setTimeout(() => {

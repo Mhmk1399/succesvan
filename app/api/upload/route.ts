@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const s3 = new S3Client({
   region: process.env.AWS_S3_REGION,
@@ -10,16 +9,26 @@ const s3 = new S3Client({
   }
 });
 
-export async function POST() {
-  const key = `images/${Date.now()}.jpg`;
+export async function POST(req: NextRequest) {
+  try {
+    const formData = await req.formData();
+    const file = formData.get("file") as File;
+    
+    if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
+    
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const key = `images/${Date.now()}-${file.name}`;
 
-  const command = new PutObjectCommand({
-    Bucket: process.env.AWS_S3_BUCKET,
-    Key: key,
-    ContentType: "image/jpeg"
-  });
+    await s3.send(new PutObjectCommand({
+      Bucket: process.env.AWS_S3_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: file.type,
+    }));
 
-  const url = await getSignedUrl(s3, command, { expiresIn: 300 });
-
-  return NextResponse.json({ uploadUrl: url, key });
+    const url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${key}`;
+    return NextResponse.json({ url });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }

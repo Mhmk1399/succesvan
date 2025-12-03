@@ -11,11 +11,13 @@ import {
   FiTag,
   FiExternalLink,
   FiLogOut,
+  FiAlertCircle,
 } from "react-icons/fi";
 import { MdSmartToy } from "react-icons/md";
 import ProfileContent from "./ProfileContent";
 import DynamicTableView from "../dashboard/DynamicTableView";
 import { Reservation } from "@/types/type";
+import { showToast } from "@/lib/toast";
 
 const menuItems = [
   {
@@ -50,6 +52,7 @@ export default function CustomerDashboard() {
   const [activeTab, setActiveTab] = useState("reserves");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [hasLicense, setHasLicense] = useState(true);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -62,6 +65,30 @@ export default function CustomerDashboard() {
     handleHashChange();
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        if (userData && typeof userData === 'object') {
+          const hasLicenseUploaded = userData.licenceAttached?.front && userData.licenceAttached?.back;
+          setHasLicense(hasLicenseUploaded);
+          
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get("uploadLicense") === "true" && !hasLicenseUploaded) {
+            showToast.warning("Your reservation is pending. Please upload your license to confirm your reservation.");
+            setActiveTab("profile");
+            window.history.replaceState({}, "", window.location.pathname);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to parse user data:", error);
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -162,6 +189,24 @@ export default function CustomerDashboard() {
         </div>
 
         <div className="p-4 sm:p-6 lg:p-8">
+          {!hasLicense && (
+            <div className="mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-start gap-3">
+              <FiAlertCircle className="text-yellow-500 text-xl mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="text-yellow-500 font-bold mb-1">License Required</h3>
+                <p className="text-gray-300 text-sm">
+                  Your reservations are pending. Please upload your driver's license in the Profile section to confirm your bookings.
+                </p>
+                <button
+                  onClick={() => handleTabChange("profile")}
+                  className="mt-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg transition-colors font-semibold text-sm"
+                >
+                  Upload License Now
+                </button>
+              </div>
+            </div>
+          )}
+        
           {activeTab === "reserves" && <ReservesContent />}
           {activeTab === "profile" && <ProfileContent />}
           {activeTab === "offers" && <OffersContent />}
@@ -206,15 +251,20 @@ export default function CustomerDashboard() {
 
 function ReservesContent() {
   const [userId, setUserId] = useState<string | null>(null);
+  const [hasLicense, setHasLicense] = useState(true);
 
   useEffect(() => {
     const user = localStorage.getItem("user");
     if (user) {
       try {
         const userData = JSON.parse(user);
-        setUserId(userData._id);
+        if (userData && typeof userData === 'object' && userData._id) {
+          setUserId(userData._id);
+          const hasLicenseUploaded = userData.licenceAttached?.front && userData.licenceAttached?.back;
+          setHasLicense(hasLicenseUploaded);
+        }
       } catch (error) {
-        console.error("Failed to parse user data");
+        console.error("Failed to parse user data:", error);
       }
     }
   }, []);

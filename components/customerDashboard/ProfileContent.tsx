@@ -15,6 +15,10 @@ interface UserData {
     phoneNumber: string;
     isVerified: boolean;
   };
+  licenceAttached?: {
+    front?: string;
+    back?: string;
+  };
 }
 
 export default function ProfileContent() {
@@ -28,6 +32,7 @@ export default function ProfileContent() {
     emailAddress: "",
     phoneNumber: "",
   });
+  const [uploading, setUploading] = useState({ front: false, back: false });
 
   useEffect(() => {
     fetchUserData();
@@ -42,7 +47,7 @@ export default function ProfileContent() {
         return;
       }
 
-      const res = await fetch("/api/auth/me", {
+      const res = await fetch("/api/auth", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -61,6 +66,47 @@ export default function ProfileContent() {
       showToast.error(error.message || "Failed to load profile");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleFileUpload = async (file: File, side: "front" | "back") => {
+    setUploading({ ...uploading, [side]: true });
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+      if (uploadData.error) throw new Error(uploadData.error);
+      const url = uploadData.url;
+
+      const token = localStorage.getItem("token");
+      const res = await fetch(`/api/users/${user?._id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          licenceAttached: {
+            ...user?.licenceAttached,
+            [side]: url,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+
+      showToast.success(`License ${side} uploaded!`);
+      fetchUserData();
+    } catch (error: any) {
+      showToast.error(error.message || "Upload failed");
+    } finally {
+      setUploading({ ...uploading, [side]: false });
     }
   };
 
@@ -193,6 +239,51 @@ export default function ProfileContent() {
               </p>
             )}
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+        <h3 className="text-xl font-black text-white mb-6">License Attachments</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-gray-400 text-sm mb-2 block">Front Side</label>
+            {user?.licenceAttached?.front ? (
+              <div className="relative">
+                <img src={user.licenceAttached.front} alt="License Front" className="w-full h-48 object-cover rounded-lg" />
+                <label className="absolute bottom-2 right-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg cursor-pointer text-sm font-semibold">
+                  {uploading.front ? "Uploading..." : "Change"}
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "front")} disabled={uploading.front} />
+                </label>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#fe9a00] transition-colors">
+                <span className="text-gray-400 text-sm">{uploading.front ? "Uploading..." : "+ Upload Front"}</span>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "front")} disabled={uploading.front} />
+              </label>
+            )}
+          </div>
+          <div>
+            <label className="text-gray-400 text-sm mb-2 block">Back Side</label>
+            {user?.licenceAttached?.back ? (
+              <div className="relative">
+                <img src={user.licenceAttached.back} alt="License Back" className="w-full h-48 object-cover rounded-lg" />
+                <label className="absolute bottom-2 right-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg cursor-pointer text-sm font-semibold">
+                  {uploading.back ? "Uploading..." : "Change"}
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "back")} disabled={uploading.back} />
+                </label>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#fe9a00] transition-colors">
+                <span className="text-gray-400 text-sm">{uploading.back ? "Uploading..." : "+ Upload Back"}</span>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "back")} disabled={uploading.back} />
+              </label>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+        <div className="space-y-4">
           <div className="flex gap-3 mt-6">
             {isEditing ? (
               <>
