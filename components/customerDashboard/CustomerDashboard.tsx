@@ -54,6 +54,21 @@ export default function CustomerDashboard() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [hasLicense, setHasLicense] = useState(true);
 
+  const checkLicenseStatus = () => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        if (userData && typeof userData === 'object') {
+          const hasLicenseUploaded = userData.licenceAttached?.front && userData.licenceAttached?.back;
+          setHasLicense(hasLicenseUploaded);
+        }
+      } catch (error) {
+        console.error("Failed to parse user data:", error);
+      }
+    }
+  };
+
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
@@ -68,17 +83,17 @@ export default function CustomerDashboard() {
   }, []);
 
   useEffect(() => {
+    checkLicenseStatus();
     const user = localStorage.getItem("user");
     if (user) {
       try {
         const userData = JSON.parse(user);
         if (userData && typeof userData === 'object') {
           const hasLicenseUploaded = userData.licenceAttached?.front && userData.licenceAttached?.back;
-          setHasLicense(hasLicenseUploaded);
           
           const urlParams = new URLSearchParams(window.location.search);
           if (urlParams.get("uploadLicense") === "true" && !hasLicenseUploaded) {
-            showToast.warning("Your reservation is pending. Please upload your license to confirm your reservation.");
+            showToast.error("Your reservation is pending. Please upload your license to confirm your reservation.");
             setActiveTab("profile");
             window.history.replaceState({}, "", window.location.pathname);
           }
@@ -208,7 +223,7 @@ export default function CustomerDashboard() {
           )}
         
           {activeTab === "reserves" && <ReservesContent />}
-          {activeTab === "profile" && <ProfileContent />}
+          {activeTab === "profile" && <ProfileContent onLicenseUpdate={checkLicenseStatus} />}
           {activeTab === "offers" && <OffersContent />}
           {activeTab === "discounts" && <DiscountsContent />}
         </div>
@@ -269,6 +284,21 @@ function ReservesContent() {
     }
   }, []);
 
+  const handleEdit = async (reservation: Reservation) => {
+    try {
+      const res = await fetch(`/api/reservations/${reservation._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reservation),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Update failed");
+      showToast.success("Reservation updated successfully!");
+    } catch (error: any) {
+      showToast.error(error.message || "Update failed");
+    }
+  };
+
   if (!userId) {
     return <div className="text-gray-400">Loading reservations...</div>;
   }
@@ -277,6 +307,7 @@ function ReservesContent() {
     <DynamicTableView<Reservation>
       apiEndpoint={`/api/reservations?userId=${userId}`}
       title="Reservation"
+      hideDelete
       columns={[
         {
           key: "office" as keyof Reservation,
@@ -318,6 +349,7 @@ function ReservesContent() {
             </span>
           ),
         },
+        
       ]}
     />
   );

@@ -21,7 +21,7 @@ interface UserData {
   };
 }
 
-export default function ProfileContent() {
+export default function ProfileContent({ onLicenseUpdate }: { onLicenseUpdate?: () => void }) {
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -101,8 +101,10 @@ export default function ProfileContent() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
+      localStorage.setItem("user", JSON.stringify(data.data));
       showToast.success(`License ${side} uploaded!`);
       fetchUserData();
+      if (onLicenseUpdate) onLicenseUpdate();
     } catch (error: any) {
       showToast.error(error.message || "Upload failed");
     } finally {

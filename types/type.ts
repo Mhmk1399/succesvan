@@ -171,6 +171,7 @@ export interface DynamicTableViewProps<T> {
   onEdit?: (item: T) => void;
   onMutate?: (mutate: () => Promise<any>) => void;
   itemsPerPage?: number;
+  hideDelete?: boolean;
 }
 
 // custom Select -------------------------------------------------------------------
