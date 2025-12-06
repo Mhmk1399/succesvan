@@ -259,51 +259,24 @@ export default function ReservationForm({
     setIsSubmitting(true);
 
     try {
-      const payload = {
+      // Store rental details in sessionStorage
+      const rentalDetails = {
         office: formData.office,
-        startDate: dateRange[0].startDate,
-        endDate: dateRange[0].endDate,
-        dirverAge: parseInt(formData.driverAge),
-        messege: formData.message,
-        addOns: [],
+        pickupDate: dateRange[0].startDate?.toISOString(),
+        returnDate: dateRange[0].endDate?.toISOString(),
+        pickupTime: formData.pickupTime,
+        returnTime: formData.returnTime,
+        pickupLocation: offices.find(o => o._id === formData.office)?.name || "",
+        driverAge: formData.driverAge,
+        message: formData.message,
       };
+      sessionStorage.setItem("rentalDetails", JSON.stringify(rentalDetails));
 
-      const requestUserData = isAuthenticated
-        ? {
-            userId: userData?._id,
-          }
-        : {
-            name: formData.name,
-            lastName: "",
-            email: formData.email,
-            phoneNumber: formData.phoneNumber,
-          };
+      
 
-      const res = await fetch("/api/reservations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userData: requestUserData,
-          reservationData: payload,
-        }),
-      });
+     
 
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Reservation failed");
-
-      showToast.success("Reservation created successfully!");
-      setFormData({
-        office: "",
-        category: "",
-        pickupTime: "10:00",
-        returnTime: "10:00",
-        driverAge: "",
-        message: "",
-        name: "",
-        email: "",
-        phoneNumber: "",
-      });
-      if (onClose) onClose();
+      
 
       const url = `/reservation?category=${formData.category}&office=${formData.office}`;
       router.push(url);
@@ -323,53 +296,7 @@ export default function ReservationForm({
           : "space-y-6"
       }
     >
-      {!isAuthenticated && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white/5 p-4 rounded-lg border border-white/10">
-          <div>
-            <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
-              <FiUser className="text-amber-400" /> Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors text-sm"
-              placeholder="Your name"
-            />
-          </div>
-          <div>
-            <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
-              <FiMail className="text-amber-400" /> Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors text-sm"
-              placeholder="your@email.com"
-            />
-          </div>
-          <div>
-            <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
-              <FiPhone className="text-amber-400" /> Phone
-            </label>
-            <input
-              type="tel"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleInputChange}
-              required
-              className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors text-sm"
-              placeholder="+44 123 456 7890"
-            />
-          </div>
-        </div>
-      )}
-
+     
       <div
         className={
           isInline
@@ -404,7 +331,7 @@ export default function ReservationForm({
               isInline ? "text-xs mb-1" : "text-sm"
             }`}
           >
-            <FiTruck className="text-amber-400 text-lg" /> Category
+            <FiTruck className="text-amber-400 text-lg relative" /> Category
           </label>
           <CustomSelect
             options={categories}

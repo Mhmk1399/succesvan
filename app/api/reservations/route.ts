@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
     const query = userId ? { user: userId } : {};
     const reservations = await Reservation.find(query)
       .populate("user", "-password")
-      .populate("office");
+      .populate("office")
+      .populate("category","-image");
     return successResponse(reservations);
   } catch (error: any) {
     return errorResponse(error.message, 500);
@@ -67,5 +68,21 @@ export async function POST(req: NextRequest) {
     return successResponse(reservation, 201);
   } catch (error: any) {
     return errorResponse(error.message, 400);
+  }
+}
+export async function DELETE(
+  req: NextRequest,
+  
+) {
+  try {
+    await connect();
+     const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+   
+    const reservation = await Reservation.findByIdAndDelete(userId);
+    if (!reservation) return errorResponse("Reservation not found", 404);
+    return successResponse({ message: "Reservation deleted" });
+  } catch (error: any) {
+    return errorResponse(error.message, 500);
   }
 }

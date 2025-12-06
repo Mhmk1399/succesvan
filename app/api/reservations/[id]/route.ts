@@ -36,7 +36,7 @@ export async function PATCH(
     })
       .populate("user", "-password")
       .populate("office")
-      .populate("vehicle")
+      .populate("category")
       .populate("addOns.addOn");
     if (!reservation) return errorResponse("Reservation not found", 404);
     return successResponse(reservation);

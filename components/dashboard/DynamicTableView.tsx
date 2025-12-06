@@ -28,6 +28,7 @@ export default function DynamicTableView<
   onEdit,
   onMutate,
   itemsPerPage = 10,
+  hideDelete = false,
 }: DynamicTableViewProps<T>) {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<T | null>(null);
@@ -150,13 +151,15 @@ export default function DynamicTableView<
                       <FiEdit2 className="text-blue-400" />
                     </button>
                   )}
-                  <button
-                    onClick={() => handleDeleteClick(item._id || item.id || "")}
-                    className="p-2 hover:bg-red-500/20 rounded cursor-pointer transition-colors tooltip"
-                    data-tooltip="Delete"
-                  >
-                    <FiTrash2 className="text-red-400" />
-                  </button>
+                  {!hideDelete && (
+                    <button
+                      onClick={() => handleDeleteClick(item._id || item.id || "")}
+                      className="p-2 hover:bg-red-500/20 rounded cursor-pointer transition-colors tooltip"
+                      data-tooltip="Delete"
+                    >
+                      <FiTrash2 className="text-red-400" />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

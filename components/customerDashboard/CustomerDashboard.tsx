@@ -11,11 +11,13 @@ import {
   FiTag,
   FiExternalLink,
   FiLogOut,
+  FiAlertCircle,
 } from "react-icons/fi";
 import { MdSmartToy } from "react-icons/md";
 import ProfileContent from "./ProfileContent";
 import DynamicTableView from "../dashboard/DynamicTableView";
 import { Reservation } from "@/types/type";
+import { showToast } from "@/lib/toast";
 
 const menuItems = [
   {
@@ -50,6 +52,22 @@ export default function CustomerDashboard() {
   const [activeTab, setActiveTab] = useState("reserves");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [hasLicense, setHasLicense] = useState(true);
+
+  const checkLicenseStatus = () => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        if (userData && typeof userData === 'object') {
+          const hasLicenseUploaded = userData.licenceAttached?.front && userData.licenceAttached?.back;
+          setHasLicense(hasLicenseUploaded);
+        }
+      } catch (error) {
+        console.error("Failed to parse user data:", error);
+      }
+    }
+  };
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -62,6 +80,30 @@ export default function CustomerDashboard() {
     handleHashChange();
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    checkLicenseStatus();
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        if (userData && typeof userData === 'object') {
+          const hasLicenseUploaded = userData.licenceAttached?.front && userData.licenceAttached?.back;
+          
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get("uploadLicense") === "true" && !hasLicenseUploaded) {
+            showToast.error("Your reservation is pending. Please upload your license to confirm your reservation.");
+            setActiveTab("profile");
+            window.history.replaceState({}, "", window.location.pathname);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to parse user data:", error);
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -162,8 +204,26 @@ export default function CustomerDashboard() {
         </div>
 
         <div className="p-4 sm:p-6 lg:p-8">
+          {!hasLicense && (
+            <div className="mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-start gap-3">
+              <FiAlertCircle className="text-yellow-500 text-xl mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="text-yellow-500 font-bold mb-1">License Required</h3>
+                <p className="text-gray-300 text-sm">
+                  Your reservations are pending. Please upload your driver's license in the Profile section to confirm your bookings.
+                </p>
+                <button
+                  onClick={() => handleTabChange("profile")}
+                  className="mt-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg transition-colors font-semibold text-sm"
+                >
+                  Upload License Now
+                </button>
+              </div>
+            </div>
+          )}
+        
           {activeTab === "reserves" && <ReservesContent />}
-          {activeTab === "profile" && <ProfileContent />}
+          {activeTab === "profile" && <ProfileContent onLicenseUpdate={checkLicenseStatus} />}
           {activeTab === "offers" && <OffersContent />}
           {activeTab === "discounts" && <DiscountsContent />}
         </div>
@@ -206,18 +266,38 @@ export default function CustomerDashboard() {
 
 function ReservesContent() {
   const [userId, setUserId] = useState<string | null>(null);
+  const [hasLicense, setHasLicense] = useState(true);
 
   useEffect(() => {
     const user = localStorage.getItem("user");
     if (user) {
       try {
         const userData = JSON.parse(user);
-        setUserId(userData._id);
+        if (userData && typeof userData === 'object' && userData._id) {
+          setUserId(userData._id);
+          const hasLicenseUploaded = userData.licenceAttached?.front && userData.licenceAttached?.back;
+          setHasLicense(hasLicenseUploaded);
+        }
       } catch (error) {
-        console.error("Failed to parse user data");
+        console.error("Failed to parse user data:", error);
       }
     }
   }, []);
+
+  const handleEdit = async (reservation: Reservation) => {
+    try {
+      const res = await fetch(`/api/reservations/${reservation._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reservation),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Update failed");
+      showToast.success("Reservation updated successfully!");
+    } catch (error: any) {
+      showToast.error(error.message || "Update failed");
+    }
+  };
 
   if (!userId) {
     return <div className="text-gray-400">Loading reservations...</div>;
@@ -227,6 +307,7 @@ function ReservesContent() {
     <DynamicTableView<Reservation>
       apiEndpoint={`/api/reservations?userId=${userId}`}
       title="Reservation"
+      hideDelete
       columns={[
         {
           key: "office" as keyof Reservation,
@@ -268,6 +349,7 @@ function ReservesContent() {
             </span>
           ),
         },
+        
       ]}
     />
   );

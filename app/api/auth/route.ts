@@ -1,0 +1,89 @@
+import { NextRequest } from "next/server";
+import connect from "@/lib/data";
+import User from "@/model/user";
+import Verification from "@/model/verification";
+import { successResponse, errorResponse } from "@/lib/api-response";
+import { requireAuth } from "@/lib/auth";
+import { sendSMS } from "@/lib/sms";
+import jwt from "jsonwebtoken";
+
+export async function POST(req: NextRequest) {
+  try {
+    await connect();
+    const { action, phoneNumber, code, name, lastName, emailAddress } = await req.json();
+
+    if (action === "send-code") {
+      if (!phoneNumber) return errorResponse("Phone number required", 400);
+
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      await Verification.findOneAndUpdate(
+        { phoneNumber },
+        { code: verificationCode, expiresAt, verified: false },
+        { upsert: true, new: true }
+      );
+
+      await sendSMS(phoneNumber, `Your verification code is: ${verificationCode}`);
+      return successResponse({ message: "Code sent" });
+    }
+
+    if (action === "verify") {
+      if (!phoneNumber || !code) return errorResponse("Phone and code required", 400);
+
+      const verification = await Verification.findOne({ phoneNumber, verified: false });
+      if (!verification || verification.code !== code) return errorResponse("Invalid code", 400);
+      if (verification.expiresAt < new Date()) return errorResponse("Code expired", 400);
+
+      verification.verified = true;
+      await verification.save();
+
+      const user = await User.findOne({ "phoneData.phoneNumber": phoneNumber });
+
+      if (user) {
+        const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET!, { expiresIn: "28d" });
+        return successResponse({ userExists: true, token, user });
+      }
+
+      return successResponse({ userExists: false, phoneVerified: true });
+    }
+
+    if (action === "register") {
+      if (!phoneNumber || !name || !lastName || !emailAddress) return errorResponse("All fields required", 400);
+
+      const verification = await Verification.findOne({ phoneNumber, verified: true });
+      if (!verification) return errorResponse("Phone not verified", 400);
+
+      const existingUser = await User.findOne({ "phoneData.phoneNumber": phoneNumber });
+      if (existingUser) return errorResponse("User already exists", 400);
+
+      const user = await User.create({
+        name,
+        lastName,
+        emaildata: { emailAddress, isVerified: false },
+        phoneData: { phoneNumber, isVerified: true }
+      });
+
+      const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET!, { expiresIn: "28d" });
+      return successResponse({ token, user }, 201);
+    }
+
+    return errorResponse("Invalid action", 400);
+  } catch (error: any) {
+    return errorResponse(error.message, 500);
+  }
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const auth = requireAuth(req);
+    await connect();
+
+    const user = await User.findById(auth.userId);
+    if (!user) return errorResponse("User not found", 404);
+
+    return successResponse(user);
+  } catch (error: any) {
+    return errorResponse(error.message === "Unauthorized" ? "Unauthorized" : error.message, error.message === "Unauthorized" ? 401 : 500);
+  }
+}
