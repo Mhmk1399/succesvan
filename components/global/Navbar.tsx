@@ -15,6 +15,7 @@ import {
 import { FaMapMarkerAlt } from "react-icons/fa";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 const scrollbarStyles = `
   .navbar-menu::-webkit-scrollbar {
@@ -104,6 +105,7 @@ const menuItems: MenuItem[] = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   const navRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -111,9 +113,6 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [user, setUser] = useState<{ name: string; lastName: string } | null>(
-    null
-  );
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
@@ -125,20 +124,7 @@ export default function Navbar() {
     });
   }, []);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          const userData = JSON.parse(storedUser);
-          setUser({ name: userData.name, lastName: userData.lastName });
-        }
-      } catch (error) {
-        console.error("Failed to parse token:", error);
-      }
-    }
-  }, []);
+
 
   const toggleMenu = () => {
     if (!isOpen) {
@@ -177,11 +163,8 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
+    logout();
     setShowDropdown(false);
-    window.location.href = "/";
   };
 
   useEffect(() => {
@@ -260,7 +243,7 @@ export default function Navbar() {
                     className="flex items-center gap-2 px-4 py-2.5 text-white rounded-lg hover:text-[#fe9a00] transition-all duration-300 font-medium text-sm hover:bg-white/5 border border-[#fe9a00]/30"
                   >
                     <FiUser size={18} />
-                    {user.name} {user.lastName}
+                    {user.name} {user.lastName || ""}
                     <FiChevronDown
                       size={16}
                       className={`transition-transform ${
@@ -272,7 +255,7 @@ export default function Navbar() {
                   {showDropdown && (
                     <div className="absolute right-0 mt-2 w-48 bg-[#0f172b] border border-[#fe9a00]/30 rounded-lg shadow-xl overflow-hidden z-50">
                       <Link
-                        href="/dashboard"
+                        href={user.role === "admin" ? "/dashboard" : "/customerDashboard"}
                         className="flex items-center gap-3 px-4 py-3 text-white hover:bg-[#fe9a00]/10 hover:text-[#fe9a00] transition-all duration-300"
                         onClick={() => setShowDropdown(false)}
                       >
@@ -402,7 +385,7 @@ export default function Navbar() {
             {user ? (
               <>
                 <Link
-                  href="/dashboard"
+                  href={user.role === "admin" ? "/dashboard" : "/customerDashboard"}
                   className="flex-1 px-4 py-2.5 text-center text-white rounded-lg hover:text-[#fe9a00] transition-all duration-300 font-medium text-sm hover:bg-white/5"
                   onClick={closeMenu}
                 >

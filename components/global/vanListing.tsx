@@ -20,6 +20,7 @@ import {
 import { BsFuelPump } from "react-icons/bs";
 import Image from "next/image";
 import { VanData } from "@/types/type";
+import { usePriceCalculation } from "@/hooks/usePriceCalculation";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -160,14 +161,18 @@ function ReservationPanel({
     acceptTerms: false,
     office: "",
     category: van._id,
+    driverAge: 25,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
-  const [rentalDays, setRentalDays] = useState(0);
-  const [totalCost, setTotalCost] = useState(0);
+  const priceCalc = usePriceCalculation(
+    formData.pickupDate,
+    formData.returnDate,
+    (van as any).pricingTiers || []
+  );
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [addOnsCost, setAddOnsCost] = useState(0);
   const [showAddOnsModal, setShowAddOnsModal] = useState(false);
@@ -194,12 +199,24 @@ function ReservationPanel({
       const details = JSON.parse(stored);
       setFormData((prev) => ({
         ...prev,
-        pickupDate: details.pickupDate ? new Date(details.pickupDate).toISOString().split("T")[0] : "",
-        returnDate: details.returnDate ? new Date(details.returnDate).toISOString().split("T")[0] : "",
+        pickupDate: details.pickupDate || "",
+        returnDate: details.returnDate || "",
         pickupLocation: details.pickupLocation || "",
         notes: details.message || "",
         office: details.office || "",
       }));
+    }
+
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const ageParam = urlParams.get("age");
+    const officeParam = urlParams.get("office");
+    
+    if (ageParam) {
+      setFormData((prev) => ({ ...prev, driverAge: parseInt(ageParam) || 25 }));
+    }
+    if (officeParam) {
+      setFormData((prev) => ({ ...prev, office: officeParam }));
     }
   }, []);
 
@@ -217,39 +234,30 @@ function ReservationPanel({
     };
   }, []);
 
-  // Calculate rental days and total cost
+  // Validate dates
   useEffect(() => {
     if (formData.pickupDate && formData.returnDate) {
       const pickup = new Date(formData.pickupDate);
       const returnDate = new Date(formData.returnDate);
-      const diffTime = returnDate.getTime() - pickup.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays > 0) {
-        setRentalDays(diffDays);
-        setTotalCost(diffDays * van.pricePerHour);
-        setErrors((prev) => ({ ...prev, returnDate: "" }));
-      } else {
-        setRentalDays(0);
-        setTotalCost(0);
+      if (returnDate <= pickup) {
         setErrors((prev) => ({
           ...prev,
           returnDate: "Return date must be after pickup date",
         }));
+      } else {
+        setErrors((prev) => ({ ...prev, returnDate: "" }));
       }
-    } else {
-      setRentalDays(0);
-      setTotalCost(0);
     }
-  }, [formData.pickupDate, formData.returnDate, van.pricePerHour]);
+  }, [formData.pickupDate, formData.returnDate]);
 
   // Calculate addons cost
   useEffect(() => {
-    if (rentalDays === 0) {
+    if (!priceCalc) {
       setAddOnsCost(0);
       return;
     }
 
+    const rentalDays = Math.ceil(priceCalc.totalHours / 24);
     const cost = selectedAddOns.reduce((total, addonId) => {
       const addon = addOns.find((a) => a._id === addonId);
       if (!addon) return total;
@@ -265,7 +273,7 @@ function ReservationPanel({
     }, 0);
 
     setAddOnsCost(cost);
-  }, [selectedAddOns, rentalDays, addOns]);
+  }, [selectedAddOns, priceCalc, addOns]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -430,11 +438,11 @@ function ReservationPanel({
           category: formData.category,
           startDate: new Date(formData.pickupDate),
           endDate: new Date(formData.returnDate),
-          totalPrice: totalCost + addOnsCost + (van.deposit || 0),
-          dirverAge: 25,
+          totalPrice: (priceCalc?.totalPrice || 0) + addOnsCost + (van.deposit || 0),
+          dirverAge: formData.driverAge || 25,
           messege: formData.notes,
           status: "pending",
-          addOns: selectedAddOns,
+          addOns: selectedAddOns.map(addonId => ({ addOn: addonId, quantity: 1 })),
         },
       };
 
@@ -542,9 +550,9 @@ function ReservationPanel({
               </h3>
               <div className="flex items-baseline gap-2">
                 <span className="text-[#fe9a00] font-black text-2xl">
-                  £{van.pricePerHour}
+                  £{(van as any).pricingTiers?.[0]?.pricePerHour || 0}
                 </span>
-                <span className="text-gray-400 text-xs">per day</span>
+                <span className="text-gray-400 text-xs">per hour (from)</span>
               </div>
             </div>
           </div>
@@ -861,17 +869,20 @@ function ReservationPanel({
               </div>
 
               {/* Rental Duration Display */}
-              {rentalDays > 0 && (
+              {priceCalc && (
                 <div className="bg-linear-to-r from-[#fe9a00]/10 to-transparent border border-[#fe9a00]/20 rounded-xl p-3">
                   <div className="flex items-center gap-2 text-sm">
                     <FiClock className="text-[#fe9a00]" />
                     <span className="text-white font-semibold">
                       Rental Duration:{" "}
                       <span className="text-[#fe9a00]">
-                        {rentalDays} {rentalDays === 1 ? "day" : "days"}
+                        {priceCalc.breakdown}
                       </span>
                     </span>
                   </div>
+                  <p className="text-gray-400 text-xs mt-1 ml-6">
+                    Total: {priceCalc.totalHours} hours @ £{priceCalc.pricePerHour}/hour
+                  </p>
                 </div>
               )}
 
@@ -923,7 +934,7 @@ function ReservationPanel({
           {!formData.pickupDate && <div className="border-t border-white/10"></div>}
 
           {/* Add-ons Button */}
-          {addOns.length > 0 && rentalDays > 0 && (
+          {addOns.length > 0 && priceCalc && (
             <div>
               <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
@@ -952,37 +963,43 @@ function ReservationPanel({
           )}
 
           {/* Divider */}
-          {addOns.length > 0 && rentalDays > 0 && <div className="border-t border-white/10"></div>}
+          {addOns.length > 0 && priceCalc && <div className="border-t border-white/10"></div>}
 
           {/* Cost Summary */}
           <div className="bg-linear-to-br from-white/5 to-transparent border border-white/10 rounded-2xl p-4 space-y-3">
             <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
-                {!formData.pickupDate ? (addOns.length > 0 && rentalDays > 0 ? "4" : "3") : (addOns.length > 0 && rentalDays > 0 ? "3" : "2")}
+                {!formData.pickupDate ? (addOns.length > 0 && priceCalc ? "4" : "3") : (addOns.length > 0 && priceCalc ? "3" : "2")}
               </div>
               Cost Summary
             </h3>
 
             <div className="space-y-2 text-sm">
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Daily Rate</span>
+                <span className="text-gray-400">Hourly Rate</span>
                 <span className="text-white font-semibold">
-                  £{van.pricePerHour}
+                  £{(van as any).pricingTiers?.[0]?.pricePerHour || 0} (from)
                 </span>
               </div>
-              {rentalDays > 0 && (
+              {priceCalc && (
                 <>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Duration</span>
                     <span className="text-white font-semibold">
-                      {rentalDays} {rentalDays === 1 ? "day" : "days"}
+                      {priceCalc.breakdown}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Rate</span>
+                    <span className="text-white font-semibold">
+                      £{priceCalc.pricePerHour}/hour
                     </span>
                   </div>
                   <div className="border-t border-white/10 pt-2">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Rental Total</span>
                       <span className="text-white font-semibold">
-                        £{totalCost}
+                        £{priceCalc.totalPrice}
                       </span>
                     </div>
                   </div>
@@ -1007,8 +1024,8 @@ function ReservationPanel({
                   <span className="text-white font-bold">Total Due Today</span>
                   <span className="text-[#fe9a00] font-black text-xl">
                     £
-                    {totalCost > 0
-                      ? totalCost + addOnsCost + (van.deposit || 0)
+                    {priceCalc
+                      ? priceCalc.totalPrice + addOnsCost + (van.deposit || 0)
                       : van.deposit || 0}
                   </span>
                 </div>
@@ -1149,10 +1166,10 @@ function AddOnsModal({
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[100000]"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-100000"
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-[100001] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-100001 flex items-center justify-center p-4">
         <div className="bg-[#0f172b] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl animate-in zoom-in duration-200">
           {/* Header */}
           <div className="bg-linear-to-r from-[#fe9a00]/20 to-transparent border-b border-white/10 p-6">
@@ -1376,12 +1393,13 @@ function CategoryCard({
             <div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-3xl font-black text-white">
-                  £{category.pricePerHour}
+                  £{(category as any).pricingTiers?.[0]?.pricePerHour || 0}
                 </span>
                 <span className="text-gray-300 text-xs font-semibold">
                   /hour
                 </span>
               </div>
+              <p className="text-gray-400 text-[10px] mt-0.5">from</p>
             </div>
             <button
               onClick={onView}

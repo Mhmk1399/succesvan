@@ -275,6 +275,35 @@ export default function DynamicTableView<
                   </div>
                 )}
 
+              {(viewingItem as any).pricingTiers &&
+                (viewingItem as any).pricingTiers.length > 0 && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-400">
+                      Pricing Tiers
+                    </label>
+                    <div className="mt-2 overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-white/10">
+                            <th className="text-left py-2 px-3 text-gray-400 font-semibold">Min Hours</th>
+                            <th className="text-left py-2 px-3 text-gray-400 font-semibold">Max Hours</th>
+                            <th className="text-left py-2 px-3 text-gray-400 font-semibold">Price/Hour</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(viewingItem as any).pricingTiers.map((tier: any, idx: number) => (
+                            <tr key={idx} className="border-b border-white/5">
+                              <td className="py-2 px-3 text-white">{tier.minHours}</td>
+                              <td className="py-2 px-3 text-white">{tier.maxHours}</td>
+                              <td className="py-2 px-3 text-white">£{tier.pricePerHour}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
               {(viewingItem as any).servicesPeriod && (
                 <div>
                   <label className="text-sm font-semibold text-gray-400">

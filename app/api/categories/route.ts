@@ -7,7 +7,10 @@ import { successResponse, errorResponse } from "@/lib/api-response";
 export async function GET() {
   try {
     await connect();
-    const categories = await Category.find();
+    const categories = await Category.find().populate({
+      model: Type,
+      path: "type",
+    });
     return successResponse(categories);
   } catch (error: any) {
     return errorResponse(error.message, 500);

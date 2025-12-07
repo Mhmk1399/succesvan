@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   try {
     await connect();
     const { userData, reservationData } = await req.json();
-
+    
     let user;
     if (userData.userId) {
       user = await User.findById(userData.userId);
@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
         });
       }
     }
+    console.log(reservationData,"reserve")
 
     const reservation = await Reservation.create({
       ...reservationData,
