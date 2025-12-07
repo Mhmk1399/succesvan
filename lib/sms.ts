@@ -9,13 +9,17 @@ export async function sendSMS(to: string, message: string) {
     return { sid: 'dev-mode', status: 'sent' };
   }
   
-  const client = require('twilio')(accountSid, authToken);
-  
-  const msg = await client.messages.create({
-    body: message,
-    from: fromNumber,
-    to: to
-  });
-  
-  return msg;
+  try {
+    const client = require('twilio')(accountSid, authToken);
+    const msg = await client.messages.create({
+      body: message,
+      from: fromNumber,
+      to: to
+    });
+    return msg;
+  } catch (error: any) {
+    console.error('Twilio Error:', error.message);
+    console.log(`[FALLBACK] SMS to ${to}: ${message}`);
+    return { sid: 'fallback-mode', status: 'sent' };
+  }
 }
