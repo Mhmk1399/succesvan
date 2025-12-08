@@ -2,11 +2,11 @@ import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Reservation from "@/model/reservation";
 import User from "@/model/user";
-// Import to register models with mongoose for populate
-import Office from "@/model/office";
+ 
 import Category from "@/model/category";
 import bcrypt from "bcryptjs";
 import { successResponse, errorResponse } from "@/lib/api-response";
+import office from "@/model/office";
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,10 +20,8 @@ export async function GET(req: NextRequest) {
     
     const reservations = await Reservation.find(query)
       .populate("user", "-password")
-      .populate("office")
-      .populate("category","-image")
-      .populate("addOns.addOn")
-      .populate("category","-image");
+      .populate({ path: "office", model: office})
+      .populate({ path: "category", model: Category})
     
     console.log("[Reservations API] Found reservations:", reservations.length);
     console.log("[Reservations API] First reservation:", reservations[0]);
