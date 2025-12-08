@@ -67,13 +67,13 @@ export default function ReservationsManagement() {
             key: "startDate",
             label: "Start Date",
             render: (value: string) =>
-              new Date(value).toLocaleDateString() || "-",
+              new Date(value).toLocaleString() || "-",
           },
           {
             key: "endDate",
             label: "End Date",
             render: (value: string) =>
-              new Date(value).toLocaleDateString() || "-",
+              new Date(value).toLocaleString() || "-",
           },
           { key: "totalPrice", label: "Total Price" },
           {
@@ -163,25 +163,42 @@ export default function ReservationsManagement() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-400">Start Date</p>
+                    <p className="text-gray-400">Category</p>
                     <p className="text-white font-semibold">
-                      {new Date(
-                        selectedReservation.startDate
-                      ).toLocaleDateString()}
+                      {(selectedReservation as any).category?.name || "-"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-400">End Date</p>
+                    <p className="text-gray-400">Start Date & Time</p>
+                    <p className="text-white font-semibold">
+                      {new Date(
+                        selectedReservation.startDate
+                      ).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400">End Date & Time</p>
                     <p className="text-white font-semibold">
                       {new Date(
                         selectedReservation.endDate
-                      ).toLocaleDateString()}
+                      ).toLocaleString()}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-400">Total Price</p>
                     <p className="text-white font-semibold">
                       £{selectedReservation.totalPrice}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400">Duration</p>
+                    <p className="text-white font-semibold">
+                      {Math.ceil(
+                        (new Date(selectedReservation.endDate).getTime() -
+                          new Date(selectedReservation.startDate).getTime()) /
+                          (1000 * 60 * 60)
+                      )}{" "}
+                      hours
                     </p>
                   </div>
                 </div>
@@ -197,14 +214,28 @@ export default function ReservationsManagement() {
                         (item: any, idx: number) => (
                           <div
                             key={idx}
-                            className="flex justify-between text-sm"
+                            className="flex justify-between items-center text-sm"
                           >
-                            <span className="text-gray-400">
-                              {item.addOn?.name || "Unknown"}
-                            </span>
-                            <span className="text-white font-semibold">
-                              x{item.quantity}
-                            </span>
+                            <div className="flex flex-col">
+                              <span className="text-white font-semibold">
+                                {item.addOn?.name || "Unknown"}
+                              </span>
+                              {item.addOn?.description && (
+                                <span className="text-gray-400 text-xs">
+                                  {item.addOn.description}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-gray-400">
+                                Qty: {item.quantity}
+                              </span>
+                              {item.addOn?.pricingType === "flat" && (
+                                <span className="text-white font-semibold">
+                                  £{item.addOn.flatPrice}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         )
                       )}
