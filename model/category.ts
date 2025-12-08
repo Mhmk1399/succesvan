@@ -13,7 +13,13 @@ const categorySchema = new mongoose.Schema(
       air: { type: Number, required: true, min: 1 },
       service: { type: Number, required: true, min: 1 },
     },
-    pricePerHour: { type: Number, required: true },
+    pricingTiers: [
+      {
+        minHours: { type: Number, required: true, min: 0 },
+        maxHours: { type: Number, required: true },
+        pricePerHour: { type: Number, required: true, min: 0 },
+      },
+    ],
     fuel: {
       type: String,
       enum: ["gas", "diesel", "electric", "hybrid"],
@@ -30,5 +36,9 @@ const categorySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Category ||
-  mongoose.model("Category", categorySchema);
+// Delete cached model to ensure schema updates are applied
+if (mongoose.models.Category) {
+  delete mongoose.models.Category;
+}
+
+export default mongoose.model("Category", categorySchema);

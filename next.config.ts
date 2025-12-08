@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
         hostname: "arziplus.storage.c2.liara.space",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "vhsbuckets3.s3.eu-north-1.amazonaws.com",
+        pathname: "/**",
+      },
     ],
   },
   /* config options here */

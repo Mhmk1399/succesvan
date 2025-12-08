@@ -6,6 +6,7 @@ import FloatingActionMenu from "@/components/ui/FloatingActionMenu";
 import SmoothScrollProvider from "@/components/ui/smoothScrollProvider.tsx";
 import Breadcrumbs from "@/components/global/breadcrumbs";
 import { Toaster } from "react-hot-toast";
+import { AuthProvider } from "@/context/AuthContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -27,14 +28,16 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        <Navbar />
-        <Toaster position="bottom-center" />
+        <AuthProvider>
+          <Navbar />
+          <Toaster position="bottom-center" />
 
-        <Breadcrumbs />
-        <SmoothScrollProvider />
-        {children}
-        <Footer />
-        <FloatingActionMenu />
+          <Breadcrumbs />
+          <SmoothScrollProvider />
+          {children}
+          <Footer />
+          <FloatingActionMenu />
+        </AuthProvider>
       </body>
     </html>
   );

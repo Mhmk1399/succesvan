@@ -4,10 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import { FiMail, FiUser, FiPhone } from "react-icons/fi";
 import gsap from "gsap";
 import { showToast } from "@/lib/toast";
+import { useAuth } from "@/context/AuthContext";
 
 interface AuthFormProps {}
 
 export default function AuthForm({}: AuthFormProps) {
+  const { setUser } = useAuth();
   const [step, setStep] = useState<"phone" | "code" | "register">("phone");
   const [formData, setFormData] = useState({
     name: "",
@@ -80,7 +82,7 @@ export default function AuthForm({}: AuthFormProps) {
       
       if (data.data.userExists) {
         localStorage.setItem("token", data.data.token);
-        localStorage.setItem("user", JSON.stringify(data.data.user));
+        setUser(data.data.user);
         showToast.success("Welcome back! Redirecting...");
         setTimeout(() => {
           window.location.href = "/";
@@ -129,7 +131,7 @@ export default function AuthForm({}: AuthFormProps) {
       if (!data.success) throw new Error(data.error || "Registration failed");
       
       localStorage.setItem("token", data.data.token);
-      localStorage.setItem("user", JSON.stringify(data.data.user));
+      setUser(data.data.user);
       showToast.success("Account created! Redirecting...");
       
       setTimeout(() => {

@@ -18,7 +18,7 @@ export default function CategoriesContent() {
     description: "",
     image: "",
     type: "",
-    pricePerHour: "",
+    pricingTiers: [{ minHours: "", maxHours: "", pricePerHour: "" }],
     fuel: "",
     gear: "",
     seats: "",
@@ -69,7 +69,7 @@ export default function CategoriesContent() {
       description: "",
       image: "",
       type: "",
-      pricePerHour: "",
+      pricingTiers: [{ minHours: "", maxHours: "", pricePerHour: "" }],
       fuel: "",
       gear: "",
       seats: "",
@@ -93,7 +93,11 @@ export default function CategoriesContent() {
       description: item.description || "",
       image: item.image || "",
       type: typeId,
-      pricePerHour: String(item.pricePerHour || ""),
+      pricingTiers: (item as any).pricingTiers?.map((t: any) => ({
+        minHours: String(t.minHours || ""),
+        maxHours: String(t.maxHours || ""),
+        pricePerHour: String(t.pricePerHour || ""),
+      })) || [{ minHours: "", maxHours: "", pricePerHour: "" }],
       fuel: item.fuel || "",
       gear: item.gear || "",
       seats: String(item.seats || ""),
@@ -125,7 +129,11 @@ export default function CategoriesContent() {
         description: formData.description,
         image: formData.image,
         type: formData.type,
-        pricePerHour: parseFloat(formData.pricePerHour),
+        pricingTiers: formData.pricingTiers.map((t) => ({
+          minHours: parseFloat(t.minHours),
+          maxHours: parseFloat(t.maxHours),
+          pricePerHour: parseFloat(t.pricePerHour),
+        })),
         fuel: formData.fuel,
         gear: formData.gear,
         seats: parseInt(formData.seats),
@@ -225,17 +233,86 @@ export default function CategoriesContent() {
                 placeholder="Select Type"
               />
 
-              <input
-                type="number"
-                name="pricePerHour"
-                placeholder="Price Per Hour"
-                value={formData.pricePerHour}
-                onChange={handleInputChange}
-                required
-                step="0.01"
-                min="0"
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-              />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-white font-semibold">Pricing Tiers</h3>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        pricingTiers: [
+                          ...prev.pricingTiers,
+                          { minHours: "", maxHours: "", pricePerHour: "" },
+                        ],
+                      }))
+                    }
+                    className="text-[#fe9a00] hover:text-[#e68a00] text-sm font-semibold"
+                  >
+                    + Add Tier
+                  </button>
+                </div>
+                {formData.pricingTiers.map((tier, index) => (
+                  <div key={index} className="grid grid-cols-3 gap-2">
+                    <input
+                      type="number"
+                      placeholder="Min Hours"
+                      value={tier.minHours}
+                      onChange={(e) => {
+                        const newTiers = [...formData.pricingTiers];
+                        newTiers[index].minHours = e.target.value;
+                        setFormData((prev) => ({ ...prev, pricingTiers: newTiers }));
+                      }}
+                      required
+                      min="0"
+                      className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] text-sm"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max Hours"
+                      value={tier.maxHours}
+                      onChange={(e) => {
+                        const newTiers = [...formData.pricingTiers];
+                        newTiers[index].maxHours = e.target.value;
+                        setFormData((prev) => ({ ...prev, pricingTiers: newTiers }));
+                      }}
+                      required
+                      min="0"
+                      className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] text-sm"
+                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        placeholder="Price/Hr"
+                        value={tier.pricePerHour}
+                        onChange={(e) => {
+                          const newTiers = [...formData.pricingTiers];
+                          newTiers[index].pricePerHour = e.target.value;
+                          setFormData((prev) => ({ ...prev, pricingTiers: newTiers }));
+                        }}
+                        required
+                        step="0.01"
+                        min="0"
+                        className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] text-sm"
+                      />
+                      {formData.pricingTiers.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              pricingTiers: prev.pricingTiers.filter((_, i) => i !== index),
+                            }))
+                          }
+                          className="px-2 text-red-400 hover:text-red-300"
+                        >
+                          <FiX />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <CustomSelect
@@ -381,7 +458,6 @@ export default function CategoriesContent() {
             render: (value: string | Type) =>
               typeof value === "string" ? value : value?.name || "-",
           },
-          { key: "pricePerHour", label: "Price/Hour" },
           { key: "fuel", label: "Fuel" },
           { key: "gear", label: "Gear" },
           { key: "seats", label: "Seats" },

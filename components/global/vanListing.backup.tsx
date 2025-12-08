@@ -178,11 +178,14 @@ function ReservationPanel({
       const pickup = new Date(formData.pickupDate);
       const returnDate = new Date(formData.returnDate);
       const diffTime = returnDate.getTime() - pickup.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+      const diffDays = Math.ceil(diffHours / 24);
 
       if (diffDays > 0) {
         setRentalDays(diffDays);
-        setTotalCost(diffDays * van.pricePerHour);
+        const tier = (van as any).pricingTiers?.find((t: any) => diffHours >= t.minHours && diffHours <= t.maxHours);
+        const pricePerHour = tier?.pricePerHour || (van as any).pricingTiers?.[0]?.pricePerHour || 0;
+        setTotalCost(diffHours * pricePerHour);
         setErrors((prev) => ({ ...prev, returnDate: "" }));
       } else {
         setRentalDays(0);
@@ -196,7 +199,7 @@ function ReservationPanel({
       setRentalDays(0);
       setTotalCost(0);
     }
-  }, [formData.pickupDate, formData.returnDate, van.pricePerHour]);
+  }, [formData.pickupDate, formData.returnDate, van]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -326,9 +329,9 @@ function ReservationPanel({
               </h3>
               <div className="flex items-baseline gap-2">
                 <span className="text-[#fe9a00] font-black text-2xl">
-                  £{van.pricePerHour}
+                  £{(van as any).pricingTiers?.[0]?.pricePerHour || 0}
                 </span>
-                <span className="text-gray-400 text-xs">per day</span>
+                <span className="text-gray-400 text-xs">per hour (from)</span>
               </div>
             </div>
           </div>
@@ -564,9 +567,9 @@ function ReservationPanel({
 
             <div className="space-y-2 text-sm">
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Daily Rate</span>
+                <span className="text-gray-400">Hourly Rate</span>
                 <span className="text-white font-semibold">
-                  £{van.pricePerHour}
+                  £{(van as any).pricingTiers?.[0]?.pricePerHour || 0} (from)
                 </span>
               </div>
               {rentalDays > 0 && (
@@ -770,12 +773,13 @@ function CategoryCard({
             <div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-3xl font-black text-white">
-                  £{category.pricePerHour}
+                  £{(category as any).pricingTiers?.[0]?.pricePerHour || 0}
                 </span>
                 <span className="text-gray-300 text-xs font-semibold">
                   /hour
                 </span>
               </div>
+              <p className="text-gray-400 text-[10px] mt-0.5">from</p>
             </div>
             <button
               onClick={onView}

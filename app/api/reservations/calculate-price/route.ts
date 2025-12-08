@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     await connect();
     const { vehicleId, startDate, endDate, addOns } = await req.json();
     
-    const vehicle = await Vehicle.findById(vehicleId);
+    const vehicle = await Vehicle.findById(vehicleId).populate("category");
     if (!vehicle) return errorResponse("Vehicle not found", 404);
     
     const start = new Date(startDate);
@@ -17,7 +17,11 @@ export async function POST(req: NextRequest) {
     const hours = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60));
     const days = Math.ceil(hours / 24);
     
-    let vehiclePrice = vehicle.pricePerHour * hours;
+    const category = vehicle.category as any;
+    const tier = category.pricingTiers?.find((t: any) => hours >= t.minHours && hours <= t.maxHours);
+    if (!tier) return errorResponse("No pricing tier found for this duration", 400);
+    
+    let vehiclePrice = tier.pricePerHour * hours;
     let addOnsPrice = 0;
     
     if (addOns && addOns.length > 0) {

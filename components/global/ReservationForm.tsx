@@ -259,11 +259,19 @@ export default function ReservationForm({
     setIsSubmitting(true);
 
     try {
-      // Store rental details in sessionStorage
+      // Store rental details in sessionStorage with time included
+      const pickupDateTime = new Date(dateRange[0].startDate || new Date());
+      const [pickupHour, pickupMinute] = formData.pickupTime.split(':');
+      pickupDateTime.setHours(parseInt(pickupHour), parseInt(pickupMinute), 0, 0);
+
+      const returnDateTime = new Date(dateRange[0].endDate || new Date());
+      const [returnHour, returnMinute] = formData.returnTime.split(':');
+      returnDateTime.setHours(parseInt(returnHour), parseInt(returnMinute), 0, 0);
+
       const rentalDetails = {
         office: formData.office,
-        pickupDate: dateRange[0].startDate?.toISOString(),
-        returnDate: dateRange[0].endDate?.toISOString(),
+        pickupDate: pickupDateTime.toISOString(),
+        returnDate: returnDateTime.toISOString(),
         pickupTime: formData.pickupTime,
         returnTime: formData.returnTime,
         pickupLocation: offices.find(o => o._id === formData.office)?.name || "",
@@ -278,7 +286,7 @@ export default function ReservationForm({
 
       
 
-      const url = `/reservation?category=${formData.category}&office=${formData.office}`;
+      const url = `/reservation?category=${formData.category}&office=${formData.office}&age=${formData.driverAge}`;
       router.push(url);
     } catch (error: any) {
       showToast.error(error.message || "Reservation failed");
