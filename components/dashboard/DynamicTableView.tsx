@@ -304,6 +304,46 @@ export default function DynamicTableView<
                   </div>
                 )}
 
+              {(viewingItem as any).addOns &&
+                (viewingItem as any).addOns.length > 0 && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-400">
+                      Add-ons
+                    </label>
+                    <div className="mt-2 space-y-2">
+                      {(viewingItem as any).addOns.map(
+                        (item: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="text-white text-sm bg-white/5 p-3 rounded flex justify-between items-center"
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-semibold">
+                                {item.addOn?.name || "Unknown"}
+                              </span>
+                              {item.addOn?.description && (
+                                <span className="text-gray-400 text-xs mt-1">
+                                  {item.addOn.description}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-gray-400">
+                                Qty: {item.quantity}
+                              </span>
+                              {item.addOn?.pricingType === "flat" && (
+                                <span className="font-semibold">
+                                  £{item.addOn.flatPrice}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
               {(viewingItem as any).servicesPeriod && (
                 <div>
                   <label className="text-sm font-semibold text-gray-400">

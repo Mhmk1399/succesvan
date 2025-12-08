@@ -21,21 +21,13 @@ import { BsFuelPump } from "react-icons/bs";
 import Image from "next/image";
 import { VanData } from "@/types/type";
 import { usePriceCalculation } from "@/hooks/usePriceCalculation";
+import AddOnsModal from "./AddOnsModal";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
 interface Category extends VanData {}
-
-interface AddOn {
-  _id: string;
-  name: string;
-  description?: string;
-  pricingType: "flat" | "tiered";
-  flatPrice?: number;
-  tiers?: { minDays: number; maxDays: number; price: number }[];
-}
 
 interface VanListingProps {
   vans?: VanData[];
@@ -137,6 +129,15 @@ export default function VanListing({ vans = [], addOns = [] }: VanListingProps) 
   );
 }
 
+interface AddOn {
+  _id: string;
+  name: string;
+  description?: string;
+  pricingType: "flat" | "tiered";
+  flatPrice?: number;
+  tiers?: { minDays: number; maxDays: number; price: number }[];
+}
+
 function ReservationPanel({
   van,
   addOns,
@@ -173,7 +174,7 @@ function ReservationPanel({
     formData.returnDate,
     (van as any).pricingTiers || []
   );
-  const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
+  const [selectedAddOns, setSelectedAddOns] = useState<{ addOn: string; quantity: number }[]>([]);
   const [addOnsCost, setAddOnsCost] = useState(0);
   const [showAddOnsModal, setShowAddOnsModal] = useState(false);
 
@@ -258,17 +259,17 @@ function ReservationPanel({
     }
 
     const rentalDays = Math.ceil(priceCalc.totalHours / 24);
-    const cost = selectedAddOns.reduce((total, addonId) => {
-      const addon = addOns.find((a) => a._id === addonId);
+    const cost = selectedAddOns.reduce((total, item) => {
+      const addon = addOns.find((a) => a._id === item.addOn);
       if (!addon) return total;
 
       if (addon.pricingType === "flat") {
-        return total + (addon.flatPrice || 0);
+        return total + (addon.flatPrice || 0) * item.quantity;
       } else {
         const tier = addon.tiers?.find(
           (t) => rentalDays >= t.minDays && rentalDays <= t.maxDays
         );
-        return total + (tier?.price || 0);
+        return total + (tier?.price || 0) * item.quantity;
       }
     }, 0);
 
@@ -442,7 +443,7 @@ function ReservationPanel({
           dirverAge: formData.driverAge || 25,
           messege: formData.notes,
           status: "pending",
-          addOns: selectedAddOns.map(addonId => ({ addOn: addonId, quantity: 1 })),
+          addOns: selectedAddOns,
         },
       };
 
@@ -510,12 +511,12 @@ function ReservationPanel({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-99999 transition-opacity duration-300"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] transition-opacity duration-300"
         onClick={onClose}
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 h-screen w-full sm:max-w-md bg-linear-to-br from-[#0f172b] to-[#1e293b] border-l border-white/10 z-99999 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+      <div className="fixed right-0 top-0 h-screen w-full sm:max-w-md bg-linear-to-br from-[#0f172b] to-[#1e293b] border-l border-white/10 z-[10000] overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
         {/* Header */}
         <div className="sticky top-0 bg-linear-to-r from-[#0f172b] to-[#1e293b] backdrop-blur-xl border-b border-white/10 p-6 z-10">
           <div className="flex items-center justify-between mb-2">
@@ -1124,200 +1125,15 @@ function ReservationPanel({
       </div>
 
       {/* Add-ons Modal */}
-      {showAddOnsModal && (
+      {showAddOnsModal && priceCalc && (
         <AddOnsModal
           addOns={addOns}
-          rentalDays={rentalDays}
           selectedAddOns={selectedAddOns}
-          onSelect={setSelectedAddOns}
+          onSave={setSelectedAddOns}
           onClose={() => setShowAddOnsModal(false)}
+          rentalDays={Math.ceil(priceCalc.totalHours / 24)}
         />
       )}
-    </>
-  );
-}
-
-function AddOnsModal({
-  addOns,
-  rentalDays,
-  selectedAddOns,
-  onSelect,
-  onClose,
-}: {
-  addOns: AddOn[];
-  rentalDays: number;
-  selectedAddOns: string[];
-  onSelect: (ids: string[]) => void;
-  onClose: () => void;
-}) {
-  const [tempSelected, setTempSelected] = useState<string[]>(selectedAddOns);
-
-  const handleSave = () => {
-    onSelect(tempSelected);
-    onClose();
-  };
-
-  const toggleAddon = (id: string) => {
-    setTempSelected((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
-  };
-
-  return (
-    <>
-      <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-100000"
-        onClick={onClose}
-      />
-      <div className="fixed inset-0 z-100001 flex items-center justify-center p-4">
-        <div className="bg-[#0f172b] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl animate-in zoom-in duration-200">
-          {/* Header */}
-          <div className="bg-linear-to-r from-[#fe9a00]/20 to-transparent border-b border-white/10 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-2xl font-black text-white mb-1">Select Add-ons</h3>
-                <p className="text-gray-400 text-sm">Enhance your rental experience</p>
-              </div>
-              <button
-                onClick={onClose}
-                className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all hover:rotate-90 duration-300"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="p-6 overflow-y-auto max-h-[calc(80vh-180px)] scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-            <div className="space-y-4">
-              {addOns.map((addon) => {
-                const isSelected = tempSelected.includes(addon._id);
-                let price = 0;
-                let priceDisplay = "";
-
-                if (addon.pricingType === "flat") {
-                  price = addon.flatPrice || 0;
-                  priceDisplay = `£${price}`;
-                } else {
-                  const tier = addon.tiers?.find(
-                    (t) => rentalDays >= t.minDays && rentalDays <= t.maxDays
-                  );
-                  price = tier?.price || 0;
-                  priceDisplay = tier ? `£${price}` : "N/A";
-                }
-
-                return (
-                  <div
-                    key={addon._id}
-                    onClick={() => toggleAddon(addon._id)}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                      isSelected
-                        ? "bg-[#fe9a00]/10 border-[#fe9a00] shadow-lg shadow-[#fe9a00]/20"
-                        : "bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10"
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="mt-1">
-                        <div
-                          className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                            isSelected
-                              ? "bg-[#fe9a00] border-[#fe9a00]"
-                              : "bg-white/5 border-white/20"
-                          }`}
-                        >
-                          {isSelected && (
-                            <FiCheckCircle className="text-white text-sm" />
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="text-white font-bold text-base">{addon.name}</h4>
-                          <span className="text-[#fe9a00] font-black text-lg">{priceDisplay}</span>
-                        </div>
-                        {addon.description && (
-                          <p className="text-gray-400 text-sm mb-3">{addon.description}</p>
-                        )}
-                        
-                        {/* Pricing Details */}
-                        <div className="bg-white/5 rounded-lg p-3 border border-white/5">
-                          {addon.pricingType === "flat" ? (
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="px-2 py-1 rounded bg-blue-500/20 text-blue-300 font-semibold">Flat Rate</span>
-                              <span className="text-gray-400">One-time charge</span>
-                            </div>
-                          ) : (
-                            <div>
-                              <div className="flex items-center gap-2 text-xs mb-2">
-                                <span className="px-2 py-1 rounded bg-purple-500/20 text-purple-300 font-semibold">Tiered Pricing</span>
-                                <span className="text-gray-400">Based on rental duration</span>
-                              </div>
-                              <div className="space-y-1">
-                                {addon.tiers?.map((tier, idx) => {
-                                  const isActive = rentalDays >= tier.minDays && rentalDays <= tier.maxDays;
-                                  return (
-                                    <div
-                                      key={idx}
-                                      className={`flex justify-between text-xs p-2 rounded ${
-                                        isActive ? "bg-[#fe9a00]/20 text-white" : "text-gray-500"
-                                      }`}
-                                    >
-                                      <span>
-                                        {tier.minDays}-{tier.maxDays} days
-                                        {isActive && " (Your rental)"}
-                                      </span>
-                                      <span className="font-semibold">£{tier.price}</span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="border-t border-white/10 p-6 bg-linear-to-t from-[#0f172b] to-transparent">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-400 text-sm">
-                {tempSelected.length} add-on{tempSelected.length !== 1 ? "s" : ""} selected
-              </span>
-              <span className="text-white font-bold text-lg">
-                Total: £
-                {tempSelected.reduce((total, id) => {
-                  const addon = addOns.find((a) => a._id === id);
-                  if (!addon) return total;
-                  if (addon.pricingType === "flat") return total + (addon.flatPrice || 0);
-                  const tier = addon.tiers?.find(
-                    (t) => rentalDays >= t.minDays && rentalDays <= t.maxDays
-                  );
-                  return total + (tier?.price || 0);
-                }, 0)}
-              </span>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold py-3 rounded-xl transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="flex-1 bg-[#fe9a00] hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-[#fe9a00]/20"
-              >
-                Apply Add-ons
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
     </>
   );
 }
