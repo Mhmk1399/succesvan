@@ -211,33 +211,53 @@ export default function ReservationsManagement() {
                     <h3 className="text-white font-semibold mb-3">Add-ons</h3>
                     <div className="space-y-2">
                       {selectedReservation.addOns.map(
-                        (item: any, idx: number) => (
-                          <div
-                            key={idx}
-                            className="flex justify-between items-center text-sm"
-                          >
-                            <div className="flex flex-col">
-                              <span className="text-white font-semibold">
-                                {item.addOn?.name || "Unknown"}
-                              </span>
-                              {item.addOn?.description && (
-                                <span className="text-gray-400 text-xs">
-                                  {item.addOn.description}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-gray-400">
-                                Qty: {item.quantity}
-                              </span>
-                              {item.addOn?.pricingType === "flat" && (
+                        (item: any, idx: number) => {
+                          const addon = item.addOn;
+                          let price = 0;
+                          let tierInfo = "";
+                          
+                          if (addon?.pricingType === "flat") {
+                            price = addon.flatPrice || 0;
+                          } else if (addon?.pricingType === "tiered") {
+                            const tierIndex = item.selectedTierIndex ?? 0;
+                            const tier = addon.tiers?.[tierIndex];
+                            if (tier) {
+                              price = tier.price;
+                              tierInfo = ` (${tier.minDays}-${tier.maxDays} days)`;
+                            }
+                          }
+                          
+                          return (
+                            <div
+                              key={idx}
+                              className="flex justify-between items-center text-sm"
+                            >
+                              <div className="flex flex-col">
                                 <span className="text-white font-semibold">
-                                  £{item.addOn.flatPrice}
+                                  {addon?.name || "Unknown"}
                                 </span>
-                              )}
+                                {addon?.description && (
+                                  <span className="text-gray-400 text-xs">
+                                    {addon.description}
+                                  </span>
+                                )}
+                                {tierInfo && (
+                                  <span className="text-[#fe9a00] text-xs">
+                                    {tierInfo}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="text-gray-400">
+                                  Qty: {item.quantity}
+                                </span>
+                                <span className="text-white font-semibold">
+                                  £{price}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        )
+                          );
+                        }
                       )}
                     </div>
                   </div>

@@ -19,7 +19,13 @@ import {
 } from "react-icons/fi";
 import { BsFuelPump } from "react-icons/bs";
 import Image from "next/image";
-import { VanData } from "@/types/type";
+import { VanData, Office } from "@/types/type";
+import CustomSelect from "@/components/ui/CustomSelect";
+import TimePickerInput from "@/components/ui/TimePickerInput";
+import { DateRange, Range } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import { format } from "date-fns";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -141,65 +147,115 @@ function ReservationPanel({
   van: VanData;
   onClose: () => void;
 }) {
+  const [step, setStep] = useState<"auth" | "details">("auth");
+  const [authStep, setAuthStep] = useState<"phone" | "code" | "register">("phone");
   const [formData, setFormData] = useState({
     name: "",
+    lastName: "",
     email: "",
     phone: "",
+    code: "",
     pickupDate: "",
     returnDate: "",
+    pickupTime: "10:00",
+    returnTime: "10:00",
     pickupLocation: "",
     notes: "",
     acceptTerms: false,
+    office: "",
+    category: van._id,
+    driverAge: 25,
   });
+
+  const [dateRange, setDateRange] = useState<Range[]>([
+    {
+      startDate: new Date(),
+      endDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+      key: "selection",
+    },
+  ]);
+  const [showDateRange, setShowDateRange] = useState(false);
+  const [offices, setOffices] = useState<Office[]>([]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [rentalDays, setRentalDays] = useState(0);
-  const [totalCost, setTotalCost] = useState(0);
+  const [isNewUser, setIsNewUser] = useState(false);
+
+  // Fetch offices
+  useEffect(() => {
+    fetch("/api/offices")
+      .then((res) => res.json())
+      .then((data) => setOffices(data.data || []))
+      .catch((err) => console.error("Failed to fetch offices", err));
+  }, []);
+
+  // Check if user is logged in and load URL params
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+    
+    if (token && user) {
+      const userData = JSON.parse(user);
+      setFormData((prev) => ({
+        ...prev,
+        name: userData.name || "",
+        lastName: userData.lastName || "",
+        email: userData.emaildata?.emailAddress || "",
+        phone: userData.phoneData?.phoneNumber || "",
+      }));
+      setStep("details");
+    }
+
+    const stored = sessionStorage.getItem("rentalDetails");
+    if (stored) {
+      const details = JSON.parse(stored);
+      setFormData((prev) => ({
+        ...prev,
+        pickupDate: details.pickupDate || "",
+        returnDate: details.returnDate || "",
+        pickupLocation: details.pickupLocation || "",
+        notes: details.message || "",
+        office: details.office || "",
+      }));
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const ageParam = urlParams.get("age");
+    const officeParam = urlParams.get("office");
+    
+    if (ageParam) {
+      setFormData((prev) => ({ ...prev, driverAge: parseInt(ageParam) || 25 }));
+    }
+    if (officeParam) {
+      setFormData((prev) => ({ ...prev, office: officeParam }));
+    }
+  }, []);
 
   // Lock body scroll when panel opens
   useEffect(() => {
-    // Store original body overflow style
     const originalStyle = window.getComputedStyle(document.body).overflow;
-
-    // Lock scroll
     document.body.style.overflow = "hidden";
-
-    // Cleanup function to restore scroll
     return () => {
       document.body.style.overflow = originalStyle;
     };
   }, []);
 
-  // Calculate rental days and total cost
+  // Validate dates
   useEffect(() => {
     if (formData.pickupDate && formData.returnDate) {
       const pickup = new Date(formData.pickupDate);
       const returnDate = new Date(formData.returnDate);
-      const diffTime = returnDate.getTime() - pickup.getTime();
-      const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
-      const diffDays = Math.ceil(diffHours / 24);
-
-      if (diffDays > 0) {
-        setRentalDays(diffDays);
-        const tier = (van as any).pricingTiers?.find((t: any) => diffHours >= t.minHours && diffHours <= t.maxHours);
-        const pricePerHour = tier?.pricePerHour || (van as any).pricingTiers?.[0]?.pricePerHour || 0;
-        setTotalCost(diffHours * pricePerHour);
-        setErrors((prev) => ({ ...prev, returnDate: "" }));
-      } else {
-        setRentalDays(0);
-        setTotalCost(0);
+      if (returnDate <= pickup) {
         setErrors((prev) => ({
           ...prev,
           returnDate: "Return date must be after pickup date",
         }));
+      } else {
+        setErrors((prev) => ({ ...prev, returnDate: "" }));
       }
-    } else {
-      setRentalDays(0);
-      setTotalCost(0);
     }
-  }, [formData.pickupDate, formData.returnDate, van]);
+  }, [formData.pickupDate, formData.returnDate]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -216,6 +272,103 @@ function ReservationPanel({
     }
   };
 
+  const handleSendCode = async () => {
+    if (!formData.phone.trim()) {
+      setErrors({ phone: "Phone number required" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "send-code", phoneNumber: formData.phone }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      setAuthStep("code");
+    } catch (error: any) {
+      setErrors({ phone: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!formData.code.trim()) {
+      setErrors({ code: "Code required" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "verify", phoneNumber: formData.phone, code: formData.code }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+
+      if (data.data.userExists) {
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        setFormData((prev) => ({
+          ...prev,
+          name: data.data.user.name,
+          lastName: data.data.user.lastName,
+          email: data.data.user.emaildata?.emailAddress || "",
+        }));
+        setStep("details");
+      } else {
+        setAuthStep("register");
+      }
+    } catch (error: any) {
+      setErrors({ code: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.trim()) newErrors.name = "Name required";
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name required";
+    if (!formData.email.trim()) newErrors.email = "Email required";
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "register",
+          phoneNumber: formData.phone,
+          name: formData.name,
+          lastName: formData.lastName,
+          emailAddress: formData.email,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+
+      localStorage.setItem("token", data.data.token);
+      localStorage.setItem("user", JSON.stringify(data.data.user));
+      setIsNewUser(true);
+      setStep("details");
+    } catch (error: any) {
+      setErrors({ submit: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -226,10 +379,9 @@ function ReservationPanel({
       newErrors.email = "Email is invalid";
     }
     if (!formData.phone.trim()) newErrors.phone = "Phone is required";
+    if (!formData.office) newErrors.office = "Office is required";
     if (!formData.pickupDate) newErrors.pickupDate = "Pickup date is required";
     if (!formData.returnDate) newErrors.returnDate = "Return date is required";
-    if (!formData.pickupLocation.trim())
-      newErrors.pickupLocation = "Pickup location is required";
     if (!formData.acceptTerms)
       newErrors.acceptTerms = "You must accept the terms";
 
@@ -244,18 +396,69 @@ function ReservationPanel({
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const token = localStorage.getItem("token");
+      const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!) : null;
 
-    console.log("Reservation:", { van, ...formData, rentalDays, totalCost });
+      if (!token || !user) {
+        setErrors({ submit: "Please login first" });
+        setStep("auth");
+        return;
+      }
 
-    setIsSubmitting(false);
-    setIsSuccess(true);
+      const pickupDateTime = new Date(`${formData.pickupDate}T${formData.pickupTime}:00`);
+      const returnDateTime = new Date(`${formData.returnDate}T${formData.returnTime}:00`);
 
-    // Close after showing success
-    setTimeout(() => {
-      onClose();
-    }, 2000);
+      const payload = {
+        userData: {
+          userId: user._id,
+          name: formData.name,
+          lastName: formData.lastName,
+          email: formData.email,
+          phoneNumber: formData.phone,
+        },
+        reservationData: {
+          office: formData.office,
+          category: formData.category,
+          startDate: pickupDateTime,
+          endDate: returnDateTime,
+          totalPrice: 0,
+          dirverAge: formData.driverAge || 25,
+          messege: formData.notes,
+          status: "pending",
+          addOns: [],
+        },
+      };
+
+      const res = await fetch("/api/reservations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Reservation failed");
+
+      setIsSuccess(true);
+      
+      if (isNewUser) {
+        setTimeout(() => {
+          window.location.href = "/customerDashboard?uploadLicense=true";
+        }, 2000);
+      } else {
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      }
+    } catch (error: any) {
+      console.error("Reservation error:", error);
+      setErrors({ submit: error.message || "Failed to create reservation" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Get today's date for min attribute
@@ -277,7 +480,9 @@ function ReservationPanel({
               Booking Confirmed!
             </h3>
             <p className="text-gray-400">
-              We'll send you a confirmation email shortly.
+              {isNewUser 
+                ? "Please upload your license in the dashboard to finalize your request."
+                : "We'll send you a confirmation email shortly."}
             </p>
           </div>
         </div>
@@ -356,7 +561,136 @@ function ReservationPanel({
           </div>
         </div>
 
+        {/* Auth Step */}
+        {step === "auth" && (
+          <div className="px-6 pb-6 space-y-5">
+            <div className="text-center mb-4">
+              <h3 className="text-white font-bold text-lg mb-2">Login or Sign Up</h3>
+              <p className="text-gray-400 text-sm">Verify your phone to continue</p>
+            </div>
+
+            {authStep === "phone" && (
+              <div>
+                <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <FiPhone className="text-[#fe9a00]" />
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={`w-full bg-white/5 border ${errors.phone ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                  placeholder="+44 123 456 7890"
+                />
+                {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
+                <button
+                  type="button"
+                  onClick={handleSendCode}
+                  disabled={isSubmitting}
+                  className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? "Sending..." : "Send Code"}
+                </button>
+              </div>
+            )}
+
+            {authStep === "code" && (
+              <div>
+                <label className="text-white text-sm font-semibold mb-2 block text-center">
+                  Enter Verification Code
+                </label>
+                <input
+                  type="text"
+                  name="code"
+                  value={formData.code}
+                  onChange={handleChange}
+                  maxLength={6}
+                  className={`w-full bg-white/5 border ${errors.code ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white text-center text-2xl tracking-widest placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                  placeholder="000000"
+                />
+                {errors.code && <p className="text-red-400 text-xs mt-1 text-center">{errors.code}</p>}
+                <button
+                  type="button"
+                  onClick={handleVerifyCode}
+                  disabled={isSubmitting}
+                  className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? "Verifying..." : "Verify Code"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthStep("phone")}
+                  className="w-full mt-2 text-[#fe9a00] text-sm hover:underline"
+                >
+                  Change phone number
+                </button>
+              </div>
+            )}
+
+            {authStep === "register" && (
+              <div className="space-y-3">
+                <p className="text-white text-sm text-center mb-4">Complete your profile</p>
+                <div>
+                  <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiUser className="text-[#fe9a00]" />
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border ${errors.name ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    placeholder="John"
+                  />
+                  {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+                </div>
+                <div>
+                  <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiUser className="text-[#fe9a00]" />
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border ${errors.lastName ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    placeholder="Doe"
+                  />
+                  {errors.lastName && <p className="text-red-400 text-xs mt-1">{errors.lastName}</p>}
+                </div>
+                <div>
+                  <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiMail className="text-[#fe9a00]" />
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border ${errors.email ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    placeholder="john@example.com"
+                  />
+                  {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRegister}
+                  disabled={isSubmitting}
+                  className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? "Creating Account..." : "Complete Registration"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Form */}
+        {step === "details" && (
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5">
           {/* Personal Information Section */}
           <div>
@@ -452,63 +786,101 @@ function ReservationPanel({
             </h3>
 
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                    <FiCalendar className="text-[#fe9a00]" />
-                    Pickup Date
-                  </label>
-                  <input
-                    type="date"
-                    name="pickupDate"
-                    value={formData.pickupDate}
-                    onChange={handleChange}
-                    min={today}
-                    className={`w-full bg-white/5 border ${
-                      errors.pickupDate ? "border-red-500" : "border-white/10"
-                    } rounded-xl px-3 py-3 text-white focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all text-sm`}
-                  />
-                  {errors.pickupDate && (
-                    <p className="text-red-400 text-[10px] mt-1">Required</p>
-                  )}
-                </div>
-                <div>
-                  <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                    <FiCalendar className="text-[#fe9a00]" />
-                    Return Date
-                  </label>
-                  <input
-                    type="date"
-                    name="returnDate"
-                    value={formData.returnDate}
-                    onChange={handleChange}
-                    min={formData.pickupDate || today}
-                    className={`w-full bg-white/5 border ${
-                      errors.returnDate ? "border-red-500" : "border-white/10"
-                    } rounded-xl px-3 py-3 text-white focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all text-sm`}
-                  />
-                  {errors.returnDate && (
-                    <p className="text-red-400 text-[10px] mt-1">
-                      {errors.returnDate}
-                    </p>
+              <div>
+                <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <FiMapPin className="text-[#fe9a00]" />
+                  Office Location
+                </label>
+                <CustomSelect
+                  options={offices}
+                  value={formData.office}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, office: value }))}
+                  placeholder="Select office"
+                />
+                {errors.office && (
+                  <p className="text-red-400 text-xs mt-1">{errors.office}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <FiCalendar className="text-[#fe9a00]" />
+                  Pickup & Return Dates
+                </label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowDateRange(!showDateRange)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-left focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all"
+                  >
+                    {dateRange[0].startDate && dateRange[0].endDate
+                      ? `${format(dateRange[0].startDate, "MMM dd")} - ${format(dateRange[0].endDate, "MMM dd, yyyy")}`
+                      : "Select dates"}
+                  </button>
+                  {showDateRange && (
+                    <div className="absolute z-50 mt-2">
+                      <DateRange
+                        ranges={dateRange}
+                        onChange={(item) => {
+                          setDateRange([item.selection]);
+                          setFormData((prev) => ({
+                            ...prev,
+                            pickupDate: format(item.selection.startDate!, "yyyy-MM-dd"),
+                            returnDate: format(item.selection.endDate!, "yyyy-MM-dd"),
+                          }));
+                        }}
+                        minDate={new Date()}
+                        rangeColors={["#fe9a00"]}
+                      />
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* Rental Duration Display */}
-              {rentalDays > 0 && (
-                <div className="bg-linear-to-r from-[#fe9a00]/10 to-transparent border border-[#fe9a00]/20 rounded-xl p-3">
-                  <div className="flex items-center gap-2 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
                     <FiClock className="text-[#fe9a00]" />
-                    <span className="text-white font-semibold">
-                      Rental Duration:{" "}
-                      <span className="text-[#fe9a00]">
-                        {rentalDays} {rentalDays === 1 ? "day" : "days"}
-                      </span>
-                    </span>
-                  </div>
+                    Pickup Time
+                  </label>
+                  <TimePickerInput
+                    value={formData.pickupTime}
+                    onChange={(time) => setFormData((prev) => ({ ...prev, pickupTime: time }))}
+                    minTime="00:00"
+                    maxTime="23:45"
+                  />
                 </div>
-              )}
+                <div>
+                  <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiClock className="text-[#fe9a00]" />
+                    Return Time
+                  </label>
+                  <TimePickerInput
+                    value={formData.returnTime}
+                    onChange={(time) => setFormData((prev) => ({ ...prev, returnTime: time }))}
+                    minTime="00:00"
+                    maxTime="23:45"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                  <FiUser className="text-[#fe9a00]" />
+                  Driver Age
+                </label>
+                <input
+                  type="number"
+                  name="driverAge"
+                  value={formData.driverAge}
+                  onChange={handleChange}
+                  min="18"
+                  max="100"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all"
+                />
+              </div>
+
+
 
               <div>
                 <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
@@ -572,24 +944,6 @@ function ReservationPanel({
                   £{(van as any).pricingTiers?.[0]?.pricePerHour || 0} (from)
                 </span>
               </div>
-              {rentalDays > 0 && (
-                <>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Duration</span>
-                    <span className="text-white font-semibold">
-                      {rentalDays} {rentalDays === 1 ? "day" : "days"}
-                    </span>
-                  </div>
-                  <div className="border-t border-white/10 pt-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Rental Total</span>
-                      <span className="text-white font-semibold">
-                        £{totalCost}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )}
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Security Deposit</span>
                 <span className="text-white font-semibold">
@@ -598,12 +952,9 @@ function ReservationPanel({
               </div>
               <div className="border-t border-[#fe9a00]/20 pt-2 mt-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-white font-bold">Total Due Today</span>
+                  <span className="text-white font-bold">Deposit Due</span>
                   <span className="text-[#fe9a00] font-black text-xl">
-                    £
-                    {totalCost > 0
-                      ? totalCost + (van.deposit || 0)
-                      : van.deposit || 0}
+                    £{van.deposit || 0}
                   </span>
                 </div>
               </div>
@@ -697,6 +1048,7 @@ function ReservationPanel({
             </div>
           </div>
         </form>
+        )}
       </div>
     </>
   );

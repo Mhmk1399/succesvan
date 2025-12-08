@@ -2,8 +2,8 @@ import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Reservation from "@/model/reservation";
 import User from "@/model/user";
- 
 import Category from "@/model/category";
+import AddOn from "@/model/addOn";
 import bcrypt from "bcryptjs";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import office from "@/model/office";
@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
       .populate("user", "-password")
       .populate({ path: "office", model: office})
       .populate({ path: "category", model: Category})
+      .populate({path: "addOns.addOn", model: AddOn})
     
     console.log("[Reservations API] Found reservations:", reservations.length);
     console.log("[Reservations API] First reservation:", reservations[0]);
