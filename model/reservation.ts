@@ -26,6 +26,7 @@ const reservationSchema = new mongoose.Schema(
           ref: "AddOn",
         },
         quantity: { type: Number, required: true, min: 1 },
+        selectedTierIndex: { type: Number },
       },
     ],
   },

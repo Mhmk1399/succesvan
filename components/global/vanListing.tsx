@@ -174,7 +174,7 @@ function ReservationPanel({
     formData.returnDate,
     (van as any).pricingTiers || []
   );
-  const [selectedAddOns, setSelectedAddOns] = useState<{ addOn: string; quantity: number }[]>([]);
+  const [selectedAddOns, setSelectedAddOns] = useState<{ addOn: string; quantity: number; selectedTierIndex?: number }[]>([]);
   const [addOnsCost, setAddOnsCost] = useState(0);
   const [showAddOnsModal, setShowAddOnsModal] = useState(false);
 
@@ -266,10 +266,9 @@ function ReservationPanel({
       if (addon.pricingType === "flat") {
         return total + (addon.flatPrice || 0) * item.quantity;
       } else {
-        const tier = addon.tiers?.find(
-          (t) => rentalDays >= t.minDays && rentalDays <= t.maxDays
-        );
-        return total + (tier?.price || 0) * item.quantity;
+        const tierIndex = item.selectedTierIndex ?? 0;
+        const price = addon.tiers?.[tierIndex]?.price || 0;
+        return total + price * item.quantity;
       }
     }, 0);
 

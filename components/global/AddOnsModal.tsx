@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { FiX, FiPlus, FiMinus } from "react-icons/fi";
 
 interface AddOn {
@@ -14,8 +14,8 @@ interface AddOn {
 
 interface AddOnsModalProps {
   addOns: AddOn[];
-  selectedAddOns: { addOn: string; quantity: number }[];
-  onSave: (selected: { addOn: string; quantity: number }[]) => void;
+  selectedAddOns: { addOn: string; quantity: number; selectedTierIndex?: number }[];
+  onSave: (selected: { addOn: string; quantity: number; selectedTierIndex?: number }[]) => void;
   onClose: () => void;
   rentalDays: number;
 }
@@ -27,25 +27,37 @@ export default function AddOnsModal({
   onClose,
   rentalDays,
 }: AddOnsModalProps) {
-  const [selected, setSelected] = useState<{ addOn: string; quantity: number }[]>(selectedAddOns);
+  const [selected, setSelected] = useState<{ addOn: string; quantity: number; selectedTierIndex?: number }[]>(selectedAddOns);
 
-  const getAddOnPrice = (addon: AddOn) => {
+  const getAddOnPrice = (addon: AddOn, tierIndex?: number) => {
     if (addon.pricingType === "flat") {
       return addon.flatPrice || 0;
     }
-    const tier = addon.tiers?.find(
-      (t) => rentalDays >= t.minDays && rentalDays <= t.maxDays
-    );
-    return tier?.price || 0;
+    if (tierIndex !== undefined && addon.tiers?.[tierIndex]) {
+      return addon.tiers[tierIndex].price;
+    }
+    return addon.tiers?.[0]?.price || 0;
   };
 
-  const handleToggle = (addonId: string) => {
+  const handleToggle = (addonId: string, addon: AddOn) => {
     const exists = selected.find((s) => s.addOn === addonId);
     if (exists) {
       setSelected(selected.filter((s) => s.addOn !== addonId));
     } else {
-      setSelected([...selected, { addOn: addonId, quantity: 1 }]);
+      setSelected([...selected, { 
+        addOn: addonId, 
+        quantity: 1,
+        selectedTierIndex: addon.pricingType === "tiered" ? 0 : undefined
+      }]);
     }
+  };
+
+  const handleTierChange = (addonId: string, tierIndex: number) => {
+    setSelected(
+      selected.map((s) =>
+        s.addOn === addonId ? { ...s, selectedTierIndex: tierIndex } : s
+      )
+    );
   };
 
   const handleQuantityChange = (addonId: string, delta: number) => {
@@ -60,7 +72,7 @@ export default function AddOnsModal({
 
   const totalCost = selected.reduce((sum, item) => {
     const addon = addOns.find((a) => a._id === item.addOn);
-    return sum + (addon ? getAddOnPrice(addon) * item.quantity : 0);
+    return sum + (addon ? getAddOnPrice(addon, item.selectedTierIndex) * item.quantity : 0);
   }, 0);
 
   return (
@@ -84,7 +96,7 @@ export default function AddOnsModal({
           <div className="p-6 space-y-4 overflow-y-auto max-h-[50vh]">
             {addOns.map((addon) => {
               const isSelected = selected.find((s) => s.addOn === addon._id);
-              const price = getAddOnPrice(addon);
+              const price = getAddOnPrice(addon, isSelected?.selectedTierIndex);
 
               return (
                 <div
@@ -94,7 +106,7 @@ export default function AddOnsModal({
                       ? "border-[#fe9a00] bg-[#fe9a00]/10"
                       : "border-white/10 bg-white/5 hover:border-white/20"
                   }`}
-                  onClick={() => !isSelected && handleToggle(addon._id)}
+                  onClick={() => !isSelected && handleToggle(addon._id, addon)}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -106,10 +118,35 @@ export default function AddOnsModal({
                           {addon.description}
                         </p>
                       )}
-                      <p className="text-[#fe9a00] font-bold mt-2">
-                        £{price}
-                        {addon.pricingType === "tiered" && " per rental"}
-                      </p>
+                      {addon.pricingType === "flat" ? (
+                        <p className="text-[#fe9a00] font-bold mt-2">£{price}</p>
+                      ) : (
+                        <div className="mt-2">
+                          <p className="text-gray-400 text-xs mb-2">Select tier:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {addon.tiers?.map((tier, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (isSelected) {
+                                    handleTierChange(addon._id, idx);
+                                  }
+                                }}
+                                disabled={!isSelected}
+                                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                                  isSelected?.selectedTierIndex === idx
+                                    ? "bg-[#fe9a00] text-white"
+                                    : "bg-white/10 text-gray-400 hover:bg-white/20"
+                                } disabled:opacity-50`}
+                              >
+                                {tier.minDays}-{tier.maxDays} days: £{tier.price}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {isSelected ? (
@@ -119,7 +156,7 @@ export default function AddOnsModal({
                           onClick={(e) => {
                             e.stopPropagation();
                             if (isSelected.quantity === 1) {
-                              handleToggle(addon._id);
+                              handleToggle(addon._id, addon);
                             } else {
                               handleQuantityChange(addon._id, -1);
                             }
@@ -147,7 +184,7 @@ export default function AddOnsModal({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleToggle(addon._id);
+                          handleToggle(addon._id, addon);
                         }}
                         className="px-4 py-2 bg-[#fe9a00] hover:bg-orange-600 text-white rounded-lg font-semibold transition-colors"
                       >
