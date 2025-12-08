@@ -66,14 +66,10 @@ export function usePriceCalculation(
     let billableHours = 0;
     let breakdown = "";
 
-    if (totalHours < 6) {
-      // Less than 6 hours: charge by hour
-      billableHours = totalHours;
-      breakdown = `${totalHours}h`;
-    } else if (totalHours < 24) {
-      // 6-23 hours: charge as 1 day (24 hours)
+    if (totalHours < 24) {
+      // Less than 24 hours: charge as 1 day (24 hours)
       billableDays = 1;
-      breakdown = "1 day (24h)";
+      breakdown = `1 day (${totalHours}h charged as 24h)`;
     } else {
       // 24+ hours: calculate days and remaining hours
       const fullDays = Math.floor(totalHours / 24);
