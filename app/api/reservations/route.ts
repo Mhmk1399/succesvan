@@ -2,6 +2,9 @@ import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Reservation from "@/model/reservation";
 import User from "@/model/user";
+// Import to register models with mongoose for populate
+import Office from "@/model/office";
+import Category from "@/model/category";
 import bcrypt from "bcryptjs";
 import { successResponse, errorResponse } from "@/lib/api-response";
 
@@ -11,14 +14,23 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
     
+    console.log("[Reservations API] userId:", userId);
     const query = userId ? { user: userId } : {};
+    console.log("[Reservations API] query:", query);
+    
     const reservations = await Reservation.find(query)
       .populate("user", "-password")
       .populate("office")
       .populate("category","-image")
-      .populate("addOns.addOn");
+      .populate("addOns.addOn")
+      .populate("category","-image");
+    
+    console.log("[Reservations API] Found reservations:", reservations.length);
+    console.log("[Reservations API] First reservation:", reservations[0]);
+    
     return successResponse(reservations);
   } catch (error: any) {
+    console.error("[Reservations API] Error:", error.message);
     return errorResponse(error.message, 500);
   }
 }
