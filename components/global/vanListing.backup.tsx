@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import {
@@ -94,7 +95,10 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative w-full bg-[#0f172b] py-20 z-10">
+    <section
+      ref={sectionRef}
+      className="relative w-full bg-[#0f172b] py-20 z-10"
+    >
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
@@ -131,12 +135,34 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
 
       {/* Reservation Panel */}
       {selectedCategory && (
-        <ReservationPanel
+        <ReservationPanelPortal
           van={selectedCategory}
           onClose={() => setSelectedCategory(null)}
         />
       )}
     </section>
+  );
+}
+
+function ReservationPanelPortal({
+  van,
+  onClose,
+}: {
+  van: VanData;
+  onClose: () => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <ReservationPanel van={van} onClose={onClose} />,
+    document.body
   );
 }
 
@@ -148,7 +174,9 @@ function ReservationPanel({
   onClose: () => void;
 }) {
   const [step, setStep] = useState<"auth" | "details">("auth");
-  const [authStep, setAuthStep] = useState<"phone" | "code" | "register">("phone");
+  const [authStep, setAuthStep] = useState<"phone" | "code" | "register">(
+    "phone"
+  );
   const [formData, setFormData] = useState({
     name: "",
     lastName: "",
@@ -194,7 +222,7 @@ function ReservationPanel({
   useEffect(() => {
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("user");
-    
+
     if (token && user) {
       const userData = JSON.parse(user);
       setFormData((prev) => ({
@@ -223,7 +251,7 @@ function ReservationPanel({
     const urlParams = new URLSearchParams(window.location.search);
     const ageParam = urlParams.get("age");
     const officeParam = urlParams.get("office");
-    
+
     if (ageParam) {
       setFormData((prev) => ({ ...prev, driverAge: parseInt(ageParam) || 25 }));
     }
@@ -283,7 +311,10 @@ function ReservationPanel({
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "send-code", phoneNumber: formData.phone }),
+        body: JSON.stringify({
+          action: "send-code",
+          phoneNumber: formData.phone,
+        }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
@@ -306,7 +337,11 @@ function ReservationPanel({
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "verify", phoneNumber: formData.phone, code: formData.code }),
+        body: JSON.stringify({
+          action: "verify",
+          phoneNumber: formData.phone,
+          code: formData.code,
+        }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
@@ -336,7 +371,7 @@ function ReservationPanel({
     if (!formData.name.trim()) newErrors.name = "Name required";
     if (!formData.lastName.trim()) newErrors.lastName = "Last name required";
     if (!formData.email.trim()) newErrors.email = "Email required";
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -398,7 +433,9 @@ function ReservationPanel({
 
     try {
       const token = localStorage.getItem("token");
-      const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!) : null;
+      const user = localStorage.getItem("user")
+        ? JSON.parse(localStorage.getItem("user")!)
+        : null;
 
       if (!token || !user) {
         setErrors({ submit: "Please login first" });
@@ -406,8 +443,12 @@ function ReservationPanel({
         return;
       }
 
-      const pickupDateTime = new Date(`${formData.pickupDate}T${formData.pickupTime}:00`);
-      const returnDateTime = new Date(`${formData.returnDate}T${formData.returnTime}:00`);
+      const pickupDateTime = new Date(
+        `${formData.pickupDate}T${formData.pickupTime}:00`
+      );
+      const returnDateTime = new Date(
+        `${formData.returnDate}T${formData.returnTime}:00`
+      );
 
       const payload = {
         userData: {
@@ -443,7 +484,7 @@ function ReservationPanel({
       if (!data.success) throw new Error(data.error || "Reservation failed");
 
       setIsSuccess(true);
-      
+
       if (isNewUser) {
         setTimeout(() => {
           window.location.href = "/customerDashboard?uploadLicense=true";
@@ -468,10 +509,10 @@ function ReservationPanel({
     return (
       <>
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-9999"
           onClick={onClose}
         />
-        <div className="fixed right-0 top-0 h-screen w-full sm:w-96 bg-linear-to-br from-[#0f172b] to-[#1e293b] z-50 flex items-center justify-center animate-in slide-in-from-right duration-300">
+        <div className="fixed right-0 top-0 h-screen w-full sm:w-96 bg-linear-to-br from-[#0f172b] to-[#1e293b] z-10000 flex items-center justify-center animate-in slide-in-from-right duration-300">
           <div className="text-center p-8">
             <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6 animate-in zoom-in duration-500">
               <FiCheckCircle className="text-5xl text-green-500" />
@@ -480,7 +521,7 @@ function ReservationPanel({
               Booking Confirmed!
             </h3>
             <p className="text-gray-400">
-              {isNewUser 
+              {isNewUser
                 ? "Please upload your license in the dashboard to finalize your request."
                 : "We'll send you a confirmation email shortly."}
             </p>
@@ -494,12 +535,12 @@ function ReservationPanel({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-99999 transition-opacity duration-300"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 transition-opacity duration-300"
         onClick={onClose}
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 h-screen w-full sm:max-w-md bg-linear-to-br from-[#0f172b] to-[#1e293b] border-l border-white/10 z-99999 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+      <div className="fixed right-0 top-0 h-screen z-10000 w-full sm:max-w-md bg-linear-to-br from-[#0f172b] to-[#1e293b] border-l border-white/10 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
         {/* Header */}
         <div className="sticky top-0 bg-linear-to-r from-[#0f172b] to-[#1e293b] backdrop-blur-xl border-b border-white/10 p-6 z-10">
           <div className="flex items-center justify-between mb-2">
@@ -565,8 +606,12 @@ function ReservationPanel({
         {step === "auth" && (
           <div className="px-6 pb-6 space-y-5">
             <div className="text-center mb-4">
-              <h3 className="text-white font-bold text-lg mb-2">Login or Sign Up</h3>
-              <p className="text-gray-400 text-sm">Verify your phone to continue</p>
+              <h3 className="text-white font-bold text-lg mb-2">
+                Login or Sign Up
+              </h3>
+              <p className="text-gray-400 text-sm">
+                Verify your phone to continue
+              </p>
             </div>
 
             {authStep === "phone" && (
@@ -580,10 +625,14 @@ function ReservationPanel({
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className={`w-full bg-white/5 border ${errors.phone ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                  className={`w-full bg-white/5 border ${
+                    errors.phone ? "border-red-500" : "border-white/10"
+                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
                   placeholder="+44 123 456 7890"
                 />
-                {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
+                {errors.phone && (
+                  <p className="text-red-400 text-xs mt-1">{errors.phone}</p>
+                )}
                 <button
                   type="button"
                   onClick={handleSendCode}
@@ -606,10 +655,16 @@ function ReservationPanel({
                   value={formData.code}
                   onChange={handleChange}
                   maxLength={6}
-                  className={`w-full bg-white/5 border ${errors.code ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white text-center text-2xl tracking-widest placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                  className={`w-full bg-white/5 border ${
+                    errors.code ? "border-red-500" : "border-white/10"
+                  } rounded-xl px-4 py-3 text-white text-center text-2xl tracking-widest placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
                   placeholder="000000"
                 />
-                {errors.code && <p className="text-red-400 text-xs mt-1 text-center">{errors.code}</p>}
+                {errors.code && (
+                  <p className="text-red-400 text-xs mt-1 text-center">
+                    {errors.code}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={handleVerifyCode}
@@ -630,7 +685,9 @@ function ReservationPanel({
 
             {authStep === "register" && (
               <div className="space-y-3">
-                <p className="text-white text-sm text-center mb-4">Complete your profile</p>
+                <p className="text-white text-sm text-center mb-4">
+                  Complete your profile
+                </p>
                 <div>
                   <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
                     <FiUser className="text-[#fe9a00]" />
@@ -641,10 +698,14 @@ function ReservationPanel({
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className={`w-full bg-white/5 border ${errors.name ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    className={`w-full bg-white/5 border ${
+                      errors.name ? "border-red-500" : "border-white/10"
+                    } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
                     placeholder="John"
                   />
-                  {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+                  {errors.name && (
+                    <p className="text-red-400 text-xs mt-1">{errors.name}</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
@@ -656,10 +717,16 @@ function ReservationPanel({
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
-                    className={`w-full bg-white/5 border ${errors.lastName ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    className={`w-full bg-white/5 border ${
+                      errors.lastName ? "border-red-500" : "border-white/10"
+                    } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
                     placeholder="Doe"
                   />
-                  {errors.lastName && <p className="text-red-400 text-xs mt-1">{errors.lastName}</p>}
+                  {errors.lastName && (
+                    <p className="text-red-400 text-xs mt-1">
+                      {errors.lastName}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
@@ -671,10 +738,14 @@ function ReservationPanel({
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full bg-white/5 border ${errors.email ? "border-red-500" : "border-white/10"} rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    className={`w-full bg-white/5 border ${
+                      errors.email ? "border-red-500" : "border-white/10"
+                    } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
                     placeholder="john@example.com"
                   />
-                  {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
+                  {errors.email && (
+                    <p className="text-red-400 text-xs mt-1">{errors.email}</p>
+                  )}
                 </div>
                 <button
                   type="button"
@@ -682,7 +753,9 @@ function ReservationPanel({
                   disabled={isSubmitting}
                   className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
                 >
-                  {isSubmitting ? "Creating Account..." : "Complete Registration"}
+                  {isSubmitting
+                    ? "Creating Account..."
+                    : "Complete Registration"}
                 </button>
               </div>
             )}
@@ -691,363 +764,378 @@ function ReservationPanel({
 
         {/* Form */}
         {step === "details" && (
-        <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5">
-          {/* Personal Information Section */}
-          <div>
-            <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
-                1
-              </div>
-              Personal Information
-            </h3>
+          <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5">
+            {/* Personal Information Section */}
+            <div>
+              <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
+                  1
+                </div>
+                Personal Information
+              </h3>
 
-            <div className="space-y-3">
-              <div>
-                <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                  <FiUser className="text-[#fe9a00]" />
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className={`w-full bg-white/5 border ${
-                    errors.name ? "border-red-500" : "border-white/10"
-                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
-                  placeholder="John Doe"
-                />
-                {errors.name && (
-                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
-                    <FiAlertCircle className="text-xs" />
-                    {errors.name}
-                  </p>
-                )}
-              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiUser className="text-[#fe9a00]" />
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border ${
+                      errors.name ? "border-red-500" : "border-white/10"
+                    } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    placeholder="John Doe"
+                  />
+                  {errors.name && (
+                    <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                      <FiAlertCircle className="text-xs" />
+                      {errors.name}
+                    </p>
+                  )}
+                </div>
 
-              <div>
-                <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                  <FiMail className="text-[#fe9a00]" />
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full bg-white/5 border ${
-                    errors.email ? "border-red-500" : "border-white/10"
-                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
-                  placeholder="john@example.com"
-                />
-                {errors.email && (
-                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
-                    <FiAlertCircle className="text-xs" />
-                    {errors.email}
-                  </p>
-                )}
-              </div>
+                <div>
+                  <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiMail className="text-[#fe9a00]" />
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border ${
+                      errors.email ? "border-red-500" : "border-white/10"
+                    } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    placeholder="john@example.com"
+                  />
+                  {errors.email && (
+                    <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                      <FiAlertCircle className="text-xs" />
+                      {errors.email}
+                    </p>
+                  )}
+                </div>
 
-              <div>
-                <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                  <FiPhone className="text-[#fe9a00]" />
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className={`w-full bg-white/5 border ${
-                    errors.phone ? "border-red-500" : "border-white/10"
-                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
-                  placeholder="+44 123 456 7890"
-                />
-                {errors.phone && (
-                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
-                    <FiAlertCircle className="text-xs" />
-                    {errors.phone}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t border-white/10"></div>
-
-          {/* Rental Details Section */}
-          <div>
-            <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
-                2
-              </div>
-              Rental Details
-            </h3>
-
-            <div className="space-y-3">
-              <div>
-                <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                  <FiMapPin className="text-[#fe9a00]" />
-                  Office Location
-                </label>
-                <CustomSelect
-                  options={offices}
-                  value={formData.office}
-                  onChange={(value) => setFormData((prev) => ({ ...prev, office: value }))}
-                  placeholder="Select office"
-                />
-                {errors.office && (
-                  <p className="text-red-400 text-xs mt-1">{errors.office}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                  <FiCalendar className="text-[#fe9a00]" />
-                  Pickup & Return Dates
-                </label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowDateRange(!showDateRange)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-left focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all"
-                  >
-                    {dateRange[0].startDate && dateRange[0].endDate
-                      ? `${format(dateRange[0].startDate, "MMM dd")} - ${format(dateRange[0].endDate, "MMM dd, yyyy")}`
-                      : "Select dates"}
-                  </button>
-                  {showDateRange && (
-                    <div className="absolute z-50 mt-2">
-                      <DateRange
-                        ranges={dateRange}
-                        onChange={(item) => {
-                          setDateRange([item.selection]);
-                          setFormData((prev) => ({
-                            ...prev,
-                            pickupDate: format(item.selection.startDate!, "yyyy-MM-dd"),
-                            returnDate: format(item.selection.endDate!, "yyyy-MM-dd"),
-                          }));
-                        }}
-                        minDate={new Date()}
-                        rangeColors={["#fe9a00"]}
-                      />
-                    </div>
+                <div>
+                  <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiPhone className="text-[#fe9a00]" />
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border ${
+                      errors.phone ? "border-red-500" : "border-white/10"
+                    } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    placeholder="+44 123 456 7890"
+                  />
+                  {errors.phone && (
+                    <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                      <FiAlertCircle className="text-xs" />
+                      {errors.phone}
+                    </p>
                   )}
                 </div>
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
+            {/* Divider */}
+            <div className="border-t border-white/10"></div>
+
+            {/* Rental Details Section */}
+            <div>
+              <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
+                  2
+                </div>
+                Rental Details
+              </h3>
+
+              <div className="space-y-3">
                 <div>
                   <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                    <FiClock className="text-[#fe9a00]" />
-                    Pickup Time
+                    <FiMapPin className="text-[#fe9a00]" />
+                    Office Location
                   </label>
-                  <TimePickerInput
-                    value={formData.pickupTime}
-                    onChange={(time) => setFormData((prev) => ({ ...prev, pickupTime: time }))}
-                    minTime="00:00"
-                    maxTime="23:45"
+                  <CustomSelect
+                    options={offices}
+                    value={formData.office}
+                    onChange={(value) =>
+                      setFormData((prev) => ({ ...prev, office: value }))
+                    }
+                    placeholder="Select office"
                   />
+                  {errors.office && (
+                    <p className="text-red-400 text-xs mt-1">{errors.office}</p>
+                  )}
                 </div>
+
                 <div>
                   <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                    <FiClock className="text-[#fe9a00]" />
-                    Return Time
+                    <FiCalendar className="text-[#fe9a00]" />
+                    Pickup & Return Dates
                   </label>
-                  <TimePickerInput
-                    value={formData.returnTime}
-                    onChange={(time) => setFormData((prev) => ({ ...prev, returnTime: time }))}
-                    minTime="00:00"
-                    maxTime="23:45"
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowDateRange(!showDateRange)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-left focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all"
+                    >
+                      {dateRange[0].startDate && dateRange[0].endDate
+                        ? `${format(
+                            dateRange[0].startDate,
+                            "MMM dd"
+                          )} - ${format(dateRange[0].endDate, "MMM dd, yyyy")}`
+                        : "Select dates"}
+                    </button>
+                    {showDateRange && (
+                      <div className="absolute z-50 mt-2">
+                        <DateRange
+                          ranges={dateRange}
+                          onChange={(item) => {
+                            setDateRange([item.selection]);
+                            setFormData((prev) => ({
+                              ...prev,
+                              pickupDate: format(
+                                item.selection.startDate!,
+                                "yyyy-MM-dd"
+                              ),
+                              returnDate: format(
+                                item.selection.endDate!,
+                                "yyyy-MM-dd"
+                              ),
+                            }));
+                          }}
+                          minDate={new Date()}
+                          rangeColors={["#fe9a00"]}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                      <FiClock className="text-[#fe9a00]" />
+                      Pickup Time
+                    </label>
+                    <TimePickerInput
+                      value={formData.pickupTime}
+                      onChange={(time) =>
+                        setFormData((prev) => ({ ...prev, pickupTime: time }))
+                      }
+                      minTime="00:00"
+                      maxTime="23:45"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                      <FiClock className="text-[#fe9a00]" />
+                      Return Time
+                    </label>
+                    <TimePickerInput
+                      value={formData.returnTime}
+                      onChange={(time) =>
+                        setFormData((prev) => ({ ...prev, returnTime: time }))
+                      }
+                      minTime="00:00"
+                      maxTime="23:45"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiUser className="text-[#fe9a00]" />
+                    Driver Age
+                  </label>
+                  <input
+                    type="number"
+                    name="driverAge"
+                    value={formData.driverAge}
+                    onChange={handleChange}
+                    min="18"
+                    max="100"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                  <FiUser className="text-[#fe9a00]" />
-                  Driver Age
-                </label>
-                <input
-                  type="number"
-                  name="driverAge"
-                  value={formData.driverAge}
-                  onChange={handleChange}
-                  min="18"
-                  max="100"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all"
-                />
-              </div>
+                <div>
+                  <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiMapPin className="text-[#fe9a00]" />
+                    Pickup Location
+                  </label>
+                  <input
+                    type="text"
+                    name="pickupLocation"
+                    value={formData.pickupLocation}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border ${
+                      errors.pickupLocation
+                        ? "border-red-500"
+                        : "border-white/10"
+                    } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    placeholder="London, UK"
+                  />
+                  {errors.pickupLocation && (
+                    <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
+                      <FiAlertCircle className="text-xs" />
+                      {errors.pickupLocation}
+                    </p>
+                  )}
+                </div>
 
-
-
-              <div>
-                <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                  <FiMapPin className="text-[#fe9a00]" />
-                  Pickup Location
-                </label>
-                <input
-                  type="text"
-                  name="pickupLocation"
-                  value={formData.pickupLocation}
-                  onChange={handleChange}
-                  className={`w-full bg-white/5 border ${
-                    errors.pickupLocation ? "border-red-500" : "border-white/10"
-                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
-                  placeholder="London, UK"
-                />
-                {errors.pickupLocation && (
-                  <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
-                    <FiAlertCircle className="text-xs" />
-                    {errors.pickupLocation}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                  <FiMessageSquare className="text-[#fe9a00]" />
-                  Additional Notes{" "}
-                  <span className="text-gray-500 text-xs font-normal">
-                    (Optional)
-                  </span>
-                </label>
-                <textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all resize-none"
-                  placeholder="Any special requirements or questions?"
-                  rows={3}
-                />
+                <div>
+                  <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiMessageSquare className="text-[#fe9a00]" />
+                    Additional Notes{" "}
+                    <span className="text-gray-500 text-xs font-normal">
+                      (Optional)
+                    </span>
+                  </label>
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleChange}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all resize-none"
+                    placeholder="Any special requirements or questions?"
+                    rows={3}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Divider */}
-          <div className="border-t border-white/10"></div>
+            {/* Divider */}
+            <div className="border-t border-white/10"></div>
 
-          {/* Cost Summary */}
-          <div className="bg-linear-to-br from-white/5 to-transparent border border-white/10 rounded-2xl p-4 space-y-3">
-            <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
-                3
-              </div>
-              Cost Summary
-            </h3>
+            {/* Cost Summary */}
+            <div className="bg-linear-to-br from-white/5 to-transparent border border-white/10 rounded-2xl p-4 space-y-3">
+              <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
+                  3
+                </div>
+                Cost Summary
+              </h3>
 
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-400">Hourly Rate</span>
-                <span className="text-white font-semibold">
-                  £{(van as any).pricingTiers?.[0]?.pricePerHour || 0} (from)
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-400">Security Deposit</span>
-                <span className="text-white font-semibold">
-                  £{van.deposit || 0}
-                </span>
-              </div>
-              <div className="border-t border-[#fe9a00]/20 pt-2 mt-2">
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between items-center">
-                  <span className="text-white font-bold">Deposit Due</span>
-                  <span className="text-[#fe9a00] font-black text-xl">
+                  <span className="text-gray-400">Hourly Rate</span>
+                  <span className="text-white font-semibold">
+                    £{(van as any).pricingTiers?.[0]?.pricePerHour || 0} (from)
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Security Deposit</span>
+                  <span className="text-white font-semibold">
                     £{van.deposit || 0}
                   </span>
                 </div>
+                <div className="border-t border-[#fe9a00]/20 pt-2 mt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white font-bold">Deposit Due</span>
+                    <span className="text-[#fe9a00] font-black text-xl">
+                      £{van.deposit || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mt-3">
+                <p className="text-blue-300 text-xs flex items-start gap-2">
+                  <FiInfo className="text-sm mt-0.5 shrink-0" />
+                  <span>
+                    Security deposit is fully refundable upon return of the van
+                    in good condition
+                  </span>
+                </p>
               </div>
             </div>
 
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mt-3">
-              <p className="text-blue-300 text-xs flex items-start gap-2">
-                <FiInfo className="text-sm mt-0.5 shrink-0" />
-                <span>
-                  Security deposit is fully refundable upon return of the van in
-                  good condition
+            {/* Terms & Conditions */}
+            <div>
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  name="acceptTerms"
+                  checked={formData.acceptTerms}
+                  onChange={handleChange}
+                  className="mt-1 w-5 h-5 rounded border-2 border-white/20 bg-white/5 checked:bg-[#fe9a00] checked:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all cursor-pointer"
+                />
+                <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
+                  I agree to the{" "}
+                  <a
+                    href="#"
+                    className="text-[#fe9a00] hover:underline font-semibold"
+                  >
+                    Terms & Conditions
+                  </a>{" "}
+                  and{" "}
+                  <a
+                    href="#"
+                    className="text-[#fe9a00] hover:underline font-semibold"
+                  >
+                    Privacy Policy
+                  </a>
                 </span>
-              </p>
-            </div>
-          </div>
-
-          {/* Terms & Conditions */}
-          <div>
-            <label className="flex items-start gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                name="acceptTerms"
-                checked={formData.acceptTerms}
-                onChange={handleChange}
-                className="mt-1 w-5 h-5 rounded border-2 border-white/20 bg-white/5 checked:bg-[#fe9a00] checked:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all cursor-pointer"
-              />
-              <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
-                I agree to the{" "}
-                <a
-                  href="#"
-                  className="text-[#fe9a00] hover:underline font-semibold"
-                >
-                  Terms & Conditions
-                </a>{" "}
-                and{" "}
-                <a
-                  href="#"
-                  className="text-[#fe9a00] hover:underline font-semibold"
-                >
-                  Privacy Policy
-                </a>
-              </span>
-            </label>
-            {errors.acceptTerms && (
-              <p className="text-red-400 text-xs mt-2 flex items-center gap-1 ml-8">
-                <FiAlertCircle className="text-xs" />
-                {errors.acceptTerms}
-              </p>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="space-y-3 pt-2">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-lg shadow-[#fe9a00]/20 hover:shadow-[#fe9a00]/40 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <FiCheckCircle className="text-xl" />
-                  Confirm Reservation
-                </>
+              </label>
+              {errors.acceptTerms && (
+                <p className="text-red-400 text-xs mt-2 flex items-center gap-1 ml-8">
+                  <FiAlertCircle className="text-xs" />
+                  {errors.acceptTerms}
+                </p>
               )}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold py-4 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel
-            </button>
-          </div>
+            </div>
 
-          {/* Trust Indicators */}
-          <div className="flex items-center justify-center gap-4 text-xs text-gray-400 pt-2">
-            <div className="flex items-center gap-1">
-              <FiCheckCircle className="text-green-500" />
-              <span>Secure Booking</span>
+            {/* Action Buttons */}
+            <div className="space-y-3 pt-2">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-lg shadow-[#fe9a00]/20 hover:shadow-[#fe9a00]/40 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <FiCheckCircle className="text-xl" />
+                    Confirm Reservation
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold py-4 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
             </div>
-            <div className="w-1 h-1 rounded-full bg-gray-600"></div>
-            <div className="flex items-center gap-1">
-              <FiCheckCircle className="text-green-500" />
-              <span>Instant Confirmation</span>
+
+            {/* Trust Indicators */}
+            <div className="flex items-center justify-center gap-4 text-xs text-gray-400 pt-2">
+              <div className="flex items-center gap-1">
+                <FiCheckCircle className="text-green-500" />
+                <span>Secure Booking</span>
+              </div>
+              <div className="w-1 h-1 rounded-full bg-gray-600"></div>
+              <div className="flex items-center gap-1">
+                <FiCheckCircle className="text-green-500" />
+                <span>Instant Confirmation</span>
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
         )}
       </div>
     </>

@@ -622,8 +622,6 @@ export default function Footer() {
         <div className="absolute bottom-1/3 left-1/4 w-2 h-2 rounded-full bg-[#fe9a00] opacity-40 animate-pulse delay-1000" />
       </div>
 
-      
-
       {/* Gradient Overlays */}
       <div className="absolute inset-0 bg-linear-to-t from-[#020617]/50 via-transparent to-transparent" />
       <div className="absolute inset-0 bg-linear-to-r from-[#020617] via-transparent to-[#020617]" />
@@ -896,7 +894,7 @@ export default function Footer() {
 
           {/* Bottom Bar */}
           <div className="footer-reveal">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-6 text-center md:text-left">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 text-center md:text-left">
               {/* Copyright */}
               <div className="text-gray-500 text-xs md:text-sm leading-relaxed">
                 © {currentYear}{" "}
@@ -905,20 +903,6 @@ export default function Footer() {
                 <br className="md:hidden" />
                 <span className="hidden md:inline mx-2">•</span>
                 <span>All rights reserved.</span>
-              </div>
-
-              {/* Powered By */}
-              <div className="flex items-center gap-2 text-xs md:text-sm">
-                <span className="text-gray-500">Powered by</span>
-                <a
-                  href="https://pgphp.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold text-[#fe9a00] hover:text-white transition-colors duration-300 flex items-center gap-1.5 group"
-                >
-                  PGPHP
-                  <FiHeart className="text-red-500 group-hover:scale-110 transition-transform duration-300 animate-pulse" />
-                </a>
               </div>
             </div>
           </div>

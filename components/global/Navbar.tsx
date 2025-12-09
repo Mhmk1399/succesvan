@@ -124,8 +124,6 @@ export default function Navbar() {
     });
   }, []);
 
-
-
   const toggleMenu = () => {
     if (!isOpen) {
       setIsOpen(true);
@@ -255,7 +253,11 @@ export default function Navbar() {
                   {showDropdown && (
                     <div className="absolute right-0 mt-2 w-48 bg-[#0f172b] border border-[#fe9a00]/30 rounded-lg shadow-xl overflow-hidden z-50">
                       <Link
-                        href={user.role === "admin" ? "/dashboard" : "/customerDashboard"}
+                        href={
+                          user.role === "admin"
+                            ? "/dashboard"
+                            : "/customerDashboard"
+                        }
                         className="flex items-center gap-3 px-4 py-3 text-white hover:bg-[#fe9a00]/10 hover:text-[#fe9a00] transition-all duration-300"
                         onClick={() => setShowDropdown(false)}
                       >
@@ -375,17 +377,26 @@ export default function Navbar() {
         <div className="p-6 border-t border-slate-200 space-y-4 pb-12 ">
           <div className="flex items-center space-x-3 text-[#fe9a00] text-sm">
             <FiPhone className="text-lg" />
-            <span className="font-semibold">+44 20 3011 1198</span>
+            <a href="tel:+442030111198" className="font-semibold">
+              +44 20 3011 1198
+            </a>
           </div>
           <div className="flex items-center space-x-3 text-[#fe9a00] text-sm">
             <FaMapMarkerAlt className="text-lg" />
-            <span className="font-semibold">London, UK</span>
+            <a
+              href="https://maps.google.com/?q=Strata+House+Waterloo+Road+London+NW2+7UH"
+              className="font-semibold"
+            >
+              London, UK
+            </a>
           </div>
           <div className="flex gap-3 pt-4">
             {user ? (
               <>
                 <Link
-                  href={user.role === "admin" ? "/dashboard" : "/customerDashboard"}
+                  href={
+                    user.role === "admin" ? "/dashboard" : "/customerDashboard"
+                  }
                   className="flex-1 px-4 py-2.5 text-center text-white rounded-lg hover:text-[#fe9a00] transition-all duration-300 font-medium text-sm hover:bg-white/5"
                   onClick={closeMenu}
                 >

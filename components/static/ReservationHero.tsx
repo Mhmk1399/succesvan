@@ -23,7 +23,7 @@ export default function ReservationHero() {
       {/* Fixed Search Bar */}
       {isScrolled && (
         <div className="fixed top-0 left-0 right-0 z-9999 bg-[#0f172b]/20 backdrop-blur-2xl shadow-2xl border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex items-center justify-between">
             <div className="group cursor-pointer">
               <Link href="/">
                 <Image
@@ -31,15 +31,15 @@ export default function ReservationHero() {
                   alt="SuccessVan Logo"
                   width={80}
                   height={50}
-                  className="h-10 w-24 group-hover:scale-110 transition-transform duration-300"
+                  className="h-8 sm:h-10 w-20 sm:w-24 group-hover:scale-110 transition-transform duration-300"
                   priority
                 />
               </Link>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <button
                 onClick={() => setIsFormOpen(!isFormOpen)}
-                className="px-6 py-2.5 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg text-sm"
+                className="px-4 sm:px-6 py-2 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg text-xs sm:text-sm"
               >
                 {isFormOpen ? "Close" : "Reserve Now"}
               </button>
@@ -49,19 +49,20 @@ export default function ReservationHero() {
       )}
 
       {/* Full Screen Form Modal */}
+
       {isFormOpen && (
         <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm overflow-y-auto">
-          <div className="min-h-screen flex items-center justify-center p-4 ">
-            <div className="w-full max-w-7xl bg-[#0f172b]/20 backdrop-blur-sm   border border-white/20 rounded-2xl p-6 md:p-6 shadow-2xl shadow-gray-900/50">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">
+          <div className="min-h-screen flex items-center justify-center p-2 sm:p-4">
+            <div className="w-full max-w-md sm:max-w-2xl lg:max-w-7xl bg-[#0f172b]/20 backdrop-blur-sm border border-white/20 rounded-2xl p-4 sm:p-6 shadow-2xl shadow-gray-900/50">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
                   Complete Your Reservation
                 </h2>
                 <button
                   onClick={() => setIsFormOpen(false)}
-                  className="text-white hover:text-amber-400 transition-colors"
+                  className="text-white hover:text-amber-400 transition-colors p-1"
                 >
-                  <FiX size={24} />
+                  <FiX size={20} className="sm:size-24" />
                 </button>
               </div>
               <ReservationForm
@@ -75,30 +76,30 @@ export default function ReservationHero() {
 
       <section
         ref={sectionRef}
-        className="relative w-full min-h-screen flex items-center justify-center pb-12 sm:pb-0 overflow-hidden"
+        className="relative w-full min-h-screen flex items-center justify-center pb-8 sm:pb-12 lg:pb-0 overflow-hidden"
       >
         <div className="absolute inset-0 z-0">
           <video
             autoPlay
             muted
             loop
-            className="absolute inset-0 w-full h-full object-cover blur-xs"
+            className="absolute inset-0 w-full h-full object-cover brightness-75 blur-xs"
           >
             <source src="/assets/videos/video.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/50"></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-28 md:mt-0">
-          <div className="space-y-8 md:space-y-12">
-            <div className="text-white">
-              <h1 className="text-4xl lg:text-7xl font-bold mb-4">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-16 sm:mt-20 md:mt-24 lg:mt-28">
+          <div className="space-y-6 sm:space-y-8 md:space-y-12">
+            <div className="text-white text-center sm:text-left">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-3 sm:mb-4 leading-tight">
                 Success Van Hire
               </h1>
-              <h2 className="text-2xl md:text-3xl font-semibold text-[#fe9a00] mb-6">
+              <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold text-[#fe9a00] mb-4 sm:mb-6">
                 RESERVATION
               </h2>
-              <p className="text-lg text-gray-200 leading-relaxed max-w-2xl">
+              <p className="md:text-lg text-sm sm:text-base text-gray-200 leading-relaxed max-w-2xl mx-auto sm:mx-0">
                 Success Van Hire offers affordable van rental services in
                 London, providing reliable options for individuals, businesses,
                 and movers alike. Whether you're relocating, delivering goods,
@@ -113,7 +114,7 @@ export default function ReservationHero() {
             </div>
 
             {/* Form Below Text - Mobile */}
-            <div className="md:hidden bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-2xl">
+            <div className="md:hidden bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-6 shadow-2xl">
               <ReservationForm isModal={false} />
             </div>
           </div>
