@@ -13,8 +13,6 @@ import {
   FiTruck,
   FiUser,
   FiMessageSquare,
-  FiMail,
-  FiPhone,
 } from "react-icons/fi";
 import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
@@ -261,12 +259,22 @@ export default function ReservationForm({
     try {
       // Store rental details in sessionStorage with time included
       const pickupDateTime = new Date(dateRange[0].startDate || new Date());
-      const [pickupHour, pickupMinute] = formData.pickupTime.split(':');
-      pickupDateTime.setHours(parseInt(pickupHour), parseInt(pickupMinute), 0, 0);
+      const [pickupHour, pickupMinute] = formData.pickupTime.split(":");
+      pickupDateTime.setHours(
+        parseInt(pickupHour),
+        parseInt(pickupMinute),
+        0,
+        0
+      );
 
       const returnDateTime = new Date(dateRange[0].endDate || new Date());
-      const [returnHour, returnMinute] = formData.returnTime.split(':');
-      returnDateTime.setHours(parseInt(returnHour), parseInt(returnMinute), 0, 0);
+      const [returnHour, returnMinute] = formData.returnTime.split(":");
+      returnDateTime.setHours(
+        parseInt(returnHour),
+        parseInt(returnMinute),
+        0,
+        0
+      );
 
       const rentalDetails = {
         office: formData.office,
@@ -274,22 +282,17 @@ export default function ReservationForm({
         returnDate: returnDateTime.toISOString(),
         pickupTime: formData.pickupTime,
         returnTime: formData.returnTime,
-        pickupLocation: offices.find(o => o._id === formData.office)?.name || "",
+        pickupLocation:
+          offices.find((o) => o._id === formData.office)?.name || "",
         driverAge: formData.driverAge,
         message: formData.message,
       };
       sessionStorage.setItem("rentalDetails", JSON.stringify(rentalDetails));
 
-      
-
-     
-
-      
-
       const url = `/reservation?category=${formData.category}&office=${formData.office}&age=${formData.driverAge}`;
       router.push(url);
-    } catch (error: any) {
-      showToast.error(error.message || "Reservation failed");
+    } catch (error) {
+      showToast.error("Reservation failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -304,7 +307,6 @@ export default function ReservationForm({
           : "space-y-6"
       }
     >
-     
       <div
         className={
           isInline
@@ -384,7 +386,7 @@ export default function ReservationForm({
             {showDateRange && (
               <div
                 className={`absolute left-0 mt-2 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 ${
-                  isInline ? "-top-64" : "-top-64"
+                  isInline ? "-top-72" : "-top-64"
                 }`}
               >
                 <DateRange
@@ -426,7 +428,7 @@ export default function ReservationForm({
         {/* Pickup Time */}
         <div>
           {dateRange[0].startDate && (
-            <p className="text-amber-300 text-xs mb-1">
+            <p className="text-amber-300 text-[10px] mb-1">
               {getAvailableTimeSlots(dateRange[0].startDate).info}
             </p>
           )}
@@ -459,7 +461,7 @@ export default function ReservationForm({
         {/* Return Time */}
         <div>
           {dateRange[0].endDate && (
-            <p className="text-amber-300  text-xs mb-1">
+            <p className="text-amber-300 text-[10px] mb-1">
               {getAvailableTimeSlots(dateRange[0].endDate).info}
             </p>
           )}
@@ -637,7 +639,7 @@ export default function ReservationForm({
               />
             )}
             {dateRange[0].startDate && (
-              <p className="text-amber-300 text-xs mt-0.5">
+              <p className="text-amber-300 text-[10px] mt-0.5">
                 {getAvailableTimeSlots(dateRange[0].startDate).info}
               </p>
             )}
@@ -663,7 +665,7 @@ export default function ReservationForm({
               />
             )}
             {dateRange[0].endDate && (
-              <p className="text-amber-300 text-xs mt-0.5">
+              <p className="text-amber-300 text-[10px] mt-0.5">
                 {getAvailableTimeSlots(dateRange[0].endDate).info}
               </p>
             )}
