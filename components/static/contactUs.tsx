@@ -59,7 +59,7 @@ const openingHours = [
   { days: "Sunday", hours: "By appointment only" },
 ];
 
-export default function ContactUs() {
+export default function Contact() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const formRef = useRef<HTMLFormElement>(null);

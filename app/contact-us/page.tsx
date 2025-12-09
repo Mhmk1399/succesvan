@@ -1,7 +1,23 @@
-import ContactUs from "@/components/static/contactUs";
+import { Metadata } from "next";
+import us from "@/components/static/contactUs";
 import FAQComponent from "@/components/static/fAQSection";
- 
-export default function Contact() {
+import Contact from "@/components/static/contactUs";
+
+export const metadata: Metadata = {
+  title: "Contact Us - Success Van Hire | Get in Touch for Van Rental London",
+  description:
+    "Contact Success Van Hire for reliable van rental services in London. Get quotes, ask questions, or book your van today. Phone, email, and online booking available.",
+  keywords:
+    "contact success van hire, van rental london contact, book van hire, van rental quotes london, success van hire phone number",
+  openGraph: {
+    title: "Contact Success Van Hire - Van Rental London",
+    description:
+      "Get in touch with London's trusted van rental service. Quick quotes, easy booking, and expert support available.",
+    type: "website",
+  },
+};
+
+export default function ContactUs() {
   const vanHireFAQs = [
     {
       question: "What is the age requirement to rent a van?",
@@ -95,7 +111,7 @@ export default function Contact() {
   ];
   return (
     <>
-      <ContactUs />
+      <Contact />
       <FAQComponent
         title="Frequently Asked Questions"
         subtitle="Find answers to common questions about our van hire services"

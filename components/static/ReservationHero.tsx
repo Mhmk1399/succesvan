@@ -62,7 +62,7 @@ export default function ReservationHero() {
                   onClick={() => setIsFormOpen(false)}
                   className="text-white hover:text-amber-400 transition-colors p-1"
                 >
-                  <FiX size={20} className="sm:size-24" />
+                  <FiX size={8} className="sm:size-8" />
                 </button>
               </div>
               <ReservationForm

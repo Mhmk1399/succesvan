@@ -6,9 +6,7 @@ import gsap from "gsap";
 import { showToast } from "@/lib/toast";
 import { useAuth } from "@/context/AuthContext";
 
-interface AuthFormProps {}
-
-export default function AuthForm({}: AuthFormProps) {
+export default function AuthForm() {
   const { setUser } = useAuth();
   const [step, setStep] = useState<"phone" | "code" | "register">("phone");
   const [formData, setFormData] = useState({
@@ -22,7 +20,6 @@ export default function AuthForm({}: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const formRef = useRef<HTMLDivElement>(null);
-  const switchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (formRef.current) {
@@ -46,7 +43,10 @@ export default function AuthForm({}: AuthFormProps) {
       const res = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "send-code", phoneNumber: formData.phoneNumber }),
+        body: JSON.stringify({
+          action: "send-code",
+          phoneNumber: formData.phoneNumber,
+        }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Failed to send code");
@@ -79,7 +79,7 @@ export default function AuthForm({}: AuthFormProps) {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Verification failed");
-      
+
       if (data.data.userExists) {
         localStorage.setItem("token", data.data.token);
         setUser(data.data.user);
@@ -108,7 +108,7 @@ export default function AuthForm({}: AuthFormProps) {
     } else if (!/\S+@\S+\.\S+/.test(formData.emailAddress)) {
       newErrors.emailAddress = "Email is invalid";
     }
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -129,11 +129,11 @@ export default function AuthForm({}: AuthFormProps) {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Registration failed");
-      
+
       localStorage.setItem("token", data.data.token);
       setUser(data.data.user);
       showToast.success("Account created! Redirecting...");
-      
+
       setTimeout(() => {
         window.location.href = "/";
       }, 1500);
@@ -159,12 +159,9 @@ export default function AuthForm({}: AuthFormProps) {
     }
   };
 
-
-
   return (
     <>
       <div className="w-full max-w-md mx-auto mt-20">
-
         <div
           ref={formRef}
           className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 shadow-2xl"
@@ -174,7 +171,7 @@ export default function AuthForm({}: AuthFormProps) {
               {step === "register" ? "Complete Profile" : "Welcome"}
             </h1>
             <p className="text-white/60">
-              {step === "register" 
+              {step === "register"
                 ? "Just a few more details"
                 : step === "code"
                 ? "Enter the code sent to your phone"
@@ -182,8 +179,14 @@ export default function AuthForm({}: AuthFormProps) {
             </p>
           </div>
 
-          <form 
-            onSubmit={step === "phone" ? handleSendCode : step === "code" ? handleVerifyCode : handleCompleteRegistration} 
+          <form
+            onSubmit={
+              step === "phone"
+                ? handleSendCode
+                : step === "code"
+                ? handleVerifyCode
+                : handleCompleteRegistration
+            }
             className="space-y-6"
           >
             {step === "phone" && (
@@ -203,7 +206,9 @@ export default function AuthForm({}: AuthFormProps) {
                   }`}
                 />
                 {errors.phoneNumber && (
-                  <p className="mt-1 text-red-400 text-sm">{errors.phoneNumber}</p>
+                  <p className="mt-1 text-red-400 text-sm">
+                    {errors.phoneNumber}
+                  </p>
                 )}
               </div>
             )}
@@ -226,7 +231,9 @@ export default function AuthForm({}: AuthFormProps) {
                     }`}
                   />
                   {errors.code && (
-                    <p className="mt-1 text-red-400 text-sm text-center">{errors.code}</p>
+                    <p className="mt-1 text-red-400 text-sm text-center">
+                      {errors.code}
+                    </p>
                   )}
                 </div>
                 <button
@@ -276,7 +283,9 @@ export default function AuthForm({}: AuthFormProps) {
                     }`}
                   />
                   {errors.lastName && (
-                    <p className="mt-1 text-red-400 text-sm">{errors.lastName}</p>
+                    <p className="mt-1 text-red-400 text-sm">
+                      {errors.lastName}
+                    </p>
                   )}
                 </div>
                 <div className="relative">
@@ -295,7 +304,9 @@ export default function AuthForm({}: AuthFormProps) {
                     }`}
                   />
                   {errors.emailAddress && (
-                    <p className="mt-1 text-red-400 text-sm">{errors.emailAddress}</p>
+                    <p className="mt-1 text-red-400 text-sm">
+                      {errors.emailAddress}
+                    </p>
                   )}
                 </div>
               </>
@@ -309,7 +320,11 @@ export default function AuthForm({}: AuthFormProps) {
               {isLoading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                  {step === "phone" ? "Sending Code..." : step === "code" ? "Verifying..." : "Creating Account..."}
+                  {step === "phone"
+                    ? "Sending Code..."
+                    : step === "code"
+                    ? "Verifying..."
+                    : "Creating Account..."}
                 </div>
               ) : step === "phone" ? (
                 "Send Code"
