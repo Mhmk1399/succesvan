@@ -1,12 +1,24 @@
+import { Metadata } from "next";
 import WelcomePage from "@/components/static/areas/westLondon";
 
- 
-const page = () => {
+export const metadata: Metadata = {
+  title: "Van Hire North West London - Success Van Hire | Local Van Rental",
+  description:
+    "Professional van hire services in North West London. Success Van Hire offers reliable, affordable van rental for Brent, Harrow, Ealing and surrounding areas.",
+  keywords:
+    "van hire north west london, van rental nw london, brent van hire, harrow van rental, ealing van hire, success van hire north west",
+  openGraph: {
+    title: "Van Hire North West London - Success Van Hire",
+    description:
+      "Local van rental services in North West London. Reliable vans for moving, delivery, and transport needs.",
+    type: "website",
+  },
+};
+
+export default function VanHireNorthWestLondon() {
   return (
     <div>
       <WelcomePage />
     </div>
   );
-};
-
-export default page;
+}
