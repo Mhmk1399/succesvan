@@ -34,7 +34,7 @@ async function setupCors() {
     await s3.send(new PutBucketCorsCommand(corsConfig));
     console.log("✅ CORS configured successfully for bucket:", env.AWS_S3_BUCKET);
   } catch (error) {
-    console.error("❌ Error:", error.message);
+    console.log("❌ Error:", error.message);
   }
 }
 

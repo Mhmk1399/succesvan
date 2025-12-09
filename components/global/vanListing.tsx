@@ -470,7 +470,7 @@ function ReservationPanel({
         }, 2000);
       }
     } catch (error: any) {
-      console.error("Reservation error:", error);
+      console.log("Reservation error:", error);
       setErrors({ submit: error.message || "Failed to create reservation" });
     } finally {
       setIsSubmitting(false);

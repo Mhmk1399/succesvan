@@ -45,7 +45,7 @@ async function setup() {
 
     console.log("✅ S3 bucket configured for public read access");
   } catch (error) {
-    console.error("❌ Error:", error.message);
+    console.log("❌ Error:", error.message);
   }
 }
 

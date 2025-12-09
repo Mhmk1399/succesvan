@@ -64,7 +64,7 @@ export default function CustomerDashboard() {
           setHasLicense(hasLicenseUploaded);
         }
       } catch (error) {
-        console.error("Failed to parse user data:", error);
+        console.log("Failed to parse user data:", error);
       }
     }
   };
@@ -99,7 +99,7 @@ export default function CustomerDashboard() {
           }
         }
       } catch (error) {
-        console.error("Failed to parse user data:", error);
+        console.log("Failed to parse user data:", error);
         localStorage.removeItem("user");
         localStorage.removeItem("token");
       }
@@ -279,7 +279,7 @@ function ReservesContent() {
           setHasLicense(hasLicenseUploaded);
         }
       } catch (error) {
-        console.error("Failed to parse user data:", error);
+        console.log("Failed to parse user data:", error);
       }
     }
   }, []);

@@ -78,7 +78,7 @@ export default function ReservationForm({
           phoneNumber: parsedUser.phoneData?.phoneNumber || "",
         }));
       } catch (error) {
-        console.error("Failed to parse user data");
+        console.log("Failed to parse user data");
       }
     }
   }, []);
@@ -95,7 +95,7 @@ export default function ReservationForm({
         setOffices(offData.data || []);
         setCategories(catData.data || []);
       } catch (error) {
-        console.error("Failed to fetch data:", error);
+        console.log("Failed to fetch data:", error);
       }
     };
     fetchData();
@@ -146,7 +146,7 @@ export default function ReservationForm({
           ]);
         }
       } catch (error) {
-        console.error("Error parsing voice:", error);
+        console.log("Error parsing voice:", error);
       }
     };
 

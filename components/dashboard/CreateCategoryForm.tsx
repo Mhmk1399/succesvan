@@ -39,7 +39,7 @@ export default function CategoriesContent() {
         const data = await res.json();
         if (data.success) setTypes(data.data);
       } catch (error) {
-        console.error("Failed to fetch types", error);
+        console.log("Failed to fetch types", error);
       }
     };
     fetchTypes();

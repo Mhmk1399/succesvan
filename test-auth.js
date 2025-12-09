@@ -22,8 +22,8 @@ async function testAPI(method, endpoint, body = null, useToken = false) {
     console.log('Response:', JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
-    console.error(`\n✗ ${method} ${endpoint}`);
-    console.error('Error:', error.message);
+    console.log(`\n✗ ${method} ${endpoint}`);
+    console.log('Error:', error.message);
     return null;
   }
 }

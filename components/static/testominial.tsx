@@ -92,7 +92,7 @@ export default function Testimonials({
           }
         }
       } catch (error) {
-        console.error("Failed to fetch testimonials", error);
+        console.log("Failed to fetch testimonials", error);
       }
     };
     fetchApprovedTestimonials();

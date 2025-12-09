@@ -41,7 +41,7 @@ Return ONLY valid JSON, no other text.`,
 
     return NextResponse.json(parsed);
   } catch (error) {
-    console.error("Error parsing voice:", error);
+    console.log("Error parsing voice:", error);
     return NextResponse.json(
       { error: "Failed to parse voice input" },
       { status: 500 }

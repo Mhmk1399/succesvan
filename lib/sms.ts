@@ -18,7 +18,7 @@ export async function sendSMS(to: string, message: string) {
     });
     return msg;
   } catch (error: any) {
-    console.error('Twilio Error:', error.message);
+    console.log('Twilio Error:', error.message);
     console.log(`[FALLBACK] SMS to ${to}: ${message}`);
     return { sid: 'fallback-mode', status: 'sent' };
   }

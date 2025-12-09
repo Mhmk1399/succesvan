@@ -22,7 +22,7 @@ function ReservationContent() {
         if (addOnsData.success) setAddOns(addOnsData.data);
         setLoaded(true);
       })
-      .catch(err => console.error("Failed to fetch data", err));
+      .catch(err => console.log("Failed to fetch data", err));
   }, []);
 
   useEffect(() => {

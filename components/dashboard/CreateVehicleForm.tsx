@@ -54,7 +54,7 @@ export default function VehiclesContent() {
         setCategories(catData.data || []);
         setOffices(offData.data || []);
       } catch (error) {
-        console.error("Failed to fetch data:", error);
+        console.log("Failed to fetch data:", error);
       } finally {
         setLoadingCategories(false);
         setLoadingOffices(false);

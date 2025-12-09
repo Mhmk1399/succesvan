@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     
     return successResponse(reservations);
   } catch (error: any) {
-    console.error("[Reservations API] Error:", error.message);
+    console.log("[Reservations API] Error:", error.message);
     return errorResponse(error.message, 500);
   }
 }

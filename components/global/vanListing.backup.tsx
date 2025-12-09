@@ -57,7 +57,7 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
       fetch("/api/categories")
         .then((res) => res.json())
         .then((data) => data.success && setCategories(data.data))
-        .catch((err) => console.error("Failed to fetch categories", err));
+        .catch((err) => console.log("Failed to fetch categories", err));
     }
   }, []);
 
@@ -215,7 +215,7 @@ function ReservationPanel({
     fetch("/api/offices")
       .then((res) => res.json())
       .then((data) => setOffices(data.data || []))
-      .catch((err) => console.error("Failed to fetch offices", err));
+      .catch((err) => console.log("Failed to fetch offices", err));
   }, []);
 
   // Check if user is logged in and load URL params
@@ -495,7 +495,7 @@ function ReservationPanel({
         }, 2000);
       }
     } catch (error: any) {
-      console.error("Reservation error:", error);
+      console.log("Reservation error:", error);
       setErrors({ submit: error.message || "Failed to create reservation" });
     } finally {
       setIsSubmitting(false);
