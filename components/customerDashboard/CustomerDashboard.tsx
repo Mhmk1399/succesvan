@@ -206,7 +206,7 @@ export default function CustomerDashboard() {
         <div className="p-4 sm:p-6 lg:p-8">
           {!hasLicense && (
             <div className="mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-start gap-3">
-              <FiAlertCircle className="text-yellow-500 text-xl mt-0.5 flex-shrink-0" />
+              <FiAlertCircle className="text-yellow-500 text-xl mt-0.5  shrink-0" />
               <div>
                 <h3 className="text-yellow-500 font-bold mb-1">License Required</h3>
                 <p className="text-gray-300 text-sm">
