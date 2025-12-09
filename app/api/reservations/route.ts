@@ -13,9 +13,33 @@ export async function GET(req: NextRequest) {
     await connect();
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
+    const officeId = searchParams.get("office");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
     
     console.log("[Reservations API] userId:", userId);
-    const query = userId ? { user: userId } : {};
+    const query: any = {};
+    if (userId) query.user = userId;
+    if (officeId) query.office = officeId;
+    
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const startEnd = new Date(startDate);
+      startEnd.setHours(23, 59, 59, 999);
+      query.startDate = { $lte: startEnd };
+      query.endDate = { $gte: start };
+    }
+    
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(0, 0, 0, 0);
+      const endEnd = new Date(endDate);
+      endEnd.setHours(23, 59, 59, 999);
+      query.startDate = { ...query.startDate, $lte: endEnd };
+      query.endDate = { ...query.endDate, $gte: end };
+    }
+    
     console.log("[Reservations API] query:", query);
     
     const reservations = await Reservation.find(query)
