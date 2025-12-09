@@ -12,18 +12,18 @@ import {
 } from "react-icons/fi";
 
 export const useCases = [
-  { icon: <FiBox className="text-2xl" />, text: "Removals & Moving Home" },
+  { icon: <FiBox className="text-lg md:text-2xl" />, text: "Removals & Moving Home" },
   {
-    icon: <FiHome className="text-2xl" />,
+    icon: <FiHome className="text-lg md:text-2xl" />,
     text: "Large Furniture Transport",
   },
-  { icon: <FiShoppingCart className="text-2xl" />, text: "IKEA Purchases" },
-  { icon: <FiTruck className="text-2xl" />, text: "Business Deliveries" },
+  { icon: <FiShoppingCart className="text-lg md:text-2xl" />, text: "IKEA Purchases" },
+  { icon: <FiTruck className="text-lg md:text-2xl" />, text: "Business Deliveries" },
   {
-    icon: <FiArrowRight className="text-2xl" />,
+    icon: <FiArrowRight className="text-lg md:text-2xl" />,
     text: "Local & Long Distance",
   },
-  { icon: <FiZap className="text-2xl" />, text: "Last Minute Hire" },
+  { icon: <FiZap className="text-lg md:text-2xl" />, text: "Last Minute Hire" },
 ];
 
 export const features = [

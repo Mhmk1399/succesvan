@@ -153,11 +153,11 @@ export default function AutomaticVanHire() {
       </div>
 
       {/* Hero Section */}
-      <section className="relative">
+      <section className="relative mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             {/* Main Heading */}
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white mb-6 leading-tight">
+            <h1 className="text-2xl sm:text-5xl lg:text-7xl font-black text-white mb-6 leading-tight">
               Welcome to
               <br />
               <span className="text-transparent bg-clip-text bg-linear-to-r from-[#fe9a00] to-orange-500">
@@ -165,11 +165,11 @@ export default function AutomaticVanHire() {
               </span>
             </h1>
 
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-300 mb-8">
+            <h2 className="text-base sm:text-3xl lg:text-4xl font-bold text-gray-300 mb-8">
               Your Trusted Automatic Van Rental Company in London
             </h2>
 
-            <p className="text-xl text-gray-400 max-w-4xl mx-auto mb-12 leading-relaxed">
+            <p className="text-sm md:text-base text-gray-400 max-w-4xl mx-auto mb-12 leading-relaxed">
               Looking for a reliable van rental service in London? Look no
               further than Success Van Hire! We are a leading van rental company
               offering a fleet of automatic vans for all your transportation
@@ -189,12 +189,12 @@ export default function AutomaticVanHire() {
                   <div className="text-xs text-white/80">
                     Reserve your automatic van
                   </div>
-                  <div className="font-black">Call 020 3011 1198</div>
+                  <div className="font-black text-xs md:text-base">Call 020 3011 1198</div>
                 </div>
               </a>
               <Link
                 href="/reservation"
-                className="px-8 py-5 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-lg hover:bg-white/10 hover:border-[#fe9a00]/30 transition-all duration-300 flex items-center gap-2"
+                className="px-8 py-5 rounded-xl bg-white/5 border text-xs md:text-base border-white/10 text-white font-bold   hover:bg-white/10 hover:border-[#fe9a00]/30 transition-all duration-300 flex items-center gap-2"
               >
                 <TbAutomaticGearbox className="text-2xl" />
                 Book Automatic Van Here
@@ -208,8 +208,8 @@ export default function AutomaticVanHire() {
                   key={index}
                   className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#fe9a00]/20 transition-all duration-300"
                 >
-                  <div className="text-[#fe9a00]">{useCase.icon}</div>
-                  <span className="text-white font-semibold text-sm">
+                  <div className="text-[#fe9a00] text-xs md:text-sm">{useCase.icon}</div>
+                  <span className="text-white font-semibold text-xs md:text-sm">
                     {useCase.text}
                   </span>
                 </div>
@@ -250,14 +250,14 @@ export default function AutomaticVanHire() {
                   className={`h-full bg-linear-to-br ${feature.linear} backdrop-blur-sm border border-white/10 rounded-3xl p-8 hover:border-[#fe9a00]/30 transition-all duration-500 hover:scale-105`}
                 >
                   <div
-                    className={`w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center ${feature.iconColor} mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}
+                    className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center ${feature.iconColor} mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}
                   >
                     {feature.icon}
                   </div>
-                  <h3 className="text-2xl font-black text-white mb-4">
+                  <h3 className="text-lg md:text-2xl font-black text-white mb-4">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-300 leading-relaxed">
+                  <p className="text-gray-300 leading-relaxed text-sm md:text-base">
                     {feature.description}
                   </p>
                 </div>
@@ -326,7 +326,7 @@ export default function AutomaticVanHire() {
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="bg-white/5 rounded-xl p-6 text-center border border-white/10">
-                    <div className="text-4xl font-black text-[#fe9a00] mb-2">
+                    <div className="text-xl md:text-4xl font-black text-[#fe9a00] mb-2">
                       100%
                     </div>
                     <div className="text-gray-300 text-sm font-semibold">
@@ -334,7 +334,7 @@ export default function AutomaticVanHire() {
                     </div>
                   </div>
                   <div className="bg-white/5 rounded-xl p-6 text-center border border-white/10">
-                    <div className="text-4xl font-black text-[#fe9a00] mb-2">
+                    <div className="text-xl md:text-4xl font-black text-[#fe9a00] mb-2">
                       Modern
                     </div>
                     <div className="text-gray-300 text-sm font-semibold">
@@ -411,10 +411,10 @@ export default function AutomaticVanHire() {
           <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-[#fe9a00] to-orange-500 p-1">
             <div className="bg-linear-to-br from-[#0f172b] to-[#1e293b] rounded-3xl p-8 lg:p-16">
               <div className="text-center max-w-4xl mx-auto">
-                <h2 className="text-3xl lg:text-5xl font-black text-white mb-6">
+                <h2 className="text-xl lg:text-5xl font-black text-white mb-6">
                   Book Your Automatic Van Rental Today
                 </h2>
-                <p className="text-gray-300 text-xl mb-10 leading-relaxed">
+                <p className="text-gray-300 text-sm mdLtext-lg mb-10 leading-relaxed">
                   Experience the convenience and comfort of driving an automatic
                   van with Success Van Hire. We are available to answer any
                   questions you may have, provide personalized recommendations,
@@ -433,12 +433,12 @@ export default function AutomaticVanHire() {
                       <div className="text-sm text-white/80">
                         Call us now to book
                       </div>
-                      <div className="font-black text-2xl">020 3011 1198</div>
+                      <div className="font-black md:text-2xl">020 3011 1198</div>
                     </div>
                   </a>
                   <Link
                     href="/reservation"
-                    className="w-full sm:w-auto px-10 py-6 rounded-xl bg-white/5 border-2 border-white/20 text-white font-bold text-xl hover:bg-white/10 hover:border-white/30 transition-all duration-300 flex items-center justify-center gap-3"
+                    className="w-full sm:w-auto px-10 py-6 rounded-xl bg-white/5 border-2 border-white/20 text-white font-bold md:text-xl hover:bg-white/10 hover:border-white/30 transition-all duration-300 flex items-center justify-center gap-3"
                   >
                     <TbAutomaticGearbox className="text-3xl" />
                     Book Online Now
