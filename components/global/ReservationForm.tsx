@@ -508,8 +508,9 @@ export default function ReservationForm({
             className={`w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors ${
               isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
             }`}
-            placeholder="18+"
-            min="18"
+            placeholder="25-70"
+            min="25"
+            max="70"
           />
         </div>
 

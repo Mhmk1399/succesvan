@@ -962,8 +962,9 @@ function ReservationPanel({
                     name="driverAge"
                     value={formData.driverAge}
                     onChange={handleChange}
-                    min="18"
-                    max="100"
+                    placeholder="25-70"
+            min="25"
+            max="70"
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all"
                   />
                 </div>
