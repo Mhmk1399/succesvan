@@ -410,8 +410,8 @@ export default function HeroSection() {
     >
       {/* Enhanced Background */}
       <div className="hero-background absolute inset-0 opacity-30">
-         <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-amber-500/15 rounded-full blur-3xl animate-pulse-slow"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-orange-500/15 rounded-full blur-3xl animate-pulse-slower"></div>
+         <div className="absolute top-1/4 left-1/4 w-125 h-125 bg-amber-500/15 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-125 h-125 bg-orange-500/15 rounded-full blur-3xl animate-pulse-slower"></div>
 
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-transparent to-transparent"></div>

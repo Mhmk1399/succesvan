@@ -83,15 +83,7 @@ export default function MeetOurTeam() {
           }
         );
 
-        // Floating animation
-        gsap.to(card, {
-          y: -15,
-          duration: 2.5 + index * 0.3,
-          repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut",
-          delay: index * 0.3,
-        });
+        
       });
     }, sectionRef);
 
