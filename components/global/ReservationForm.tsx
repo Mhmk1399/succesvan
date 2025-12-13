@@ -23,6 +23,8 @@ import TimeSelect from "@/components/ui/TimeSelect";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import VoiceConfirmationModal from "@/components/global/VoiceConfirmationModal";
 import ConversationalModal from "@/components/global/ConversationalModal";
+import AIAgentModal from "@/components/global/AIAgentModal";
+import { FiCpu } from "react-icons/fi";
 
 interface ReservationFormProps {
   isModal?: boolean;
@@ -54,6 +56,9 @@ export default function ReservationForm({
 
   // Conversational modal state
   const [showConversationalModal, setShowConversationalModal] = useState(false);
+
+  // AI Agent modal state (comprehensive consultant)
+  const [showAIAgentModal, setShowAIAgentModal] = useState(false);
 
   const [dateRange, setDateRange] = useState<Range[]>([
     {
@@ -231,6 +236,20 @@ export default function ReservationForm({
   const handleConversationalMode = () => {
     console.log("💬 [Form] Starting conversational mode");
     setShowConversationalModal(true);
+  };
+
+  const handleAIAgentMode = () => {
+    console.log("🤖 [Form] Starting AI Agent consultant mode");
+    setShowAIAgentModal(true);
+  };
+
+  const handleAIAgentComplete = (reservationId: string, bookingData: any) => {
+    console.log("✅ [Form] AI Agent completed booking:", reservationId, bookingData);
+    setShowAIAgentModal(false);
+    
+    // Navigate to the reservation page or show success
+    showToast.success("Booking created successfully!");
+    router.push(`/customerDashboard`);
   };
 
   const handleConversationComplete = (data: any) => {
@@ -705,6 +724,17 @@ export default function ReservationForm({
             >
               {isSubmitting ? "Booking..." : "RESERVE NOW"}
             </button>
+            
+            {/* AI Consultant Button - New comprehensive agent */}
+            <button
+              type="button"
+              onClick={handleAIAgentMode}
+              className="w-full px-4 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all text-sm bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
+            >
+              <FiCpu className="text-lg" />
+              🤖 AI Van Consultant - Tell Me What You Need!
+            </button>
+            
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -712,7 +742,7 @@ export default function ReservationForm({
                 className="w-full px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm bg-linear-to-r from-purple-500 to-pink-500 text-white hover:from-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
               >
                 <FiMessageSquare className="text-lg" />
-                Talk to AI
+                Voice Form
               </button>
               <button
                 type="button"
@@ -727,7 +757,7 @@ export default function ReservationForm({
                 }`}
               >
                 <FiMic className="text-lg" />
-                {isRecording ? "Recording" : isProcessing ? "Processing" : "Voice"}
+                {isRecording ? "Recording" : isProcessing ? "Processing" : "Quick Fill"}
               </button>
             </div>
           </div>
@@ -999,6 +1029,16 @@ export default function ReservationForm({
         onComplete={handleConversationComplete}
         offices={offices}
         categories={categories}
+      />
+
+      {/* AI Agent Modal - Comprehensive Consultant */}
+      <AIAgentModal
+        isOpen={showAIAgentModal}
+        onClose={() => {
+          console.log("❌ [Form] AI Agent modal closed");
+          setShowAIAgentModal(false);
+        }}
+        onComplete={handleAIAgentComplete}
       />
     </form>
   );
