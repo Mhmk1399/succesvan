@@ -31,8 +31,14 @@ export async function GET(req: NextRequest) {
       query.endDate = { $gte: end, $lte: endEnd };
     }
 
-    const reservations = await Reservation.find(query);
-    return successResponse(reservations);
+    const reservations = await Reservation.find(query).populate("office");
+    
+    const reservedSlots = reservations.map((r: any) => ({
+      startTime: new Date(r.startDate).toTimeString().slice(0, 5),
+      endTime: new Date(r.endDate).toTimeString().slice(0, 5),
+    }));
+    
+    return successResponse({ reservations, reservedSlots });
   } catch (error: any) {
     return errorResponse(error.message, 500);
   }

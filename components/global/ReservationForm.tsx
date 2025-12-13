@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { DateRange, Range } from "react-date-range";
 import "react-date-range/dist/styles.css";
@@ -18,7 +18,8 @@ import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
 import { Office, Category } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
-import TimePickerInput from "@/components/ui/TimePickerInput";
+import { generateTimeSlots, isTimeSlotAvailable } from "@/utils/timeSlots";
+import TimeSelect from "@/components/ui/TimeSelect";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import VoiceConfirmationModal from "@/components/global/VoiceConfirmationModal";
 import ConversationalModal from "@/components/global/ConversationalModal";
@@ -43,6 +44,7 @@ export default function ReservationForm({
   const [categories, setCategories] = useState<Category[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState<any>(null);
+  const [reservedSlots, setReservedSlots] = useState<{ startTime: string; endTime: string }[]>([]);
   
   // Voice modal state
   const [showVoiceModal, setShowVoiceModal] = useState(false);
@@ -70,6 +72,59 @@ export default function ReservationForm({
     email: "",
     phoneNumber: "",
   });
+
+  const pickupTimeSlots = useMemo(() => {
+    if (!formData.office || !dateRange[0].startDate) return [];
+    const office = offices.find(o => o._id === formData.office);
+    if (!office) return [];
+    
+    const date = dateRange[0].startDate;
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][date.getDay()];
+    
+    const specialDay = office.specialDays?.find((sd: any) => sd.month === month && sd.day === day);
+    let start = '00:00', end = '23:59';
+    
+    if (specialDay && specialDay.isOpen) {
+      start = specialDay.startTime;
+      end = specialDay.endTime;
+    } else {
+      const workingDay = office.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+      if (workingDay) {
+        start = workingDay.startTime;
+        end = workingDay.endTime;
+      }
+    }
+    
+    return generateTimeSlots(start, end, 15);
+  }, [formData.office, dateRange, offices]);
+
+  const returnTimeSlots = useMemo(() => {
+    if (!formData.office || !dateRange[0].endDate || !formData.pickupTime) return [];
+    const office = offices.find(o => o._id === formData.office);
+    if (!office) return [];
+    
+    const date = dateRange[0].endDate;
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][date.getDay()];
+    
+    const specialDay = office.specialDays?.find((sd: any) => sd.month === month && sd.day === day);
+    let end = '23:59';
+    
+    if (specialDay && specialDay.isOpen) {
+      end = specialDay.endTime;
+    } else {
+      const workingDay = office.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+      if (workingDay) {
+        end = workingDay.endTime;
+      }
+    }
+    
+    const allSlots = generateTimeSlots(formData.pickupTime, end, 15);
+    return allSlots.filter(slot => slot > formData.pickupTime);
+  }, [formData.office, formData.pickupTime, dateRange, offices]);
 
   // Initialize voice recording hook
   const { isRecording, isProcessing, toggleRecording } = useVoiceRecording({
@@ -127,6 +182,16 @@ export default function ReservationForm({
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (formData.office && dateRange[0].startDate) {
+      const startDate = dateRange[0].startDate.toISOString().split('T')[0];
+      fetch(`/api/reservations/by-office?office=${formData.office}&startDate=${startDate}`)
+        .then(res => res.json())
+        .then(data => setReservedSlots(data.data?.reservedSlots || []))
+        .catch(err => console.error(err));
+    }
+  }, [formData.office, dateRange]);
 
   const handleGlobalVoice = () => {
     console.log("🎤 [Form] Voice button clicked");
@@ -516,18 +581,11 @@ export default function ReservationForm({
           </label>
 
           {dateRange[0].startDate && (
-            <TimePickerInput
-              key={`pickup-${
-                formData.office
-              }-${dateRange[0].startDate.toDateString()}`}
+            <TimeSelect
               value={formData.pickupTime}
               onChange={(time) => handleTimeChange("pickupTime", time)}
-              minTime={
-                getAvailableTimeSlots(dateRange[0].startDate).start || "00:00"
-              }
-              maxTime={
-                getAvailableTimeSlots(dateRange[0].startDate).end || "23:59"
-              }
+              slots={pickupTimeSlots}
+              reservedSlots={reservedSlots}
               isInline={isInline}
             />
           )}
@@ -548,18 +606,11 @@ export default function ReservationForm({
             <FiClock className="text-amber-400 text-lg" /> To
           </label>
           {dateRange[0].endDate && (
-            <TimePickerInput
-              key={`return-${
-                formData.office
-              }-${dateRange[0].endDate.toDateString()}`}
+            <TimeSelect
               value={formData.returnTime}
               onChange={(time) => handleTimeChange("returnTime", time)}
-              minTime={
-                getAvailableTimeSlots(dateRange[0].endDate).start || "00:00"
-              }
-              maxTime={
-                getAvailableTimeSlots(dateRange[0].endDate).end || "23:59"
-              }
+              slots={returnTimeSlots}
+              reservedSlots={reservedSlots}
               isInline={isInline}
             />
           )}
@@ -716,18 +767,11 @@ export default function ReservationForm({
               Pickup Time
             </label>
             {dateRange[0].startDate && (
-              <TimePickerInput
-                key={`mobile-pickup-${
-                  formData.office
-                }-${dateRange[0].startDate.toDateString()}`}
+              <TimeSelect
                 value={formData.pickupTime}
                 onChange={(time) => handleTimeChange("pickupTime", time)}
-                minTime={
-                  getAvailableTimeSlots(dateRange[0].startDate).start || "00:00"
-                }
-                maxTime={
-                  getAvailableTimeSlots(dateRange[0].startDate).end || "23:59"
-                }
+                slots={pickupTimeSlots}
+                reservedSlots={reservedSlots}
                 isInline={true}
               />
             )}
@@ -742,18 +786,11 @@ export default function ReservationForm({
               Return Time
             </label>
             {dateRange[0].endDate && (
-              <TimePickerInput
-                key={`mobile-return-${
-                  formData.office
-                }-${dateRange[0].endDate.toDateString()}`}
+              <TimeSelect
                 value={formData.returnTime}
                 onChange={(time) => handleTimeChange("returnTime", time)}
-                minTime={
-                  getAvailableTimeSlots(dateRange[0].endDate).start || "00:00"
-                }
-                maxTime={
-                  getAvailableTimeSlots(dateRange[0].endDate).end || "23:59"
-                }
+                slots={returnTimeSlots}
+                reservedSlots={reservedSlots}
                 isInline={true}
               />
             )}
@@ -822,6 +859,15 @@ export default function ReservationForm({
       </div>
 
       <style jsx global>{`
+        select {
+          cursor: pointer;
+          max-height: 200px !important;
+          overflow-y: auto !important;
+        }
+        select option:disabled {
+          color: #4b5563 !important;
+          background-color: #1e293b !important;
+        }
         .rdrCalendarWrapper {
           background-color: transparent !important;
           border: none !important;

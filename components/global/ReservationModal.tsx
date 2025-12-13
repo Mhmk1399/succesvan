@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FiX, FiMapPin, FiCalendar, FiClock, FiUser, FiPhone, FiMail, FiCheckCircle, FiPackage, FiUsers } from "react-icons/fi";
 import CustomSelect from "@/components/ui/CustomSelect";
-import TimePickerInput from "@/components/ui/TimePickerInput";
+
 import AddOnsModal from "./AddOnsModal";
 import { usePriceCalculation } from "@/hooks/usePriceCalculation";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
 import { BsFuelPump } from "react-icons/bs";
+import { generateTimeSlots, isTimeSlotAvailable } from "@/utils/timeSlots";
 
 interface Office {
   _id: string;
@@ -42,8 +43,9 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
   const [offices, setOffices] = useState<Office[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [addOns, setAddOns] = useState<AddOn[]>([]);
-  const [reservedHours, setReservedHours] = useState<{ start: string[]; end: string[] }>({ start: [], end: [] });
-  
+  const [reservedSlots, setReservedSlots] = useState<{ startTime: string; endTime: string }[]>([]);
+  const [officeHours, setOfficeHours] = useState<{ startTime: string; endTime: string } | null>(null);
+
   const [formData, setFormData] = useState({
     office: "",
     startDate: "",
@@ -66,6 +68,18 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
+
+  const availableStartTimes = useMemo(() => {
+    if (!officeHours) return [];
+    const allSlots = generateTimeSlots(officeHours.startTime, officeHours.endTime, 15);
+    return allSlots.filter(slot => isTimeSlotAvailable(slot, reservedSlots));
+  }, [officeHours, reservedSlots]);
+
+  const availableEndTimes = useMemo(() => {
+    if (!officeHours || !formData.startTime) return [];
+    const allSlots = generateTimeSlots(formData.startTime, officeHours.endTime, 15);
+    return allSlots.filter(slot => slot > formData.startTime && isTimeSlotAvailable(slot, reservedSlots));
+  }, [officeHours, formData.startTime, reservedSlots]);
 
   const selectedCategory = categories.find(c => c._id === formData.category);
   const priceCalc = usePriceCalculation(
@@ -131,19 +145,23 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       .catch(err => console.error(err));
   }, []);
 
-  // Fetch reserved hours when date selected
+  // Fetch office hours and reserved slots
   useEffect(() => {
     if (formData.office && formData.startDate) {
-      fetch(`/api/reservations/by-office?office=${formData.office}&startDate=${formData.startDate}`)
-        .then(res => res.json())
-        .then(data => {
-          const reserved = (data.data || []).map((r: any) => ({
-            start: new Date(r.startDate).toTimeString().slice(0, 5),
-            end: new Date(r.endDate).toTimeString().slice(0, 5),
-          }));
-          setReservedHours({ start: reserved.map((r: any) => r.start), end: reserved.map((r: any) => r.end) });
-        })
-        .catch(err => console.error(err));
+      Promise.all([
+        fetch(`/api/offices/${formData.office}`).then(r => r.json()),
+        fetch(`/api/reservations/by-office?office=${formData.office}&startDate=${formData.startDate}`).then(r => r.json())
+      ]).then(([officeData, reservationData]) => {
+        const office = officeData.data;
+        const date = new Date(formData.startDate);
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+        const workingDay = office?.workingTime?.find((wt: any) => wt.day === dayName && wt.isOpen);
+        
+        if (workingDay) {
+          setOfficeHours({ startTime: workingDay.startTime, endTime: workingDay.endTime });
+        }
+        setReservedSlots(reservationData.data?.reservedSlots || []);
+      }).catch(err => console.error(err));
     }
   }, [formData.office, formData.startDate]);
 
