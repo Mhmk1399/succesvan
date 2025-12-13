@@ -18,7 +18,7 @@ interface VoiceConfirmationModalProps {
     missingFields: string[];
   };
   offices: Array<{ _id?: string; name?: string }>;
-  categories: Array<{ _id?: string; name?: string }>;
+  types: Array<{ _id?: string; name?: string }>;
 }
 
 export default function VoiceConfirmationModal({
@@ -27,7 +27,7 @@ export default function VoiceConfirmationModal({
   onConfirm,
   extractedData,
   offices,
-  categories,
+  types,
 }: VoiceConfirmationModalProps) {
   const router = useRouter();
   const [formData, setFormData] = useState(extractedData.data);
@@ -264,7 +264,7 @@ export default function VoiceConfirmationModal({
   };
 
   const getCategoryName = (id: string) => {
-    return categories.find((c) => c._id === id)?.name || "Unknown";
+    return types.find((c) => c._id === id)?.name || "Unknown";
   };
 
   const modalContent = (
@@ -362,8 +362,8 @@ export default function VoiceConfirmationModal({
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                             className="flex-1 bg-white/10 border border-red-400/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-400"
                           >
-                            <option value="">Select Category</option>
-                            {categories.map((c) => (
+                            <option value="">Select type</option>
+                            {types.map((c) => (
                               <option key={c._id} value={c._id}>
                                 {c.name}
                               </option>

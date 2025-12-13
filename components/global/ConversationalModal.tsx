@@ -12,7 +12,7 @@ interface ConversationalModalProps {
   onClose: () => void;
   onComplete: (data: any) => void;
   offices: Array<{ _id?: string; name?: string }>;
-  categories: Array<{ _id?: string; name?: string }>;
+  types: Array<{ _id?: string; name?: string }>;
 }
 
 export default function ConversationalModal({
@@ -20,7 +20,7 @@ export default function ConversationalModal({
   onClose,
   onComplete,
   offices,
-  categories,
+  types,
 }: ConversationalModalProps) {
   const [mounted, setMounted] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -106,7 +106,7 @@ export default function ConversationalModal({
   };
 
   const getCategoryName = (id: string) => {
-    return categories.find((c) => c._id === id)?.name || id;
+    return types.find((c) => c._id === id)?.name || id;
   };
 
   const modalContent = (
