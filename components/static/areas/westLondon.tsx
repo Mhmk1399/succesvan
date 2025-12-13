@@ -181,9 +181,9 @@ export default function WelcomePage() {
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
          
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/2 left-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 right-0 w-125 h-125 bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/2 left-0 w-125 h-125 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-125 h-125 bg-purple-500/10 rounded-full blur-3xl"></div>
       </div>
       {/* Hero Section */}
       <section className="relative  ">

@@ -302,7 +302,7 @@ export default function BlogListing({
 function BlogCard({ post }: { post: BlogPost }) {
   return (
     <Link href={`/blog/${post.slug}`}>
-      <div className="group relative h-[500px] rounded-3xl overflow-hidden cursor-pointer">
+      <div className="group relative h-125 rounded-3xl overflow-hidden cursor-pointer">
         <div className="absolute inset-0">
           <Image
             src={post.image}

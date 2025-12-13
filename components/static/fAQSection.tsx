@@ -295,7 +295,7 @@ export default function FAQComponent({
                     {/* Answer - Simplified toggle without maxHeight transition */}
                     {isOpen && (
                       <div className="px-6 lg:px-7 pb-6 lg:pb-7 pt-0">
-                        <div className="pl-0 lg:pl-[68px]">
+                        <div className="pl-0 lg:pl-17">
                           {/* Divider */}
                           <div
                             className="h-px mb-5 rounded-full"

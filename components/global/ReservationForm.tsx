@@ -19,6 +19,8 @@ import { showToast } from "@/lib/toast";
 import { Office, Category } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
 import TimePickerInput from "@/components/ui/TimePickerInput";
+import { useVoiceRecording } from "@/hooks/useVoiceRecording";
+import VoiceConfirmationModal from "@/components/global/VoiceConfirmationModal";
 
 interface ReservationFormProps {
   isModal?: boolean;
@@ -34,13 +36,16 @@ export default function ReservationForm({
   onBookNow,
 }: ReservationFormProps) {
   const router = useRouter();
-  const [isListening, setIsListening] = useState(false);
   const [showDateRange, setShowDateRange] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [offices, setOffices] = useState<Office[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState<any>(null);
+  
+  // Voice modal state
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [voiceData, setVoiceData] = useState<any>(null);
 
   const [dateRange, setDateRange] = useState<Range[]>([
     {
@@ -60,6 +65,24 @@ export default function ReservationForm({
     name: "",
     email: "",
     phoneNumber: "",
+  });
+
+  // Initialize voice recording hook
+  const { isRecording, isProcessing, toggleRecording } = useVoiceRecording({
+    onTranscriptionComplete: (result) => {
+      console.log("📥 [Form] Voice result received:", result);
+      
+      // Store the voice data and show modal for confirmation
+      setVoiceData(result);
+      setShowVoiceModal(true);
+      
+      console.log("👁️ [Form] Opening confirmation modal");
+    },
+    onError: (error) => {
+      console.error("❌ [Form] Voice recording error:", error);
+      showToast.error("Voice recording failed");
+    },
+    autoSubmit: false, // Set to true if you want automatic submission
   });
 
   useEffect(() => {
@@ -101,64 +124,70 @@ export default function ReservationForm({
     fetchData();
   }, []);
 
-  const handleGlobalVoice = async () => {
-    if (!("webkitSpeechRecognition" in window)) {
-      showToast.error("Speech Recognition not supported");
-      return;
+  const handleGlobalVoice = () => {
+    console.log("🎤 [Form] Voice button clicked");
+    toggleRecording();
+  };
+
+  const handleVoiceConfirm = (data: any) => {
+    console.log("✅ [Form] User confirmed voice data:", data);
+    
+    // Update form with confirmed data
+    setFormData((prev) => ({
+      ...prev,
+      office: data.office || prev.office,
+      category: data.category || prev.category,
+      pickupTime: data.pickupTime || prev.pickupTime,
+      returnTime: data.returnTime || prev.returnTime,
+      driverAge: data.driverAge || prev.driverAge,
+      message: data.message || prev.message,
+    }));
+
+    // Update date range if provided
+    if (data.pickupDate && data.returnDate) {
+      console.log("📅 [Form] Updating date range:", {
+        pickup: data.pickupDate,
+        return: data.returnDate,
+      });
+      
+      setDateRange([
+        {
+          startDate: new Date(data.pickupDate),
+          endDate: new Date(data.returnDate),
+          key: "selection",
+        },
+      ]);
     }
 
-    const recognition = new (window as any).webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = "en-US";
+    console.log("✅ [Form] Form updated with voice data");
+    showToast.success("Form filled successfully!");
+  };
 
-    setIsListening(true);
+  const handleAutoSubmit = async (data: any) => {
+    try {
+      // Store rental details in sessionStorage
+      const pickupDateTime = new Date(data.pickupDate);
+      const returnDateTime = new Date(data.returnDate);
 
-    recognition.onresult = async (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setIsListening(false);
+      const rentalDetails = {
+        office: data.office,
+        pickupDate: pickupDateTime.toISOString(),
+        returnDate: returnDateTime.toISOString(),
+        pickupTime: data.pickupTime,
+        returnTime: data.returnTime,
+        pickupLocation:
+          offices.find((o) => o._id === data.office)?.name || "",
+        driverAge: data.driverAge,
+        message: data.message,
+      };
+      sessionStorage.setItem("rentalDetails", JSON.stringify(rentalDetails));
 
-      try {
-        const response = await fetch("/api/parse-voice", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ transcript }),
-        });
-
-        const data = await response.json();
-
-        setFormData((prev) => ({
-          ...prev,
-          office: data.office || prev.office,
-          pickupTime: data.pickupTime || prev.pickupTime,
-          returnTime: data.returnTime || prev.returnTime,
-          category: data.category || prev.category,
-          driverAge: data.driverAge || prev.driverAge,
-        }));
-
-        if (data.pickupDate && data.returnDate) {
-          setDateRange([
-            {
-              startDate: new Date(data.pickupDate),
-              endDate: new Date(data.returnDate),
-              key: "selection",
-            },
-          ]);
-        }
-      } catch (error) {
-        console.log("Error parsing voice:", error);
-      }
-    };
-
-    recognition.onerror = () => {
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.start();
+      // Navigate to reservation page
+      const url = `/reservation?category=${data.category}&office=${data.office}&age=${data.driverAge}`;
+      router.push(url);
+    } catch (error) {
+      showToast.error("Failed to process reservation");
+    }
   };
 
   const handleInputChange = (
@@ -538,17 +567,20 @@ export default function ReservationForm({
             <button
               type="button"
               onClick={handleGlobalVoice}
-              className={`px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all text-sm ${
-                isListening
+              disabled={isProcessing}
+              className={`px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all text-sm disabled:opacity-50 ${
+                isRecording
                   ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50"
+                  : isProcessing
+                  ? "bg-blue-500 text-white shadow-lg shadow-blue-500/50"
                   : "bg-linear-to-r from-amber-500 to-amber-600 text-white hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/50"
               }`}
             >
               <FiMic className="text-lg" />
-              {isListening ? "Listening" : "Voice"}
+              {isRecording ? "Recording..." : isProcessing ? "Processing..." : "Voice"}
             </button>
             <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-slate-900 text-amber-300 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg border border-amber-400/30">
-              Say: "London, tomorrow 10am to next day 5pm, van, 25"
+              Say: "London office, tomorrow 10am to next day 5pm, small van, age 30"
             </div>
           </div>
         </div>
@@ -723,9 +755,12 @@ export default function ReservationForm({
           <button
             type="button"
             onClick={handleGlobalVoice}
-            className={`w-full py-2.5 px-4 col-span-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-xs ${
-              isListening
+            disabled={isProcessing}
+            className={`w-full py-2.5 px-4 col-span-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-xs disabled:opacity-50 ${
+              isRecording
                 ? "bg-red-500 text-white animate-pulse"
+                : isProcessing
+                ? "bg-blue-500 text-white"
                 : "bg-linear-to-r from-amber-500 to-amber-600 text-white hover:from-amber-400 hover:to-amber-500"
             }`}
           >
@@ -793,6 +828,21 @@ export default function ReservationForm({
           color: #fbbf24 !important;
         }
       `}</style>
+      
+      {/* Voice Confirmation Modal */}
+      {voiceData && (
+        <VoiceConfirmationModal
+          isOpen={showVoiceModal}
+          onClose={() => {
+            console.log("❌ [Form] Modal closed without confirmation");
+            setShowVoiceModal(false);
+          }}
+          onConfirm={handleVoiceConfirm}
+          extractedData={voiceData}
+          offices={offices}
+          categories={categories}
+        />
+      )}
     </form>
   );
 }

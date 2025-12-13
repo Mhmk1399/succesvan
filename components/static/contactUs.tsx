@@ -161,8 +161,8 @@ export default function Contact() {
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
          
-        <div className="bg-orb-contact-1 absolute top-1/4 right-1/4 w-[600px] h-[600px] rounded-full blur-3xl opacity-20 bg-[#fe9a00]"></div>
-        <div className="absolute bottom-1/4 left-1/4 w-[600px] h-[600px] rounded-full blur-3xl opacity-20 bg-[#fe9a00]"></div>
+        <div className="bg-orb-contact-1 absolute top-1/4 right-1/4 w-150 h-150 rounded-full blur-3xl opacity-20 bg-[#fe9a00]"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-150 h-150 rounded-full blur-3xl opacity-20 bg-[#fe9a00]"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

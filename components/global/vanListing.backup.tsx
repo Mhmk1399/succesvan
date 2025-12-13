@@ -1151,7 +1151,7 @@ function CategoryCard({
   onView: () => void;
 }) {
   return (
-    <div className="group relative h-[500px] rounded-3xl overflow-hidden">
+    <div className="group relative h-125 rounded-3xl overflow-hidden">
       <div className="absolute inset-0">
         {category.image ? (
           <Image
