@@ -9,7 +9,7 @@ import {
   FiCalendar,
   FiClock,
   FiMic,
-  FiMapPin,
+  FiMapPin, 
   FiTruck,
   FiUser,
   FiMessageSquare,
