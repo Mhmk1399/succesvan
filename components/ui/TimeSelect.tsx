@@ -64,7 +64,7 @@ export default function TimeSelect({
       )}
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-2 w-full bg-slate-800 border border-white/20 rounded-lg shadow-2xl max-h-56 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 z-50 mt-2 w-full   bg-slate-800 border border-white/20 rounded-lg shadow-2xl max-h-40 overflow-y-auto">
           {slots.length > 0 ? (
             slots.map((slot) => {
               const disabled = isDisabled(slot);

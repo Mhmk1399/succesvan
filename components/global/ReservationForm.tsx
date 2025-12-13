@@ -23,6 +23,7 @@ import TimeSelect from "@/components/ui/TimeSelect";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import VoiceConfirmationModal from "@/components/global/VoiceConfirmationModal";
 import ConversationalModal from "@/components/global/ConversationalModal";
+import { datePickerStyles } from "./DatePickerStyles";
 
 interface ReservationFormProps {
   isModal?: boolean;
@@ -555,7 +556,7 @@ export default function ReservationForm({
             {showDateRange && (
               <div
                 className={`absolute left-0 mt-2 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 ${
-                  isInline ? "-top-72" : "-top-64"
+                  isInline ? "-top-72" : "-top-50"
                 }`}
               >
                 <DateRange
@@ -596,11 +597,6 @@ export default function ReservationForm({
 
         {/* Pickup Time */}
         <div>
-          {/* {dateRange[0].startDate && (
-            <p className="text-amber-300 text-[10px]  ">
-              {getAvailableTimeSlots(dateRange[0].startDate).info}
-            </p>
-          )} */}
           <label
             className={`text-white font-semibold mb-2 flex items-center gap-2 ${
               isInline ? "text-xs mb-1" : "text-sm"
@@ -623,11 +619,6 @@ export default function ReservationForm({
 
         {/* Return Time */}
         <div className="">
-          {/* {dateRange[0].endDate && (
-            <p className="text-amber-300 text-[10px] ">
-              {getAvailableTimeSlots(dateRange[0].endDate).info}
-            </p>
-          )} */}
           <label
             className={`text-white font-semibold mb-2 flex items-center gap-2 ${
               isInline ? "text-xs mb-1" : "text-sm"
@@ -727,7 +718,11 @@ export default function ReservationForm({
                 }`}
               >
                 <FiMic className="text-lg" />
-                {isRecording ? "Recording" : isProcessing ? "Processing" : "Voice"}
+                {isRecording
+                  ? "Recording"
+                  : isProcessing
+                  ? "Processing"
+                  : "Voice"}
               </button>
             </div>
           </div>
@@ -905,74 +900,7 @@ export default function ReservationForm({
         </div>
       </div>
 
-      <style jsx global>{`
-        select {
-          cursor: pointer;
-          max-height: 200px !important;
-          overflow-y: auto !important;
-        }
-        select option:disabled {
-          color: #4b5563 !important;
-          background-color: #1e293b !important;
-        }
-        .rdrCalendarWrapper {
-          background-color: transparent !important;
-          border: none !important;
-        }
-        .rdrDayDisabled .rdrDayNumber span {
-          color: black !important;
-          border-radius: 8px !important;
-        }
-        .rdrMonth {
-          width: 100%;
-        }
-        .rdrMonthAndYearPickers {
-          color: black !important;
-        }
-        .rdrMonthAndYearPickers select {
-          color: black !important;
-        }
-        .rdrMonthPicker select,
-        .rdrYearPicker select {
-          background-color: rgba(255, 255, 255, 0.95) !important;
-          color: black !important;
-          border: 1px solid rgba(0, 0, 0, 0.2) !important;
-          border-radius: 0.5rem !important;
-        }
-        .rdrDayNumber span {
-          color: white !important;
-        }
-        .rdrDayPassive .rdrDayNumber span {
-          color: rgba(255, 255, 255, 0.4) !important;
-        }
-        .rdrDayToday .rdrDayNumber span {
-          color: #fbbf24 !important;
-          font-weight: bold;
-        }
-        .rdrDayInRange {
-          background-color: rgba(251, 191, 36, 0.2) !important;
-        }
-        .rdrDayStartPreview,
-        .rdrDayInPreview,
-        .rdrDayEndPreview {
-          background-color: rgba(251, 191, 36, 0.1) !important;
-        }
-        .rdrDayStartOfMonth,
-        .rdrDayEndOfMonth {
-          background-color: rgba(251, 191, 36, 0.3) !important;
-        }
-        .rdrDayStartOfMonth .rdrDayNumber span,
-        .rdrDayEndOfMonth .rdrDayNumber span {
-          color: white !important;
-          font-weight: bold;
-        }
-        .rdrDayHovered {
-          background-color: rgba(251, 191, 36, 0.3) !important;
-        }
-        .rdrWeekDay {
-          color: #fbbf24 !important;
-        }
-      `}</style>
+      <style jsx global>{datePickerStyles}</style>
 
       {/* Voice Confirmation Modal */}
       {voiceData && (
