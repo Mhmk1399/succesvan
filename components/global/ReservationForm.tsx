@@ -21,6 +21,7 @@ import CustomSelect from "@/components/ui/CustomSelect";
 import TimePickerInput from "@/components/ui/TimePickerInput";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import VoiceConfirmationModal from "@/components/global/VoiceConfirmationModal";
+import ConversationalModal from "@/components/global/ConversationalModal";
 
 interface ReservationFormProps {
   isModal?: boolean;
@@ -44,6 +45,9 @@ export default function ReservationForm({
   // Voice modal state
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [voiceData, setVoiceData] = useState<any>(null);
+  
+  // Conversational modal state
+  const [showConversationalModal, setShowConversationalModal] = useState(false);
 
   const [dateRange, setDateRange] = useState<Range[]>([
     {
@@ -125,6 +129,40 @@ export default function ReservationForm({
   const handleGlobalVoice = () => {
     console.log("🎤 [Form] Voice button clicked");
     toggleRecording();
+  };
+
+  const handleConversationalMode = () => {
+    console.log("💬 [Form] Starting conversational mode");
+    setShowConversationalModal(true);
+  };
+
+  const handleConversationComplete = (data: any) => {
+    console.log("✅ [Form] Conversation completed with data:", data);
+    setShowConversationalModal(false);
+    
+    // Update form with conversation data
+    setFormData((prev) => ({
+      ...prev,
+      office: data.office || prev.office,
+      category: data.category || prev.category,
+      pickupTime: data.pickupTime || prev.pickupTime,
+      returnTime: data.returnTime || prev.returnTime,
+      driverAge: data.driverAge || prev.driverAge,
+      message: data.message || prev.message,
+    }));
+
+    // Update date range if provided
+    if (data.pickupDate && data.returnDate) {
+      setDateRange([
+        {
+          startDate: new Date(data.pickupDate),
+          endDate: new Date(data.returnDate),
+          key: "selection",
+        },
+      ]);
+    }
+    
+    showToast.success("Reservation details filled via conversation!");
   };
 
   const handleVoiceConfirm = (data: any) => {
@@ -558,6 +596,20 @@ export default function ReservationForm({
           <div className="relative group">
             <button
               type="button"
+              onClick={handleConversationalMode}
+              className="px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all text-sm bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
+            >
+              <FiMessageSquare className="text-lg" />
+              Talk to AI
+            </button>
+            <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-slate-900 text-purple-300 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg border border-purple-400/30">
+              Have a conversation with AI assistant
+            </div>
+          </div>
+
+          <div className="relative group">
+            <button
+              type="button"
               onClick={handleGlobalVoice}
               disabled={isProcessing}
               className={`px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all text-sm disabled:opacity-50 ${
@@ -569,7 +621,7 @@ export default function ReservationForm({
               }`}
             >
               <FiMic className="text-lg" />
-              {isRecording ? "Recording..." : isProcessing ? "Processing..." : "Voice"}
+              {isRecording ? "Recording..." : isProcessing ? "Processing..." : "Quick Voice"}
             </button>
             <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-slate-900 text-amber-300 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg border border-amber-400/30">
               Say: "London office, tomorrow 10am to next day 5pm, small van, age 30"
@@ -835,6 +887,18 @@ export default function ReservationForm({
           categories={categories}
         />
       )}
+      
+      {/* Conversational Modal */}
+      <ConversationalModal
+        isOpen={showConversationalModal}
+        onClose={() => {
+          console.log("❌ [Form] Conversational modal closed");
+          setShowConversationalModal(false);
+        }}
+        onComplete={handleConversationComplete}
+        offices={offices}
+        categories={categories}
+      />
     </form>
   );
 }
