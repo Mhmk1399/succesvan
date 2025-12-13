@@ -25,6 +25,7 @@ import VoiceConfirmationModal from "@/components/global/VoiceConfirmationModal";
 import ConversationalModal from "@/components/global/ConversationalModal";
 import AIAgentModal from "@/components/global/AIAgentModal";
 import { FiCpu } from "react-icons/fi";
+import { datePickerStyles } from "./DatePickerStyles";
 
 interface ReservationFormProps {
   isModal?: boolean;
@@ -244,9 +245,13 @@ export default function ReservationForm({
   };
 
   const handleAIAgentComplete = (reservationId: string, bookingData: any) => {
-    console.log("✅ [Form] AI Agent completed booking:", reservationId, bookingData);
+    console.log(
+      "✅ [Form] AI Agent completed booking:",
+      reservationId,
+      bookingData
+    );
     setShowAIAgentModal(false);
-    
+
     // Navigate to the reservation page or show success
     showToast.success("Booking created successfully!");
     router.push(`/customerDashboard`);
@@ -536,9 +541,7 @@ export default function ReservationForm({
           <CustomSelect
             options={types}
             value={formData.type}
-            onChange={(val) =>
-              setFormData((prev) => ({ ...prev, type: val }))
-            }
+            onChange={(val) => setFormData((prev) => ({ ...prev, type: val }))}
             placeholder="Select Type"
             isInline={isInline}
           />
@@ -716,7 +719,7 @@ export default function ReservationForm({
             >
               {isSubmitting ? "Booking..." : "RESERVE NOW"}
             </button>
-            
+
             {/* AI Consultant Button - New comprehensive agent */}
             <button
               type="button"
@@ -726,7 +729,7 @@ export default function ReservationForm({
               <FiCpu className="text-lg" />
               🤖 AI Van Consultant - Tell Me What You Need!
             </button>
-            
+
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -749,7 +752,11 @@ export default function ReservationForm({
                 }`}
               >
                 <FiMic className="text-lg" />
-                {isRecording ? "Recording" : isProcessing ? "Processing" : "Quick Fill"}
+                {isRecording
+                  ? "Recording"
+                  : isProcessing
+                  ? "Processing"
+                  : "Quick Fill"}
               </button>
             </div>
           </div>
@@ -780,9 +787,7 @@ export default function ReservationForm({
           <CustomSelect
             options={types}
             value={formData.type}
-            onChange={(val) =>
-              setFormData((prev) => ({ ...prev, type: val }))
-            }
+            onChange={(val) => setFormData((prev) => ({ ...prev, type: val }))}
             placeholder="Select Type"
             isInline={true}
           />
@@ -927,7 +932,9 @@ export default function ReservationForm({
         </div>
       </div>
 
-      <style jsx global>{datePickerStyles}</style>
+      <style jsx global>
+        {datePickerStyles}
+      </style>
 
       {/* Voice Confirmation Modal */}
       {voiceData && (
@@ -953,7 +960,7 @@ export default function ReservationForm({
         }}
         onComplete={handleConversationComplete}
         offices={offices}
-        categories={categories}
+        types={types}
       />
 
       {/* AI Agent Modal - Comprehensive Consultant */}
