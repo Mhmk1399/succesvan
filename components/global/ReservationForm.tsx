@@ -25,6 +25,7 @@ import VoiceConfirmationModal from "@/components/global/VoiceConfirmationModal";
 import ConversationalModal from "@/components/global/ConversationalModal";
 import AIAgentModal from "@/components/global/AIAgentModal";
 import { FiCpu } from "react-icons/fi";
+import { datePickerStyles } from "./DatePickerStyles";
 
 interface ReservationFormProps {
   isModal?: boolean;
@@ -953,7 +954,7 @@ export default function ReservationForm({
         }}
         onComplete={handleConversationComplete}
         offices={offices}
-        categories={categories}
+        types={types}
       />
 
       {/* AI Agent Modal - Comprehensive Consultant */}
