@@ -18,7 +18,7 @@ import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
 import { Office, Category } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
-import { generateTimeSlots, isTimeSlotAvailable } from "@/utils/timeSlots";
+import { generateTimeSlots } from "@/utils/timeSlots";
 import TimeSelect from "@/components/ui/TimeSelect";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import VoiceConfirmationModal from "@/components/global/VoiceConfirmationModal";
@@ -44,12 +44,14 @@ export default function ReservationForm({
   const [categories, setCategories] = useState<Category[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState<any>(null);
-  const [reservedSlots, setReservedSlots] = useState<{ startTime: string; endTime: string }[]>([]);
-  
+  const [reservedSlots, setReservedSlots] = useState<
+    { startTime: string; endTime: string }[]
+  >([]);
+
   // Voice modal state
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [voiceData, setVoiceData] = useState<any>(null);
-  
+
   // Conversational modal state
   const [showConversationalModal, setShowConversationalModal] = useState(false);
 
@@ -75,66 +77,92 @@ export default function ReservationForm({
 
   const pickupTimeSlots = useMemo(() => {
     if (!formData.office || !dateRange[0].startDate) return [];
-    const office = offices.find(o => o._id === formData.office);
+    const office = offices.find((o) => o._id === formData.office);
     if (!office) return [];
-    
+
     const date = dateRange[0].startDate;
     const month = date.getMonth() + 1;
     const day = date.getDate();
-    const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][date.getDay()];
-    
-    const specialDay = office.specialDays?.find((sd: any) => sd.month === month && sd.day === day);
-    let start = '00:00', end = '23:59';
-    
+    const dayName = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ][date.getDay()];
+
+    const specialDay = office.specialDays?.find(
+      (sd: any) => sd.month === month && sd.day === day
+    );
+    let start = "00:00",
+      end = "23:59";
+
     if (specialDay && specialDay.isOpen) {
       start = specialDay.startTime;
       end = specialDay.endTime;
     } else {
-      const workingDay = office.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+      const workingDay = office.workingTime?.find(
+        (w: any) => w.day === dayName && w.isOpen
+      );
       if (workingDay) {
         start = workingDay.startTime;
         end = workingDay.endTime;
       }
     }
-    
+
     return generateTimeSlots(start, end, 15);
   }, [formData.office, dateRange, offices]);
 
   const returnTimeSlots = useMemo(() => {
-    if (!formData.office || !dateRange[0].endDate || !formData.pickupTime) return [];
-    const office = offices.find(o => o._id === formData.office);
+    if (!formData.office || !dateRange[0].endDate || !formData.pickupTime)
+      return [];
+    const office = offices.find((o) => o._id === formData.office);
     if (!office) return [];
-    
+
     const date = dateRange[0].endDate;
     const month = date.getMonth() + 1;
     const day = date.getDate();
-    const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][date.getDay()];
-    
-    const specialDay = office.specialDays?.find((sd: any) => sd.month === month && sd.day === day);
-    let end = '23:59';
-    
+    const dayName = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ][date.getDay()];
+
+    const specialDay = office.specialDays?.find(
+      (sd: any) => sd.month === month && sd.day === day
+    );
+    let end = "23:59";
+
     if (specialDay && specialDay.isOpen) {
       end = specialDay.endTime;
     } else {
-      const workingDay = office.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+      const workingDay = office.workingTime?.find(
+        (w: any) => w.day === dayName && w.isOpen
+      );
       if (workingDay) {
         end = workingDay.endTime;
       }
     }
-    
+
     const allSlots = generateTimeSlots(formData.pickupTime, end, 15);
-    return allSlots.filter(slot => slot > formData.pickupTime);
+    return allSlots.filter((slot) => slot > formData.pickupTime);
   }, [formData.office, formData.pickupTime, dateRange, offices]);
 
   // Initialize voice recording hook
   const { isRecording, isProcessing, toggleRecording } = useVoiceRecording({
     onTranscriptionComplete: (result) => {
       console.log("📥 [Form] Voice result received:", result);
-      
+
       // Store the voice data and show modal for confirmation
       setVoiceData(result);
       setShowVoiceModal(true);
-      
+
       console.log("👁️ [Form] Opening confirmation modal");
     },
     onError: (error) => {
@@ -185,11 +213,13 @@ export default function ReservationForm({
 
   useEffect(() => {
     if (formData.office && dateRange[0].startDate) {
-      const startDate = dateRange[0].startDate.toISOString().split('T')[0];
-      fetch(`/api/reservations/by-office?office=${formData.office}&startDate=${startDate}`)
-        .then(res => res.json())
-        .then(data => setReservedSlots(data.data?.reservedSlots || []))
-        .catch(err => console.error(err));
+      const startDate = dateRange[0].startDate.toISOString().split("T")[0];
+      fetch(
+        `/api/reservations/by-office?office=${formData.office}&startDate=${startDate}`
+      )
+        .then((res) => res.json())
+        .then((data) => setReservedSlots(data.data?.reservedSlots || []))
+        .catch((err) => console.error(err));
     }
   }, [formData.office, dateRange]);
 
@@ -206,7 +236,7 @@ export default function ReservationForm({
   const handleConversationComplete = (data: any) => {
     console.log("✅ [Form] Conversation completed with data:", data);
     setShowConversationalModal(false);
-    
+
     // Update form with conversation data
     setFormData((prev) => ({
       ...prev,
@@ -228,13 +258,13 @@ export default function ReservationForm({
         },
       ]);
     }
-    
+
     showToast.success("Reservation details filled via conversation!");
   };
 
   const handleVoiceConfirm = (data: any) => {
     console.log("✅ [Form] User confirmed voice data:", data);
-    
+
     // Update form with confirmed data
     setFormData((prev) => ({
       ...prev,
@@ -252,7 +282,7 @@ export default function ReservationForm({
         pickup: data.pickupDate,
         return: data.returnDate,
       });
-      
+
       setDateRange([
         {
           startDate: new Date(data.pickupDate),
@@ -278,8 +308,7 @@ export default function ReservationForm({
         returnDate: returnDateTime.toISOString(),
         pickupTime: data.pickupTime,
         returnTime: data.returnTime,
-        pickupLocation:
-          offices.find((o) => o._id === data.office)?.name || "",
+        pickupLocation: offices.find((o) => o._id === data.office)?.name || "",
         driverAge: data.driverAge,
         message: data.message,
       };
@@ -567,11 +596,11 @@ export default function ReservationForm({
 
         {/* Pickup Time */}
         <div>
-          {dateRange[0].startDate && (
-            <p className="text-amber-300 text-[10px] mb-1">
+          {/* {dateRange[0].startDate && (
+            <p className="text-amber-300 text-[10px]  ">
               {getAvailableTimeSlots(dateRange[0].startDate).info}
             </p>
-          )}
+          )} */}
           <label
             className={`text-white font-semibold mb-2 flex items-center gap-2 ${
               isInline ? "text-xs mb-1" : "text-sm"
@@ -587,17 +616,18 @@ export default function ReservationForm({
               slots={pickupTimeSlots}
               reservedSlots={reservedSlots}
               isInline={isInline}
+              tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
             />
           )}
         </div>
 
         {/* Return Time */}
-        <div>
-          {dateRange[0].endDate && (
-            <p className="text-amber-300 text-[10px] mb-1">
+        <div className="">
+          {/* {dateRange[0].endDate && (
+            <p className="text-amber-300 text-[10px] ">
               {getAvailableTimeSlots(dateRange[0].endDate).info}
             </p>
-          )}
+          )} */}
           <label
             className={`text-white font-semibold mb-2 flex items-center gap-2 ${
               isInline ? "text-xs mb-1" : "text-sm"
@@ -612,6 +642,7 @@ export default function ReservationForm({
               slots={returnTimeSlots}
               reservedSlots={reservedSlots}
               isInline={isInline}
+              tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
             />
           )}
         </div>
@@ -641,37 +672,20 @@ export default function ReservationForm({
         </div>
 
         {/* Buttons Row */}
-        <div className={isInline ? "flex gap-2" : "col-span-2 flex gap-3"}>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 disabled:opacity-50 ${
-              isInline ? "px-4 py-1 text-xs" : "flex-1 px-8 py-2 text-sm"
-            }`}
-          >
-            {isSubmitting ? "Booking..." : isInline ? "BOOK" : "RESERVE NOW"}
-          </button>
-
-          <div className="relative group">
+        {isInline ? (
+          <div className="flex gap-2">
             <button
-              type="button"
-              onClick={handleConversationalMode}
-              className="px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all text-sm bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 disabled:opacity-50 px-4 py-1 text-xs"
             >
-              <FiMessageSquare className="text-lg" />
-              Talk to AI
+              {isSubmitting ? "Booking..." : "BOOK"}
             </button>
-            <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-slate-900 text-purple-300 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg border border-purple-400/30">
-              Have a conversation with AI assistant
-            </div>
-          </div>
-
-          <div className="relative group">
             <button
               type="button"
               onClick={handleGlobalVoice}
               disabled={isProcessing}
-              className={`px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all text-sm disabled:opacity-50 ${
+              className={`px-6 py-1 rounded-lg font-semibold flex items-center gap-2 transition-all text-xs disabled:opacity-50 ${
                 isRecording
                   ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50"
                   : isProcessing
@@ -680,13 +694,44 @@ export default function ReservationForm({
               }`}
             >
               <FiMic className="text-lg" />
-              {isRecording ? "Recording..." : isProcessing ? "Processing..." : "Quick Voice"}
             </button>
-            <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-slate-900 text-amber-300 text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg border border-amber-400/30">
-              Say: "London office, tomorrow 10am to next day 5pm, small van, age 30"
+          </div>
+        ) : (
+          <div className="col-span-2 space-y-3">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 disabled:opacity-50 px-8 py-3 text-sm"
+            >
+              {isSubmitting ? "Booking..." : "RESERVE NOW"}
+            </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={handleConversationalMode}
+                className="w-full px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm bg-linear-to-r from-purple-500 to-pink-500 text-white hover:from-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
+              >
+                <FiMessageSquare className="text-lg" />
+                Talk to AI
+              </button>
+              <button
+                type="button"
+                onClick={handleGlobalVoice}
+                disabled={isProcessing}
+                className={`w-full px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm disabled:opacity-50 ${
+                  isRecording
+                    ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50"
+                    : isProcessing
+                    ? "bg-blue-500 text-white shadow-lg shadow-blue-500/50"
+                    : "bg-linear-to-r from-green-500 to-emerald-600 text-white hover:from-green-400 hover:to-emerald-500 shadow-lg shadow-green-500/50"
+                }`}
+              >
+                <FiMic className="text-lg" />
+                {isRecording ? "Recording" : isProcessing ? "Processing" : "Voice"}
+              </button>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Mobile: Flex Col */}
@@ -773,6 +818,7 @@ export default function ReservationForm({
                 slots={pickupTimeSlots}
                 reservedSlots={reservedSlots}
                 isInline={true}
+                tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
               />
             )}
             {dateRange[0].startDate && (
@@ -792,6 +838,7 @@ export default function ReservationForm({
                 slots={returnTimeSlots}
                 reservedSlots={reservedSlots}
                 isInline={true}
+                tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
               />
             )}
             {dateRange[0].endDate && (
@@ -926,7 +973,7 @@ export default function ReservationForm({
           color: #fbbf24 !important;
         }
       `}</style>
-      
+
       {/* Voice Confirmation Modal */}
       {voiceData && (
         <VoiceConfirmationModal
@@ -941,7 +988,7 @@ export default function ReservationForm({
           categories={categories}
         />
       )}
-      
+
       {/* Conversational Modal */}
       <ConversationalModal
         isOpen={showConversationalModal}
