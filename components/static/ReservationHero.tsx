@@ -49,7 +49,6 @@ export default function ReservationHero({ onBookNow }: { onBookNow?: () => void 
       )}
 
       {/* Full Screen Form Modal */}
-
       {isFormOpen && (
         <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm overflow-y-auto">
           <div className="min-h-screen flex items-center justify-center p-2 sm:p-4">
@@ -91,31 +90,52 @@ export default function ReservationHero({ onBookNow }: { onBookNow?: () => void 
           <div className="absolute inset-0 bg-black/50"></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-16 sm:mt-20 md:mt-24 lg:mt-28">
-          <div className="space-y-6 sm:space-y-8 md:space-y-12">
-            <div className="text-white text-center sm:text-left">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-3 sm:mb-4 leading-tight">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-20 0   lg:mt-0">
+          {/* Desktop: Grid Layout */}
+          <div className="hidden md:grid grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left: Text Content */}
+            <div className="text-white space-y-4 lg:space-y-6">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                 Success Van Hire
               </h1>
-              <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold text-[#fe9a00] mb-4 sm:mb-6">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-[#fe9a00]">
                 RESERVATION
               </h2>
-              <p className="md:text-lg text-sm sm:text-base text-gray-200 leading-relaxed max-w-2xl mx-auto sm:mx-0">
+              <p className="text-sm md:text-base lg:text-lg text-gray-200 leading-relaxed">
                 Success Van Hire offers affordable van rental services in
                 London, providing reliable options for individuals, businesses,
-                and movers alike. Whether you're relocating, delivering goods,
+                and movers alike. Whether you're relocating,  
                 or simply need a larger vehicle for a few days, our wide range
                 of vans ensures you'll find the perfect fit.
               </p>
             </div>
 
-            {/* Inline Form */}
-            <div className="hidden md:block">
-              <ReservationForm isInline={true} onBookNow={onBookNow} />
+            {/* Right: Form with Grid 2 */}
+            <div className="bg-white/5 backdrop-blur-md border border-white/20 rounded-2xl p-6 lg:p-8 shadow-2xl">
+              <ReservationForm isInline={false} onBookNow={onBookNow} />
+            </div>
+          </div>
+
+          {/* Mobile: Stacked Layout */}
+          <div className="md:hidden space-y-6 sm:space-y-8">
+            <div className="text-white text-center sm:text-left">
+              <h1 className="text-3xl sm:text-4xl font-bold mb-3 sm:mb-4 leading-tight">
+                Success Van Hire
+              </h1>
+              <h2 className="text-lg sm:text-xl font-semibold text-[#fe9a00] mb-4 sm:mb-6">
+                RESERVATION
+              </h2>
+              <p className="text-sm sm:text-base text-gray-200 leading-relaxed">
+                Success Van Hire offers affordable van rental services in
+                London, providing reliable options for individuals, businesses,
+                and movers alike. Whether you're relocating,  
+                or simply need a larger vehicle for a few days, our wide range
+                of vans ensures you'll find the perfect fit.
+              </p>
             </div>
 
             {/* Form Below Text - Mobile */}
-            <div className="md:hidden bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-6 shadow-2xl">
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-6 shadow-2xl">
               <ReservationForm isModal={false} onBookNow={onBookNow} />
             </div>
           </div>
