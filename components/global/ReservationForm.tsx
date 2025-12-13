@@ -42,7 +42,7 @@ export default function ReservationForm({
   const [showDateRange, setShowDateRange] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [offices, setOffices] = useState<Office[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [types, setTypes] = useState<Category[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState<any>(null);
   const [reservedSlots, setReservedSlots] = useState<
@@ -66,7 +66,7 @@ export default function ReservationForm({
 
   const [formData, setFormData] = useState({
     office: "",
-    category: "",
+    type: "",
     pickupTime: "10:00",
     returnTime: "10:00",
     driverAge: "",
@@ -197,14 +197,14 @@ export default function ReservationForm({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [offRes, catRes] = await Promise.all([
+        const [offRes, typeRes] = await Promise.all([
           fetch("/api/offices"),
-          fetch("/api/categories"),
+          fetch("/api/types"),
         ]);
         const offData = await offRes.json();
-        const catData = await catRes.json();
+        const typeData = await typeRes.json();
         setOffices(offData.data || []);
-        setCategories(catData.data || []);
+        setTypes(typeData.data || []);
       } catch (error) {
         console.log("Failed to fetch data:", error);
       }
@@ -213,16 +213,16 @@ export default function ReservationForm({
   }, []);
 
   useEffect(() => {
-    if (formData.office && dateRange[0].startDate) {
+    if (formData.office && formData.type && dateRange[0].startDate) {
       const startDate = dateRange[0].startDate.toISOString().split("T")[0];
       fetch(
-        `/api/reservations/by-office?office=${formData.office}&startDate=${startDate}`
+        `/api/reservations/by-office?office=${formData.office}&type=${formData.type}&startDate=${startDate}`
       )
         .then((res) => res.json())
         .then((data) => setReservedSlots(data.data?.reservedSlots || []))
         .catch((err) => console.error(err));
     }
-  }, [formData.office, dateRange]);
+  }, [formData.office, formData.type, dateRange]);
 
   const handleGlobalVoice = () => {
     console.log("🎤 [Form] Voice button clicked");
@@ -242,7 +242,7 @@ export default function ReservationForm({
     setFormData((prev) => ({
       ...prev,
       office: data.office || prev.office,
-      category: data.category || prev.category,
+      type: data.type || prev.type,
       pickupTime: data.pickupTime || prev.pickupTime,
       returnTime: data.returnTime || prev.returnTime,
       driverAge: data.driverAge || prev.driverAge,
@@ -270,7 +270,7 @@ export default function ReservationForm({
     setFormData((prev) => ({
       ...prev,
       office: data.office || prev.office,
-      category: data.category || prev.category,
+      type: data.type || prev.type,
       pickupTime: data.pickupTime || prev.pickupTime,
       returnTime: data.returnTime || prev.returnTime,
       driverAge: data.driverAge || prev.driverAge,
@@ -305,6 +305,7 @@ export default function ReservationForm({
 
       const rentalDetails = {
         office: data.office,
+        type: data.type,
         pickupDate: pickupDateTime.toISOString(),
         returnDate: returnDateTime.toISOString(),
         pickupTime: data.pickupTime,
@@ -316,7 +317,7 @@ export default function ReservationForm({
       sessionStorage.setItem("rentalDetails", JSON.stringify(rentalDetails));
 
       // Navigate to reservation page
-      const url = `/reservation?category=${data.category}&office=${data.office}&age=${data.driverAge}`;
+      const url = `/reservation?type=${data.type}&office=${data.office}&age=${data.driverAge}`;
       router.push(url);
     } catch (error) {
       showToast.error("Failed to process reservation");
@@ -442,6 +443,7 @@ export default function ReservationForm({
 
       const rentalDetails = {
         office: formData.office,
+        type: formData.type,
         pickupDate: pickupDateTime.toISOString(),
         returnDate: returnDateTime.toISOString(),
         pickupTime: formData.pickupTime,
@@ -458,7 +460,7 @@ export default function ReservationForm({
         onBookNow();
         if (onClose) onClose();
       } else {
-        const url = `/reservation?category=${formData.category}&office=${formData.office}&age=${formData.driverAge}`;
+        const url = `/reservation?type=${formData.type}&office=${formData.office}&age=${formData.driverAge}`;
         router.push(url);
       }
     } catch (error) {
@@ -504,22 +506,22 @@ export default function ReservationForm({
           />
         </div>
 
-        {/* Category */}
+        {/* Type */}
         <div>
           <label
             className={`text-white font-semibold mb-2 flex items-center gap-2 ${
               isInline ? "text-xs mb-1" : "text-sm"
             }`}
           >
-            <FiTruck className="text-amber-400 text-lg relative" /> Category
+            <FiTruck className="text-amber-400 text-lg relative" /> Type
           </label>
           <CustomSelect
-            options={categories}
-            value={formData.category}
+            options={types}
+            value={formData.type}
             onChange={(val) =>
-              setFormData((prev) => ({ ...prev, category: val }))
+              setFormData((prev) => ({ ...prev, type: val }))
             }
-            placeholder="Select Category"
+            placeholder="Select Type"
             isInline={isInline}
           />
         </div>
@@ -748,15 +750,15 @@ export default function ReservationForm({
 
         <div>
           <label className="text-white text-xs font-semibold mb-1 flex items-center gap-1">
-            <FiTruck className="text-amber-400" /> Category
+            <FiTruck className="text-amber-400" /> Type
           </label>
           <CustomSelect
-            options={categories}
-            value={formData.category}
+            options={types}
+            value={formData.type}
             onChange={(val) =>
-              setFormData((prev) => ({ ...prev, category: val }))
+              setFormData((prev) => ({ ...prev, type: val }))
             }
-            placeholder="Select Category"
+            placeholder="Select Type"
             isInline={true}
           />
         </div>
@@ -913,7 +915,7 @@ export default function ReservationForm({
           onConfirm={handleVoiceConfirm}
           extractedData={voiceData}
           offices={offices}
-          categories={categories}
+          types={types}
         />
       )}
 
@@ -926,7 +928,7 @@ export default function ReservationForm({
         }}
         onComplete={handleConversationComplete}
         offices={offices}
-        categories={categories}
+        types={types}
       />
     </form>
   );
