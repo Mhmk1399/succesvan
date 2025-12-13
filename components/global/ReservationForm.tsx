@@ -216,7 +216,7 @@ export default function ReservationForm({
     if (formData.office && formData.type && dateRange[0].startDate) {
       const startDate = dateRange[0].startDate.toISOString().split("T")[0];
       fetch(
-        `/api/reservations/by-office?office=${formData.office}&type=${formData.type}&startDate=${startDate}`
+        `/api/reservations/by-office?office=${formData.office}&startDate=${startDate}`
       )
         .then((res) => res.json())
         .then((data) => setReservedSlots(data.data?.reservedSlots || []))
