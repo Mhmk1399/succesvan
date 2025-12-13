@@ -5,7 +5,7 @@ import { useRef, useState, useEffect } from "react";
 import { FiX } from "react-icons/fi";
 import ReservationForm from "@/components/global/ReservationForm";
 
-export default function ReservationHero() {
+export default function ReservationHero({ onBookNow }: { onBookNow?: () => void }) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -38,7 +38,7 @@ export default function ReservationHero() {
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               <button
-                onClick={() => setIsFormOpen(!isFormOpen)}
+                onClick={() => onBookNow ? onBookNow() : setIsFormOpen(!isFormOpen)}
                 className="px-4 sm:px-6 py-2 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg text-xs sm:text-sm"
               >
                 {isFormOpen ? "Close" : "Reserve Now"}
@@ -68,6 +68,7 @@ export default function ReservationHero() {
               <ReservationForm
                 isModal={true}
                 onClose={() => setIsFormOpen(false)}
+                onBookNow={onBookNow}
               />
             </div>
           </div>
@@ -110,12 +111,12 @@ export default function ReservationHero() {
 
             {/* Inline Form */}
             <div className="hidden md:block">
-              <ReservationForm isInline={true} />
+              <ReservationForm isInline={true} onBookNow={onBookNow} />
             </div>
 
             {/* Form Below Text - Mobile */}
             <div className="md:hidden bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-6 shadow-2xl">
-              <ReservationForm isModal={false} />
+              <ReservationForm isModal={false} onBookNow={onBookNow} />
             </div>
           </div>
         </div>

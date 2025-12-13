@@ -31,6 +31,11 @@ export function usePriceCalculation(
     const start = new Date(startDate);
     const end = new Date(endDate);
     
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      setResult(null);
+      return;
+    }
+    
     console.log('=== Date Parsing ===');
     console.log('Raw Start Date:', startDate);
     console.log('Raw End Date:', endDate);

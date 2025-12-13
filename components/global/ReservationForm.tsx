@@ -24,12 +24,14 @@ interface ReservationFormProps {
   isModal?: boolean;
   isInline?: boolean;
   onClose?: () => void;
+  onBookNow?: () => void;
 }
 
 export default function ReservationForm({
   isModal = false,
   isInline = false,
   onClose,
+  onBookNow,
 }: ReservationFormProps) {
   const router = useRouter();
   const [isListening, setIsListening] = useState(false);
@@ -289,8 +291,14 @@ export default function ReservationForm({
       };
       sessionStorage.setItem("rentalDetails", JSON.stringify(rentalDetails));
 
-      const url = `/reservation?category=${formData.category}&office=${formData.office}&age=${formData.driverAge}`;
-      router.push(url);
+      // Open modal instead of redirecting
+      if (onBookNow) {
+        onBookNow();
+        if (onClose) onClose();
+      } else {
+        const url = `/reservation?category=${formData.category}&office=${formData.office}&age=${formData.driverAge}`;
+        router.push(url);
+      }
     } catch (error) {
       showToast.error("Reservation failed");
     } finally {
