@@ -1,4 +1,6 @@
-import { Metadata } from "next";
+"use client";
+
+import { useState } from "react";
 import SEODescription from "@/components/global/seoDesc";
 import VanListingHome from "@/components/global/vanListing.backup";
 import AboutUs from "@/components/static/aboutHome";
@@ -7,22 +9,10 @@ import HeroSlider from "@/components/static/HeroSlider";
 import ReservationHero from "@/components/static/ReservationHero";
 import Testimonials from "@/components/static/testominial";
 import WhyUs from "@/components/static/whyus";
-
-export const metadata: Metadata = {
-  title: "Success Van Hire - Van Rental London | Self-Drive Van & Minibus Hire",
-  description:
-    "Professional van hire and minibus rental in North West London. Success Van Hire offers reliable, affordable self-drive vans for moving, deliveries, and group travel. Book online today!",
-  keywords:
-    "van hire london, van rental north west london, minibus hire, self drive van rental, success van hire, van hire golders green, van rental cricklewood",
-  openGraph: {
-    title: "Success Van Hire - Professional Van Rental London",
-    description:
-      "London's trusted van hire specialist. Self-drive vans and minibuses for moving, business, and group travel. Book online with transparent pricing.",
-    type: "website",
-  },
-};
+import ReservationModal from "@/components/global/ReservationModal";
 
 export default function Home() {
+  const [showReservationModal, setShowReservationModal] = useState(false);
   const faq = [
     {
       question: "What types of vans do you offer for rental?",
@@ -87,7 +77,7 @@ export default function Home() {
   ];
   return (
     <>
-      <ReservationHero />
+      <ReservationHero onBookNow={() => setShowReservationModal(true)} />
       <VanListingHome />
       <HeroSlider />
       <WhyUs />
@@ -195,6 +185,9 @@ export default function Home() {
 "
         collapsedLines={4}
       />
+      {showReservationModal && (
+        <ReservationModal onClose={() => setShowReservationModal(false)} />
+      )}
     </>
   );
 }

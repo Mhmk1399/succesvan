@@ -31,7 +31,7 @@ export default function BlogDetail({ params }: { params: Promise<{ slug: string 
   return (
     <div className="min-h-screen bg-linear-to-br from-[#0f172b] via-slate-900 to-[#0f172b]">
       {/* Hero Image */}
-      <div className="relative h-96 lg:h-[500px] overflow-hidden">
+      <div className="relative h-96 lg:h-125 overflow-hidden">
         <Image
           src={post.image}
           alt={post.title}

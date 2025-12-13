@@ -158,8 +158,8 @@ export default function WhatWeOffer() {
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
          
-        <div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/4 right-1/4 w-125 h-125 bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-125 h-125 bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

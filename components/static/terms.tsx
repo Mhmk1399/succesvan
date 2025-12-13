@@ -572,7 +572,7 @@ export default function TermsAndConditions() {
               isTocOpen ? "block" : "hidden"
             } lg:block`}
           >
-            <div className="fixed   top-20 w-[calc(20%-1rem)] h-fit max-w-xs lg:max-w-none">
+            <div className="fixed   top-30 w-[calc(20%-1rem)] h-fit max-w-xs lg:max-w-none">
               <div className="p-6 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10">
                 <h3 className="text-white text-lg font-black mb-6 flex items-center gap-2">
                   <FiFileText className="text-[#fe9a00]" />
