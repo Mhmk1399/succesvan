@@ -87,8 +87,8 @@ export default function ConversationalModal({
   useEffect(() => {
     if (isOpen && !hasStarted && mounted) {
       setHasStarted(true);
-      // Send initial greeting
-      sendMessage("Hello, I want to make a reservation");
+      // Send initial greeting - user hasn't said anything yet, just opened modal
+      sendMessage("start");
     }
   }, [isOpen, hasStarted, mounted, sendMessage]);
 

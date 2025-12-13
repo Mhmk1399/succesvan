@@ -59,8 +59,9 @@ export default function CustomerDashboard() {
     if (user) {
       try {
         const userData = JSON.parse(user);
-        if (userData && typeof userData === 'object') {
-          const hasLicenseUploaded = userData.licenceAttached?.front && userData.licenceAttached?.back;
+        if (userData && typeof userData === "object") {
+          const hasLicenseUploaded =
+            userData.licenceAttached?.front && userData.licenceAttached?.back;
           setHasLicense(hasLicenseUploaded);
         }
       } catch (error) {
@@ -88,12 +89,18 @@ export default function CustomerDashboard() {
     if (user) {
       try {
         const userData = JSON.parse(user);
-        if (userData && typeof userData === 'object') {
-          const hasLicenseUploaded = userData.licenceAttached?.front && userData.licenceAttached?.back;
-          
+        if (userData && typeof userData === "object") {
+          const hasLicenseUploaded =
+            userData.licenceAttached?.front && userData.licenceAttached?.back;
+
           const urlParams = new URLSearchParams(window.location.search);
-          if (urlParams.get("uploadLicense") === "true" && !hasLicenseUploaded) {
-            showToast.error("Your reservation is pending. Please upload your license to confirm your reservation.");
+          if (
+            urlParams.get("uploadLicense") === "true" &&
+            !hasLicenseUploaded
+          ) {
+            showToast.error(
+              "Your reservation is pending. Please upload your license to confirm your reservation."
+            );
             setActiveTab("profile");
             window.history.replaceState({}, "", window.location.pathname);
           }
@@ -208,9 +215,12 @@ export default function CustomerDashboard() {
             <div className="mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-start gap-3">
               <FiAlertCircle className="text-yellow-500 text-xl mt-0.5  shrink-0" />
               <div>
-                <h3 className="text-yellow-500 font-bold mb-1">License Required</h3>
+                <h3 className="text-yellow-500 font-bold mb-1">
+                  License Required
+                </h3>
                 <p className="text-gray-300 text-sm">
-                  Your reservations are pending. Please upload your driver's license in the Profile section to confirm your bookings.
+                  Your reservations are pending. Please upload your driver's
+                  license in the Profile section to confirm your bookings.
                 </p>
                 <button
                   onClick={() => handleTabChange("profile")}
@@ -221,9 +231,11 @@ export default function CustomerDashboard() {
               </div>
             </div>
           )}
-        
+
           {activeTab === "reserves" && <ReservesContent />}
-          {activeTab === "profile" && <ProfileContent onLicenseUpdate={checkLicenseStatus} />}
+          {activeTab === "profile" && (
+            <ProfileContent onLicenseUpdate={checkLicenseStatus} />
+          )}
           {activeTab === "offers" && <OffersContent />}
           {activeTab === "discounts" && <DiscountsContent />}
         </div>
@@ -273,9 +285,10 @@ function ReservesContent() {
     if (user) {
       try {
         const userData = JSON.parse(user);
-        if (userData && typeof userData === 'object' && userData._id) {
+        if (userData && typeof userData === "object" && userData._id) {
           setUserId(userData._id);
-          const hasLicenseUploaded = userData.licenceAttached?.front && userData.licenceAttached?.back;
+          const hasLicenseUploaded =
+            userData.licenceAttached?.front && userData.licenceAttached?.back;
           setHasLicense(hasLicenseUploaded);
         }
       } catch (error) {
@@ -283,21 +296,6 @@ function ReservesContent() {
       }
     }
   }, []);
-
-  const handleEdit = async (reservation: Reservation) => {
-    try {
-      const res = await fetch(`/api/reservations/${reservation._id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(reservation),
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Update failed");
-      showToast.success("Reservation updated successfully!");
-    } catch (error: any) {
-      showToast.error(error.message || "Update failed");
-    }
-  };
 
   if (!userId) {
     return <div className="text-gray-400">Loading reservations...</div>;
@@ -349,7 +347,6 @@ function ReservesContent() {
             </span>
           ),
         },
-        
       ]}
     />
   );
