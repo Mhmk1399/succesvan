@@ -16,6 +16,7 @@ export default function CategoriesContent() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    expert: "",
     image: "",
     type: "",
     pricingTiers: [{ minHours: "", maxHours: "", pricePerHour: "" }],
@@ -67,6 +68,7 @@ export default function CategoriesContent() {
     setFormData({
       name: "",
       description: "",
+      expert: "",
       image: "",
       type: "",
       pricingTiers: [{ minHours: "", maxHours: "", pricePerHour: "" }],
@@ -91,6 +93,7 @@ export default function CategoriesContent() {
     setFormData({
       name: item.name,
       description: item.description || "",
+      expert: (item as any).expert || "",
       image: item.image || "",
       type: typeId,
       pricingTiers: (item as any).pricingTiers?.map((t: any) => ({
@@ -127,6 +130,7 @@ export default function CategoriesContent() {
       const payload = {
         name: formData.name,
         description: formData.description,
+        expert: formData.expert,
         image: formData.image,
         type: formData.type,
         pricingTiers: formData.pricingTiers.map((t) => ({
@@ -217,6 +221,15 @@ export default function CategoriesContent() {
 
               <input
                 type="text"
+                name="expert"
+                placeholder="Expert"
+                value={formData.expert}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+              />
+
+              <input
+                type="text"
                 name="image"
                 placeholder="Image URL"
                 value={formData.image}
@@ -244,7 +257,7 @@ export default function CategoriesContent() {
                         pricingTiers: [
                           ...prev.pricingTiers,
                           { minHours: "", maxHours: "", pricePerHour: "" },
-                        ],
+                        ], 
                       }))
                     }
                     className="text-[#fe9a00] hover:text-[#e68a00] text-sm font-semibold"
@@ -452,6 +465,7 @@ export default function CategoriesContent() {
         columns={[
           { key: "name", label: "Name" },
           { key: "description", label: "Description" },
+          { key: "expert", label: "Expert" },
           {
             key: "type",
             label: "Type",
