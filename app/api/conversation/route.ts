@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { conversationalReservation, textToSpeech } from "@/lib/openai";
+import { buildRAGContext, fetchFullOffices, fetchFullCategories } from "@/lib/rag-context";
 import connect from "@/lib/data";
-import Office from "@/model/office";
-import Category from "@/model/category";
 
 export async function POST(request: NextRequest) {
   console.log("💬 [Conversation API] Received conversation request");
@@ -13,6 +12,8 @@ export async function POST(request: NextRequest) {
 
     console.log("📝 [Conversation API] Transcript:", transcript);
     console.log("📋 [Conversation API] Current data:", currentData);
+    console.log("🗣️ [Conversation API] Conversation history length:", conversationHistory.length);
+    console.log("🗣️ [Conversation API] Conversation history:", conversationHistory);
 
     if (!transcript) {
       return NextResponse.json(
@@ -23,28 +24,44 @@ export async function POST(request: NextRequest) {
 
     // Get offices and categories from database
     await connect();
-    const offices = await Office.find({}).select("_id name").lean();
-    const categories = await Category.find({}).select("_id name").lean();
+    
+    console.log("🔍 [Conversation API] Fetching full office and category data for RAG");
+    
+    // Fetch comprehensive data for RAG context
+    const fullOffices = await fetchFullOffices();
+    const fullCategories = await fetchFullCategories();
+    
+    console.log(`📍 [Conversation API] Loaded ${fullOffices.length} offices and ${fullCategories.length} categories with full details`);
+    
+    // Build RAG context with all available information
+    const ragContext = await buildRAGContext(
+      fullOffices,
+      fullCategories,
+      currentData.startDate,
+      currentData.endDate,
+      currentData.office
+    );
+    
+    console.log("📚 [Conversation API] RAG context size:", ragContext.length, "characters");
 
-    console.log(`📍 [Conversation API] Loaded ${offices.length} offices and ${categories.length} categories`);
-
-    // Format data for the function
-    const formattedOffices = offices.map((o: any) => ({
-      _id: o._id.toString(),
+    // Format data for the function (simple version for extraction)
+    const formattedOffices = fullOffices.map((o: any) => ({
+      _id: o._id,
       name: o.name,
     }));
-    const formattedCategories = categories.map((c: any) => ({
-      _id: c._id.toString(),
+    const formattedCategories = fullCategories.map((c: any) => ({
+      _id: c._id,
       name: c.name,
     }));
 
-    // Get AI response
+    // Get AI response with RAG context
     const aiResponse = await conversationalReservation(
       transcript,
       currentData,
       formattedOffices,
       formattedCategories,
-      conversationHistory
+      conversationHistory,
+      ragContext // Pass RAG context to AI
     );
 
     console.log("✅ [Conversation API] AI response:", aiResponse.message);

@@ -22,7 +22,8 @@ import { BsFuelPump } from "react-icons/bs";
 import Image from "next/image";
 import { VanData, Office } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
-import TimePickerInput from "@/components/ui/TimePickerInput";
+import TimeSelect from "@/components/ui/TimeSelect";
+import { generateTimeSlots, isTimeSlotAvailable } from "@/utils/timeSlots";
 import { DateRange, Range } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -209,6 +210,9 @@ function ReservationPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
+  const [reservedSlots, setReservedSlots] = useState<{ startTime: string; endTime: string }[]>([]);
+  const [pickupTimeSlots, setPickupTimeSlots] = useState<string[]>([]);
+  const [returnTimeSlots, setReturnTimeSlots] = useState<string[]>([]);
 
   // Fetch offices
   useEffect(() => {
@@ -217,6 +221,23 @@ function ReservationPanel({
       .then((data) => setOffices(data.data || []))
       .catch((err) => console.log("Failed to fetch offices", err));
   }, []);
+
+  // Fetch reserved slots and generate time slots
+  useEffect(() => {
+    if (formData.office && formData.pickupDate) {
+      fetch(`/api/reservations/by-office?office=${formData.office}&startDate=${formData.pickupDate}`)
+        .then(res => res.json())
+        .then(data => setReservedSlots(data.data?.reservedSlots || []))
+        .catch(err => console.error(err));
+
+      const office = offices.find(o => o._id === formData.office);
+      if (office) {
+        const slots = generateTimeSlots('00:00', '23:45', 15);
+        setPickupTimeSlots(slots);
+        setReturnTimeSlots(slots);
+      }
+    }
+  }, [formData.office, formData.pickupDate, offices]);
 
   // Check if user is logged in and load URL params
   useEffect(() => {
@@ -896,7 +917,7 @@ function ReservationPanel({
                         : "Select dates"}
                     </button>
                     {showDateRange && (
-                      <div className="absolute z-50 mt-2">
+                      <div className="absolute z-50 mt-2 bg-slate-800 border border-white/20 rounded-xl p-4 shadow-2xl">
                         <DateRange
                           ranges={dateRange}
                           onChange={(item) => {
@@ -916,6 +937,13 @@ function ReservationPanel({
                           minDate={new Date()}
                           rangeColors={["#fe9a00"]}
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowDateRange(false)}
+                          className="w-full mt-3 px-4 py-2 bg-[#fe9a00] text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors"
+                        >
+                          Done
+                        </button>
                       </div>
                     )}
                   </div>
@@ -927,13 +955,13 @@ function ReservationPanel({
                       <FiClock className="text-[#fe9a00]" />
                       Pickup Time
                     </label>
-                    <TimePickerInput
+                    <TimeSelect
                       value={formData.pickupTime}
                       onChange={(time) =>
                         setFormData((prev) => ({ ...prev, pickupTime: time }))
                       }
-                      minTime="00:00"
-                      maxTime="23:45"
+                      slots={pickupTimeSlots}
+                      reservedSlots={reservedSlots}
                     />
                   </div>
                   <div>
@@ -941,13 +969,13 @@ function ReservationPanel({
                       <FiClock className="text-[#fe9a00]" />
                       Return Time
                     </label>
-                    <TimePickerInput
+                    <TimeSelect
                       value={formData.returnTime}
                       onChange={(time) =>
                         setFormData((prev) => ({ ...prev, returnTime: time }))
                       }
-                      minTime="00:00"
-                      maxTime="23:45"
+                      slots={returnTimeSlots}
+                      reservedSlots={reservedSlots}
                     />
                   </div>
                 </div>

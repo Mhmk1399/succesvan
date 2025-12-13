@@ -102,13 +102,43 @@ Rules:
     
     console.log("✅ [API] GPT extraction complete:", parsedData);
     
-    // Detect missing required fields
-    const requiredFields = ['office', 'category', 'pickupDate', 'returnDate', 'driverAge'];
-    const missingFields = requiredFields.filter(field => !parsedData[field]);
+    // Detect missing required fields (matching reservation model)
+    const requiredFields: (keyof typeof normalizedData)[] = [
+      'office',      // Required in model
+      'category',    // Required in model
+      'startDate',   // Required in model (pickup date)
+      'endDate',     // Required in model (return date)
+      'driverAge'    // Required in model
+    ];
+    
+    // Map old field names to new ones for backwards compatibility
+    const normalizedData: {
+      office: any;
+      category: any;
+      startDate: any;
+      endDate: any;
+      startTime: any;
+      endTime: any;
+      driverAge: any;
+      message: any;
+    } = {
+      office: parsedData.office,
+      category: parsedData.category,
+      startDate: parsedData.startDate || parsedData.pickupDate,
+      endDate: parsedData.endDate || parsedData.returnDate,
+      startTime: parsedData.startTime || parsedData.pickupTime || "10:00",
+      endTime: parsedData.endTime || parsedData.returnTime || "10:00",
+      driverAge: parsedData.driverAge,
+      message: parsedData.message || "",
+    };
+    
+    const missingFields = requiredFields.filter(field => !normalizedData[field]);
     
     if (missingFields.length > 0) {
       console.warn("⚠️ [API] Missing required fields:", missingFields);
     }
+    
+    console.log("📋 [API] Normalized data:", normalizedData);
     
     const processingTime = Date.now() - startTime;
     console.log(`⏱️ [API] Total processing time: ${processingTime}ms`);
@@ -134,7 +164,7 @@ Rules:
     return NextResponse.json({
       success: true,
       transcript,
-      data: parsedData,
+      data: normalizedData,
       missingFields,
       autoSubmit: false,
     });
