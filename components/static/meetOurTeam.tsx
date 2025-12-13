@@ -98,8 +98,8 @@ export default function MeetOurTeam() {
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
          
-        <div className="absolute top-1/3 left-1/3 w-[600px] h-[600px] bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-[600px] h-[600px] bg-orange-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/3 left-1/3 w-150 h-150 bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/3 right-1/3 w-150 h-150 bg-orange-500/10 rounded-full blur-3xl"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
