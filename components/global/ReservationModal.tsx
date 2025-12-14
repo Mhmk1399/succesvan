@@ -32,7 +32,8 @@ interface Category {
   _id: string;
   name: string;
   image: string;
-  pricingTiers: { minHours: number; maxHours: number; pricePerHour: number }[];
+  pricingTiers: { minDays: number; maxDays: number; pricePerDay: number }[];
+  extrahoursRate: number;
   deposit: number;
   seats: number;
   fuel: string;
@@ -135,51 +136,29 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       .catch((err) => console.error(err));
   }, []);
 
-  // Fetch categories when office selected
+  // Fetch and filter categories when office and type selected
   useEffect(() => {
-    if (formData.office) {
-      fetch("/api/categories")
+    if (formData.office && formData.type) {
+      const typeId = typeof formData.type === 'string' ? formData.type : formData.type._id;
+      fetch(`/api/offices/${formData.office}`)
         .then((res) => res.json())
         .then((data) => {
-          const allCategories = data.data || [];
-          const office = offices.find((o) => o._id === formData.office);
-
-          if (office?.vehicles && office.vehicles.length > 0) {
-            // Extract category IDs from office vehicles
-            const officeCategoryIds = office.vehicles
-              .map((v: any) => {
-                if (typeof v === "string") return v;
-                if (v.vehicle) {
-                  if (typeof v.vehicle === "string") return v.vehicle;
-                  if (v.vehicle.category) {
-                    return typeof v.vehicle.category === "string"
-                      ? v.vehicle.category
-                      : v.vehicle.category._id;
-                  }
-                  return v.vehicle._id;
-                }
-                if (v.category)
-                  return typeof v.category === "string"
-                    ? v.category
-                    : v.category._id;
-                return v._id;
-              })
-              .filter(Boolean);
-
-            // Filter categories
-            const filtered = allCategories.filter((cat: any) =>
-              officeCategoryIds.includes(cat._id)
-            );
+          const office = data.data;
+          if (office?.categories && office.categories.length > 0) {
+            const filtered = office.categories.filter((cat: any) => {
+              const catTypeId = typeof cat.type === 'string' ? cat.type : cat.type?._id;
+              return catTypeId === typeId;
+            });
             setCategories(filtered);
           } else {
-            setCategories(allCategories);
+            setCategories([]);
           }
         })
         .catch((err) => console.error(err));
     } else {
       setCategories([]);
     }
-  }, [formData.office, offices]);
+  }, [formData.office, formData.type]);
 
   // Fetch add-ons
   useEffect(() => {
@@ -488,10 +467,10 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999"
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-10000 flex items-center justify-center p-4 overflow-y-auto">
-        <div className="bg-[#0f172b] rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto border border-white/10">
+      <div className="fixed inset-0 z-10000 flex items-center justify-center p-2 overflow-y-auto">
+        <div className="bg-[#0f172b] rounded-2xl max-w-6xl w-full max-h-[99vh] overflow-y-auto border border-white/10">
           {/* Header */}
-          <div className="sticky top-0 bg-[#0f172b] border-b border-white/10 p-6 flex items-center justify-between z-10">
+          <div className="sticky top-0 bg-[#0f172b] border-b border-white/10 p-2 flex items-center justify-between z-10">
             <div>
               <h2 className="text-2xl font-black text-white">Book Your Van</h2>
               <p className="text-gray-400 text-sm">Step {step} of 3</p>
@@ -504,111 +483,110 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
             </button>
           </div>
 
-          <div className="p-6">
+          <div className="p-2">
             {/* Step 1: Category Selection */}
             {step === 1 && (
-              <div className="space-y-4">
-                <h3 className="text-white font-bold text-lg mb-4">
-                  Select Van Category
-                </h3>
-
-                {/* Show rental details summary */}
-                {formData.office && formData.startDate && formData.endDate && formData.type?.name && (
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
-                    <p className="text-gray-400 text-sm mb-2">
-                      Rental Details:
-                    </p>
-                    <p className="text-white text-sm">
-                       Type: {formData.type.name}
-                    </p>
-                    <p className="text-white text-sm">
-                       {offices.find((o) => o._id === formData.office)?.name}
-                    </p>
-                    <p className="text-white text-sm">
-                       {formData.startDate} {formData.startTime} →{" "}
-                      {formData.endDate} {formData.endTime}
-                    </p>
-                    <p className="text-white text-sm">
-                       Driver Age: {formData.driverAge}
-                    </p>
-                  </div>
-                )}
-
+              <div className="relative">
                 {categories.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-4 max-h-[60vh] overflow-y-auto">
-                    {categories.map((cat) => (
-                      <div
-                        key={cat._id}
-                        onClick={() =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            category: cat._id,
-                          }))
-                        }
-                        className={`group relative h-80 rounded-2xl overflow-hidden cursor-pointer transition-all ${
-                          formData.category === cat._id
-                            ? "ring-2 ring-[#fe9a00]"
-                            : ""
-                        }`}
-                      >
-                        <div className="absolute inset-0">
-                          <Image
-                            src={cat.image}
-                            alt={cat.name}
-                            fill
-                            className="object-cover group-hover:scale-110 transition-all duration-500"
-                            unoptimized
-                          />
-                          <div className="absolute inset-0 bg-linear-to-b from-black/60 via-transparent to-black/90 group-hover:from-black/70 group-hover:to-black/95 transition-all duration-500"></div>
-                        </div>
-                        <div className="relative h-full flex flex-col p-4 justify-between">
-                          <div>
-                            <h4 className="text-base font-black text-white line-clamp-1">
-                              {cat.name}
-                            </h4>
-                            <p className="text-gray-300 text-xs mb-2">
-                              or similar
-                            </p>
-                            <div className="flex gap-1 flex-wrap">
-                              <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
-                                <FiUsers className="text-[#fe9a00] text-[10px]" />
-                                <span className="text-white text-[10px] font-semibold">
-                                  {cat.seats}
-                                </span>
+                  <div className="grid grid-cols-3 gap-4 max-h-[80vh] overflow-y-auto pb-20">
+                    {categories.map((cat) => {
+                      const CategoryCard = () => {
+                        const catPrice = usePriceCalculation(
+                          formData.startDate ? `${formData.startDate}T${formData.startTime}` : "",
+                          formData.endDate ? `${formData.endDate}T${formData.endTime}` : "",
+                          cat.pricingTiers || [],
+                          cat.extrahoursRate || 0
+                        );
+                        
+                        return (
+                          <div
+                            onClick={() =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                category: cat._id,
+                              }))
+                            }
+                            className={`group relative h-80 rounded-2xl overflow-hidden cursor-pointer transition-all ${
+                              formData.category === cat._id
+                                ? "ring-2 ring-[#fe9a00]"
+                                : ""
+                            }`}
+                          >
+                            <div className="absolute inset-0">
+                              <Image
+                                src={cat.image}
+                                alt={cat.name}
+                                fill
+                                className="object-cover group-hover:scale-110 transition-all duration-500"
+                                unoptimized
+                              />
+                              <div className="absolute inset-0 bg-linear-to-b from-black/60 via-transparent to-black/90 group-hover:from-black/70 group-hover:to-black/95 transition-all duration-500"></div>
+                            </div>
+                            <div className="relative h-full flex flex-col p-4 justify-between">
+                              <div>
+                                <h4 className="text-base font-black text-white line-clamp-1">
+                                  {cat.name}
+                                </h4>
+                                <p className="text-gray-300 text-xs mb-2">
+                                  or similar
+                                </p>
+                                <div className="flex gap-1 flex-wrap">
+                                  <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
+                                    <FiUsers className="text-[#fe9a00] text-[10px]" />
+                                    <span className="text-white text-[10px] font-semibold">
+                                      {cat.seats}
+                                    </span>
+                                  </div>
+                                  <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
+                                    <BsFuelPump className="text-[#fe9a00] text-[10px]" />
+                                    <span className="text-white text-[10px] font-semibold">
+                                      {cat.fuel}
+                                    </span>
+                                  </div>
+                                  <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
+                                    <FiPackage className="text-[#fe9a00] text-[10px]" />
+                                    <span className="text-white text-[10px] font-semibold">
+                                      {cat.cargo}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
-                                <BsFuelPump className="text-[#fe9a00] text-[10px]" />
-                                <span className="text-white text-[10px] font-semibold">
-                                  {cat.fuel}
-                                </span>
-                              </div>
-                              <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
-                                <FiPackage className="text-[#fe9a00] text-[10px]" />
-                                <span className="text-white text-[10px] font-semibold">
-                                  {cat.cargo}
-                                </span>
+                              <div>
+                                {catPrice ? (
+                                  <>
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="text-2xl font-black text-white">
+                                        £{catPrice.totalPrice}
+                                      </span>
+                                    </div>
+                                    <p className="text-gray-400 text-xs">{catPrice.breakdown}</p>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="text-2xl font-black text-white">
+                                        £{cat.pricingTiers[0]?.pricePerDay}
+                                      </span>
+                                      <span className="text-gray-300 text-sm font-semibold">
+                                        /day
+                                      </span>
+                                    </div>
+                                    <p className="text-gray-400 text-[9px]">from</p>
+                                  </>
+                                )}
                               </div>
                             </div>
+                            {formData.category === cat._id && (
+                              <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#fe9a00] flex items-center justify-center">
+                                <FiCheckCircle className="text-white text-sm" />
+                              </div>
+                            )}
                           </div>
-                          <div>
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-2xl font-black text-white">
-                                £{cat.pricingTiers[0]?.pricePerHour}
-                              </span>
-                              <span className="text-gray-300 text-[10px] font-semibold">
-                                /hour
-                              </span>
-                            </div>
-                            <p className="text-gray-400 text-[9px]">from</p>
-                          </div>
-                        </div>
-                        {formData.category === cat._id && (
-                          <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#fe9a00] flex items-center justify-center">
-                            <FiCheckCircle className="text-white text-sm" />
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                        );
+                      };
+                      
+                      return <CategoryCard key={cat._id} />;
+                    })}
                   </div>
                 ) : (
                   <p className="text-gray-400 text-center py-8">
@@ -616,36 +594,27 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                   </p>
                 )}
 
-                <button
-                  onClick={() => {
-                    if (!formData.category) {
-                      setErrors({ category: "Please select a category" });
-                      return;
-                    }
-
-                    // Save category to sessionStorage
-                    const stored = sessionStorage.getItem("rentalDetails");
-                    if (stored) {
-                      const details = JSON.parse(stored);
-                      details.category = formData.category;
-                      sessionStorage.setItem(
-                        "rentalDetails",
-                        JSON.stringify(details)
-                      );
-                    }
-
-                    // If user exists, skip to step 3, otherwise go to step 2
-                    setStep(user ? 3 : 2);
-                  }}
-                  className="w-full bg-[#fe9a00] hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all"
-                >
-                  {user ? "Continue to Add-ons" : "Continue to Login"}
-                </button>
-                {errors.category && (
-                  <p className="text-red-400 text-sm text-center mt-2">
-                    {errors.category}
-                  </p>
-                )}
+                <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-6xl px-8 z-20 transition-all duration-500 ease-out ${
+                  formData.category ? 'translate-y-0 opacity-100' : 'translate-y-32 opacity-0 pointer-events-none'
+                }`}>
+                  <button
+                    onClick={() => {
+                      const stored = sessionStorage.getItem("rentalDetails");
+                      if (stored) {
+                        const details = JSON.parse(stored);
+                        details.category = formData.category;
+                        sessionStorage.setItem(
+                          "rentalDetails",
+                          JSON.stringify(details)
+                        );
+                      }
+                      setStep(user ? 3 : 2);
+                    }}
+                    className="w-full bg-[#fe9a00] hover:bg-orange-600 hover:scale-[1.02] text-white font-bold py-4 rounded-xl transition-all duration-200 shadow-2xl"
+                  >
+                    {user ? "Continue to Add-ons" : "Continue to Login"}
+                  </button>
+                </div>
               </div>
             )}
 

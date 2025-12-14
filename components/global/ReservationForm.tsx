@@ -44,7 +44,8 @@ export default function ReservationForm({
   const [showDateRange, setShowDateRange] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [offices, setOffices] = useState<Office[]>([]);
-  const [types, setTypes] = useState<Category[]>([]);
+  const [types, setTypes] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState<any>(null);
   const [reservedSlots, setReservedSlots] = useState<
@@ -217,6 +218,29 @@ export default function ReservationForm({
     fetchData();
   }, []);
 
+  // Fetch and filter categories based on office and type
+  useEffect(() => {
+    if (formData.office && formData.type) {
+      fetch(`/api/offices/${formData.office}`)
+        .then((res) => res.json())
+        .then((data) => {
+          const office = data.data;
+          if (office?.categories && office.categories.length > 0) {
+            const filtered = office.categories.filter((cat: any) => {
+              const catTypeId = typeof cat.type === 'string' ? cat.type : cat.type?._id;
+              return catTypeId === formData.type;
+            });
+            setCategories(filtered);
+          } else {
+            setCategories([]);
+          }
+        })
+        .catch((err) => console.error(err));
+    } else {
+      setCategories([]);
+    }
+  }, [formData.office, formData.type]);
+
   useEffect(() => {
     if (formData.office && formData.type && dateRange[0].startDate) {
       const startDate = dateRange[0].startDate.toISOString().split("T")[0];
@@ -228,6 +252,8 @@ export default function ReservationForm({
         .catch((err) => console.error(err));
     }
   }, [formData.office, formData.type, dateRange]);
+
+
 
   const handleGlobalVoice = () => {
     console.log("🎤 [Form] Voice button clicked");
