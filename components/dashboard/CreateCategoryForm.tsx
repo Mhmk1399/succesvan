@@ -13,12 +13,15 @@ export default function CategoriesContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const mutateRef = useRef<(() => Promise<any>) | null>(null);
   const [types, setTypes] = useState<Type[]>([]);
+  const [uploading, setUploading] = useState({ image: false, video: false });
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     image: "",
+    video: "",
     type: "",
-    pricingTiers: [{ minHours: "", maxHours: "", pricePerHour: "" }],
+    pricingTiers: [{ minDays: "", maxDays: "", pricePerDay: "" }],
+    extrahoursRate: "",
     fuel: "",
     gear: "",
     seats: "",
@@ -63,13 +66,35 @@ export default function CategoriesContent() {
     }));
   };
 
+  const handleFileUpload = async (file: File, type: "image" | "video") => {
+    setUploading({ ...uploading, [type]: true });
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formDataUpload,
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setFormData((prev) => ({ ...prev, [type]: data.url }));
+      showToast.success(`${type} uploaded!`);
+    } catch (error: any) {
+      showToast.error(error.message || "Upload failed");
+    } finally {
+      setUploading({ ...uploading, [type]: false });
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: "",
       description: "",
       image: "",
+      video: "",
       type: "",
-      pricingTiers: [{ minHours: "", maxHours: "", pricePerHour: "" }],
+      pricingTiers: [{ minDays: "", maxDays: "", pricePerDay: "" }],
+      extrahoursRate: "",
       fuel: "",
       gear: "",
       seats: "",
@@ -92,12 +117,14 @@ export default function CategoriesContent() {
       name: item.name,
       description: item.description || "",
       image: item.image || "",
+      video: (item as any).video || "",
       type: typeId,
       pricingTiers: (item as any).pricingTiers?.map((t: any) => ({
-        minHours: String(t.minHours || ""),
-        maxHours: String(t.maxHours || ""),
-        pricePerHour: String(t.pricePerHour || ""),
-      })) || [{ minHours: "", maxHours: "", pricePerHour: "" }],
+        minDays: String(t.minDays || ""),
+        maxDays: String(t.maxDays || ""),
+        pricePerDay: String(t.pricePerDay || ""),
+      })) || [{ minDays: "", maxDays: "", pricePerDay: "" }],
+      extrahoursRate: String((item as any).extrahoursRate || ""),
       fuel: item.fuel || "",
       gear: item.gear || "",
       seats: String(item.seats || ""),
@@ -128,12 +155,14 @@ export default function CategoriesContent() {
         name: formData.name,
         description: formData.description,
         image: formData.image,
+        video: formData.video,
         type: formData.type,
         pricingTiers: formData.pricingTiers.map((t) => ({
-          minHours: parseFloat(t.minHours),
-          maxHours: parseFloat(t.maxHours),
-          pricePerHour: parseFloat(t.pricePerHour),
+          minDays: parseFloat(t.minDays),
+          maxDays: parseFloat(t.maxDays),
+          pricePerDay: parseFloat(t.pricePerDay),
         })),
+        extrahoursRate: parseFloat(formData.extrahoursRate),
         fuel: formData.fuel,
         gear: formData.gear,
         seats: parseInt(formData.seats),
@@ -215,14 +244,41 @@ export default function CategoriesContent() {
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
 
-              <input
-                type="text"
-                name="image"
-                placeholder="Image URL"
-                value={formData.image}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-              />
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">Image</label>
+                {formData.image ? (
+                  <div className="relative">
+                    <img src={formData.image} alt="Category" className="w-full h-32 object-cover rounded-lg" />
+                    <label className="absolute bottom-2 right-2 px-3 py-1 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg cursor-pointer text-sm font-semibold">
+                      {uploading.image ? "Uploading..." : "Change"}
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "image")} disabled={uploading.image} />
+                    </label>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#fe9a00] transition-colors">
+                    <span className="text-gray-400 text-sm">{uploading.image ? "Uploading..." : "+ Upload Image"}</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "image")} disabled={uploading.image} />
+                  </label>
+                )}
+              </div>
+
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">Video</label>
+                {formData.video ? (
+                  <div className="relative">
+                    <video src={formData.video} className="w-full h-32 object-cover rounded-lg" controls />
+                    <label className="absolute bottom-2 right-2 px-3 py-1 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg cursor-pointer text-sm font-semibold">
+                      {uploading.video ? "Uploading..." : "Change"}
+                      <input type="file" accept="video/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "video")} disabled={uploading.video} />
+                    </label>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#fe9a00] transition-colors">
+                    <span className="text-gray-400 text-sm">{uploading.video ? "Uploading..." : "+ Upload Video"}</span>
+                    <input type="file" accept="video/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "video")} disabled={uploading.video} />
+                  </label>
+                )}
+              </div>
 
               <CustomSelect
                 options={types}
@@ -243,7 +299,7 @@ export default function CategoriesContent() {
                         ...prev,
                         pricingTiers: [
                           ...prev.pricingTiers,
-                          { minHours: "", maxHours: "", pricePerHour: "" },
+                          { minDays: "", maxDays: "", pricePerDay: "" },
                         ],
                       }))
                     }
@@ -256,38 +312,38 @@ export default function CategoriesContent() {
                   <div key={index} className="grid grid-cols-3 gap-2">
                     <input
                       type="number"
-                      placeholder="Min Hours"
-                      value={tier.minHours}
+                      placeholder="Min Days"
+                      value={tier.minDays}
                       onChange={(e) => {
                         const newTiers = [...formData.pricingTiers];
-                        newTiers[index].minHours = e.target.value;
+                        newTiers[index].minDays = e.target.value;
                         setFormData((prev) => ({ ...prev, pricingTiers: newTiers }));
                       }}
                       required
-                      min="0"
+                      min="1"
                       className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] text-sm"
                     />
                     <input
                       type="number"
-                      placeholder="Max Hours"
-                      value={tier.maxHours}
+                      placeholder="Max Days"
+                      value={tier.maxDays}
                       onChange={(e) => {
                         const newTiers = [...formData.pricingTiers];
-                        newTiers[index].maxHours = e.target.value;
+                        newTiers[index].maxDays = e.target.value;
                         setFormData((prev) => ({ ...prev, pricingTiers: newTiers }));
                       }}
                       required
-                      min="0"
+                      min="1"
                       className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] text-sm"
                     />
                     <div className="flex gap-2">
                       <input
                         type="number"
-                        placeholder="Price/Hr"
-                        value={tier.pricePerHour}
+                        placeholder="Price/Day"
+                        value={tier.pricePerDay}
                         onChange={(e) => {
                           const newTiers = [...formData.pricingTiers];
-                          newTiers[index].pricePerHour = e.target.value;
+                          newTiers[index].pricePerDay = e.target.value;
                           setFormData((prev) => ({ ...prev, pricingTiers: newTiers }));
                         }}
                         required
@@ -313,6 +369,18 @@ export default function CategoriesContent() {
                   </div>
                 ))}
               </div>
+
+              <input
+                type="number"
+                name="extrahoursRate"
+                placeholder="Extra Hours Rate (GBP/hour)"
+                value={formData.extrahoursRate}
+                onChange={handleInputChange}
+                required
+                step="0.01"
+                min="0"
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+              />
 
               <div className="grid grid-cols-2 gap-4">
                 <CustomSelect

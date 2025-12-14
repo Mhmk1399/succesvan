@@ -5,6 +5,7 @@ const categorySchema = new mongoose.Schema(
     name: { type: String, required: true, unique: true },
     description: { type: String },
     image: { type: String },
+    video: { type: String },
     type: { type: mongoose.Schema.Types.ObjectId, ref: "Type", required: true },
     servicesPeriod: {
       tire: { type: Number, required: true, min: 1 },
@@ -15,11 +16,12 @@ const categorySchema = new mongoose.Schema(
     },
     pricingTiers: [
       {
-        minHours: { type: Number, required: true, min: 0 },
-        maxHours: { type: Number, required: true },
-        pricePerHour: { type: Number, required: true, min: 0 },
+        minDays: { type: Number, required: true, min: 1 },
+        maxDays: { type: Number, required: true },
+        pricePerDay: { type: Number, required: true, min: 0 },
       },
     ],
+    extrahoursRate: { type: Number, required: true, min: 0 },
     fuel: {
       type: String,
       enum: ["gas", "diesel", "electric", "hybrid"],
