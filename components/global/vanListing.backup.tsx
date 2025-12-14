@@ -24,6 +24,17 @@ import { VanData, Office } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
 import TimeSelect from "@/components/ui/TimeSelect";
 import { generateTimeSlots, isTimeSlotAvailable } from "@/utils/timeSlots";
+import { usePriceCalculation } from "@/hooks/usePriceCalculation";
+import AddOnsModal from "./AddOnsModal";
+
+interface AddOn {
+  _id: string;
+  name: string;
+  description?: string;
+  pricingType: "flat" | "tiered";
+  flatPrice?: number;
+  tiers?: { minDays: number; maxDays: number; price: number }[];
+}
 import { DateRange, Range } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -213,6 +224,17 @@ function ReservationPanel({
   const [reservedSlots, setReservedSlots] = useState<{ startTime: string; endTime: string }[]>([]);
   const [pickupTimeSlots, setPickupTimeSlots] = useState<string[]>([]);
   const [returnTimeSlots, setReturnTimeSlots] = useState<string[]>([]);
+  const [addOns, setAddOns] = useState<AddOn[]>([]);
+  const [selectedAddOns, setSelectedAddOns] = useState<{ addOn: string; quantity: number; selectedTierIndex?: number }[]>([]);
+  const [showAddOnsModal, setShowAddOnsModal] = useState(false);
+  const [addOnsCost, setAddOnsCost] = useState(0);
+
+  const priceCalc = usePriceCalculation(
+    formData.pickupDate ? `${formData.pickupDate}T${formData.pickupTime}:00` : "",
+    formData.returnDate ? `${formData.returnDate}T${formData.returnTime}:00` : "",
+    (van as any).pricingTiers || [],
+    (van as any).extrahoursRate || 0
+  );
 
   // Fetch offices
   useEffect(() => {
@@ -221,6 +243,34 @@ function ReservationPanel({
       .then((data) => setOffices(data.data || []))
       .catch((err) => console.log("Failed to fetch offices", err));
   }, []);
+
+  // Fetch add-ons
+  useEffect(() => {
+    fetch("/api/addons")
+      .then(res => res.json())
+      .then(data => setAddOns(data.data || []))
+      .catch(err => console.error(err));
+  }, []);
+
+  // Calculate add-ons cost
+  useEffect(() => {
+    if (!priceCalc) {
+      setAddOnsCost(0);
+      return;
+    }
+    const cost = selectedAddOns.reduce((total, item) => {
+      const addon = addOns.find(a => a._id === item.addOn);
+      if (!addon) return total;
+      if (addon.pricingType === "flat") {
+        return total + (addon.flatPrice || 0) * item.quantity;
+      } else {
+        const tierIndex = item.selectedTierIndex ?? 0;
+        const price = addon.tiers?.[tierIndex]?.price || 0;
+        return total + price * item.quantity;
+      }
+    }, 0);
+    setAddOnsCost(cost);
+  }, [selectedAddOns, priceCalc, addOns]);
 
   // Fetch reserved slots and generate time slots
   useEffect(() => {
@@ -263,7 +313,6 @@ function ReservationPanel({
         ...prev,
         pickupDate: details.pickupDate || "",
         returnDate: details.returnDate || "",
-        pickupLocation: details.pickupLocation || "",
         notes: details.message || "",
         office: details.office || "",
       }));
@@ -484,11 +533,11 @@ function ReservationPanel({
           category: formData.category,
           startDate: pickupDateTime,
           endDate: returnDateTime,
-          totalPrice: 0,
+          totalPrice: (priceCalc?.totalPrice || 0) + addOnsCost + (van.deposit || 0),
           dirverAge: formData.driverAge || 25,
           messege: formData.notes,
           status: "pending",
-          addOns: [],
+          addOns: selectedAddOns,
         },
       };
 
@@ -999,31 +1048,6 @@ function ReservationPanel({
 
                 <div>
                   <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
-                    <FiMapPin className="text-[#fe9a00]" />
-                    Pickup Location
-                  </label>
-                  <input
-                    type="text"
-                    name="pickupLocation"
-                    value={formData.pickupLocation}
-                    onChange={handleChange}
-                    className={`w-full bg-white/5 border ${
-                      errors.pickupLocation
-                        ? "border-red-500"
-                        : "border-white/10"
-                    } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
-                    placeholder="London, UK"
-                  />
-                  {errors.pickupLocation && (
-                    <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
-                      <FiAlertCircle className="text-xs" />
-                      {errors.pickupLocation}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="  text-white text-sm font-semibold mb-2 flex items-center gap-2">
                     <FiMessageSquare className="text-[#fe9a00]" />
                     Additional Notes{" "}
                     <span className="text-gray-500 text-xs font-normal">
@@ -1045,11 +1069,47 @@ function ReservationPanel({
             {/* Divider */}
             <div className="border-t border-white/10"></div>
 
+            {/* Add-ons Section */}
+            {addOns.length > 0 && formData.pickupDate && formData.returnDate && (
+              <div>
+                <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
+                    3
+                  </div>
+                  Add-ons
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowAddOnsModal(true)}
+                  className="w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#fe9a00]/50 rounded-xl p-4 transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="text-left">
+                      <p className="text-white font-semibold text-sm">
+                        {selectedAddOns.length === 0
+                          ? "Select Add-ons"
+                          : `${selectedAddOns.length} Add-on${selectedAddOns.length > 1 ? "s" : ""} Selected`}
+                      </p>
+                      <p className="text-gray-400 text-xs mt-1">
+                        {selectedAddOns.length === 0
+                          ? "Enhance your rental experience"
+                          : `Total: £${addOnsCost}`}
+                      </p>
+                    </div>
+                    <FiPackage className="text-[#fe9a00] text-xl group-hover:scale-110 transition-transform" />
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* Divider */}
+            {addOns.length > 0 && formData.pickupDate && formData.returnDate && <div className="border-t border-white/10"></div>}
+
             {/* Cost Summary */}
             <div className="bg-linear-to-br from-white/5 to-transparent border border-white/10 rounded-2xl p-4 space-y-3">
               <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
-                  3
+                  {addOns.length > 0 && formData.pickupDate && formData.returnDate ? "4" : "3"}
                 </div>
                 Cost Summary
               </h3>
@@ -1165,6 +1225,17 @@ function ReservationPanel({
               </div>
             </div>
           </form>
+        )}
+
+        {/* Add-ons Modal */}
+        {showAddOnsModal && (
+          <AddOnsModal
+            addOns={addOns}
+            selectedAddOns={selectedAddOns}
+            onSave={setSelectedAddOns}
+            onClose={() => setShowAddOnsModal(false)}
+            rentalDays={priceCalc ? Math.ceil(priceCalc.totalHours / 24) : 1}
+          />
         )}
       </div>
     </>

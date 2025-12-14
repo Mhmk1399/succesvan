@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Reservation from "@/model/reservation";
 import { successResponse, errorResponse } from "@/lib/api-response";
+import office from "@/model/office";
 
 export async function GET(req: NextRequest) {
   try {
@@ -31,13 +32,16 @@ export async function GET(req: NextRequest) {
       query.endDate = { $gte: end, $lte: endEnd };
     }
 
-    const reservations = await Reservation.find(query).populate("office");
-    
+    const reservations = await Reservation.find(query).populate({
+      path: "office",
+      model: office,
+    });
+
     const reservedSlots = reservations.map((r: any) => ({
       startTime: new Date(r.startDate).toTimeString().slice(0, 5),
       endTime: new Date(r.endDate).toTimeString().slice(0, 5),
     }));
-    
+
     return successResponse({ reservations, reservedSlots });
   } catch (error: any) {
     return errorResponse(error.message, 500);

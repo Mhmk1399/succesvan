@@ -90,6 +90,7 @@ export interface Category {
   name: string;
   description?: string;
   image?: string;
+  expert: String;
   type: string | Type;
   servicesPeriod: ServicesPeriod;
   pricePerHour: number;

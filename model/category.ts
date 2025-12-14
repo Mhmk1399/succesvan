@@ -2,24 +2,35 @@ import mongoose from "mongoose";
 
 const categorySchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
     description: { type: String },
+    expert: { type: String },
     image: { type: String },
+    video: { type: String },
     type: { type: mongoose.Schema.Types.ObjectId, ref: "Type", required: true },
+    showPrice: { type: Number, required: true, min: 0 },
+    properties: [
+      {
+        key: { type: String, required: true },
+        value: { type: String, required: true },
+      },
+    ],
+    requiredLicense: { type: String, required: true },
     servicesPeriod: {
-      tire: { type: Number, required: true, min: 1 },
-      oil: { type: Number, required: true, min: 1 },
-      battery: { type: Number, required: true, min: 1 },
-      air: { type: Number, required: true, min: 1 },
-      service: { type: Number, required: true, min: 1 },
+      tire: { type: Number, min: 1 },
+      oil: { type: Number, min: 1 },
+      battery: { type: Number,  min: 1 },
+      air: { type: Number, min: 1 },
+      service: { type: Number, min: 1 },
     },
     pricingTiers: [
       {
-        minHours: { type: Number, required: true, min: 0 },
-        maxHours: { type: Number, required: true },
-        pricePerHour: { type: Number, required: true, min: 0 },
+        minDays: { type: Number, required: true, min: 1 },
+        maxDays: { type: Number, required: true },
+        pricePerDay: { type: Number, required: true, min: 0 },
       },
     ],
+    extrahoursRate: { type: Number, required: true, min: 0 },
     fuel: {
       type: String,
       enum: ["gas", "diesel", "electric", "hybrid"],

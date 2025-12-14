@@ -41,15 +41,23 @@ export default function VanListing({
   const sectionRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const [categories, setCategories] = useState<Category[]>(vans as Category[]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null
-  );
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [fetchedAddOns, setFetchedAddOns] = useState<AddOn[]>(addOns);
 
   useEffect(() => {
     if (vans.length > 0) {
       setCategories(vans as Category[]);
     }
   }, [vans.length]);
+
+  useEffect(() => {
+    if (addOns.length === 0) {
+      fetch("/api/addons")
+        .then(res => res.json())
+        .then(data => data.success && setFetchedAddOns(data.data || []))
+        .catch(err => console.log("Failed to fetch add-ons", err));
+    }
+  }, [addOns.length]);
 
   const setCardRef = useCallback((index: number, el: HTMLDivElement | null) => {
     cardsRef.current[index] = el;
@@ -124,7 +132,7 @@ export default function VanListing({
       {selectedCategory && (
         <ReservationPanel
           van={selectedCategory}
-          addOns={addOns}
+          addOns={fetchedAddOns}
           onClose={() => setSelectedCategory(null)}
         />
       )}
@@ -174,10 +182,13 @@ function ReservationPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
+  console.log('Van data:', van);
+  console.log('extrahoursRate from van:', (van as any).extrahoursRate);
   const priceCalc = usePriceCalculation(
-    formData.pickupDate,
-    formData.returnDate,
-    (van as any).pricingTiers || []
+    formData.pickupDate ? `${formData.pickupDate}T00:00:00` : "",
+    formData.returnDate ? `${formData.returnDate}T00:00:00` : "",
+    (van as any).pricingTiers || [],
+    (van as any).extrahoursRate || 0
   );
   const [selectedAddOns, setSelectedAddOns] = useState<
     { addOn: string; quantity: number; selectedTierIndex?: number }[]
