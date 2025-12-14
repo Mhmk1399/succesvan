@@ -468,7 +468,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
         onClick={onClose}
       />
       <div className="fixed inset-0 z-10000 flex items-center justify-center p-2 overflow-y-auto">
-        <div className="bg-[#0f172b] rounded-2xl max-w-6xl w-full max-h-[99vh] overflow-y-auto border border-white/10">
+        <div className="relative bg-[#0f172b] rounded-2xl max-w-6xl w-full max-h-[99vh] overflow-y-auto border border-white/10">
           {/* Header */}
           <div className="sticky top-0 bg-[#0f172b] border-b border-white/10 p-2 flex items-center justify-between z-10">
             <div>
@@ -486,17 +486,40 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
           <div className="p-2">
             {/* Step 1: Category Selection */}
             {step === 1 && (
-              <div className="relative">
+              <div className="relative ">
                 {categories.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-4 max-h-[80vh] overflow-y-auto pb-20">
+                  <div className="grid grid-cols-4 gap-2 max-h-[80vh] overflow-y-auto p-2 pt-2 pb-12">
                     {categories.map((cat) => {
                       const CategoryCard = () => {
-                        const catPrice = usePriceCalculation(
-                          formData.startDate ? `${formData.startDate}T${formData.startTime}` : "",
-                          formData.endDate ? `${formData.endDate}T${formData.endTime}` : "",
-                          cat.pricingTiers || [],
-                          cat.extrahoursRate || 0
-                        );
+                        const catPrice = useMemo(() => {
+                          if (!formData.startDate || !formData.endDate) return null;
+                          const start = formData.startDate ? `${formData.startDate}T${formData.startTime}` : "";
+                          const end = formData.endDate ? `${formData.endDate}T${formData.endTime}` : "";
+                          const diffTime = new Date(end).getTime() - new Date(start).getTime();
+                          const totalMinutes = diffTime / (1000 * 60);
+                          const totalHours = Math.floor(totalMinutes / 60);
+                          const remainingMinutes = totalMinutes % 60;
+                          const billableHours = remainingMinutes > 15 ? totalHours + 1 : totalHours;
+                          if (billableHours <= 0) return null;
+                          const totalDays = Math.floor(billableHours / 24);
+                          const extraHours = billableHours % 24;
+                          const tier = cat.pricingTiers.find(
+                            (t) => totalDays >= t.minDays && totalDays <= t.maxDays
+                          ) || cat.pricingTiers[cat.pricingTiers.length - 1];
+                          const pricePerDay = tier.pricePerDay;
+                          const daysPrice = totalDays * pricePerDay;
+                          const extraHoursPrice = extraHours * (cat.extrahoursRate || 0);
+                          const totalPrice = daysPrice + extraHoursPrice;
+                          let breakdown = "";
+                          if (totalDays > 0 && extraHours > 0) {
+                            breakdown = `${totalDays} day${totalDays > 1 ? 's' : ''} (£${pricePerDay}/day) + ${extraHours}h (£${cat.extrahoursRate}/hr) = £${totalPrice}`;
+                          } else if (totalDays > 0) {
+                            breakdown = `${totalDays} day${totalDays > 1 ? 's' : ''} (£${pricePerDay}/day) = £${totalPrice}`;
+                          } else {
+                            breakdown = `${extraHours}h (£${cat.extrahoursRate}/hr) = £${totalPrice}`;
+                          }
+                          return { totalPrice, breakdown };
+                        }, [formData.startDate, formData.startTime, formData.endDate, formData.endTime]);
                         
                         return (
                           <div
@@ -506,7 +529,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                 category: cat._id,
                               }))
                             }
-                            className={`group relative h-80 rounded-2xl overflow-hidden cursor-pointer transition-all ${
+                            className={`group relative h-96 rounded-2xl overflow-hidden cursor-pointer transition-all ${
                               formData.category === cat._id
                                 ? "ring-2 ring-[#fe9a00]"
                                 : ""
@@ -585,7 +608,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                         );
                       };
                       
-                      return <CategoryCard key={cat._id} />;
+                      return <CategoryCard key={`${cat._id}-${formData.category}`} />;
                     })}
                   </div>
                 ) : (
@@ -594,27 +617,27 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                   </p>
                 )}
 
-                <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-6xl px-8 z-20 transition-all duration-500 ease-out ${
-                  formData.category ? 'translate-y-0 opacity-100' : 'translate-y-32 opacity-0 pointer-events-none'
-                }`}>
-                  <button
-                    onClick={() => {
-                      const stored = sessionStorage.getItem("rentalDetails");
-                      if (stored) {
-                        const details = JSON.parse(stored);
-                        details.category = formData.category;
-                        sessionStorage.setItem(
-                          "rentalDetails",
-                          JSON.stringify(details)
-                        );
-                      }
-                      setStep(user ? 3 : 2);
-                    }}
-                    className="w-full bg-[#fe9a00] hover:bg-orange-600 hover:scale-[1.02] text-white font-bold py-4 rounded-xl transition-all duration-200 shadow-2xl"
-                  >
-                    {user ? "Continue to Add-ons" : "Continue to Login"}
-                  </button>
-                </div>
+                {formData.category && (
+                  <div className="absolute bottom-0 left-0 right-0 px-8 z-20 animate-[slideUp_0.5s_ease-out]">
+                    <button
+                      onClick={() => {
+                        const stored = sessionStorage.getItem("rentalDetails");
+                        if (stored) {
+                          const details = JSON.parse(stored);
+                          details.category = formData.category;
+                          sessionStorage.setItem(
+                            "rentalDetails",
+                            JSON.stringify(details)
+                          );
+                        }
+                        setStep(user ? 3 : 2);
+                      }}
+                      className="w-full bg-[#fe9a00] hover:bg-orange-600 hover:scale-[1.02] text-white font-bold py-4 rounded-xl transition-all duration-200 shadow-2xl"
+                    >
+                      {user ? "Continue to Add-ons" : "Continue to Login"}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
