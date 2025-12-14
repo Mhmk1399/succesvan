@@ -21,6 +21,9 @@ export default function CategoriesContent() {
     image: "",
     video: "",
     type: "",
+    showPrice: "",
+    properties: [{ key: "", value: "" }],
+    requiredLicense: "",
     pricingTiers: [{ minDays: "", maxDays: "", pricePerDay: "" }],
     extrahoursRate: "",
     fuel: "",
@@ -95,6 +98,9 @@ export default function CategoriesContent() {
       image: "",
       video: "",
       type: "",
+      showPrice: "",
+      properties: [{ key: "", value: "" }],
+      requiredLicense: "",
       pricingTiers: [{ minDays: "", maxDays: "", pricePerDay: "" }],
       extrahoursRate: "",
       fuel: "",
@@ -122,6 +128,12 @@ export default function CategoriesContent() {
       image: item.image || "",
       video: (item as any).video || "",
       type: typeId,
+      showPrice: String((item as any).showPrice || ""),
+      properties: (item as any).properties?.map((p: any) => ({
+        key: p.key || "",
+        value: p.value || "",
+      })) || [{ key: "", value: "" }],
+      requiredLicense: (item as any).requiredLicense || "",
       pricingTiers: (item as any).pricingTiers?.map((t: any) => ({
         minDays: String(t.minDays || ""),
         maxDays: String(t.maxDays || ""),
@@ -161,6 +173,12 @@ export default function CategoriesContent() {
         image: formData.image,
         video: formData.video,
         type: formData.type,
+        showPrice: parseFloat(formData.showPrice),
+        properties: formData.properties.map((p) => ({
+          key: p.key,
+          value: p.value,
+        })),
+        requiredLicense: formData.requiredLicense,
         pricingTiers: formData.pricingTiers.map((t) => ({
           minDays: parseFloat(t.minDays),
           maxDays: parseFloat(t.maxDays),
@@ -230,23 +248,29 @@ export default function CategoriesContent() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <input
-                type="text"
-                name="name"
-                placeholder="Category Name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-              />
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">Category Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Category Name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                />
+              </div>
 
-              <textarea
-                name="description"
-                placeholder="Description"
-                value={formData.description}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-              />
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">Description</label>
+                <textarea
+                  name="description"
+                  placeholder="Description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                />
+              </div>
 
               <div>
                 <label className="text-gray-400 text-sm mb-2 block">Image</label>
@@ -283,32 +307,30 @@ export default function CategoriesContent() {
                   </label>
                 )}
               </div>
-              <input
-                type="text"
-                name="expert"
-                placeholder="Expert"
-                value={formData.expert}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-              />
 
-              <input
-                type="text"
-                name="image"
-                placeholder="Image URL"
-                value={formData.image}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-              />
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">Expert</label>
+                <input
+                  type="text"
+                  name="expert"
+                  placeholder="Ford Transit Custom or Similar"
+                  value={formData.expert}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                />
+              </div>
 
-              <CustomSelect
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">Type</label>
+                <CustomSelect
                 options={types}
                 value={formData.type}
                 onChange={(val) =>
                   setFormData((prev) => ({ ...prev, type: val }))
                 }
-                placeholder="Select Type"
-              />
+                  placeholder="Select Type"
+                />
+              </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -391,73 +413,178 @@ export default function CategoriesContent() {
                 ))}
               </div>
 
-              <input
-                type="number"
-                name="extrahoursRate"
-                placeholder="Extra Hours Rate (GBP/hour)"
-                value={formData.extrahoursRate}
-                onChange={handleInputChange}
-                required
-                step="0.01"
-                min="0"
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <CustomSelect
-                  options={[
-                    { _id: "gas", name: "Gas" },
-                    { _id: "diesel", name: "Diesel" },
-                    { _id: "electric", name: "Electric" },
-                    { _id: "hybrid", name: "Hybrid" },
-                  ]}
-                  value={formData.fuel}
-                  onChange={(val) =>
-                    setFormData((prev) => ({ ...prev, fuel: val }))
-                  }
-                  placeholder="Select Fuel"
-                />
-
-                <CustomSelect
-                  options={[
-                    { _id: "automatic", name: "Automatic" },
-                    { _id: "manual", name: "Manual" },
-                    { _id: "manual,automatic", name: "Manual & Automatic" },
-                  ]}
-                  value={formData.gear}
-                  onChange={(val) =>
-                    setFormData((prev) => ({ ...prev, gear: val }))
-                  }
-                  placeholder="Select Gear"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">Show Price</label>
                 <input
                   type="number"
-                  name="seats"
-                  placeholder="Seats"
-                  value={formData.seats}
+                  name="showPrice"
+                  placeholder="Show Price"
+                  value={formData.showPrice}
                   onChange={handleInputChange}
                   required
-                  min="1"
-                  className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                />
-                <input
-                  type="number"
-                  name="doors"
-                  placeholder="Doors"
-                  value={formData.doors}
-                  onChange={handleInputChange}
-                  required
-                  min="1"
-                  className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                  step="0.01"
+                  min="0"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
                 />
               </div>
 
               <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-white font-semibold">Properties</h3>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        properties: [...prev.properties, { key: "", value: "" }],
+                      }))
+                    }
+                    className="text-[#fe9a00] hover:text-[#e68a00] text-sm font-semibold"
+                  >
+                    + Add Property
+                  </button>
+                </div>
+                {formData.properties.map((prop, index) => (
+                  <div key={index} className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Key (e.g. Carry Weight)"
+                      value={prop.key}
+                      onChange={(e) => {
+                        const newProps = [...formData.properties];
+                        newProps[index].key = e.target.value;
+                        setFormData((prev) => ({ ...prev, properties: newProps }));
+                      }}
+                      required
+                      className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] text-sm"
+                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Value (e.g. 1000kg)"
+                        value={prop.value}
+                        onChange={(e) => {
+                          const newProps = [...formData.properties];
+                          newProps[index].value = e.target.value;
+                          setFormData((prev) => ({ ...prev, properties: newProps }));
+                        }}
+                        required
+                        className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] text-sm"
+                      />
+                      {formData.properties.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              properties: prev.properties.filter((_, i) => i !== index),
+                            }))
+                          }
+                          className="px-2 text-red-400 hover:text-red-300"
+                        >
+                          <FiX />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">Required License</label>
+                <input
+                  type="text"
+                  name="requiredLicense"
+                  placeholder="Required License"
+                  value={formData.requiredLicense}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                />
+              </div>
+
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">Extra Hours Rate (GBP/hour)</label>
+                <input
+                  type="number"
+                  name="extrahoursRate"
+                  placeholder="Extra Hours Rate (GBP/hour)"
+                  value={formData.extrahoursRate}
+                  onChange={handleInputChange}
+                  required
+                  step="0.01"
+                  min="0"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-gray-400 text-sm mb-2 block">Fuel Type</label>
+                  <CustomSelect
+                    options={[
+                      { _id: "gas", name: "Gas" },
+                      { _id: "diesel", name: "Diesel" },
+                      { _id: "electric", name: "Electric" },
+                      { _id: "hybrid", name: "Hybrid" },
+                    ]}
+                    value={formData.fuel}
+                    onChange={(val) =>
+                      setFormData((prev) => ({ ...prev, fuel: val }))
+                    }
+                    placeholder="Select Fuel"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-gray-400 text-sm mb-2 block">Gear Type</label>
+                  <CustomSelect
+                    options={[
+                      { _id: "automatic", name: "Automatic" },
+                      { _id: "manual", name: "Manual" },
+                      { _id: "manual,automatic", name: "Manual & Automatic" },
+                    ]}
+                    value={formData.gear}
+                    onChange={(val) =>
+                      setFormData((prev) => ({ ...prev, gear: val }))
+                    }
+                    placeholder="Select Gear"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-gray-400 text-sm mb-2 block">Seats</label>
+                  <input
+                    type="number"
+                    name="seats"
+                    placeholder="Seats"
+                    value={formData.seats}
+                    onChange={handleInputChange}
+                    required
+                    min="1"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                  />
+                </div>
+                <div>
+                  <label className="text-gray-400 text-sm mb-2 block">Doors</label>
+                  <input
+                    type="number"
+                    name="doors"
+                    placeholder="Doors"
+                    value={formData.doors}
+                    onChange={handleInputChange}
+                    required
+                    min="1"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
                 <h3 className="text-white font-semibold">
-                  Service Period (Days)
+                  Service Period <span className="text-white text-sm font-normal">(enetr each service period in days)</span>
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <input
@@ -540,13 +667,60 @@ export default function CategoriesContent() {
         title="Category"
         columns={[
           { key: "name", label: "Name" },
-          { key: "description", label: "Description" },
-          { key: "expert", label: "Expert" },
           {
             key: "type",
             label: "Type",
             render: (value: string | Type) =>
               typeof value === "string" ? value : value?.name || "-",
+          },
+          { key: "expert", label: "Expert" },
+          {
+            key: "showPrice" as keyof Category,
+            label: "Show Price",
+            render: (value: any) => value ? `£${value}` : "-",
+          },
+          {
+            key: "properties" as keyof Category,
+            label: "Properties",
+            render: (value: any) =>
+              Array.isArray(value) && value.length > 0 ? (
+                <table className="text-xs">
+                  <tbody>
+                    {value.map((p: any, i: number) => (
+                      <tr key={i}>
+                        <td className="pr-2 font-semibold">{p.key}:</td>
+                        <td>{p.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : "-",
+          },
+          {
+            key: "pricingTiers" as keyof Category,
+            label: "Pricing Tiers",
+            render: (value: any) =>
+              Array.isArray(value) && value.length > 0 ? (
+                <table className="text-xs">
+                  <tbody>
+                    {value.map((t: any, i: number) => (
+                      <tr key={i}>
+                        <td className="pr-2">{t.minDays}-{t.maxDays} days:</td>
+                        <td className="font-semibold">£{t.pricePerDay}/day</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : "-",
+          },
+          {
+            key: "extrahoursRate" as keyof Category,
+            label: "Extra Hours Rate",
+            render: (value: any) => value ? `£${value}/hr` : "-",
+          },
+          {
+            key: "requiredLicense" as keyof Category,
+            label: "License",
           },
           { key: "fuel", label: "Fuel" },
           { key: "gear", label: "Gear" },
