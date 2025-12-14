@@ -23,7 +23,7 @@ import TimeSelect from "@/components/ui/TimeSelect";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import VoiceConfirmationModal from "@/components/global/VoiceConfirmationModal";
 import ConversationalModal from "@/components/global/ConversationalModal";
-import AIAgentModal from "@/components/global/AIAgentModal";
+import FastAgentModal from "@/components/global/FastAgentModal";
 import { FiCpu } from "react-icons/fi";
 import { datePickerStyles } from "./DatePickerStyles";
 
@@ -58,8 +58,8 @@ export default function ReservationForm({
   // Conversational modal state
   const [showConversationalModal, setShowConversationalModal] = useState(false);
 
-  // AI Agent modal state (comprehensive consultant)
-  const [showAIAgentModal, setShowAIAgentModal] = useState(false);
+  // Fast AI Agent modal state (quick 1-minute booking)
+  const [showFastAgentModal, setShowFastAgentModal] = useState(false);
 
   const [dateRange, setDateRange] = useState<Range[]>([
     {
@@ -240,21 +240,31 @@ export default function ReservationForm({
   };
 
   const handleAIAgentMode = () => {
-    console.log("🤖 [Form] Starting AI Agent consultant mode");
-    setShowAIAgentModal(true);
+    console.log("🤖 [Form] Starting Fast AI Agent mode");
+    setShowFastAgentModal(true);
   };
 
-  const handleAIAgentComplete = (reservationId: string, bookingData: any) => {
+  const handleFastAgentComplete = (reservationId: string, userToken: string, isNewUser: boolean) => {
     console.log(
-      "✅ [Form] AI Agent completed booking:",
+      "✅ [Form] Fast Agent completed booking:",
       reservationId,
-      bookingData
+      "isNewUser:", isNewUser
     );
-    setShowAIAgentModal(false);
+    setShowFastAgentModal(false);
 
-    // Navigate to the reservation page or show success
+    // Store the token if provided
+    if (userToken) {
+      localStorage.setItem("token", userToken);
+    }
+
     showToast.success("Booking created successfully!");
-    router.push(`/customerDashboard`);
+    
+    // Navigate based on whether it's a new user
+    if (isNewUser) {
+      router.push(`/customerDashboard?uploadLicense=true`);
+    } else {
+      router.push(`/customerDashboard`);  
+    }
   };
 
   const handleConversationComplete = (data: any) => {
@@ -963,14 +973,14 @@ export default function ReservationForm({
         types={types}
       />
 
-      {/* AI Agent Modal - Comprehensive Consultant */}
-      <AIAgentModal
-        isOpen={showAIAgentModal}
+      {/* Fast AI Agent Modal - Quick 1-minute booking */}
+      <FastAgentModal
+        isOpen={showFastAgentModal}
         onClose={() => {
-          console.log("❌ [Form] AI Agent modal closed");
-          setShowAIAgentModal(false);
+          console.log("❌ [Form] Fast Agent modal closed");
+          setShowFastAgentModal(false);
         }}
-        onComplete={handleAIAgentComplete}
+        onComplete={handleFastAgentComplete}
       />
     </form>
   );
