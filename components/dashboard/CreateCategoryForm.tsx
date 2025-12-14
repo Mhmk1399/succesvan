@@ -156,6 +156,44 @@ export default function CategoriesContent() {
     setIsFormOpen(true);
   };
 
+  const handleDuplicate = async (item: Category) => {
+    try {
+      const typeId = typeof item.type === "string" ? item.type : item.type._id || "";
+      const payload = {
+        name: `${item.name} (Copy)`,
+        description: item.description,
+        expert: (item as any).expert,
+        image: item.image,
+        video: (item as any).video,
+        type: typeId,
+        showPrice: (item as any).showPrice,
+        properties: (item as any).properties || [],
+        requiredLicense: (item as any).requiredLicense,
+        pricingTiers: (item as any).pricingTiers || [],
+        extrahoursRate: (item as any).extrahoursRate,
+        fuel: item.fuel,
+        gear: item.gear,
+        seats: item.seats,
+        doors: item.doors,
+        servicesPeriod: item.servicesPeriod,
+      };
+
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Duplicate failed");
+
+      showToast.success("Category duplicated successfully!");
+      if (mutateRef.current) mutateRef.current();
+    } catch (error: any) {
+      showToast.error(error.message || "Duplicate failed");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -584,7 +622,7 @@ export default function CategoriesContent() {
 
               <div className="space-y-3">
                 <h3 className="text-white font-semibold">
-                  Service Period <span className="text-white text-sm font-normal">(enetr each service period in days)</span>
+                  Service Period <span className="text-white text-sm font-normal">(enter each service period in days)</span>
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <input
@@ -665,6 +703,7 @@ export default function CategoriesContent() {
       <DynamicTableView<Category>
         apiEndpoint="/api/categories"
         title="Category"
+        onDuplicate={handleDuplicate}
         columns={[
           { key: "name", label: "Name" },
           {

@@ -118,7 +118,8 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
   const priceCalc = usePriceCalculation(
     formData.startDate ? `${formData.startDate}T${formData.startTime}` : "",
     formData.endDate ? `${formData.endDate}T${formData.endTime}` : "",
-    selectedCategory?.pricingTiers || []
+    selectedCategory?.pricingTiers || [],
+    (selectedCategory as any)?.extrahoursRate || 0
   );
 
   // Fetch offices and types

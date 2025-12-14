@@ -10,6 +10,7 @@ import {
   FiEye,
   FiX,
   FiEdit2,
+  FiCopy,
   FiInbox,
 } from "react-icons/fi";
 import { format } from "date-fns";
@@ -26,6 +27,7 @@ export default function DynamicTableView<
   title,
   columns,
   onEdit,
+  onDuplicate,
   onMutate,
   itemsPerPage = 10,
   hideDelete = false,
@@ -151,6 +153,15 @@ export default function DynamicTableView<
                       <FiEdit2 className="text-blue-400" />
                     </button>
                   )}
+                  {onDuplicate && (
+                    <button
+                      onClick={() => onDuplicate(item)}
+                      className="p-2 hover:bg-purple-500/20 rounded cursor-pointer transition-colors tooltip"
+                      data-tooltip="Duplicate"
+                    >
+                      <FiCopy className="text-purple-400" />
+                    </button>
+                  )}
                   {!hideDelete && (
                     <button
                       onClick={() => handleDeleteClick(item._id || item.id || "")}
@@ -253,56 +264,7 @@ export default function DynamicTableView<
                   </div>
                 )}
 
-              {(viewingItem as any).properties &&
-                (viewingItem as any).properties.length > 0 && (
-                  <div>
-                    <label className="text-sm font-semibold text-gray-400">
-                      Properties
-                    </label>
-                    <div className="mt-2 space-y-2">
-                      {(viewingItem as any).properties.map(
-                        (prop: any, idx: number) => (
-                          <div
-                            key={idx}
-                            className="text-white text-sm bg-white/5 p-2 rounded"
-                          >
-                            <span className="font-semibold">{prop.name}:</span>{" "}
-                            {prop.value}
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                )}
 
-              {(viewingItem as any).pricingTiers &&
-                (viewingItem as any).pricingTiers.length > 0 && (
-                  <div>
-                    <label className="text-sm font-semibold text-gray-400">
-                      Pricing Tiers
-                    </label>
-                    <div className="mt-2 overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-white/10">
-                            <th className="text-left py-2 px-3 text-gray-400 font-semibold">Min Hours</th>
-                            <th className="text-left py-2 px-3 text-gray-400 font-semibold">Max Hours</th>
-                            <th className="text-left py-2 px-3 text-gray-400 font-semibold">Price/Hour</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(viewingItem as any).pricingTiers.map((tier: any, idx: number) => (
-                            <tr key={idx} className="border-b border-white/5">
-                              <td className="py-2 px-3 text-white">{tier.minHours}</td>
-                              <td className="py-2 px-3 text-white">{tier.maxHours}</td>
-                              <td className="py-2 px-3 text-white">£{tier.pricePerHour}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
 
               {(viewingItem as any).addOns &&
                 (viewingItem as any).addOns.length > 0 && (

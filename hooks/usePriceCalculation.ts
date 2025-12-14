@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 
 interface PricingTier {
-  minHours: number;
-  maxHours: number;
-  pricePerHour: number;
+  minDays: number;
+  maxDays: number;
+  pricePerDay: number;
 }
 
 interface PriceCalculationResult {
   totalHours: number;
-  billableDays: number;
-  billableHours: number;
-  pricePerHour: number;
+  totalDays: number;
+  extraHours: number;
+  pricePerDay: number;
+  extraHoursRate: number;
   totalPrice: number;
   breakdown: string;
 }
@@ -18,11 +19,13 @@ interface PriceCalculationResult {
 export function usePriceCalculation(
   startDate: string,
   endDate: string,
-  pricingTiers: PricingTier[]
+  pricingTiers: PricingTier[],
+  extraHoursRate: number = 0
 ): PriceCalculationResult | null {
   const [result, setResult] = useState<PriceCalculationResult | null>(null);
 
   useEffect(() => {
+    console.log('usePriceCalculation received extraHoursRate:', extraHoursRate);
     if (!startDate || !endDate || !pricingTiers || pricingTiers.length === 0) {
       setResult(null);
       return;
@@ -46,81 +49,71 @@ export function usePriceCalculation(
     console.log('===================');
     
     const diffTime = end.getTime() - start.getTime();
-    const totalHours = Math.ceil(diffTime / (1000 * 60 * 60));
+    const totalMinutes = diffTime / (1000 * 60);
+    const totalHours = Math.floor(totalMinutes / 60);
+    const remainingMinutes = totalMinutes % 60;
 
-    if (totalHours <= 0) {
+    // If minutes > 15, count as extra hour; if <= 15, ignore
+    const billableHours = remainingMinutes > 15 ? totalHours + 1 : totalHours;
+
+    if (billableHours <= 0) {
       setResult(null);
       return;
     }
 
-    // Find the appropriate pricing tier
+    // Calculate full days and extra hours
+    const totalDays = Math.floor(billableHours / 24);
+    const extraHours = billableHours % 24;
+
+    // Find the appropriate pricing tier based on days
     const tier = pricingTiers.find(
-      (t) => totalHours >= t.minHours && totalHours <= t.maxHours
-    ) || pricingTiers[0];
+      (t) => totalDays >= t.minDays && totalDays <= t.maxDays
+    ) || pricingTiers[pricingTiers.length - 1];
 
-    const pricePerHour = tier.pricePerHour;
+    const pricePerDay = tier.pricePerDay;
 
-    // Calculate billable days and hours based on the rule:
-    // - Less than 6 hours: charge by hour
-    // - 6+ hours but less than 24: charge as 1 day (24 hours)
-    // - 24+ hours: calculate full days + remaining hours
-    //   - If remaining hours >= 6: charge as full day
-    //   - If remaining hours < 6: charge by hour
+    // Calculate total price: (days * pricePerDay) + (extraHours * extraHoursRate)
+    const daysPrice = totalDays * pricePerDay;
+    const extraHoursPrice = extraHours * extraHoursRate;
+    const totalPrice = daysPrice + extraHoursPrice;
 
-    let billableDays = 0;
-    let billableHours = 0;
+    // Build breakdown
     let breakdown = "";
-
-    if (totalHours < 24) {
-      // Less than 24 hours: charge as 1 day (24 hours)
-      billableDays = 1;
-      breakdown = `1 day (${totalHours}h charged as 24h)`;
+    if (totalDays > 0 && extraHours > 0) {
+      breakdown = `${totalDays} day${totalDays > 1 ? 's' : ''} (£${pricePerDay}/day) + ${extraHours}h (£${extraHoursRate}/hr) = £${totalPrice}`;
+    } else if (totalDays > 0) {
+      breakdown = `${totalDays} day${totalDays > 1 ? 's' : ''} (£${pricePerDay}/day) = £${totalPrice}`;
     } else {
-      // 24+ hours: calculate days and remaining hours
-      const fullDays = Math.floor(totalHours / 24);
-      const remainingHours = totalHours % 24;
-
-      if (remainingHours >= 6) {
-        // Remaining hours >= 6: charge as full day
-        billableDays = fullDays + 1;
-        breakdown = `${billableDays} days (${totalHours}h = ${fullDays}d + ${remainingHours}h rounded up)`;
-      } else if (remainingHours > 0) {
-        // Remaining hours < 6: charge days + hours
-        billableDays = fullDays;
-        billableHours = remainingHours;
-        breakdown = `${billableDays} day${billableDays > 1 ? 's' : ''} + ${remainingHours}h (${totalHours}h total)`;
-      } else {
-        // Exact days
-        billableDays = fullDays;
-        breakdown = `${billableDays} day${billableDays > 1 ? 's' : ''} (${totalHours}h)`;
-      }
+      breakdown = `${extraHours}h (£${extraHoursRate}/hr) = £${totalPrice}`;
     }
-
-    // Calculate total price
-    const totalPrice = (billableDays * 24 + billableHours) * pricePerHour;
 
     // Log calculation details
     console.log('=== Price Calculation ===');
     console.log('Start Date:', startDate);
     console.log('End Date:', endDate);
-    console.log('Total Hours:', totalHours);
-    console.log('Billable Days:', billableDays);
+    console.log('Total Minutes:', totalMinutes);
+    console.log('Remaining Minutes:', remainingMinutes);
     console.log('Billable Hours:', billableHours);
-    console.log('Billable Total:', `${billableDays} days (${billableDays * 24}h) + ${billableHours}h = ${billableDays * 24 + billableHours}h`);
-    console.log('Price Per Hour:', `£${pricePerHour}`);
+    console.log('Total Days:', totalDays);
+    console.log('Extra Hours:', extraHours);
+    console.log('Price Per Day:', `£${pricePerDay}`);
+    console.log('Extra Hours Rate:', `£${extraHoursRate}`);
+    console.log('Days Price:', `£${daysPrice}`);
+    console.log('Extra Hours Price:', `£${extraHoursPrice}`);
     console.log('Total Price:', `£${totalPrice}`);
     console.log('Breakdown:', breakdown);
     console.log('========================');
 
     setResult({
-      totalHours,
-      billableDays,
-      billableHours,
-      pricePerHour,
+      totalHours: billableHours,
+      totalDays,
+      extraHours,
+      pricePerDay,
+      extraHoursRate,
       totalPrice,
       breakdown,
     });
-  }, [startDate, endDate, pricingTiers]);
+  }, [startDate, endDate, pricingTiers, extraHoursRate]);
 
   return result;
 }
