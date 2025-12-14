@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Office from "@/model/office";
 import Vehicle from "@/model/vehicle";
+import Category from "@/model/category";
 import { successResponse, errorResponse } from "@/lib/api-response";
 
 export async function GET(
@@ -11,7 +12,7 @@ export async function GET(
   try {
     await connect();
     const { id } = await params;
-    const office = await Office.findById(id).populate([{path:"vehicles.vehicle", model: Vehicle}, {path:"categories"}]);
+    const office = await Office.findById(id).populate([{path:"vehicles.vehicle", model: Vehicle}, {path:"categories", model: Category}]);
     if (!office) return errorResponse("Office not found", 404);
     return successResponse(office);
   } catch (error: any) {
@@ -30,7 +31,7 @@ export async function PATCH(
     const office = await Office.findByIdAndUpdate(id, body, {
       new: true,
       runValidators: true,
-    }).populate([{path:"vehicles.vehicle", model: Vehicle}, {path:"categories"}]);
+    }).populate([{path:"vehicles.vehicle", model: Vehicle}, {path:"categories", model: Category}]);
     if (!office) return errorResponse("Office not found", 404);
     return successResponse(office);
   } catch (error: any) {

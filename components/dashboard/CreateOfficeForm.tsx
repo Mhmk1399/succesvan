@@ -93,7 +93,7 @@ export default function OfficesContent() {
       name: item.name,
       address: item.address,
       phone: item.phone,
-      categories: item.categories || [],
+      categories: (item.categories || []).map((cat: any) => typeof cat === 'string' ? cat : cat._id),
       location: {
         latitude: String(item.location.latitude),
         longitude: String(item.location.longitude),
