@@ -182,10 +182,13 @@ function ReservationPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
+  console.log('Van data:', van);
+  console.log('extrahoursRate from van:', (van as any).extrahoursRate);
   const priceCalc = usePriceCalculation(
     formData.pickupDate ? `${formData.pickupDate}T00:00:00` : "",
     formData.returnDate ? `${formData.returnDate}T00:00:00` : "",
-    (van as any).pricingTiers || []
+    (van as any).pricingTiers || [],
+    (van as any).extrahoursRate || 0
   );
   const [selectedAddOns, setSelectedAddOns] = useState<
     { addOn: string; quantity: number; selectedTierIndex?: number }[]

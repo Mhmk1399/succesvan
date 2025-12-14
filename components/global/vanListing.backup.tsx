@@ -232,7 +232,8 @@ function ReservationPanel({
   const priceCalc = usePriceCalculation(
     formData.pickupDate ? `${formData.pickupDate}T${formData.pickupTime}:00` : "",
     formData.returnDate ? `${formData.returnDate}T${formData.returnTime}:00` : "",
-    (van as any).pricingTiers || []
+    (van as any).pricingTiers || [],
+    (van as any).extrahoursRate || 0
   );
 
   // Fetch offices
