@@ -17,6 +17,7 @@ export default function CategoriesContent() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    expert: "",
     image: "",
     video: "",
     type: "",
@@ -90,6 +91,7 @@ export default function CategoriesContent() {
     setFormData({
       name: "",
       description: "",
+      expert: "",
       image: "",
       video: "",
       type: "",
@@ -116,6 +118,7 @@ export default function CategoriesContent() {
     setFormData({
       name: item.name,
       description: item.description || "",
+      expert: (item as any).expert || "",
       image: item.image || "",
       video: (item as any).video || "",
       type: typeId,
@@ -154,6 +157,7 @@ export default function CategoriesContent() {
       const payload = {
         name: formData.name,
         description: formData.description,
+        expert: formData.expert,
         image: formData.image,
         video: formData.video,
         type: formData.type,
@@ -279,6 +283,23 @@ export default function CategoriesContent() {
                   </label>
                 )}
               </div>
+              <input
+                type="text"
+                name="expert"
+                placeholder="Expert"
+                value={formData.expert}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+              />
+
+              <input
+                type="text"
+                name="image"
+                placeholder="Image URL"
+                value={formData.image}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+              />
 
               <CustomSelect
                 options={types}
@@ -520,6 +541,7 @@ export default function CategoriesContent() {
         columns={[
           { key: "name", label: "Name" },
           { key: "description", label: "Description" },
+          { key: "expert", label: "Expert" },
           {
             key: "type",
             label: "Type",
