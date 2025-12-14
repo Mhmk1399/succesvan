@@ -34,6 +34,7 @@ export interface Office {
     latitude: number;
     longitude: number;
   };
+  categories: string[];
   address: string;
   phone: string;
   workingTime: WorkingTime[];

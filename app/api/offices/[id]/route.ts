@@ -11,7 +11,7 @@ export async function GET(
   try {
     await connect();
     const { id } = await params;
-    const office = await Office.findById(id).populate("vehicles.vehicle");
+    const office = await Office.findById(id).populate([{path:"vehicles.vehicle", model: Vehicle}, {path:"categories"}]);
     if (!office) return errorResponse("Office not found", 404);
     return successResponse(office);
   } catch (error: any) {
@@ -30,7 +30,7 @@ export async function PATCH(
     const office = await Office.findByIdAndUpdate(id, body, {
       new: true,
       runValidators: true,
-    }).populate("vehicles.vehicle");
+    }).populate([{path:"vehicles.vehicle", model: Vehicle}, {path:"categories"}]);
     if (!office) return errorResponse("Office not found", 404);
     return successResponse(office);
   } catch (error: any) {

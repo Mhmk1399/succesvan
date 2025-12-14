@@ -3,11 +3,11 @@ import connect from "@/lib/data";
 import Office from "@/model/office";
 import Vehicle from "@/model/vehicle";
 import { successResponse, errorResponse } from "@/lib/api-response";
-
+import Category from "@/model/category";
 export async function GET() {
   try {
     await connect();
-    const offices = await Office.find().populate({path:"vehicles.vehicle", model: Vehicle});
+    const offices = await Office.find().populate([{path:"vehicles.vehicle", model: Vehicle}, {path:"categories.category", model: Category}]);
     return successResponse(offices);
   } catch (error: any) {
     return errorResponse(error.message, 500);

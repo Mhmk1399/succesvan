@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { FiX, FiPlus } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
-import { Office } from "@/types/type";
+import { Office, Category } from "@/types/type";
 import DynamicTableView from "./DynamicTableView";
 
 export default function OfficesContent() {
@@ -11,10 +11,12 @@ export default function OfficesContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const mutateRef = useRef<(() => Promise<any>) | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     address: "",
     phone: "",
+    categories: [] as string[],
     location: {
       latitude: "",
       longitude: "",
@@ -29,6 +31,12 @@ export default function OfficesContent() {
       { day: "sunday", isOpen: false, startTime: "", endTime: "" },
     ],
   });
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => setCategories(data.data || []));
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -62,6 +70,7 @@ export default function OfficesContent() {
       name: "",
       address: "",
       phone: "",
+      categories: [],
       location: {
         latitude: "",
         longitude: "",
@@ -84,6 +93,7 @@ export default function OfficesContent() {
       name: item.name,
       address: item.address,
       phone: item.phone,
+      categories: item.categories || [],
       location: {
         latitude: String(item.location.latitude),
         longitude: String(item.location.longitude),
@@ -194,6 +204,30 @@ export default function OfficesContent() {
                 required
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
+
+              <div className="space-y-2">
+                <label className="text-white font-semibold">Categories</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {categories.map((cat) => (
+                    <label key={cat._id} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10">
+                      <input
+                        type="checkbox"
+                        checked={formData.categories.includes(cat._id!)}
+                        onChange={(e) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            categories: e.target.checked
+                              ? [...prev.categories, cat._id!]
+                              : prev.categories.filter((id) => id !== cat._id),
+                          }));
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-300">{cat.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <input

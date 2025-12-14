@@ -238,6 +238,27 @@ export default function DynamicTableView<
                 </div>
               )}
 
+              {(viewingItem as any).categories &&
+                (viewingItem as any).categories.length > 0 && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-400">
+                      Categories
+                    </label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {(viewingItem as any).categories.map(
+                        (cat: any, idx: number) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 bg-[#fe9a00]/20 text-[#fe9a00] rounded-full text-sm"
+                          >
+                            {cat.name || cat}
+                          </span>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
               {(viewingItem as any).workingTime &&
                 (viewingItem as any).workingTime.length > 0 && (
                   <div>

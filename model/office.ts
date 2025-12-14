@@ -7,6 +7,7 @@ const officeSchema = new mongoose.Schema(
       latitude: { type: Number, required: true },
       longitude: { type: Number, required: true },
     },
+    categories: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
     address: { type: String, required: true },
     phone: { type: String, required: true },
     workingTime: [
