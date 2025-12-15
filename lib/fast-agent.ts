@@ -27,6 +27,8 @@ export type FastPhase =
   | "ask_needs"        // Quick question about needs
   | "show_suggestions" // Display category cards
   | "collect_booking"  // Get dates, office, age
+  | "select_addons"    // Optional add-ons selection
+  | "show_receipt"     // Show price and booking summary
   | "verify_phone"     // Phone verification
   | "complete";        // Done!
 
@@ -40,12 +42,34 @@ export interface CategorySuggestion {
   seats: number;
   doors: number;
   pricingTiers: Array<{
-    minHours: number;
-    maxHours: number;
-    pricePerHour: number;
+    minDays: number;
+    maxDays: number;
+    pricePerDay: number;
   }>;
+  extrahoursRate?: number;
   matchScore: number;  // 1-100 how well it matches needs
   matchReason: string; // Why this was suggested
+}
+
+export interface AddOnOption {
+  _id: string;
+  name: string;
+  description?: string;
+  pricingType: "flat" | "tiered";
+  flatPrice?: number;
+  tiers?: Array<{
+    minDays: number;
+    maxDays: number;
+    price: number;
+  }>;
+}
+
+export interface SelectedAddOn {
+  addOnId: string;
+  name: string;
+  quantity: number;
+  pricePerUnit: number;
+  totalPrice: number;
 }
 
 export interface FastAgentState {
@@ -73,7 +97,20 @@ export interface FastAgentState {
     endTime?: string;
     driverAge?: number;
     phoneNumber?: string;
+    // Calculated price
+    totalDays?: number;
+    extraHours?: number;
+    pricePerDay?: number;
+    extraHoursRate?: number;
+    totalPrice?: number;
+    priceBreakdown?: string;
+    // Add-ons
+    selectedAddOns?: SelectedAddOn[];
+    addOnsTotal?: number;
   };
+  
+  // Available add-ons (fetched from DB)
+  availableAddOns?: AddOnOption[];
   
   // Auth
   userId?: string;
@@ -92,6 +129,8 @@ export interface FastAgentResponse {
   needsPhoneInput: boolean;
   needsCodeInput: boolean;
   needsBookingForm: boolean;
+  needsAddOns: boolean;
+  needsReceipt: boolean;
   isComplete: boolean;
   error?: string;
 }
@@ -128,20 +167,72 @@ export async function processFastAgent(
           needsPhoneInput: false,
           needsCodeInput: false,
           needsBookingForm: false,
+          needsAddOns: false,
+          needsReceipt: false,
           isComplete: false,
         };
         
       case "collect_booking":
         if (action === "submit_booking") {
-          return handleSubmitBooking(userMessage, currentState);
+          return await handleSubmitBooking(userMessage, currentState);
+        }
+        if (action === "voice_booking") {
+          return await handleVoiceBooking(userMessage, currentState);
         }
         return {
-          message: "Please fill in the booking details.",
+          message: "Please fill in the booking details or tap the mic to speak them.",
           state: currentState,
           showSuggestions: false,
           needsPhoneInput: false,
           needsCodeInput: false,
           needsBookingForm: true,
+          needsAddOns: false,
+          needsReceipt: false,
+          isComplete: false,
+        };
+      
+      case "select_addons":
+        if (action === "confirm_addons") {
+          return handleConfirmAddOns(userMessage, currentState);
+        }
+        if (action === "skip_addons") {
+          return handleSkipAddOns(currentState);
+        }
+        return {
+          message: "Would you like to add any extras to your booking?",
+          state: currentState,
+          showSuggestions: false,
+          needsPhoneInput: false,
+          needsCodeInput: false,
+          needsBookingForm: false,
+          needsAddOns: true,
+          needsReceipt: false,
+          isComplete: false,
+        };
+      
+      case "show_receipt":
+        if (action === "confirm_receipt") {
+          return {
+            message: "Great! Now let's verify your phone number to confirm the booking:",
+            state: { ...currentState, phase: "verify_phone" },
+            showSuggestions: false,
+            needsPhoneInput: true,
+            needsCodeInput: false,
+            needsBookingForm: false,
+            needsAddOns: false,
+            needsReceipt: false,
+            isComplete: false,
+          };
+        }
+        return {
+          message: "Please review your booking details and confirm to proceed.",
+          state: currentState,
+          showSuggestions: false,
+          needsPhoneInput: false,
+          needsCodeInput: false,
+          needsBookingForm: false,
+          needsAddOns: false,
+          needsReceipt: true,
           isComplete: false,
         };
         
@@ -152,6 +243,9 @@ export async function processFastAgent(
         if (action === "verify_code") {
           return await handleVerifyCode(userMessage, currentState);
         }
+        if (action === "voice_phone") {
+          return await handleVoicePhone(userMessage, currentState);
+        }
         return {
           message: "Please enter your phone number to confirm the booking.",
           state: currentState,
@@ -159,6 +253,8 @@ export async function processFastAgent(
           needsPhoneInput: !currentState.verificationSent,
           needsCodeInput: !!currentState.verificationSent,
           needsBookingForm: false,
+          needsAddOns: false,
+          needsReceipt: false,
           isComplete: false,
         };
         
@@ -170,6 +266,8 @@ export async function processFastAgent(
           needsPhoneInput: false,
           needsCodeInput: false,
           needsBookingForm: false,
+          needsAddOns: false,
+          needsReceipt: false,
           isComplete: true,
         };
         
@@ -185,6 +283,8 @@ export async function processFastAgent(
       needsPhoneInput: false,
       needsCodeInput: false,
       needsBookingForm: false,
+      needsAddOns: false,
+      needsReceipt: false,
       isComplete: false,
       error: error.message,
     };
@@ -208,6 +308,8 @@ async function handleAskNeeds(
       needsPhoneInput: false,
       needsCodeInput: false,
       needsBookingForm: false,
+      needsAddOns: false,
+      needsReceipt: false,
       isComplete: false,
     };
   }
@@ -266,6 +368,8 @@ Respond with valid JSON:
       needsPhoneInput: false,
       needsCodeInput: false,
       needsBookingForm: false,
+      needsAddOns: false,
+      needsReceipt: false,
       isComplete: false,
     };
   }
@@ -328,6 +432,8 @@ Respond with valid JSON:
     needsPhoneInput: false,
     needsCodeInput: false,
     needsBookingForm: false,
+    needsAddOns: false,
+    needsReceipt: false,
     isComplete: false,
   };
 }
@@ -346,6 +452,8 @@ function handleSelectCategory(
       needsPhoneInput: false,
       needsCodeInput: false,
       needsBookingForm: false,
+      needsAddOns: false,
+      needsReceipt: false,
       isComplete: false,
     };
   }
@@ -367,14 +475,87 @@ function handleSelectCategory(
     needsPhoneInput: false,
     needsCodeInput: false,
     needsBookingForm: true,
+    needsAddOns: false,
+    needsReceipt: false,
     isComplete: false,
   };
 }
 
-function handleSubmitBooking(
+// Helper function to calculate price (mirrors usePriceCalculation logic)
+function calculatePrice(
+  startDateStr: string,
+  endDateStr: string,
+  startTime: string,
+  endTime: string,
+  pricingTiers: { minDays: number; maxDays: number; pricePerDay: number }[],
+  extraHoursRate: number = 0
+): { totalPrice: number; breakdown: string; totalDays: number; extraHours: number; pricePerDay: number; extraHoursRate: number } | null {
+  if (!startDateStr || !endDateStr || !pricingTiers || pricingTiers.length === 0) {
+    return null;
+  }
+  
+  // Combine date and time
+  const start = new Date(startDateStr);
+  const end = new Date(endDateStr);
+  
+  if (startTime) {
+    const [h, m] = startTime.split(":").map(Number);
+    start.setHours(h, m, 0, 0);
+  }
+  if (endTime) {
+    const [h, m] = endTime.split(":").map(Number);
+    end.setHours(h, m, 0, 0);
+  }
+  
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return null;
+  }
+  
+  const diffTime = end.getTime() - start.getTime();
+  const totalMinutes = diffTime / (1000 * 60);
+  const totalHours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+  
+  // If minutes > 15, count as extra hour
+  const billableHours = remainingMinutes > 15 ? totalHours + 1 : totalHours;
+  
+  if (billableHours <= 0) {
+    return null;
+  }
+  
+  // Calculate full days and extra hours
+  const totalDays = Math.floor(billableHours / 24);
+  const extraHours = billableHours % 24;
+  
+  // Find the appropriate pricing tier
+  const tier = pricingTiers.find(
+    (t) => totalDays >= t.minDays && totalDays <= t.maxDays
+  ) || pricingTiers[pricingTiers.length - 1];
+  
+  const pricePerDay = tier?.pricePerDay || 0;
+  
+  // Calculate total price
+  const daysPrice = totalDays * pricePerDay;
+  const extraHoursPrice = extraHours * extraHoursRate;
+  const totalPrice = daysPrice + extraHoursPrice;
+  
+  // Build breakdown
+  let breakdown = "";
+  if (totalDays > 0 && extraHours > 0) {
+    breakdown = `${totalDays} day${totalDays > 1 ? "s" : ""} (£${pricePerDay}/day) + ${extraHours}h (£${extraHoursRate}/hr) = £${totalPrice}`;
+  } else if (totalDays > 0) {
+    breakdown = `${totalDays} day${totalDays > 1 ? "s" : ""} (£${pricePerDay}/day) = £${totalPrice}`;
+  } else {
+    breakdown = `${extraHours}h (£${extraHoursRate}/hr) = £${totalPrice}`;
+  }
+  
+  return { totalPrice, breakdown, totalDays, extraHours, pricePerDay, extraHoursRate };
+}
+
+async function handleSubmitBooking(
   bookingJson: string,
   currentState: FastAgentState
-): FastAgentResponse {
+): Promise<FastAgentResponse> {
   try {
     const booking = JSON.parse(bookingJson);
     
@@ -387,29 +568,78 @@ function handleSubmitBooking(
         needsPhoneInput: false,
         needsCodeInput: false,
         needsBookingForm: true,
+        needsAddOns: false,
+        needsReceipt: false,
         isComplete: false,
       };
     }
     
+    // Get category for pricing
+    const category = currentState.selectedCategory;
+    let priceInfo = null;
+    
+    if (category) {
+      const categoryDoc = await Category.findById(category._id).lean() as any;
+      if (categoryDoc?.pricingTiers) {
+        priceInfo = calculatePrice(
+          booking.startDate,
+          booking.endDate,
+          booking.startTime || "10:00",
+          booking.endTime || "10:00",
+          categoryDoc.pricingTiers,
+          categoryDoc.extrahoursRate || 0
+        );
+      }
+    }
+    
+    // Get office name
+    const office = await Office.findById(booking.officeId).lean() as any;
+    const officeName = office?.name || "Selected Office";
+    
+    // Fetch available add-ons
+    const AddOn = (await import("@/model/addOn")).default;
+    const addOns = await AddOn.find({}).lean();
+    const availableAddOns: AddOnOption[] = addOns.map((a: any) => ({
+      _id: a._id.toString(),
+      name: a.name,
+      description: a.description,
+      pricingType: a.pricingType,
+      flatPrice: a.flatPrice,
+      tiers: a.tiers,
+    }));
+    
     const newState: FastAgentState = {
       ...currentState,
-      phase: "verify_phone",
+      phase: "select_addons",
+      availableAddOns,
       booking: {
         ...currentState.booking,
         ...booking,
+        officeName,
+        totalPrice: priceInfo?.totalPrice,
+        priceBreakdown: priceInfo?.breakdown,
+        totalDays: priceInfo?.totalDays,
+        extraHours: priceInfo?.extraHours,
+        pricePerDay: priceInfo?.pricePerDay,
+        extraHoursRate: priceInfo?.extraHoursRate,
+        selectedAddOns: [],
+        addOnsTotal: 0,
       },
     };
     
     return {
-      message: "Almost done! Enter your phone number to confirm the booking:",
+      message: "Great! Would you like to add any extras to your booking?",
       state: newState,
       showSuggestions: false,
-      needsPhoneInput: true,
+      needsPhoneInput: false,
       needsCodeInput: false,
       needsBookingForm: false,
+      needsAddOns: true,
+      needsReceipt: false,
       isComplete: false,
     };
-  } catch {
+  } catch (error) {
+    console.error("[Fast Agent] Submit booking error:", error);
     return {
       message: "Invalid booking data. Please try again.",
       state: currentState,
@@ -417,9 +647,231 @@ function handleSubmitBooking(
       needsPhoneInput: false,
       needsCodeInput: false,
       needsBookingForm: true,
+      needsAddOns: false,
+      needsReceipt: false,
       isComplete: false,
     };
   }
+}
+
+async function handleVoiceBooking(
+  voiceInput: string,
+  currentState: FastAgentState
+): Promise<FastAgentResponse> {
+  console.log("🎤 [Fast Agent] Processing voice booking input:", voiceInput);
+  
+  const offices = await Office.find({}).lean();
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+  
+  // Use GPT to parse the voice input for booking details
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: `You are a booking assistant. Parse the user's voice input to extract booking details.
+
+AVAILABLE OFFICES:
+${offices.map((o: any) => `- "${o.name}" (ID: ${o._id})`).join("\n")}
+
+TODAY'S DATE: ${todayStr} (${today.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })})
+
+Extract and respond with valid JSON:
+{
+  "understood": true/false,
+  "officeId": "office ID if mentioned, or null",
+  "officeName": "office name if mentioned",
+  "startDate": "YYYY-MM-DD format or null",
+  "endDate": "YYYY-MM-DD format or null",
+  "startTime": "HH:MM 24hr format or null",
+  "endTime": "HH:MM 24hr format or null",
+  "driverAge": number or null,
+  "missingFields": ["list of fields still needed"],
+  "confirmationMessage": "brief confirmation of what you understood"
+}
+
+Examples of date parsing:
+- "tomorrow" = next day from today
+- "Friday" = the upcoming Friday
+- "next week" = 7 days from today
+- "10am" or "10 a.m." = "10:00"
+- "5pm" or "5 p.m." = "17:00"`
+      },
+      { role: "user", content: voiceInput }
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.2,
+  });
+  
+  const result = JSON.parse(completion.choices[0].message.content || "{}");
+  console.log("📋 [Fast Agent] Parsed booking:", JSON.stringify(result, null, 2));
+  
+  // Update booking data with parsed values
+  const newBooking = { ...currentState.booking };
+  
+  if (result.officeId) {
+    newBooking.officeId = result.officeId;
+    newBooking.officeName = result.officeName;
+  }
+  if (result.startDate) newBooking.startDate = result.startDate;
+  if (result.endDate) newBooking.endDate = result.endDate;
+  if (result.startTime) newBooking.startTime = result.startTime;
+  if (result.endTime) newBooking.endTime = result.endTime;
+  if (result.driverAge) newBooking.driverAge = result.driverAge;
+  
+  // Check if all required fields are filled
+  const isComplete = newBooking.officeId && newBooking.startDate && 
+                     newBooking.endDate && newBooking.driverAge;
+  
+  if (isComplete) {
+    // Calculate price
+    const category = currentState.selectedCategory;
+    let priceInfo = null;
+    
+    if (category) {
+      const categoryDoc = await Category.findById(category._id).lean() as any;
+      if (categoryDoc?.pricingTiers) {
+        priceInfo = calculatePrice(
+          newBooking.startDate!,
+          newBooking.endDate!,
+          newBooking.startTime || "10:00",
+          newBooking.endTime || "10:00",
+          categoryDoc.pricingTiers,
+          categoryDoc.extrahoursRate || 0
+        );
+      }
+    }
+    
+    // Update booking with price info
+    if (priceInfo) {
+      newBooking.totalPrice = priceInfo.totalPrice;
+      newBooking.priceBreakdown = priceInfo.breakdown;
+      newBooking.totalDays = priceInfo.totalDays;
+      newBooking.extraHours = priceInfo.extraHours;
+      newBooking.pricePerDay = priceInfo.pricePerDay;
+      newBooking.extraHoursRate = priceInfo.extraHoursRate;
+    }
+    
+    // Fetch available add-ons
+    const AddOn = (await import("@/model/addOn")).default;
+    const addOns = await AddOn.find({}).lean();
+    const availableAddOns: AddOnOption[] = addOns.map((a: any) => ({
+      _id: a._id.toString(),
+      name: a.name,
+      description: a.description,
+      pricingType: a.pricingType,
+      flatPrice: a.flatPrice,
+      tiers: a.tiers,
+    }));
+    
+    return {
+      message: "Great! Would you like to add any extras to your booking?",
+      state: {
+        ...currentState,
+        phase: "select_addons",
+        availableAddOns,
+        booking: {
+          ...newBooking,
+          selectedAddOns: [],
+          addOnsTotal: 0,
+        },
+      },
+      showSuggestions: false,
+      needsPhoneInput: false,
+      needsCodeInput: false,
+      needsBookingForm: false,
+      needsAddOns: true,
+      needsReceipt: false,
+      isComplete: false,
+    };
+  }
+  
+  // Still need more info
+  return {
+    message: result.confirmationMessage || "I got some details. What else can you tell me about your booking?",
+    state: {
+      ...currentState,
+      booking: newBooking,
+    },
+    showSuggestions: false,
+    needsPhoneInput: false,
+    needsCodeInput: false,
+    needsBookingForm: true,
+    needsAddOns: false,
+    needsReceipt: false,
+    isComplete: false,
+  };
+}
+
+async function handleVoicePhone(
+  voiceInput: string,
+  currentState: FastAgentState
+): Promise<FastAgentResponse> {
+  console.log("🎤 [Fast Agent] Processing voice phone input:", voiceInput);
+  
+  // First, try to extract digits directly from the input (handles cases like "0901-552-8576")
+  const digitsOnly = voiceInput.replace(/[^0-9]/g, "");
+  console.log("📱 [Fast Agent] Extracted digits:", digitsOnly);
+  
+  // If we have at least 10 digits, treat it as a phone number directly
+  if (digitsOnly.length >= 10) {
+    console.log("✅ [Fast Agent] Valid phone number detected directly:", digitsOnly);
+    return await handleSendCode(digitsOnly, currentState);
+  }
+  
+  // Use GPT to extract phone number from natural language
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: `Extract a phone number from the user's voice input. Accept ANY valid phone number format from any country.
+        
+Respond with valid JSON:
+{
+  "phoneNumber": "the extracted phone number (digits only or with country code), or null if not found",
+  "message": "confirmation or request for clarification"
+}
+
+IMPORTANT: Accept phone numbers in ANY format:
+- UK: 07123456789, +44 7123456789
+- US: 555-123-4567, (555) 123-4567
+- International: +1234567890
+- With dashes/spaces: 0901-552-8576, 090 1552 8576
+- Spoken: "zero nine zero one five five two eight five seven six"
+
+Examples:
+- "my number is 07123456789" → {"phoneNumber": "07123456789", "message": "Got it!"}
+- "0901-552-8576" → {"phoneNumber": "09015528576", "message": "Got it!"}
+- "call me at zero seven one two three" → {"phoneNumber": "07123", "message": "Got it!"}
+- "I don't want to share" → {"phoneNumber": null, "message": "I need your phone number to confirm the booking."}`
+      },
+      { role: "user", content: voiceInput }
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.2,
+  });
+  
+  const result = JSON.parse(completion.choices[0].message.content || "{}");
+  console.log("📋 [Fast Agent] Parsed phone:", JSON.stringify(result, null, 2));
+  
+  if (result.phoneNumber) {
+    // Send the verification code
+    return await handleSendCode(result.phoneNumber, currentState);
+  }
+  
+  return {
+    message: result.message || "I didn't catch your phone number. Could you repeat it?",
+    state: currentState,
+    showSuggestions: false,
+    needsPhoneInput: true,
+    needsCodeInput: false,
+    needsBookingForm: false,
+    needsAddOns: false,
+    needsReceipt: false,
+    isComplete: false,
+  };
 }
 
 async function handleSendCode(
@@ -434,6 +886,8 @@ async function handleSendCode(
       needsPhoneInput: true,
       needsCodeInput: false,
       needsBookingForm: false,
+      needsAddOns: false,
+      needsReceipt: false,
       isComplete: false,
     };
   }
@@ -468,6 +922,8 @@ async function handleSendCode(
       needsPhoneInput: false,
       needsCodeInput: true,
       needsBookingForm: false,
+      needsAddOns: false,
+      needsReceipt: false,
       isComplete: false,
     };
   } catch (error: any) {
@@ -478,6 +934,8 @@ async function handleSendCode(
       needsPhoneInput: true,
       needsCodeInput: false,
       needsBookingForm: false,
+      needsAddOns: false,
+      needsReceipt: false,
       isComplete: false,
       error: error.message,
     };
@@ -496,6 +954,8 @@ async function handleVerifyCode(
       needsPhoneInput: false,
       needsCodeInput: true,
       needsBookingForm: false,
+      needsAddOns: false,
+      needsReceipt: false,
       isComplete: false,
     };
   }
@@ -556,31 +1016,40 @@ async function handleVerifyCode(
     // Create the reservation
     const { booking, selectedCategory } = currentState;
     
-    const startDate = new Date(booking.startDate!);
-    const endDate = new Date(booking.endDate!);
-    const hours = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60));
+    // Combine date and time
+    const startDateObj = new Date(booking.startDate!);
+    const endDateObj = new Date(booking.endDate!);
     
-    // Calculate price from tiers
-    let pricePerHour = 10;
-    if (selectedCategory?.pricingTiers?.length) {
-      const tier = selectedCategory.pricingTiers.find(
-        t => hours >= t.minHours && hours <= t.maxHours
-      ) || selectedCategory.pricingTiers[0];
-      pricePerHour = tier?.pricePerHour || 10;
+    // Apply times if provided
+    if (booking.startTime) {
+      const [startHour, startMin] = booking.startTime.split(":").map(Number);
+      startDateObj.setHours(startHour, startMin, 0, 0);
     }
-    const totalPrice = hours * pricePerHour;
+    if (booking.endTime) {
+      const [endHour, endMin] = booking.endTime.split(":").map(Number);
+      endDateObj.setHours(endHour, endMin, 0, 0);
+    }
+    
+    // Use pre-calculated price from booking state
+    const totalPrice = booking.totalPrice || 0;
+    
+    // Build add-ons array for reservation
+    const reservationAddOns = (booking.selectedAddOns || []).map(addon => ({
+      addOn: addon.addOnId,
+      quantity: addon.quantity,
+    }));
     
     const reservation = new Reservation({
       user: userId,
       office: booking.officeId,
       category: booking.categoryId,
-      startDate,
-      endDate,
+      startDate: startDateObj,
+      endDate: endDateObj,
       totalPrice,
       status: "pending",
       dirverAge: booking.driverAge || 25,
       messege: `Booked via AI Assistant. Phone: ${phoneNumber}`,
-      addOns: [],
+      addOns: reservationAddOns,
     });
     
     await reservation.save();
@@ -605,6 +1074,8 @@ async function handleVerifyCode(
       needsPhoneInput: false,
       needsCodeInput: false,
       needsBookingForm: false,
+      needsAddOns: false,
+      needsReceipt: false,
       isComplete: true,
     };
     
@@ -616,10 +1087,133 @@ async function handleVerifyCode(
       needsPhoneInput: true,
       needsCodeInput: false,
       needsBookingForm: false,
+      needsAddOns: false,
+      needsReceipt: false,
       isComplete: false,
       error: error.message,
     };
   }
+}
+
+// ============================================================================
+// ADD-ONS HANDLERS
+// ============================================================================
+
+function handleConfirmAddOns(
+  addOnsJson: string,
+  currentState: FastAgentState
+): FastAgentResponse {
+  try {
+    const { selectedAddOns } = JSON.parse(addOnsJson) as { selectedAddOns: SelectedAddOn[] };
+    
+    // Calculate add-ons total
+    const addOnsTotal = selectedAddOns.reduce((sum, addon) => sum + addon.totalPrice, 0);
+    
+    // Update total price
+    const basePrice = currentState.booking.totalPrice || 0;
+    const newTotalPrice = basePrice + addOnsTotal;
+    
+    const newState: FastAgentState = {
+      ...currentState,
+      phase: "show_receipt",
+      booking: {
+        ...currentState.booking,
+        selectedAddOns,
+        addOnsTotal,
+        totalPrice: newTotalPrice,
+      },
+    };
+    
+    // Build receipt message
+    const category = currentState.selectedCategory;
+    const booking = newState.booking;
+    const categoryName = category?.name || "Van";
+    const startDateFormatted = new Date(booking.startDate!).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+    const endDateFormatted = new Date(booking.endDate!).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+    
+    let receiptMessage = `📋 **Booking Summary**\n\n`;
+    receiptMessage += `🚐 **Vehicle:** ${categoryName}\n`;
+    receiptMessage += `📍 **Pickup:** ${booking.officeName || "Office"}\n`;
+    receiptMessage += `📅 **From:** ${startDateFormatted} at ${booking.startTime}\n`;
+    receiptMessage += `📅 **Until:** ${endDateFormatted} at ${booking.endTime}\n`;
+    receiptMessage += `👤 **Driver Age:** ${booking.driverAge}\n`;
+    
+    if (selectedAddOns.length > 0) {
+      receiptMessage += `\n📦 **Add-ons:**\n`;
+      selectedAddOns.forEach(addon => {
+        receiptMessage += `  • ${addon.name} x${addon.quantity} = £${addon.totalPrice.toFixed(2)}\n`;
+      });
+    }
+    
+    receiptMessage += `\n💰 **Total Price:** £${newTotalPrice.toFixed(2)}\n`;
+    if (booking.priceBreakdown) {
+      receiptMessage += `📊 **Breakdown:** ${booking.priceBreakdown}`;
+      if (addOnsTotal > 0) {
+        receiptMessage += ` + £${addOnsTotal.toFixed(2)} add-ons`;
+      }
+      receiptMessage += `\n\n`;
+    }
+    
+    receiptMessage += `Review your booking and tap "Confirm" to proceed with phone verification.`;
+    
+    return {
+      message: receiptMessage,
+      state: newState,
+      showSuggestions: false,
+      needsPhoneInput: false,
+      needsCodeInput: false,
+      needsBookingForm: false,
+      needsAddOns: false,
+      needsReceipt: true,
+      isComplete: false,
+    };
+  } catch (error) {
+    console.error("[Fast Agent] Confirm add-ons error:", error);
+    return handleSkipAddOns(currentState);
+  }
+}
+
+function handleSkipAddOns(currentState: FastAgentState): FastAgentResponse {
+  // Skip add-ons and go directly to receipt
+  const category = currentState.selectedCategory;
+  const booking = currentState.booking;
+  const categoryName = category?.name || "Van";
+  const startDateFormatted = new Date(booking.startDate!).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  const endDateFormatted = new Date(booking.endDate!).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  
+  let receiptMessage = `📋 **Booking Summary**\n\n`;
+  receiptMessage += `🚐 **Vehicle:** ${categoryName}\n`;
+  receiptMessage += `📍 **Pickup:** ${booking.officeName || "Office"}\n`;
+  receiptMessage += `📅 **From:** ${startDateFormatted} at ${booking.startTime}\n`;
+  receiptMessage += `📅 **Until:** ${endDateFormatted} at ${booking.endTime}\n`;
+  receiptMessage += `👤 **Driver Age:** ${booking.driverAge}\n\n`;
+  
+  receiptMessage += `💰 **Total Price:** £${(booking.totalPrice || 0).toFixed(2)}\n`;
+  if (booking.priceBreakdown) {
+    receiptMessage += `📊 **Breakdown:** ${booking.priceBreakdown}\n\n`;
+  }
+  
+  receiptMessage += `Review your booking and tap "Confirm" to proceed with phone verification.`;
+  
+  return {
+    message: receiptMessage,
+    state: {
+      ...currentState,
+      phase: "show_receipt",
+      booking: {
+        ...booking,
+        selectedAddOns: [],
+        addOnsTotal: 0,
+      },
+    },
+    showSuggestions: false,
+    needsPhoneInput: false,
+    needsCodeInput: false,
+    needsBookingForm: false,
+    needsAddOns: false,
+    needsReceipt: true,
+    isComplete: false,
+  };
 }
 
 // ============================================================================

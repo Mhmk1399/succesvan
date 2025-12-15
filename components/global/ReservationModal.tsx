@@ -423,7 +423,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       setIsSuccess(true);
       if (isNewUser) {
         setTimeout(() => {
-          window.location.href = "/customerDashboard?uploadLicense=true";
+          window.location.href = "/customerDashboard#profile";
         }, 2000);
       } else {
         setTimeout(() => onClose(), 2000);

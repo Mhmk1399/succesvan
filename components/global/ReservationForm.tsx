@@ -285,6 +285,11 @@ export default function ReservationForm({
 
     showToast.success("Booking created successfully!");
     
+    // Close any parent modal before navigation
+    if (onClose) {
+      onClose();
+    }
+    
     // Navigate based on whether it's a new user
     if (isNewUser) {
       router.push(`/customerDashboard?uploadLicense=true`);
@@ -765,36 +770,6 @@ export default function ReservationForm({
               <FiCpu className="text-lg" />
               🤖 AI Van Consultant - Tell Me What You Need!
             </button>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={handleConversationalMode}
-                className="w-full px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm bg-linear-to-r from-purple-500 to-pink-500 text-white hover:from-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
-              >
-                <FiMessageSquare className="text-lg" />
-                Voice Form
-              </button>
-              <button
-                type="button"
-                onClick={handleGlobalVoice}
-                disabled={isProcessing}
-                className={`w-full px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm disabled:opacity-50 ${
-                  isRecording
-                    ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50"
-                    : isProcessing
-                    ? "bg-blue-500 text-white shadow-lg shadow-blue-500/50"
-                    : "bg-linear-to-r from-green-500 to-emerald-600 text-white hover:from-green-400 hover:to-emerald-500 shadow-lg shadow-green-500/50"
-                }`}
-              >
-                <FiMic className="text-lg" />
-                {isRecording
-                  ? "Recording"
-                  : isProcessing
-                  ? "Processing"
-                  : "Quick Fill"}
-              </button>
-            </div>
           </div>
         )}
       </div>
@@ -943,29 +918,23 @@ export default function ReservationForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-1">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full px-4 py-2.5 col-span-9 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 text-sm disabled:opacity-50"
-          >
-            {isSubmitting ? "Booking..." : "RESERVE"}
-          </button>
-          <button
-            type="button"
-            onClick={handleGlobalVoice}
-            disabled={isProcessing}
-            className={`w-full py-2.5 px-4 col-span-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-xs disabled:opacity-50 ${
-              isRecording
-                ? "bg-red-500 text-white animate-pulse"
-                : isProcessing
-                ? "bg-blue-500 text-white"
-                : "bg-linear-to-r from-amber-500 to-amber-600 text-white hover:from-amber-400 hover:to-amber-500"
-            }`}
-          >
-            <FiMic className="text-base" />
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full px-4 py-2.5 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 text-sm disabled:opacity-50"
+        >
+          {isSubmitting ? "Booking..." : "RESERVE NOW"}
+        </button>
+        
+        {/* AI Consultant Button - Mobile */}
+        <button
+          type="button"
+          onClick={handleAIAgentMode}
+          className="w-full px-4 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition-all text-sm bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
+        >
+          <FiCpu className="text-lg" />
+          🤖 AI Van Consultant
+        </button>
       </div>
 
       <style jsx global>

@@ -14,11 +14,13 @@ import {
   FiPackage,
   FiSend,
   FiLoader,
+  FiPlus,
+  FiMinus,
 } from "react-icons/fi";
 import { BsFuelPump } from "react-icons/bs";
 import Image from "next/image";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
-import { useFastAgent, CategorySuggestion, FastPhase } from "@/hooks/useFastAgent";
+import { useFastAgent, CategorySuggestion, FastPhase, AddOnOption, SelectedAddOn } from "@/hooks/useFastAgent";
 
 interface FastAgentModalProps {
   isOpen: boolean;
@@ -40,12 +42,17 @@ export default function FastAgentModal({
     officeId: "",
     startDate: "",
     endDate: "",
+    startTime: "10:00",
+    endTime: "10:00",
     driverAge: 25,
   });
   
   // Phone verification state
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
+  
+  // Add-ons selection state
+  const [addOnQuantities, setAddOnQuantities] = useState<Record<string, number>>({});
   
   const {
     isLoading,
@@ -56,16 +63,41 @@ export default function FastAgentModal({
     sendMessage,
     selectCategory,
     submitBooking,
+    voiceBooking,
+    voicePhone,
+    confirmAddOns,
+    skipAddOns,
+    confirmReceipt,
     sendCode,
     verifyCode,
     reset,
     stopAudio,
   } = useFastAgent();
   
+  // Use ref to track current phase for voice callback (avoids stale closure)
+  const phaseRef = useRef(agentState.phase);
+  useEffect(() => {
+    phaseRef.current = agentState.phase;
+    console.log("📍 [FastAgentModal] Phase updated to:", agentState.phase);
+  }, [agentState.phase]);
+  
   const { isRecording, toggleRecording } = useVoiceRecording({
     onTranscriptionComplete: async (result) => {
       console.log("🎤 User said:", result.transcript);
-      const response = await sendMessage(result.transcript);
+      console.log("📍 Current phase (from ref):", phaseRef.current);
+      
+      // Use different handler based on current phase
+      let response;
+      if (phaseRef.current === "collect_booking") {
+        console.log("🎯 Calling voiceBooking...");
+        response = await voiceBooking(result.transcript);
+      } else if (phaseRef.current === "verify_phone") {
+        console.log("🎯 Calling voicePhone...");
+        response = await voicePhone(result.transcript);
+      } else {
+        console.log("🎯 Calling sendMessage...");
+        response = await sendMessage(result.transcript);
+      }
       
       if (response?.isComplete && response.state.reservationId) {
         setTimeout(() => {
@@ -87,6 +119,20 @@ export default function FastAgentModal({
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+  
+  // Sync booking form with agent state (for voice-filled values)
+  useEffect(() => {
+    if (agentState.booking) {
+      setBookingForm(prev => ({
+        officeId: agentState.booking.officeId || prev.officeId,
+        startDate: agentState.booking.startDate || prev.startDate,
+        endDate: agentState.booking.endDate || prev.endDate,
+        startTime: agentState.booking.startTime || prev.startTime,
+        endTime: agentState.booking.endTime || prev.endTime,
+        driverAge: agentState.booking.driverAge || prev.driverAge,
+      }));
+    }
+  }, [agentState.booking]);
   
   // Start conversation when modal opens
   useEffect(() => {
@@ -138,7 +184,12 @@ export default function FastAgentModal({
   
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!verificationCode || verificationCode.length !== 6) return;
+    console.log("🔐 [FastAgentModal] Attempting to verify code:", verificationCode);
+    if (!verificationCode || verificationCode.length !== 6) {
+      console.log("⚠️ [FastAgentModal] Invalid code length:", verificationCode.length);
+      return;
+    }
+    console.log("📤 [FastAgentModal] Calling verifyCode...");
     await verifyCode(verificationCode);
   };
   
@@ -146,12 +197,61 @@ export default function FastAgentModal({
   
   const getPhaseProgress = (phase: FastPhase): number => {
     switch (phase) {
-      case "ask_needs": return 20;
-      case "show_suggestions": return 40;
-      case "collect_booking": return 60;
-      case "verify_phone": return 80;
+      case "ask_needs": return 10;
+      case "show_suggestions": return 25;
+      case "collect_booking": return 40;
+      case "select_addons": return 55;
+      case "show_receipt": return 70;
+      case "verify_phone": return 85;
       case "complete": return 100;
     }
+  };
+  
+  // Calculate add-on price based on rental days
+  const getAddOnPrice = (addOn: AddOnOption): number => {
+    const totalDays = agentState.booking.totalDays || 1;
+    
+    if (addOn.pricingType === "flat") {
+      return addOn.flatPrice || 0;
+    }
+    
+    // Find matching tier for tiered pricing
+    if (addOn.tiers && addOn.tiers.length > 0) {
+      const tier = addOn.tiers.find(t => totalDays >= t.minDays && totalDays <= t.maxDays);
+      return tier?.price || addOn.tiers[0].price || 0;
+    }
+    
+    return 0;
+  };
+  
+  // Handle add-on quantity change
+  const handleAddOnQuantityChange = (addOnId: string, delta: number) => {
+    setAddOnQuantities(prev => {
+      const current = prev[addOnId] || 0;
+      const newVal = Math.max(0, current + delta);
+      return { ...prev, [addOnId]: newVal };
+    });
+  };
+  
+  // Handle confirm add-ons
+  const handleConfirmAddOns = async () => {
+    const selectedAddOns: SelectedAddOn[] = [];
+    
+    for (const addOn of agentState.availableAddOns || []) {
+      const quantity = addOnQuantities[addOn._id] || 0;
+      if (quantity > 0) {
+        const pricePerUnit = getAddOnPrice(addOn);
+        selectedAddOns.push({
+          addOnId: addOn._id,
+          name: addOn.name,
+          quantity,
+          pricePerUnit,
+          totalPrice: pricePerUnit * quantity,
+        });
+      }
+    }
+    
+    await confirmAddOns(selectedAddOns);
   };
   
   return createPortal(
@@ -300,6 +400,30 @@ export default function FastAgentModal({
                   </div>
                 </div>
                 
+                {/* Times */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-gray-300 text-sm mb-1.5">Pickup Time *</label>
+                    <input
+                      type="time"
+                      value={bookingForm.startTime}
+                      onChange={(e) => setBookingForm(p => ({ ...p, startTime: e.target.value }))}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-300 text-sm mb-1.5">Return Time *</label>
+                    <input
+                      type="time"
+                      value={bookingForm.endTime}
+                      onChange={(e) => setBookingForm(p => ({ ...p, endTime: e.target.value }))}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500"
+                      required
+                    />
+                  </div>
+                </div>
+                
                 {/* Driver Age */}
                 <div>
                   <label className="block text-gray-300 text-sm mb-1.5">Driver Age *</label>
@@ -320,9 +444,227 @@ export default function FastAgentModal({
                   className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
                   {isLoading ? <FiLoader className="animate-spin" /> : <FiCalendar />}
-                  Continue to Verification
+                  Continue to Add-ons
                 </button>
               </form>
+            </div>
+          )}
+          
+          {/* Add-ons Selection */}
+          {agentState.phase === "select_addons" && agentState.availableAddOns && (
+            <div className="px-4 pb-4">
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
+                {/* Header */}
+                <div className="text-center border-b border-white/10 pb-3">
+                  <h3 className="text-xl font-bold text-white">📦 Optional Add-ons</h3>
+                  <p className="text-gray-400 text-sm">Enhance your rental experience</p>
+                </div>
+                
+                {/* Add-ons List */}
+                <div className="space-y-3">
+                  {agentState.availableAddOns.map((addOn) => {
+                    const price = getAddOnPrice(addOn);
+                    const quantity = addOnQuantities[addOn._id] || 0;
+                    
+                    return (
+                      <div 
+                        key={addOn._id}
+                        className="flex items-center justify-between bg-white/5 rounded-lg p-3"
+                      >
+                        <div className="flex-1">
+                          <p className="text-white font-medium">{addOn.name}</p>
+                          {addOn.description && (
+                            <p className="text-gray-400 text-xs">{addOn.description}</p>
+                          )}
+                          <p className="text-orange-400 text-sm font-medium">
+                            £{price.toFixed(2)} {addOn.pricingType === "flat" ? "" : "/ rental"}
+                          </p>
+                        </div>
+                        
+                        {/* Quantity Controls */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleAddOnQuantityChange(addOn._id, -1)}
+                            disabled={quantity === 0}
+                            className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <FiMinus className="w-4 h-4" />
+                          </button>
+                          <span className="w-8 text-center text-white font-medium">{quantity}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleAddOnQuantityChange(addOn._id, 1)}
+                            className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white hover:bg-orange-600"
+                          >
+                            <FiPlus className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Total for selected add-ons */}
+                {Object.values(addOnQuantities).some(q => q > 0) && (
+                  <div className="border-t border-white/10 pt-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">Add-ons Total:</span>
+                      <span className="text-orange-400 font-medium">
+                        £{(agentState.availableAddOns || []).reduce((sum, addOn) => {
+                          const qty = addOnQuantities[addOn._id] || 0;
+                          return sum + (getAddOnPrice(addOn) * qty);
+                        }, 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={skipAddOns}
+                    disabled={isLoading}
+                    className="flex-1 bg-white/10 hover:bg-white/20 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    onClick={handleConfirmAddOns}
+                    disabled={isLoading}
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? <FiLoader className="animate-spin" /> : <FiCheck />}
+                    Continue
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Booking Receipt */}
+          {agentState.phase === "show_receipt" && agentState.booking && (
+            <div className="px-4 pb-4">
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
+                {/* Header */}
+                <div className="text-center border-b border-white/10 pb-3">
+                  <h3 className="text-xl font-bold text-white">📋 Booking Summary</h3>
+                  <p className="text-gray-400 text-sm">Please review your booking details</p>
+                </div>
+                
+                {/* Vehicle */}
+                {agentState.selectedCategory && (
+                  <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                    <FiTruck className="text-orange-500 text-xl shrink-0" />
+                    <div>
+                      <p className="text-white font-medium">{agentState.selectedCategory.name}</p>
+                      <p className="text-gray-400 text-xs">{agentState.selectedCategory.matchReason}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  {/* Pickup Location */}
+                  <div className="col-span-2 bg-white/5 rounded-lg p-3">
+                    <p className="text-gray-400 text-xs mb-1">Pickup Location</p>
+                    <p className="text-white font-medium">
+                      {offices.find(o => o._id === agentState.booking.officeId)?.name || "—"}
+                    </p>
+                  </div>
+                  
+                  {/* Pickup Date & Time */}
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="text-gray-400 text-xs mb-1">Pickup</p>
+                    <p className="text-white font-medium">{agentState.booking.startDate || "—"}</p>
+                    <p className="text-orange-400 text-sm">{agentState.booking.startTime || "—"}</p>
+                  </div>
+                  
+                  {/* Return Date & Time */}
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="text-gray-400 text-xs mb-1">Return</p>
+                    <p className="text-white font-medium">{agentState.booking.endDate || "—"}</p>
+                    <p className="text-orange-400 text-sm">{agentState.booking.endTime || "—"}</p>
+                  </div>
+                  
+                  {/* Driver Age */}
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="text-gray-400 text-xs mb-1">Driver Age</p>
+                    <p className="text-white font-medium">{agentState.booking.driverAge || 25} years</p>
+                  </div>
+                  
+                  {/* Duration */}
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <p className="text-gray-400 text-xs mb-1">Duration</p>
+                    <p className="text-white font-medium">
+                      {agentState.booking.totalDays || 0} day(s)
+                      {agentState.booking.extraHours ? ` + ${agentState.booking.extraHours}h` : ""}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Price Breakdown */}
+                <div className="border-t border-white/10 pt-3 space-y-2">
+                  <p className="text-gray-400 text-xs uppercase tracking-wider">Price Breakdown</p>
+                  
+                  {agentState.booking.totalDays && agentState.booking.pricePerDay && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">
+                        {agentState.booking.totalDays} day(s) × £{agentState.booking.pricePerDay}
+                      </span>
+                      <span className="text-white">
+                        £{(agentState.booking.totalDays * agentState.booking.pricePerDay).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {agentState.booking.extraHours && agentState.booking.extraHoursRate && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">
+                        {agentState.booking.extraHours} extra hour(s) × £{agentState.booking.extraHoursRate}
+                      </span>
+                      <span className="text-white">
+                        £{(agentState.booking.extraHours * agentState.booking.extraHoursRate).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Add-ons */}
+                  {agentState.booking.selectedAddOns && agentState.booking.selectedAddOns.length > 0 && (
+                    <>
+                      <p className="text-gray-400 text-xs uppercase tracking-wider pt-2">Add-ons</p>
+                      {agentState.booking.selectedAddOns.map((addon, idx) => (
+                        <div key={idx} className="flex justify-between text-sm">
+                          <span className="text-gray-300">
+                            {addon.name} × {addon.quantity}
+                          </span>
+                          <span className="text-white">
+                            £{addon.totalPrice.toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  
+                  {/* Total */}
+                  <div className="flex justify-between items-center pt-2 border-t border-white/10">
+                    <span className="text-white font-bold text-lg">Total</span>
+                    <span className="text-2xl font-bold text-green-400">
+                      £{(agentState.booking.totalPrice || 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Confirm Button */}
+                <button
+                  onClick={confirmReceipt}
+                  disabled={isLoading}
+                  className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  {isLoading ? <FiLoader className="animate-spin" /> : <FiCheck />}
+                  Confirm & Continue to Verification
+                </button>
+              </div>
             </div>
           )}
           
@@ -400,8 +742,8 @@ export default function FastAgentModal({
           )}
         </div>
         
-        {/* Bottom Controls - only show for voice input phases */}
-        {(agentState.phase === "ask_needs") && (
+        {/* Bottom Controls - show for voice input phases */}
+        {(agentState.phase === "ask_needs" || agentState.phase === "collect_booking" || agentState.phase === "verify_phone") && (
           <div className="p-4 border-t border-white/10 bg-[#0f172b]">
             <div className="flex items-center justify-center gap-4">
               <div className="text-sm text-gray-400">
@@ -415,6 +757,10 @@ export default function FastAgentModal({
                     <FiVolume2 className="animate-pulse" />
                     Speaking...
                   </span>
+                ) : agentState.phase === "collect_booking" ? (
+                  <span>Or speak: &quot;Tomorrow at 10am, return Friday 5pm&quot;</span>
+                ) : agentState.phase === "verify_phone" && !agentState.verificationSent ? (
+                  <span>Or speak: &quot;My number is 07123456789&quot;</span>
                 ) : (
                   <span>Tap to speak</span>
                 )}
@@ -422,7 +768,7 @@ export default function FastAgentModal({
               
               <button
                 onClick={toggleRecording}
-                disabled={isPlaying || isLoading}
+                disabled={isPlaying || isLoading || agentState.verificationSent}
                 className={`w-14 h-14 rounded-full flex items-center justify-center transition-all transform hover:scale-105 ${
                   isRecording
                     ? "bg-red-500 animate-pulse"
@@ -504,9 +850,9 @@ function SuggestionCard({
         <div className="flex items-center justify-between">
           <div>
             <span className="text-xl font-bold text-white">
-              £{category.pricingTiers?.[0]?.pricePerHour || 0}
+              £{category.pricingTiers?.[0]?.pricePerDay || 0}
             </span>
-            <span className="text-gray-400 text-xs">/hour</span>
+            <span className="text-gray-400 text-xs">/day</span>
           </div>
           <button
             disabled={isLoading}
