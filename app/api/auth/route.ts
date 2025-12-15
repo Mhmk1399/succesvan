@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       );
 
       try {
-        await sendSMS(phoneNumber, `Your verification code is: ${verificationCode}`);
+        await sendSMS(phoneNumber, `Your success van hire verification code is: ${verificationCode}`);
       } catch (smsError: any) {
         console.log("SMS Error:", smsError.message);
       }
