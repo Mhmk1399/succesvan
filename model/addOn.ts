@@ -6,19 +6,25 @@ const addOnSchema = new mongoose.Schema(
     description: { type: String },
     pricingType: { type: String, enum: ["flat", "tiered"], required: true },
     flatPrice: {
-      type: Number,
-      min: 0,
-      required: function (this: { pricingType: string }): boolean {
-        return this.pricingType === "flat";
+      amount: {
+        type: Number,
+        min: 0,
+        required: function (this: { pricingType: string }): boolean {
+          return this.pricingType === "flat";
+        },
       },
+      isPerDay: { type: Boolean, default: false },
     },
-    tiers: [
-      {
-        minDays: { type: Number, required: true, min: 1 },
-        maxDays: { type: Number, required: true, min: 1 },
-        price: { type: Number, required: true, min: 0 },
-      },
-    ],
+    tieredPrice: {
+      isPerDay: { type: Boolean, default: false },
+      tiers: [
+        {
+          minDays: { type: Number, required: true, min: 1 },
+          maxDays: { type: Number, required: true, min: 1 },
+          price: { type: Number, required: true, min: 0 },
+        },
+      ],
+    },
   },
   { timestamps: true }
 );

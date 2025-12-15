@@ -17,8 +17,8 @@ export default function AddOnsContent() {
     name: "",
     description: "",
     pricingType: "flat" as "flat" | "tiered",
-    flatPrice: "",
-    tiers: [{ minDays: "", maxDays: "", price: "" }],
+    flatPrice: { amount: "", isPerDay: false },
+    tieredPrice: { isPerDay: false, tiers: [{ minDays: "", maxDays: "", price: "" }] },
   });
 
   const handleInputChange = (
@@ -32,23 +32,23 @@ export default function AddOnsContent() {
 
   const handleTierChange = (index: number, field: string, value: string) => {
     setFormData((prev) => {
-      const updated = [...prev.tiers];
+      const updated = [...prev.tieredPrice.tiers];
       updated[index] = { ...updated[index], [field]: value };
-      return { ...prev, tiers: updated };
+      return { ...prev, tieredPrice: { ...prev.tieredPrice, tiers: updated } };
     });
   };
 
   const addTier = () => {
     setFormData((prev) => ({
       ...prev,
-      tiers: [...prev.tiers, { minDays: "", maxDays: "", price: "" }],
+      tieredPrice: { ...prev.tieredPrice, tiers: [...prev.tieredPrice.tiers, { minDays: "", maxDays: "", price: "" }] },
     }));
   };
 
   const removeTier = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      tiers: prev.tiers.filter((_, i) => i !== index),
+      tieredPrice: { ...prev.tieredPrice, tiers: prev.tieredPrice.tiers.filter((_, i) => i !== index) },
     }));
   };
 
@@ -57,8 +57,8 @@ export default function AddOnsContent() {
       name: "",
       description: "",
       pricingType: "flat",
-      flatPrice: "",
-      tiers: [{ minDays: "", maxDays: "", price: "" }],
+      flatPrice: { amount: "", isPerDay: false },
+      tieredPrice: { isPerDay: false, tiers: [{ minDays: "", maxDays: "", price: "" }] },
     });
     setEditingId(null);
   };
@@ -68,14 +68,20 @@ export default function AddOnsContent() {
       name: item.name,
       description: item.description || "",
       pricingType: item.pricingType,
-      flatPrice: String(item.flatPrice || ""),
-      tiers: (item.tiers || [{ minDays: "", maxDays: "", price: "" }]).map(
-        (t: any) => ({
-          minDays: String(t.minDays),
-          maxDays: String(t.maxDays),
-          price: String(t.price),
-        })
-      ),
+      flatPrice: {
+        amount: String((item.flatPrice as any)?.amount || ""),
+        isPerDay: (item.flatPrice as any)?.isPerDay || false,
+      },
+      tieredPrice: {
+        isPerDay: (item as any).tieredPrice?.isPerDay || false,
+        tiers: ((item as any).tieredPrice?.tiers || [{ minDays: "", maxDays: "", price: "" }]).map(
+          (t: any) => ({
+            minDays: String(t.minDays),
+            maxDays: String(t.maxDays),
+            price: String(t.price),
+          })
+        ),
+      },
     });
     setEditingId(item._id || null);
     setIsFormOpen(true);
@@ -96,13 +102,19 @@ export default function AddOnsContent() {
       };
 
       if (formData.pricingType === "flat") {
-        payload.flatPrice = parseFloat(formData.flatPrice);
+        payload.flatPrice = {
+          amount: parseFloat(formData.flatPrice.amount),
+          isPerDay: formData.flatPrice.isPerDay,
+        };
       } else {
-        payload.tiers = formData.tiers.map((t) => ({
-          minDays: parseInt(t.minDays),
-          maxDays: parseInt(t.maxDays),
-          price: parseFloat(t.price),
-        }));
+        payload.tieredPrice = {
+          isPerDay: formData.tieredPrice.isPerDay,
+          tiers: formData.tieredPrice.tiers.map((t) => ({
+            minDays: parseInt(t.minDays),
+            maxDays: parseInt(t.maxDays),
+            price: parseFloat(t.price),
+          })),
+        };
       }
 
       const res = await fetch(url, {
@@ -189,17 +201,38 @@ export default function AddOnsContent() {
               />
 
               {formData.pricingType === "flat" ? (
-                <input
-                  type="number"
-                  name="flatPrice"
-                  placeholder="Price"
-                  value={formData.flatPrice}
-                  onChange={handleInputChange}
-                  required
-                  step="0.01"
-                  min="0"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                />
+                <div className="space-y-3">
+                  <input
+                    type="number"
+                    name="flatPriceAmount"
+                    placeholder="Price"
+                    value={formData.flatPrice.amount}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        flatPrice: { ...prev.flatPrice, amount: e.target.value },
+                      }))
+                    }
+                    required
+                    step="0.01"
+                    min="0"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                  />
+                  <label className="flex items-center gap-2 text-white cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.flatPrice.isPerDay}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          flatPrice: { ...prev.flatPrice, isPerDay: e.target.checked },
+                        }))
+                      }
+                      className="w-4 h-4 accent-[#fe9a00]"
+                    />
+                    <span>Price per day</span>
+                  </label>
+                </div>
               ) : (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -212,7 +245,21 @@ export default function AddOnsContent() {
                       + Add Tier
                     </button>
                   </div>
-                  {formData.tiers.map((tier, idx) => (
+                  <label className="flex items-center gap-2 text-white cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.tieredPrice.isPerDay}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          tieredPrice: { ...prev.tieredPrice, isPerDay: e.target.checked },
+                        }))
+                      }
+                      className="w-4 h-4 accent-[#fe9a00]"
+                    />
+                    <span>Price per day (applies to all tiers)</span>
+                  </label>
+                  {formData.tieredPrice.tiers.map((tier, idx) => (
                     <div key={idx} className="flex gap-2">
                       <input
                         type="number"
@@ -248,7 +295,7 @@ export default function AddOnsContent() {
                         min="0"
                         className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] text-sm"
                       />
-                      {formData.tiers.length > 1 && (
+                      {formData.tieredPrice.tiers.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeTier(idx)}
@@ -295,11 +342,16 @@ export default function AddOnsContent() {
             label: "Price",
             render: (_, item) => {
               if (item?.pricingType === "flat") {
-                return `£${item?.flatPrice || 0}`;
+                const fp = item?.flatPrice as any;
+                const amount = fp?.amount || 0;
+                const perDay = fp?.isPerDay ? "/day" : "";
+                return `£${amount}${perDay}`;
               }
+              const tp = (item as any)?.tieredPrice;
+              const perDay = tp?.isPerDay ? "/day" : "";
               return (
-                item?.tiers
-                  ?.map((t: any) => `${t.minDays}-${t.maxDays}d: £${t.price}`)
+                tp?.tiers
+                  ?.map((t: any) => `${t.minDays}-${t.maxDays}d: £${t.price}${perDay}`)
                   .join(" | ") || "-"
               );
             },
