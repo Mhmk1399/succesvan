@@ -37,8 +37,9 @@ export async function POST(request: NextRequest) {
     let audioBase64: string | undefined;
     if (includeAudio && response.message && response.message.length < 500) {
       try {
-        audioBase64 = await textToSpeech(response.message);
-        console.log("🔊 Audio generated");
+        const audioBuffer = await textToSpeech(response.message);
+        audioBase64 = audioBuffer.toString("base64");
+        console.log("🔊 Audio generated, base64 length:", audioBase64.length);
       } catch (audioError) {
         console.warn("⚠️ Audio generation failed:", audioError);
       }
