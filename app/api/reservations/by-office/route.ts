@@ -16,20 +16,23 @@ export async function GET(req: NextRequest) {
 
     const query: any = { office: officeId };
 
+    // Find reservations that overlap with the selected date
     if (startDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      const startEnd = new Date(startDate);
-      startEnd.setHours(23, 59, 59, 999);
-      query.startDate = { $gte: start, $lte: startEnd };
-    }
+      const date = new Date(startDate);
+      const dayStart = new Date(date);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(date);
+      dayEnd.setHours(23, 59, 59, 999);
 
-    if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(0, 0, 0, 0);
-      const endEnd = new Date(endDate);
-      endEnd.setHours(23, 59, 59, 999);
-      query.endDate = { $gte: end, $lte: endEnd };
+      // Find reservations where:
+      // - startDate is on this day, OR
+      // - endDate is on this day, OR
+      // - reservation spans across this day
+      query.$or = [
+        { startDate: { $gte: dayStart, $lte: dayEnd } },
+        { endDate: { $gte: dayStart, $lte: dayEnd } },
+        { startDate: { $lt: dayStart }, endDate: { $gt: dayEnd } }
+      ];
     }
 
     const reservations = await Reservation.find(query).populate({
@@ -37,10 +40,20 @@ export async function GET(req: NextRequest) {
       model: office,
     });
 
-    const reservedSlots = reservations.map((r: any) => ({
-      startTime: new Date(r.startDate).toTimeString().slice(0, 5),
-      endTime: new Date(r.endDate).toTimeString().slice(0, 5),
-    }));
+    // Group slots by date
+    const reservedSlots = reservations.map((r: any) => {
+      const resStart = new Date(r.startDate);
+      const resEnd = new Date(r.endDate);
+      const isSameDay = resStart.toDateString() === resEnd.toDateString();
+      
+      return {
+        startDate: resStart.toISOString().split('T')[0],
+        endDate: resEnd.toISOString().split('T')[0],
+        startTime: resStart.toTimeString().slice(0, 5),
+        endTime: resEnd.toTimeString().slice(0, 5),
+        isSameDay
+      };
+    });
 
     return successResponse({ reservations, reservedSlots });
   } catch (error: any) {

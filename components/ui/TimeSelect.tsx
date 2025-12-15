@@ -7,9 +7,11 @@ interface TimeSelectProps {
   value: string;
   onChange: (time: string) => void;
   slots: string[];
-  reservedSlots: { startTime: string; endTime: string }[];
+  reservedSlots: { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[];
   isInline?: boolean;
   tooltip?: string;
+  selectedDate?: Date;
+  isStartTime?: boolean;
 }
 
 export default function TimeSelect({
@@ -19,6 +21,8 @@ export default function TimeSelect({
   reservedSlots,
   isInline,
   tooltip,
+  selectedDate,
+  isStartTime = true,
 }: TimeSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -37,7 +41,21 @@ export default function TimeSelect({
   }, []);
 
   const isDisabled = (slot: string) => {
-    return reservedSlots.some((r) => slot >= r.startTime && slot <= r.endTime);
+    if (!selectedDate) return false;
+    
+    const currentDateStr = selectedDate.toISOString().split('T')[0];
+    
+    return reservedSlots.some((r) => {
+      if (isStartTime && r.startDate === currentDateStr) {
+        return slot >= r.startTime && slot < r.endTime;
+      }
+      
+      if (!isStartTime && r.endDate === currentDateStr) {
+        return slot > r.startTime && slot <= r.endTime;
+      }
+      
+      return false;
+    });
   };
 
   return (

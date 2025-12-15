@@ -9,9 +9,6 @@ const addOnSchema = new mongoose.Schema(
       amount: {
         type: Number,
         min: 0,
-        required: function (this: { pricingType: string }): boolean {
-          return this.pricingType === "flat";
-        },
       },
       isPerDay: { type: Boolean, default: false },
     },

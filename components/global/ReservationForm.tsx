@@ -49,7 +49,7 @@ export default function ReservationForm({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState<any>(null);
   const [reservedSlots, setReservedSlots] = useState<
-    { startTime: string; endTime: string }[]
+    { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[]
   >([]);
 
   // Voice modal state
@@ -242,16 +242,28 @@ export default function ReservationForm({
   }, [formData.office, formData.type]);
 
   useEffect(() => {
-    if (formData.office && formData.type && dateRange[0].startDate) {
+    if (formData.office && dateRange[0].startDate && dateRange[0].endDate) {
       const startDate = dateRange[0].startDate.toISOString().split("T")[0];
-      fetch(
-        `/api/reservations/by-office?office=${formData.office}&startDate=${startDate}`
+      const endDate = dateRange[0].endDate.toISOString().split("T")[0];
+      
+      const fetchPromises = [startDate];
+      if (startDate !== endDate) {
+        fetchPromises.push(endDate);
+      }
+      
+      Promise.all(
+        fetchPromises.map(date => 
+          fetch(`/api/reservations/by-office?office=${formData.office}&startDate=${date}`)
+            .then(res => res.json())
+        )
       )
-        .then((res) => res.json())
-        .then((data) => setReservedSlots(data.data?.reservedSlots || []))
+        .then(results => {
+          const allSlots = results.flatMap(data => data.data?.reservedSlots || []);
+          setReservedSlots(allSlots);
+        })
         .catch((err) => console.error(err));
     }
-  }, [formData.office, formData.type, dateRange]);
+  }, [formData.office, dateRange]);
 
 
 
@@ -677,6 +689,8 @@ export default function ReservationForm({
               reservedSlots={reservedSlots}
               isInline={isInline}
               tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
+              selectedDate={dateRange[0].startDate}
+              isStartTime={true}
             />
           )}
         </div>
@@ -698,6 +712,8 @@ export default function ReservationForm({
               reservedSlots={reservedSlots}
               isInline={isInline}
               tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
+              selectedDate={dateRange[0].endDate}
+              isStartTime={false}
             />
           )}
         </div>
@@ -857,6 +873,8 @@ export default function ReservationForm({
                 reservedSlots={reservedSlots}
                 isInline={true}
                 tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
+                selectedDate={dateRange[0].startDate}
+                isStartTime={true}
               />
             )}
             {dateRange[0].startDate && (
@@ -877,6 +895,8 @@ export default function ReservationForm({
                 reservedSlots={reservedSlots}
                 isInline={true}
                 tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
+                selectedDate={dateRange[0].endDate}
+                isStartTime={false}
               />
             )}
             {dateRange[0].endDate && (
