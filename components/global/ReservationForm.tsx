@@ -116,6 +116,15 @@ export default function ReservationForm({
       if (workingDay) {
         start = workingDay.startTime;
         end = workingDay.endTime;
+        
+        if (workingDay.pickupExtension) {
+          const [startHour, startMin] = start.split(':').map(Number);
+          const [endHour, endMin] = end.split(':').map(Number);
+          const extendedStartMinutes = Math.max(0, startHour * 60 + startMin - workingDay.pickupExtension.hoursBefore * 60);
+          const extendedEndMinutes = Math.min(1439, endHour * 60 + endMin + workingDay.pickupExtension.hoursAfter * 60);
+          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(2, '0')}:${String(extendedStartMinutes % 60).padStart(2, '0')}`;
+          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(2, '0')}:${String(extendedEndMinutes % 60).padStart(2, '0')}`;
+        }
       }
     }
 
@@ -156,6 +165,15 @@ export default function ReservationForm({
       if (workingDay) {
         start = workingDay.startTime;
         end = workingDay.endTime;
+        
+        if (workingDay.returnExtension) {
+          const [startHour, startMin] = start.split(':').map(Number);
+          const [endHour, endMin] = end.split(':').map(Number);
+          const extendedStartMinutes = Math.max(0, startHour * 60 + startMin - workingDay.returnExtension.hoursBefore * 60);
+          const extendedEndMinutes = Math.min(1439, endHour * 60 + endMin + workingDay.returnExtension.hoursAfter * 60);
+          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(2, '0')}:${String(extendedStartMinutes % 60).padStart(2, '0')}`;
+          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(2, '0')}:${String(extendedEndMinutes % 60).padStart(2, '0')}`;
+        }
       }
     }
 
@@ -697,18 +715,32 @@ export default function ReservationForm({
             <FiClock className="text-amber-400 text-lg" /> From
           </label>
 
-          {dateRange[0].startDate && (
-            <TimeSelect
-              value={formData.pickupTime}
-              onChange={(time) => handleTimeChange("pickupTime", time)}
-              slots={pickupTimeSlots}
-              reservedSlots={reservedSlots}
-              isInline={isInline}
-              tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
-              selectedDate={dateRange[0].startDate}
-              isStartTime={true}
-            />
-          )}
+          {dateRange[0].startDate && (() => {
+            const office = getSelectedOffice();
+            const date = dateRange[0].startDate;
+            const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+            const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+            const extensionTimes = workingDay?.pickupExtension ? {
+              start: pickupTimeSlots[0],
+              end: pickupTimeSlots[pickupTimeSlots.length - 1],
+              normalStart: workingDay.startTime,
+              normalEnd: workingDay.endTime,
+              price: workingDay.pickupExtension.flatPrice
+            } : undefined;
+            return (
+              <TimeSelect
+                value={formData.pickupTime}
+                onChange={(time) => handleTimeChange("pickupTime", time)}
+                slots={pickupTimeSlots}
+                reservedSlots={reservedSlots}
+                isInline={isInline}
+                tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
+                selectedDate={dateRange[0].startDate}
+                isStartTime={true}
+                extensionTimes={extensionTimes}
+              />
+            );
+          })()}
         </div>
 
         {/* Return Time */}
@@ -720,18 +752,32 @@ export default function ReservationForm({
           >
             <FiClock className="text-amber-400 text-lg" /> To
           </label>
-          {dateRange[0].endDate && (
-            <TimeSelect
-              value={formData.returnTime}
-              onChange={(time) => handleTimeChange("returnTime", time)}
-              slots={returnTimeSlots}
-              reservedSlots={reservedSlots}
-              isInline={isInline}
-              tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
-              selectedDate={dateRange[0].endDate}
-              isStartTime={false}
-            />
-          )}
+          {dateRange[0].endDate && (() => {
+            const office = getSelectedOffice();
+            const date = dateRange[0].endDate;
+            const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+            const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+            const extensionTimes = workingDay?.returnExtension ? {
+              start: returnTimeSlots[0],
+              end: returnTimeSlots[returnTimeSlots.length - 1],
+              normalStart: workingDay.startTime,
+              normalEnd: workingDay.endTime,
+              price: workingDay.returnExtension.flatPrice
+            } : undefined;
+            return (
+              <TimeSelect
+                value={formData.returnTime}
+                onChange={(time) => handleTimeChange("returnTime", time)}
+                slots={returnTimeSlots}
+                reservedSlots={reservedSlots}
+                isInline={isInline}
+                tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
+                selectedDate={dateRange[0].endDate}
+                isStartTime={false}
+                extensionTimes={extensionTimes}
+              />
+            );
+          })()}
         </div>
 
         {/* Driver Age */}
@@ -881,18 +927,32 @@ export default function ReservationForm({
             <label className="block text-white text-xs font-semibold mb-1">
               Pickup Time
             </label>
-            {dateRange[0].startDate && (
-              <TimeSelect
-                value={formData.pickupTime}
-                onChange={(time) => handleTimeChange("pickupTime", time)}
-                slots={pickupTimeSlots}
-                reservedSlots={reservedSlots}
-                isInline={true}
-                tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
-                selectedDate={dateRange[0].startDate}
-                isStartTime={true}
-              />
-            )}
+            {dateRange[0].startDate && (() => {
+              const office = getSelectedOffice();
+              const date = dateRange[0].startDate;
+              const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+              const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+              const extensionTimes = workingDay?.pickupExtension ? {
+                start: pickupTimeSlots[0],
+                end: pickupTimeSlots[pickupTimeSlots.length - 1],
+                normalStart: workingDay.startTime,
+                normalEnd: workingDay.endTime,
+                price: workingDay.pickupExtension.flatPrice
+              } : undefined;
+              return (
+                <TimeSelect
+                  value={formData.pickupTime}
+                  onChange={(time) => handleTimeChange("pickupTime", time)}
+                  slots={pickupTimeSlots}
+                  reservedSlots={reservedSlots}
+                  isInline={true}
+                  tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
+                  selectedDate={dateRange[0].startDate}
+                  isStartTime={true}
+                  extensionTimes={extensionTimes}
+                />
+              );
+            })()}
             {dateRange[0].startDate && (
               <p className="text-amber-300 text-[10px] mt-0.5">
                 {getAvailableTimeSlots(dateRange[0].startDate).info}
@@ -903,18 +963,32 @@ export default function ReservationForm({
             <label className="block text-white text-xs font-semibold mb-1">
               Return Time
             </label>
-            {dateRange[0].endDate && (
-              <TimeSelect
-                value={formData.returnTime}
-                onChange={(time) => handleTimeChange("returnTime", time)}
-                slots={returnTimeSlots}
-                reservedSlots={reservedSlots}
-                isInline={true}
-                tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
-                selectedDate={dateRange[0].endDate}
-                isStartTime={false}
-              />
-            )}
+            {dateRange[0].endDate && (() => {
+              const office = getSelectedOffice();
+              const date = dateRange[0].endDate;
+              const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+              const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+              const extensionTimes = workingDay?.returnExtension ? {
+                start: returnTimeSlots[0],
+                end: returnTimeSlots[returnTimeSlots.length - 1],
+                normalStart: workingDay.startTime,
+                normalEnd: workingDay.endTime,
+                price: workingDay.returnExtension.flatPrice
+              } : undefined;
+              return (
+                <TimeSelect
+                  value={formData.returnTime}
+                  onChange={(time) => handleTimeChange("returnTime", time)}
+                  slots={returnTimeSlots}
+                  reservedSlots={reservedSlots}
+                  isInline={true}
+                  tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
+                  selectedDate={dateRange[0].endDate}
+                  isStartTime={false}
+                  extensionTimes={extensionTimes}
+                />
+              );
+            })()}
             {dateRange[0].endDate && (
               <p className="text-amber-300 text-[10px] mt-0.5">
                 {getAvailableTimeSlots(dateRange[0].endDate).info}

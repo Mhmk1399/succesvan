@@ -12,6 +12,7 @@ interface TimeSelectProps {
   tooltip?: string;
   selectedDate?: Date;
   isStartTime?: boolean;
+  extensionTimes?: { start: string; end: string; normalStart: string; normalEnd: string; price: number };
 }
 
 export default function TimeSelect({
@@ -23,6 +24,7 @@ export default function TimeSelect({
   tooltip,
   selectedDate,
   isStartTime = true,
+  extensionTimes,
 }: TimeSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -107,11 +109,17 @@ export default function TimeSelect({
                   }`}
                 >
                   <span className="flex-1">{slot}</span>
-                  {!disabled && (
-                    <div className="w-1 h-1 absolute left-1 rounded-full bg-green-500  "></div>
+                  {!disabled && extensionTimes && (slot < extensionTimes.normalStart || slot > extensionTimes.normalEnd) && (
+                    <>
+                      <div className="w-1.5 h-1.5 absolute left-1 rounded-full bg-yellow-400"></div>
+                      <span className="text-[9px] text-yellow-400">extra(+£{extensionTimes.price})</span>
+                    </>
+                  )}
+                  {!disabled && extensionTimes && extensionTimes.normalStart !== extensionTimes.normalEnd && slot >= extensionTimes.normalStart && slot <= extensionTimes.normalEnd && (
+                    <div className="w-1 h-1 absolute left-1 rounded-full bg-green-500"></div>
                   )}
                   {disabled && (
-                    <div className="w-1 h-1 absolute left-1 rounded-full bg-red-500  "></div>
+                    <div className="w-1 h-1 absolute left-1 rounded-full bg-red-500"></div>
                   )}
                 </button>
               );
