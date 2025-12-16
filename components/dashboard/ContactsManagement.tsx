@@ -62,6 +62,10 @@ export default function ContactsManagement() {
             ),
           },
           {
+            key: "address" as keyof User,
+            label: "Address",
+          },
+          {
             key: "createdAt" as keyof User,
             label: "Joined",
             render: (value: Date) =>
@@ -123,6 +127,12 @@ export default function ContactsManagement() {
                       {(selectedUser.phoneData as any)?.isVerified
                         ? "✓ Verified"
                         : "✗ Not Verified"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-gray-400 text-sm">Address</label>
+                    <p className="text-white font-semibold">
+                      {(selectedUser as any).address || "-"}
                     </p>
                   </div>
                   <div>

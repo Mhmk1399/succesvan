@@ -12,6 +12,7 @@ import {
   FiEdit2,
   FiCopy,
   FiInbox,
+  FiAlertCircle,
 } from "react-icons/fi";
 import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
@@ -27,17 +28,19 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function DynamicTableView<
   T extends { _id?: string; id?: string }
->({
-  apiEndpoint,
-  title,
-  columns,
-  onEdit,
-  onDuplicate,
-  onMutate,
-  itemsPerPage = 10,
-  hideDelete = false,
-  hiddenColumns = [],
-}: DynamicTableViewProps<T>) {
+>(
+  {
+    apiEndpoint,
+    title,
+    columns,
+    onEdit,
+    onDuplicate,
+    onMutate,
+    itemsPerPage = 10,
+    hideDelete = false,
+    hiddenColumns = [],
+  }: DynamicTableViewProps<T>
+) {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<T | null>(null);
 
@@ -98,16 +101,35 @@ export default function DynamicTableView<
   };
 
   if (isLoading)
-    return <div className="text-white text-center py-8">Loading...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className="w-12 h-12 border-4 border-[#fe9a00]/30 border-t-[#fe9a00] rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-300 text-lg font-semibold">Loading {title}...</p>
+        <p className="text-gray-500 text-sm mt-2">Please wait</p>
+      </div>
+    );
   if (error)
     return (
-      <div className="text-red-500 text-center py-8">Failed to load data</div>
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+          <FiAlertCircle className="text-red-400 text-3xl" />
+        </div>
+        <p className="text-red-400 text-lg font-semibold">Failed to load data</p>
+        <p className="text-gray-400 text-sm mt-2">Please try again later</p>
+      </div>
     );
   if (items.length === 0)
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <FiInbox className="text-gray-400 text-6xl mb-4" />
-        <p className="text-gray-400 text-lg">No data available yet</p>
+        <div className="w-16 h-16 bg-[#fe9a00]/20 rounded-full flex items-center justify-center mb-4">
+          <FiInbox className="text-[#fe9a00] text-3xl" />
+        </div>
+        <p className="text-gray-300 text-lg font-semibold">
+          No {title.toLowerCase()} yet
+        </p>
+        <p className="text-gray-500 text-sm mt-2">
+          Start by creating your first {title.toLowerCase()}
+        </p>
       </div>
     );
 

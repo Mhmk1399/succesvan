@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema(
       front: { type: String },
       back: { type: String },
     },
+    address: { type: String },
   },
   { timestamps: true }
 );

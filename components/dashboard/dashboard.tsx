@@ -20,6 +20,8 @@ import {
   FiCommand,
 } from "react-icons/fi";
 import { useStats } from "@/hooks/useStats";
+import { useRecentReservations } from "@/hooks/useRecentReservations";
+import { useFleetStatus } from "@/hooks/useFleetStatus";
 import OfficesContent from "./CreateOfficeForm";
 import VehiclesContent from "./CreateVehicleForm";
 import CategoriesContent from "./CreateCategoryForm";
@@ -165,7 +167,7 @@ export default function Dashboard() {
               }`}
             >
               <span
-                className={`text-lg  ${
+                className={`text-sm  ${
                   activeTab === item.id ? "text-white" : "text-[#fe9a00]"
                 } `}
               >
@@ -212,7 +214,6 @@ export default function Dashboard() {
               Visit Site
               <FiExternalLink className="text-lg" />
             </Link>
-            <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#fe9a00] to-orange-600"></div>
           </div>
         </div>
 
@@ -244,6 +245,9 @@ export default function Dashboard() {
 
 function DashboardContent() {
   const { stats, isLoading } = useStats();
+  const { reservations, isLoading: reservationsLoading } =
+    useRecentReservations();
+  const { fleetStatus, isLoading: fleetLoading } = useFleetStatus();
 
   const statCards = [
     {
@@ -297,22 +301,38 @@ function DashboardContent() {
             Recent Reserves
           </h3>
           <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
-              >
-                <div>
-                  <p className="text-white font-semibold">
-                    Reserve #{1000 + i}
-                  </p>
-                  <p className="text-gray-400 text-sm">2 days ago</p>
+            {reservationsLoading ? (
+              <p className="text-gray-400 text-sm">Loading...</p>
+            ) : reservations.length > 0 ? (
+              reservations.map((res) => (
+                <div
+                  key={res._id}
+                  className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
+                >
+                  <div>
+                    <p className="text-white font-semibold">
+                      Reserve #{res._id?.slice(-4).toUpperCase()}
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      {new Date(res.createdAt!).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      res.status === "confirmed"
+                        ? "bg-green-500/20 text-green-400"
+                        : res.status === "pending"
+                        ? "bg-yellow-500/20 text-yellow-400"
+                        : "bg-red-500/20 text-red-400"
+                    }`}
+                  >
+                    {res.status.charAt(0).toUpperCase() + res.status.slice(1)}
+                  </span>
                 </div>
-                <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-semibold">
-                  Active
-                </span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-gray-400 text-sm">No reservations yet</p>
+            )}
           </div>
         </div>
 
@@ -321,15 +341,21 @@ function DashboardContent() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-gray-300">Available</span>
-              <span className="text-2xl font-black text-green-400">18</span>
+              <span className="text-2xl font-black text-green-400">
+                {fleetLoading ? "-" : fleetStatus.available}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-300">In Use</span>
-              <span className="text-2xl font-black text-orange-400">5</span>
+              <span className="text-2xl font-black text-orange-400">
+                {fleetLoading ? "-" : fleetStatus.inUse}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-300">Maintenance</span>
-              <span className="text-2xl font-black text-red-400">1</span>
+              <span className="text-2xl font-black text-red-400">
+                {fleetLoading ? "-" : fleetStatus.maintenance}
+              </span>
             </div>
           </div>
         </div>
