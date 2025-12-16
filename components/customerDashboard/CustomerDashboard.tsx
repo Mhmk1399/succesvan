@@ -53,6 +53,10 @@ export default function CustomerDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [hasLicense, setHasLicense] = useState(true);
+  const [hasAddress, setHasAddress] = useState(true);
+  const [scrollToSection, setScrollToSection] = useState<
+    "license" | "address" | null
+  >(null);
 
   const checkLicenseStatus = () => {
     const user = localStorage.getItem("user");
@@ -63,6 +67,9 @@ export default function CustomerDashboard() {
           const hasLicenseUploaded =
             userData.licenceAttached?.front && userData.licenceAttached?.back;
           setHasLicense(hasLicenseUploaded);
+          const hasAddressData =
+            userData.address && userData.address.trim() !== "";
+          setHasAddress(hasAddressData);
         }
       } catch (error) {
         console.log("Failed to parse user data:", error);
@@ -124,10 +131,14 @@ export default function CustomerDashboard() {
     };
   }, [sidebarOpen]);
 
-  const handleTabChange = (tabId: string) => {
+  const handleTabChange = (tabId: string, section?: "license" | "address") => {
     setActiveTab(tabId);
     window.location.hash = tabId;
     setSidebarOpen(false);
+    if (section) {
+      setScrollToSection(section);
+      setTimeout(() => setScrollToSection(null), 500);
+    }
   };
 
   const handleLogout = () => {
@@ -213,7 +224,7 @@ export default function CustomerDashboard() {
         <div className="p-4 sm:p-6 lg:p-8">
           {!hasLicense && (
             <div className="mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-start gap-3">
-              <FiAlertCircle className="text-yellow-500 text-xl mt-0.5  shrink-0" />
+              <FiAlertCircle className="text-yellow-500 text-xl mt-0.5 shrink-0" />
               <div>
                 <h3 className="text-yellow-500 font-bold mb-1">
                   License Required
@@ -223,7 +234,7 @@ export default function CustomerDashboard() {
                   license in the Profile section to confirm your bookings.
                 </p>
                 <button
-                  onClick={() => handleTabChange("profile")}
+                  onClick={() => handleTabChange("profile", "license")}
                   className="mt-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg transition-colors font-semibold text-sm"
                 >
                   Upload License Now
@@ -231,10 +242,33 @@ export default function CustomerDashboard() {
               </div>
             </div>
           )}
+          {!hasAddress && (
+            <div className="mb-6 bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 flex items-start gap-3">
+              <FiAlertCircle className="text-blue-500 text-xl mt-0.5 shrink-0" />
+              <div>
+                <h3 className="text-blue-500 font-bold mb-1">
+                  Address Required
+                </h3>
+                <p className="text-gray-300 text-sm">
+                  Please add your address in the Profile section to complete
+                  your profile.
+                </p>
+                <button
+                  onClick={() => handleTabChange("profile", "address")}
+                  className="mt-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-semibold text-sm"
+                >
+                  Add Address Now
+                </button>
+              </div>
+            </div>
+          )}
 
           {activeTab === "reserves" && <ReservesContent />}
           {activeTab === "profile" && (
-            <ProfileContent onLicenseUpdate={checkLicenseStatus} />
+            <ProfileContent
+              onLicenseUpdate={checkLicenseStatus}
+              scrollToSection={scrollToSection}
+            />
           )}
           {activeTab === "offers" && <OffersContent />}
           {activeTab === "discounts" && <DiscountsContent />}

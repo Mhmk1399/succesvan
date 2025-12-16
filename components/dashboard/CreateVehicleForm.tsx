@@ -7,7 +7,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
-import { Category, Office, Vehicle } from "@/types/type";
+import { Category, Office, Reservation, Vehicle } from "@/types/type";
 import DynamicTableView from "./DynamicTableView";
 import CustomSelect from "@/components/ui/CustomSelect";
 
@@ -17,8 +17,12 @@ export default function VehiclesContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [offices, setOffices] = useState<Office[]>([]);
+  const [reservations, setReservations] = useState<
+    { _id: string; name: string }[]
+  >([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingOffices, setLoadingOffices] = useState(true);
+  const [loadingReservations, setLoadingReservations] = useState(true);
   const [showServiceDatePicker, setShowServiceDatePicker] = useState<
     string | null
   >(null);
@@ -31,6 +35,7 @@ export default function VehiclesContent() {
     number: "",
     category: "",
     office: "",
+    reservation: "",
     properties: [{ name: "", value: "" }],
     needsService: false,
     serviceHistory: {
@@ -45,19 +50,28 @@ export default function VehiclesContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [catRes, offRes] = await Promise.all([
+        const [catRes, offRes, resRes] = await Promise.all([
           fetch("/api/categories"),
           fetch("/api/offices"),
+          fetch("/api/reservations"),
         ]);
         const catData = await catRes.json();
         const offData = await offRes.json();
+        const resData = await resRes.json();
         setCategories(catData.data || []);
         setOffices(offData.data || []);
+        setReservations(
+          (resData.data || []).map((res: Reservation) => ({
+            _id: res._id,
+            name: `Res #${res._id?.slice(-6)} - ${res.user?.name || "Unknown"}`,
+          }))
+        );
       } catch (error) {
         console.log("Failed to fetch data:", error);
       } finally {
         setLoadingCategories(false);
         setLoadingOffices(false);
+        setLoadingReservations(false);
       }
     };
     fetchData();
@@ -121,6 +135,7 @@ export default function VehiclesContent() {
       number: "",
       category: "",
       office: "",
+      reservation: "",
       properties: [{ name: "", value: "" }],
       needsService: false,
       serviceHistory: {
@@ -148,6 +163,10 @@ export default function VehiclesContent() {
         typeof (item as any).office === "string"
           ? (item as any).office
           : (item as any).office?._id || "",
+      reservation:
+        typeof (item as any).reservation === "string"
+          ? (item as any).reservation
+          : (item as any).reservation?._id || "",
       properties: item.properties || [{ name: "", value: "" }],
       needsService: item.needsService,
       serviceHistory: item.serviceHistory || {
@@ -177,6 +196,7 @@ export default function VehiclesContent() {
         number: formData.number,
         category: formData.category,
         office: formData.office,
+        ...(formData.reservation && { reservation: formData.reservation }),
         properties: formData.properties.filter((p) => p.name && p.value),
         needsService: formData.needsService,
         serviceHistory: {
@@ -298,6 +318,19 @@ export default function VehiclesContent() {
                   loadingCategories
                     ? "Loading categories..."
                     : "Select Category"
+                }
+              />
+
+              <CustomSelect
+                options={reservations}
+                value={formData.reservation}
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, reservation: val }))
+                }
+                placeholder={
+                  loadingReservations
+                    ? "Loading reservations..."
+                    : "Select Reservation (Optional)"
                 }
               />
 

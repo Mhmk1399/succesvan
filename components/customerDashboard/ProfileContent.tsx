@@ -7,6 +7,7 @@ interface UserData {
   _id: string;
   name: string;
   lastName: string;
+  address?: string;
   emaildata?: {
     emailAddress: string;
     isVerified: boolean;
@@ -23,8 +24,10 @@ interface UserData {
 
 export default function ProfileContent({
   onLicenseUpdate,
+  scrollToSection,
 }: {
   onLicenseUpdate?: () => void;
+  scrollToSection?: "license" | "address" | null;
 }) {
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +36,7 @@ export default function ProfileContent({
   const [formData, setFormData] = useState({
     name: "",
     lastName: "",
+    address: "",
     emailAddress: "",
     phoneNumber: "",
   });
@@ -41,6 +45,16 @@ export default function ProfileContent({
   useEffect(() => {
     fetchUserData();
   }, []);
+
+  useEffect(() => {
+    if (scrollToSection) {
+      setIsEditing(true);
+      setTimeout(() => {
+        const element = document.getElementById(`section-${scrollToSection}`);
+        element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+    }
+  }, [scrollToSection]);
 
   const fetchUserData = async () => {
     try {
@@ -63,6 +77,7 @@ export default function ProfileContent({
       setFormData({
         name: userData.name,
         lastName: userData.lastName,
+        address: userData.address || "",
         emailAddress: userData.emaildata?.emailAddress || "",
         phoneNumber: userData.phoneData?.phoneNumber || "",
       });
@@ -131,6 +146,7 @@ export default function ProfileContent({
         body: JSON.stringify({
           name: formData.name,
           lastName: formData.lastName,
+          address: formData.address,
           emaildata: { emailAddress: formData.emailAddress },
           phoneData: { phoneNumber: formData.phoneNumber },
         }),
@@ -144,7 +160,7 @@ export default function ProfileContent({
 
       showToast.success("Profile updated successfully!");
       setIsEditing(false);
-      fetchUserData();
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       showToast.error(message || "Update failed");
@@ -163,7 +179,37 @@ export default function ProfileContent({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <h2 className="text-2xl sm:text-3xl font-black text-white">Profile Settings</h2>
+        <div className="flex gap-2 w-full sm:w-auto">
+          {isEditing ? (
+            <>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex-1 sm:flex-none px-6 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-semibold text-sm disabled:opacity-50"
+              >
+                {isSaving ? "Saving..." : "Save"}
+              </button>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="flex-1 sm:flex-none px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors font-semibold text-sm"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="w-full sm:w-auto px-6 py-2.5 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold text-sm"
+            >
+              Edit Profile
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div id="section-address" className="bg-white/5 border border-white/10 rounded-2xl p-6">
         <h3 className="text-xl font-black text-white mb-6">
           Profile Information
         </h3>
@@ -177,7 +223,11 @@ export default function ProfileContent({
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="w-full mt-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                className={`w-full mt-1 px-4 py-2 bg-white/10 border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                  formData.name.trim()
+                    ? "border-green-500/50 focus:border-green-500"
+                    : "border-red-500/50 focus:border-red-500"
+                }`}
               />
             ) : (
               <p className="text-white font-semibold mt-1">{user?.name}</p>
@@ -192,10 +242,36 @@ export default function ProfileContent({
                 onChange={(e) =>
                   setFormData({ ...formData, lastName: e.target.value })
                 }
-                className="w-full mt-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                className={`w-full mt-1 px-4 py-2 bg-white/10 border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                  formData.lastName.trim()
+                    ? "border-green-500/50 focus:border-green-500"
+                    : "border-red-500/50 focus:border-red-500"
+                }`}
               />
             ) : (
               <p className="text-white font-semibold mt-1">{user?.lastName}</p>
+            )}
+          </div>
+          <div>
+            <label className="text-gray-400 text-sm">Address</label>
+            {isEditing ? (
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
+                className={`w-full mt-1 px-4 py-2 bg-white/10 border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                  formData.address.trim()
+                    ? "border-green-500/50 focus:border-green-500"
+                    : "border-red-500/50 focus:border-red-500"
+                }`}
+                placeholder="Enter your address"
+              />
+            ) : (
+              <p className="text-white font-semibold mt-1">
+                {user?.address || "-"}
+              </p>
             )}
           </div>
           <div>
@@ -218,7 +294,11 @@ export default function ProfileContent({
                 onChange={(e) =>
                   setFormData({ ...formData, emailAddress: e.target.value })
                 }
-                className="w-full mt-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                className={`w-full mt-1 px-4 py-2 bg-white/10 border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                  formData.emailAddress.trim()
+                    ? "border-green-500/50 focus:border-green-500"
+                    : "border-red-500/50 focus:border-red-500"
+                }`}
               />
             ) : (
               <p className="text-white font-semibold mt-1">
@@ -246,7 +326,11 @@ export default function ProfileContent({
                 onChange={(e) =>
                   setFormData({ ...formData, phoneNumber: e.target.value })
                 }
-                className="w-full mt-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                className={`w-full mt-1 px-4 py-2 bg-white/10 border rounded-lg text-white placeholder-gray-500 focus:outline-none transition-colors ${
+                  formData.phoneNumber.trim()
+                    ? "border-green-500/50 focus:border-green-500"
+                    : "border-red-500/50 focus:border-red-500"
+                }`}
               />
             ) : (
               <p className="text-white font-semibold mt-1">
@@ -257,7 +341,7 @@ export default function ProfileContent({
         </div>
       </div>
 
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <div id="section-license" className="bg-white/5 border border-white/10 rounded-2xl p-6">
         <h3 className="text-xl font-black text-white mb-6">
           License Attachments
         </h3>
@@ -351,36 +435,7 @@ export default function ProfileContent({
         </div>
       </div>
 
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-        <div className="space-y-4">
-          <div className="flex gap-3 mt-6">
-            {isEditing ? (
-              <>
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="flex-1 px-6 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold disabled:opacity-50"
-                >
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </button>
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors font-semibold"
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="w-full px-6 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold"
-              >
-                Edit Profile
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 }

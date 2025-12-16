@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FiX } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import DynamicTableView from "./DynamicTableView";
-import { AddOn, Reservation } from "@/types/type";
+import { Reservation } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
 
 export default function ReservationsManagement() {
@@ -13,11 +13,38 @@ export default function ReservationsManagement() {
     useState<Reservation | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [newStatus, setNewStatus] = useState("");
+  const [newVehicle, setNewVehicle] = useState("");
+  const [vehicles, setVehicles] = useState<{ _id: string; name: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingVehicles, setLoadingVehicles] = useState(true);
+
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        const res = await fetch("/api/vehicles");
+        const data = await res.json();
+        setVehicles(
+          (data.data || []).map((vehicle: any) => ({
+            _id: vehicle._id,
+            name: vehicle.title || vehicle.number || "Unknown",
+          }))
+        );
+      } catch (error) {
+        console.log("Failed to fetch vehicles:", error);
+      } finally {
+        setLoadingVehicles(false);
+      }
+    };
+    fetchVehicles();
+  }, []);
 
   const handleViewDetails = (item: Reservation) => {
     setSelectedReservation(item);
+    setNewVehicle(
+      typeof item.vehicle === "string" ? item.vehicle : item.vehicle?._id || ""
+    );
     setIsDetailOpen(true);
   };
 
@@ -38,6 +65,32 @@ export default function ReservationsManagement() {
       showToast.success("Status updated successfully!");
       setIsStatusOpen(false);
       setNewStatus("");
+      if (mutateRef.current) mutateRef.current();
+      setIsDetailOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Update failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVehicleUpdate = async () => {
+    if (!selectedReservation) return;
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(`/api/reservations/${selectedReservation._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vehicle: newVehicle || null }),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Update failed");
+
+      showToast.success("Vehicle updated successfully!");
+      setIsEditOpen(false);
       if (mutateRef.current) mutateRef.current();
       setIsDetailOpen(false);
     } catch (error) {
@@ -168,6 +221,12 @@ export default function ReservationsManagement() {
                     </p>
                   </div>
                   <div>
+                    <p className="text-gray-400">Vehicle</p>
+                    <p className="text-white font-semibold">
+                      {(selectedReservation as any).vehicle?.title || "-"}
+                    </p>
+                  </div>
+                  <div>
                     <p className="text-gray-400">Start Date & Time</p>
                     <p className="text-white font-semibold">
                       {new Date(selectedReservation.startDate).toLocaleString()}
@@ -267,6 +326,41 @@ export default function ReservationsManagement() {
                   </p>
                 </div>
               )}
+
+              {/* Vehicle Assignment */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-white font-semibold">Assign Vehicle</h3>
+                </div>
+                <button
+                  onClick={() => setIsEditOpen(!isEditOpen)}
+                  className="w-full px-4 py-2 bg-[#fe9a00]/20 text-[#fe9a00] rounded-lg hover:bg-[#fe9a00]/30 transition-colors font-semibold text-sm"
+                >
+                  Edit Vehicle
+                </button>
+
+                {isEditOpen && (
+                  <div className="mt-3 space-y-2">
+                    <CustomSelect
+                      options={vehicles}
+                      value={newVehicle}
+                      onChange={setNewVehicle}
+                      placeholder={
+                        loadingVehicles
+                          ? "Loading vehicles..."
+                          : "Select Vehicle"
+                      }
+                    />
+                    <button
+                      onClick={handleVehicleUpdate}
+                      disabled={isSubmitting}
+                      className="w-full px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold text-sm disabled:opacity-50"
+                    >
+                      {isSubmitting ? "Updating..." : "Update Vehicle"}
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {/* Status Management */}
               <div className="bg-white/5 border border-white/10 rounded-xl p-4">

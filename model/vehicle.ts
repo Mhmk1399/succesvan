@@ -10,6 +10,10 @@ const vehicleSchema = new mongoose.Schema(
       ref: "Category",
       required: true,
     },
+    reservation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Reservation",
+    },
     number: { type: String, required: true },
 
     office: {

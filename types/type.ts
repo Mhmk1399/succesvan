@@ -145,6 +145,7 @@ export interface AddOn {
 // Reservation ------------------------------------------------------------------------------------------
 export interface Reservation {
   _id?: string;
+
   user?: any;
   office?: any;
   startDate: Date;
@@ -159,6 +160,7 @@ export interface Reservation {
   }>;
   createdAt?: Date;
   updatedAt?: Date;
+  vehicle: Vehicle;
 }
 
 // Table ------------------------------------------------------------------------------------
