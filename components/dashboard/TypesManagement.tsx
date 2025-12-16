@@ -58,8 +58,9 @@ export default function TypesManagement() {
       );
       handleCloseForm();
       if (mutateRef.current) mutateRef.current();
-    } catch (error: any) {
-      showToast.error(error.message || "Operation failed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Operation failed");
     } finally {
       setIsSubmitting(false);
     }

@@ -52,8 +52,9 @@ export default function AuthForm() {
       if (!data.success) throw new Error(data.error || "Failed to send code");
       showToast.success("Code sent to your phone!");
       setStep("code");
-    } catch (error: any) {
-      showToast.error(error.message || "Failed to send code");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Failed to send code");
     } finally {
       setIsLoading(false);
     }
@@ -91,8 +92,9 @@ export default function AuthForm() {
         showToast.success("Phone verified! Please complete registration.");
         setStep("register");
       }
-    } catch (error: any) {
-      showToast.error(error.message || "Verification failed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Verification failed");
     } finally {
       setIsLoading(false);
     }
@@ -137,8 +139,9 @@ export default function AuthForm() {
       setTimeout(() => {
         window.location.href = "/";
       }, 1500);
-    } catch (error: any) {
-      showToast.error(error.message || "Registration failed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Registration failed");
     } finally {
       setIsLoading(false);
     }

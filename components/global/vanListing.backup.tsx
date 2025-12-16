@@ -221,17 +221,25 @@ function ReservationPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
-  const [reservedSlots, setReservedSlots] = useState<{ startTime: string; endTime: string }[]>([]);
+  const [reservedSlots, setReservedSlots] = useState<
+    { startTime: string; endTime: string }[]
+  >([]);
   const [pickupTimeSlots, setPickupTimeSlots] = useState<string[]>([]);
   const [returnTimeSlots, setReturnTimeSlots] = useState<string[]>([]);
   const [addOns, setAddOns] = useState<AddOn[]>([]);
-  const [selectedAddOns, setSelectedAddOns] = useState<{ addOn: string; quantity: number; selectedTierIndex?: number }[]>([]);
+  const [selectedAddOns, setSelectedAddOns] = useState<
+    { addOn: string; quantity: number; selectedTierIndex?: number }[]
+  >([]);
   const [showAddOnsModal, setShowAddOnsModal] = useState(false);
   const [addOnsCost, setAddOnsCost] = useState(0);
 
   const priceCalc = usePriceCalculation(
-    formData.pickupDate ? `${formData.pickupDate}T${formData.pickupTime}:00` : "",
-    formData.returnDate ? `${formData.returnDate}T${formData.returnTime}:00` : "",
+    formData.pickupDate
+      ? `${formData.pickupDate}T${formData.pickupTime}:00`
+      : "",
+    formData.returnDate
+      ? `${formData.returnDate}T${formData.returnTime}:00`
+      : "",
     (van as any).pricingTiers || [],
     (van as any).extrahoursRate || 0
   );
@@ -247,9 +255,9 @@ function ReservationPanel({
   // Fetch add-ons
   useEffect(() => {
     fetch("/api/addons")
-      .then(res => res.json())
-      .then(data => setAddOns(data.data || []))
-      .catch(err => console.error(err));
+      .then((res) => res.json())
+      .then((data) => setAddOns(data.data || []))
+      .catch((err) => console.error(err));
   }, []);
 
   // Calculate add-ons cost
@@ -259,7 +267,7 @@ function ReservationPanel({
       return;
     }
     const cost = selectedAddOns.reduce((total, item) => {
-      const addon = addOns.find(a => a._id === item.addOn);
+      const addon = addOns.find((a) => a._id === item.addOn);
       if (!addon) return total;
       if (addon.pricingType === "flat") {
         return total + (addon.flatPrice || 0) * item.quantity;
@@ -275,14 +283,16 @@ function ReservationPanel({
   // Fetch reserved slots and generate time slots
   useEffect(() => {
     if (formData.office && formData.pickupDate) {
-      fetch(`/api/reservations/by-office?office=${formData.office}&startDate=${formData.pickupDate}`)
-        .then(res => res.json())
-        .then(data => setReservedSlots(data.data?.reservedSlots || []))
-        .catch(err => console.error(err));
+      fetch(
+        `/api/reservations/by-office?office=${formData.office}&startDate=${formData.pickupDate}`
+      )
+        .then((res) => res.json())
+        .then((data) => setReservedSlots(data.data?.reservedSlots || []))
+        .catch((err) => console.error(err));
 
-      const office = offices.find(o => o._id === formData.office);
+      const office = offices.find((o) => o._id === formData.office);
       if (office) {
-        const slots = generateTimeSlots('00:00', '23:45', 15);
+        const slots = generateTimeSlots("00:00", "23:45", 15);
         setPickupTimeSlots(slots);
         setReturnTimeSlots(slots);
       }
@@ -389,8 +399,9 @@ function ReservationPanel({
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
       setAuthStep("code");
-    } catch (error: any) {
-      setErrors({ phone: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setErrors({ phone: message });
     } finally {
       setIsSubmitting(false);
     }
@@ -429,8 +440,9 @@ function ReservationPanel({
       } else {
         setAuthStep("register");
       }
-    } catch (error: any) {
-      setErrors({ code: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setErrors({ code: message });
     } finally {
       setIsSubmitting(false);
     }
@@ -467,8 +479,9 @@ function ReservationPanel({
       localStorage.setItem("user", JSON.stringify(data.data.user));
       setIsNewUser(true);
       setStep("details");
-    } catch (error: any) {
-      setErrors({ submit: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setErrors({ submit: message });
     } finally {
       setIsSubmitting(false);
     }
@@ -533,7 +546,8 @@ function ReservationPanel({
           category: formData.category,
           startDate: pickupDateTime,
           endDate: returnDateTime,
-          totalPrice: (priceCalc?.totalPrice || 0) + addOnsCost + (van.deposit || 0),
+          totalPrice:
+            (priceCalc?.totalPrice || 0) + addOnsCost + (van.deposit || 0),
           dirverAge: formData.driverAge || 25,
           messege: formData.notes,
           status: "pending",
@@ -564,9 +578,10 @@ function ReservationPanel({
           onClose();
         }, 2000);
       }
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
       console.log("Reservation error:", error);
-      setErrors({ submit: error.message || "Failed to create reservation" });
+      setErrors({ submit: message || "Failed to create reservation" });
     } finally {
       setIsSubmitting(false);
     }
@@ -1040,8 +1055,8 @@ function ReservationPanel({
                     value={formData.driverAge}
                     onChange={handleChange}
                     placeholder="25-70"
-            min="25"
-            max="70"
+                    min="25"
+                    max="70"
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all"
                   />
                 </div>
@@ -1070,46 +1085,58 @@ function ReservationPanel({
             <div className="border-t border-white/10"></div>
 
             {/* Add-ons Section */}
-            {addOns.length > 0 && formData.pickupDate && formData.returnDate && (
-              <div>
-                <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
-                    3
-                  </div>
-                  Add-ons
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setShowAddOnsModal(true)}
-                  className="w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#fe9a00]/50 rounded-xl p-4 transition-all group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-left">
-                      <p className="text-white font-semibold text-sm">
-                        {selectedAddOns.length === 0
-                          ? "Select Add-ons"
-                          : `${selectedAddOns.length} Add-on${selectedAddOns.length > 1 ? "s" : ""} Selected`}
-                      </p>
-                      <p className="text-gray-400 text-xs mt-1">
-                        {selectedAddOns.length === 0
-                          ? "Enhance your rental experience"
-                          : `Total: £${addOnsCost}`}
-                      </p>
+            {addOns.length > 0 &&
+              formData.pickupDate &&
+              formData.returnDate && (
+                <div>
+                  <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
+                      3
                     </div>
-                    <FiPackage className="text-[#fe9a00] text-xl group-hover:scale-110 transition-transform" />
-                  </div>
-                </button>
-              </div>
-            )}
+                    Add-ons
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddOnsModal(true)}
+                    className="w-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#fe9a00]/50 rounded-xl p-4 transition-all group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="text-left">
+                        <p className="text-white font-semibold text-sm">
+                          {selectedAddOns.length === 0
+                            ? "Select Add-ons"
+                            : `${selectedAddOns.length} Add-on${
+                                selectedAddOns.length > 1 ? "s" : ""
+                              } Selected`}
+                        </p>
+                        <p className="text-gray-400 text-xs mt-1">
+                          {selectedAddOns.length === 0
+                            ? "Enhance your rental experience"
+                            : `Total: £${addOnsCost}`}
+                        </p>
+                      </div>
+                      <FiPackage className="text-[#fe9a00] text-xl group-hover:scale-110 transition-transform" />
+                    </div>
+                  </button>
+                </div>
+              )}
 
             {/* Divider */}
-            {addOns.length > 0 && formData.pickupDate && formData.returnDate && <div className="border-t border-white/10"></div>}
+            {addOns.length > 0 &&
+              formData.pickupDate &&
+              formData.returnDate && (
+                <div className="border-t border-white/10"></div>
+              )}
 
             {/* Cost Summary */}
             <div className="bg-linear-to-br from-white/5 to-transparent border border-white/10 rounded-2xl p-4 space-y-3">
               <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
-                  {addOns.length > 0 && formData.pickupDate && formData.returnDate ? "4" : "3"}
+                  {addOns.length > 0 &&
+                  formData.pickupDate &&
+                  formData.returnDate
+                    ? "4"
+                    : "3"}
                 </div>
                 Cost Summary
               </h3>

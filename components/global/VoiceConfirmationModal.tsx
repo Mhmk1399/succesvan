@@ -35,15 +35,16 @@ export default function VoiceConfirmationModal({
   const [step, setStep] = useState<"review" | "signup">("review");
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [waitingForVoiceConfirmation, setWaitingForVoiceConfirmation] = useState(false);
+  const [waitingForVoiceConfirmation, setWaitingForVoiceConfirmation] =
+    useState(false);
 
   // Voice confirmation hook
   const { isRecording, isProcessing, toggleRecording } = useVoiceRecording({
     onTranscriptionComplete: async (result) => {
       console.log("🎤 [Modal] Voice confirmation received:", result.transcript);
-      
+
       const transcript = result.transcript.toLowerCase();
-      
+
       // Check if user said "ok", "yes", "confirm", etc.
       if (
         transcript.includes("ok") ||
@@ -83,7 +84,13 @@ export default function VoiceConfirmationModal({
     console.log("✅ [Modal] User confirmed voice data:", formData);
 
     // Check for required fields
-    const requiredFields = ["office", "category", "pickupDate", "returnDate", "driverAge"];
+    const requiredFields = [
+      "office",
+      "category",
+      "pickupDate",
+      "returnDate",
+      "driverAge",
+    ];
     const missing = requiredFields.filter((field) => !formData[field]);
 
     if (missing.length > 0) {
@@ -126,7 +133,10 @@ export default function VoiceConfirmationModal({
         phoneNumber: user?.phoneData?.phoneNumber || "",
       };
 
-      console.log("📤 [Modal] Sending reservation data:", JSON.stringify(reservationData, null, 2));
+      console.log(
+        "📤 [Modal] Sending reservation data:",
+        JSON.stringify(reservationData, null, 2)
+      );
       console.log("🔑 [Modal] Has user token:", !!user);
       console.log("📧 [Modal] Email:", reservationData.email);
 
@@ -134,7 +144,9 @@ export default function VoiceConfirmationModal({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(user && { Authorization: `Bearer ${localStorage.getItem("token")}` }),
+          ...(user && {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          }),
         },
         body: JSON.stringify(reservationData),
       });
@@ -159,7 +171,10 @@ export default function VoiceConfirmationModal({
         // Store in session for confirmation page
         const reservationToStore = data.data || data;
         console.log("💾 [Modal] Storing in session:", reservationToStore);
-        sessionStorage.setItem("lastReservation", JSON.stringify(reservationToStore));
+        sessionStorage.setItem(
+          "lastReservation",
+          JSON.stringify(reservationToStore)
+        );
 
         if (user) {
           // Redirect to customer dashboard
@@ -174,12 +189,14 @@ export default function VoiceConfirmationModal({
         onClose();
       } else {
         console.error("❌ [Modal] Server returned error:", data);
-        throw new Error(data.error || data.message || "Failed to create reservation");
+        throw new Error(
+          data.error || data.message || "Failed to create reservation"
+        );
       }
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
       console.error("❌ [Modal] Error creating reservation:", error);
-      console.error("❌ [Modal] Error stack:", error.stack);
-      showToast.error(error.message || "Failed to create reservation");
+      showToast.error(message || "Failed to create reservation");
     } finally {
       setIsSubmitting(false);
     }
@@ -218,9 +235,10 @@ export default function VoiceConfirmationModal({
 
       // Then create reservation with the user
       await createReservation(userData.user || userData.data);
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
       console.error("❌ [Modal] Signup error:", error);
-      showToast.error(error.message || "Failed to create account");
+      showToast.error(message || "Failed to create account");
       setIsSubmitting(false);
     }
   };
@@ -228,11 +246,11 @@ export default function VoiceConfirmationModal({
   const handleGoogleLogin = async () => {
     console.log("🔐 [Modal] Initiating Google login...");
     setIsSubmitting(true);
-    
+
     try {
       // Store reservation data before redirect
       sessionStorage.setItem("pendingReservation", JSON.stringify(formData));
-      
+
       // Redirect to Google OAuth
       window.location.href = "/api/auth/google?redirect=/reservation/complete";
     } catch (error) {
@@ -245,11 +263,11 @@ export default function VoiceConfirmationModal({
   const handleAppleLogin = async () => {
     console.log("🍎 [Modal] Initiating Apple login...");
     setIsSubmitting(true);
-    
+
     try {
       // Store reservation data before redirect
       sessionStorage.setItem("pendingReservation", JSON.stringify(formData));
-      
+
       // Redirect to Apple OAuth
       window.location.href = "/api/auth/apple?redirect=/reservation/complete";
     } catch (error) {
@@ -271,14 +289,14 @@ export default function VoiceConfirmationModal({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-md z-[9998] animate-fadeIn"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md z-9998 animate-fadeIn"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
+      <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full border border-amber-500/30 pointer-events-auto animate-scaleIn"
+          className="bg-linear-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl max-w-2xl w-full border border-amber-500/30 pointer-events-auto animate-scaleIn"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -289,8 +307,10 @@ export default function VoiceConfirmationModal({
                 {step === "signup" && "📧 Complete Your Booking"}
               </h2>
               <p className="text-gray-400 text-sm mt-1">
-                {step === "review" && "Review and confirm the extracted information"}
-                {step === "signup" && "Enter your email to receive booking confirmation"}
+                {step === "review" &&
+                  "Review and confirm the extracted information"}
+                {step === "signup" &&
+                  "Enter your email to receive booking confirmation"}
               </p>
             </div>
             <button
@@ -310,7 +330,9 @@ export default function VoiceConfirmationModal({
                   <h3 className="text-sm font-semibold text-amber-400 mb-2">
                     📝 What You Said:
                   </h3>
-                  <p className="text-white italic">"{extractedData.transcript}"</p>
+                  <p className="text-white italic">
+                    "{extractedData.transcript}"
+                  </p>
                 </div>
 
                 {/* Extracted Information */}
@@ -321,18 +343,27 @@ export default function VoiceConfirmationModal({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Office */}
                     <div>
-                      <label className="text-sm text-gray-400 block mb-1">Office</label>
+                      <label className="text-sm text-gray-400 block mb-1">
+                        Office
+                      </label>
                       {formData.office ? (
                         <div className="flex items-center gap-2">
                           <FiCheck className="text-green-400" />
-                          <span className="text-white">{getOfficeName(formData.office)}</span>
+                          <span className="text-white">
+                            {getOfficeName(formData.office)}
+                          </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
                           <FiAlertCircle className="text-red-400" />
                           <select
                             value={formData.office || ""}
-                            onChange={(e) => setFormData({ ...formData, office: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                office: e.target.value,
+                              })
+                            }
                             className="flex-1 bg-white/10 border border-red-400/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-400"
                           >
                             <option value="">Select Office</option>
@@ -348,18 +379,27 @@ export default function VoiceConfirmationModal({
 
                     {/* Category */}
                     <div>
-                      <label className="text-sm text-gray-400 block mb-1">Category</label>
+                      <label className="text-sm text-gray-400 block mb-1">
+                        Category
+                      </label>
                       {formData.category ? (
                         <div className="flex items-center gap-2">
                           <FiCheck className="text-green-400" />
-                          <span className="text-white">{getCategoryName(formData.category)}</span>
+                          <span className="text-white">
+                            {getCategoryName(formData.category)}
+                          </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
                           <FiAlertCircle className="text-red-400" />
                           <select
                             value={formData.category || ""}
-                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                category: e.target.value,
+                              })
+                            }
                             className="flex-1 bg-white/10 border border-red-400/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-400"
                           >
                             <option value="">Select type</option>
@@ -375,7 +415,9 @@ export default function VoiceConfirmationModal({
 
                     {/* Pickup Date */}
                     <div>
-                      <label className="text-sm text-gray-400 block mb-1">Pickup Date</label>
+                      <label className="text-sm text-gray-400 block mb-1">
+                        Pickup Date
+                      </label>
                       {formData.pickupDate ? (
                         <div className="flex items-center gap-2">
                           <FiCheck className="text-green-400" />
@@ -390,7 +432,10 @@ export default function VoiceConfirmationModal({
                             type="date"
                             value={formData.pickupDate || ""}
                             onChange={(e) =>
-                              setFormData({ ...formData, pickupDate: e.target.value })
+                              setFormData({
+                                ...formData,
+                                pickupDate: e.target.value,
+                              })
                             }
                             className="flex-1 bg-white/10 border border-red-400/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-400"
                           />
@@ -400,7 +445,9 @@ export default function VoiceConfirmationModal({
 
                     {/* Return Date */}
                     <div>
-                      <label className="text-sm text-gray-400 block mb-1">Return Date</label>
+                      <label className="text-sm text-gray-400 block mb-1">
+                        Return Date
+                      </label>
                       {formData.returnDate ? (
                         <div className="flex items-center gap-2">
                           <FiCheck className="text-green-400" />
@@ -415,7 +462,10 @@ export default function VoiceConfirmationModal({
                             type="date"
                             value={formData.returnDate || ""}
                             onChange={(e) =>
-                              setFormData({ ...formData, returnDate: e.target.value })
+                              setFormData({
+                                ...formData,
+                                returnDate: e.target.value,
+                              })
                             }
                             className="flex-1 bg-white/10 border border-red-400/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-400"
                           />
@@ -425,11 +475,15 @@ export default function VoiceConfirmationModal({
 
                     {/* Pickup Time */}
                     <div>
-                      <label className="text-sm text-gray-400 block mb-1">Pickup Time</label>
+                      <label className="text-sm text-gray-400 block mb-1">
+                        Pickup Time
+                      </label>
                       {formData.pickupTime ? (
                         <div className="flex items-center gap-2">
                           <FiCheck className="text-green-400" />
-                          <span className="text-white">{formData.pickupTime}</span>
+                          <span className="text-white">
+                            {formData.pickupTime}
+                          </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
@@ -438,7 +492,10 @@ export default function VoiceConfirmationModal({
                             type="time"
                             value={formData.pickupTime || ""}
                             onChange={(e) =>
-                              setFormData({ ...formData, pickupTime: e.target.value })
+                              setFormData({
+                                ...formData,
+                                pickupTime: e.target.value,
+                              })
                             }
                             className="flex-1 bg-white/10 border border-red-400/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-400"
                           />
@@ -448,11 +505,15 @@ export default function VoiceConfirmationModal({
 
                     {/* Return Time */}
                     <div>
-                      <label className="text-sm text-gray-400 block mb-1">Return Time</label>
+                      <label className="text-sm text-gray-400 block mb-1">
+                        Return Time
+                      </label>
                       {formData.returnTime ? (
                         <div className="flex items-center gap-2">
                           <FiCheck className="text-green-400" />
-                          <span className="text-white">{formData.returnTime}</span>
+                          <span className="text-white">
+                            {formData.returnTime}
+                          </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
@@ -461,7 +522,10 @@ export default function VoiceConfirmationModal({
                             type="time"
                             value={formData.returnTime || ""}
                             onChange={(e) =>
-                              setFormData({ ...formData, returnTime: e.target.value })
+                              setFormData({
+                                ...formData,
+                                returnTime: e.target.value,
+                              })
                             }
                             className="flex-1 bg-white/10 border border-red-400/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-400"
                           />
@@ -471,11 +535,15 @@ export default function VoiceConfirmationModal({
 
                     {/* Driver Age */}
                     <div>
-                      <label className="text-sm text-gray-400 block mb-1">Driver Age</label>
+                      <label className="text-sm text-gray-400 block mb-1">
+                        Driver Age
+                      </label>
                       {formData.driverAge ? (
                         <div className="flex items-center gap-2">
                           <FiCheck className="text-green-400" />
-                          <span className="text-white">{formData.driverAge}</span>
+                          <span className="text-white">
+                            {formData.driverAge}
+                          </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
@@ -484,7 +552,10 @@ export default function VoiceConfirmationModal({
                             type="number"
                             value={formData.driverAge || ""}
                             onChange={(e) =>
-                              setFormData({ ...formData, driverAge: e.target.value })
+                              setFormData({
+                                ...formData,
+                                driverAge: e.target.value,
+                              })
                             }
                             min="25"
                             max="70"
@@ -507,7 +578,8 @@ export default function VoiceConfirmationModal({
                           Missing Information
                         </h4>
                         <p className="text-gray-300 text-sm mt-1">
-                          Please fill in: {extractedData.missingFields.join(", ")}
+                          Please fill in:{" "}
+                          {extractedData.missingFields.join(", ")}
                         </p>
                       </div>
                     </div>
@@ -563,13 +635,15 @@ export default function VoiceConfirmationModal({
                     <div className="w-full border-t border-white/20"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-slate-800 text-gray-400">Or continue with email</span>
+                    <span className="px-4 bg-slate-800 text-gray-400">
+                      Or continue with email
+                    </span>
                   </div>
                 </div>
 
                 {/* Email Option */}
                 <div>
-                  <label className="text-sm text-gray-400 block mb-2 flex items-center gap-2">
+                  <label className="text-sm text-gray-400   mb-2 flex items-center gap-2">
                     <FiMail className="text-amber-400" />
                     Email Address
                   </label>
@@ -581,21 +655,28 @@ export default function VoiceConfirmationModal({
                     className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors"
                   />
                   <p className="text-gray-400 text-xs mt-2">
-                    We'll create an account for you and send booking confirmation
+                    We'll create an account for you and send booking
+                    confirmation
                   </p>
                 </div>
 
                 {/* Booking Summary */}
                 <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                  <h4 className="text-white font-semibold mb-2">Booking Summary:</h4>
+                  <h4 className="text-white font-semibold mb-2">
+                    Booking Summary:
+                  </h4>
                   <div className="space-y-1 text-sm text-gray-300">
                     <p>📍 Office: {getOfficeName(formData.office)}</p>
                     <p>🚗 Category: {getCategoryName(formData.category)}</p>
                     <p>
-                      📅 Dates: {new Date(formData.pickupDate).toLocaleDateString()} -{" "}
+                      📅 Dates:{" "}
+                      {new Date(formData.pickupDate).toLocaleDateString()} -{" "}
                       {new Date(formData.returnDate).toLocaleDateString()}
                     </p>
-                    <p>⏰ Times: {formData.pickupTime || "10:00"} - {formData.returnTime || "10:00"}</p>
+                    <p>
+                      ⏰ Times: {formData.pickupTime || "10:00"} -{" "}
+                      {formData.returnTime || "10:00"}
+                    </p>
                     <p>👤 Driver Age: {formData.driverAge}</p>
                   </div>
                 </div>
@@ -603,7 +684,8 @@ export default function VoiceConfirmationModal({
                 {/* Privacy Notice */}
                 <div className="bg-white/5 rounded-lg p-3 border border-white/10">
                   <p className="text-gray-400 text-xs text-center">
-                    By continuing, you agree to our Terms of Service and Privacy Policy
+                    By continuing, you agree to our Terms of Service and Privacy
+                    Policy
                   </p>
                 </div>
               </div>
@@ -621,7 +703,7 @@ export default function VoiceConfirmationModal({
                 >
                   Cancel
                 </button>
-                
+
                 <button
                   onClick={() => {
                     if (!isRecording) {
@@ -642,13 +724,17 @@ export default function VoiceConfirmationModal({
                   }`}
                 >
                   <FiMic />
-                  {isRecording ? "Click to Stop" : isProcessing ? "Processing..." : "Voice Confirm"}
+                  {isRecording
+                    ? "Click to Stop"
+                    : isProcessing
+                    ? "Processing..."
+                    : "Voice Confirm"}
                 </button>
 
                 <button
                   onClick={handleConfirm}
                   disabled={isSubmitting || isRecording || isProcessing}
-                  className="px-6 py-2.5 rounded-lg font-semibold text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg shadow-amber-500/30 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-lg font-semibold text-slate-900 bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg shadow-amber-500/30 disabled:opacity-50"
                 >
                   {isSubmitting ? "Processing..." : "Confirm & Continue"}
                 </button>
@@ -667,7 +753,7 @@ export default function VoiceConfirmationModal({
                 <button
                   onClick={handleSignupAndReserve}
                   disabled={isSubmitting || !email}
-                  className="px-6 py-2.5 rounded-lg font-semibold text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg shadow-amber-500/30 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-lg font-semibold text-slate-900 bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg shadow-amber-500/30 disabled:opacity-50"
                 >
                   {isSubmitting ? "Creating Booking..." : "Complete Booking"}
                 </button>

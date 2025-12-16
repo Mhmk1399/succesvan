@@ -73,8 +73,9 @@ export default function SpecialDaysManagement() {
       setEditingIndex(null);
       setIsFormOpen(false);
       mutateOffices();
-    } catch (error: any) {
-      showToast.error(error.message || "Operation failed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Operation failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -97,8 +98,9 @@ export default function SpecialDaysManagement() {
 
       showToast.success("Special day deleted!");
       mutateOffices();
-    } catch (error: any) {
-      showToast.error(error.message || "Delete failed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Delete failed");
     }
   };
 

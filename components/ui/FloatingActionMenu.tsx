@@ -4,11 +4,13 @@ import { useState } from "react";
 import { FiPhone, FiCalendar, FiShare2, FiX } from "react-icons/fi";
 import { FaInstagram } from "react-icons/fa";
 import ReservationForm from "@/components/global/ReservationForm";
+import { usePathname } from "next/navigation";
 
 export default function FloatingActionMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [showReservationModal, setShowReservationModal] = useState(false);
+  const pathname = usePathname();
 
   const menuItems = [
     {
@@ -39,6 +41,10 @@ export default function FloatingActionMenu() {
       ],
     },
   ];
+
+  if (pathname === "/dashboard" || pathname === "/customerDashboard") {
+    return null;
+  }
 
   return (
     <>

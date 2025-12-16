@@ -15,8 +15,9 @@ export async function GET(
     const user = await User.findById(id).select("-password");
     if (!user) return errorResponse("User not found", 404);
     return successResponse(user);
-  } catch (error: any) {
-    return errorResponse(error.message, 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 500);
   }
 }
 
@@ -44,10 +45,11 @@ export async function PATCH(
     }).select("-password");
     if (!user) return errorResponse("User not found", 404);
     return successResponse(user);
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     return errorResponse(
-      error.message === "Unauthorized" ? error.message : error.message,
-      error.message === "Unauthorized" ? 401 : 400
+      message === "Unauthorized" ? message : message,
+      message === "Unauthorized" ? 401 : 400
     );
   }
 }
@@ -67,10 +69,11 @@ export async function DELETE(
     const user = await User.findByIdAndDelete(id);
     if (!user) return errorResponse("User not found", 404);
     return successResponse({ message: "User deleted" });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     return errorResponse(
-      error.message === "Unauthorized" ? error.message : error.message,
-      error.message === "Unauthorized" ? 401 : 500
+      message === "Unauthorized" ? message : message,
+      message === "Unauthorized" ? 401 : 500
     );
   }
 }

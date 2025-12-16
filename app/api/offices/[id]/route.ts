@@ -12,11 +12,15 @@ export async function GET(
   try {
     await connect();
     const { id } = await params;
-    const office = await Office.findById(id).populate([{path:"vehicles.vehicle", model: Vehicle}, {path:"categories", model: Category, populate: {path: "type"}}]);
+    const office = await Office.findById(id).populate([
+      { path: "vehicles.vehicle", model: Vehicle },
+      { path: "categories", model: Category, populate: { path: "type" } },
+    ]);
     if (!office) return errorResponse("Office not found", 404);
     return successResponse(office);
-  } catch (error: any) {
-    return errorResponse(error.message, 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 500);
   }
 }
 
@@ -31,11 +35,15 @@ export async function PATCH(
     const office = await Office.findByIdAndUpdate(id, body, {
       new: true,
       runValidators: true,
-    }).populate([{path:"vehicles.vehicle", model: Vehicle}, {path:"categories", model: Category}]);
+    }).populate([
+      { path: "vehicles.vehicle", model: Vehicle },
+      { path: "categories", model: Category },
+    ]);
     if (!office) return errorResponse("Office not found", 404);
     return successResponse(office);
-  } catch (error: any) {
-    return errorResponse(error.message, 400);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 400);
   }
 }
 
@@ -49,7 +57,8 @@ export async function DELETE(
     const office = await Office.findByIdAndDelete(id);
     if (!office) return errorResponse("Office not found", 404);
     return successResponse({ message: "Office deleted" });
-  } catch (error: any) {
-    return errorResponse(error.message, 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 500);
   }
 }

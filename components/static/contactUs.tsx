@@ -147,8 +147,9 @@ export default function Contact() {
         setIsSubmitted(false);
         setFormData({ name: "", email: "", message: "", rating: 5 });
       }, 3000);
-    } catch (error: any) {
-      showToast.error(error.message || "Failed to send message");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Failed to send message");
     } finally {
       setIsSubmitting(false);
     }
@@ -160,7 +161,6 @@ export default function Contact() {
       className="relative w-full bg-[#0f172b] py-20 overflow-hidden"
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-         
         <div className="bg-orb-contact-1 absolute top-1/4 right-1/4 w-150 h-150 rounded-full blur-3xl opacity-20 bg-[#fe9a00]"></div>
         <div className="absolute bottom-1/4 left-1/4 w-150 h-150 rounded-full blur-3xl opacity-20 bg-[#fe9a00]"></div>
       </div>

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { 
-  processAgentTurn, 
-  createInitialState, 
+import {
+  processAgentTurn,
+  createInitialState,
   getInitialGreeting,
   ConversationState,
-  ConversationMessage 
+  ConversationMessage,
 } from "@/lib/ai-agent";
 import { textToSpeech } from "@/lib/openai";
 import connect from "@/lib/data";
@@ -14,26 +14,31 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { 
-      transcript, 
-      currentState, 
-      conversationHistory = [] 
-    } = body;
+    const { transcript, currentState, conversationHistory = [] } = body;
 
     console.log("📝 [AI Agent API] Transcript:", transcript);
-    console.log("📍 [AI Agent API] Current phase:", currentState?.phase || "new");
-    console.log("💬 [AI Agent API] History length:", conversationHistory.length);
+    console.log(
+      "📍 [AI Agent API] Current phase:",
+      currentState?.phase || "new"
+    );
+    console.log(
+      "💬 [AI Agent API] History length:",
+      conversationHistory.length
+    );
 
     // Connect to database
     await connect();
 
     // Handle initial greeting
-    if (transcript.toLowerCase() === "start" && (!currentState || currentState.phase === "discovery")) {
+    if (
+      transcript.toLowerCase() === "start" &&
+      (!currentState || currentState.phase === "discovery")
+    ) {
       console.log("👋 [AI Agent API] Sending initial greeting");
-      
+
       const greeting = await getInitialGreeting();
       const audioBuffer = await textToSpeech(greeting);
-      
+
       return NextResponse.json({
         success: true,
         message: greeting,
@@ -68,8 +73,12 @@ export async function POST(request: NextRequest) {
     // Generate speech
     console.log("🔊 [AI Agent API] Generating speech...");
     const audioBuffer = await textToSpeech(response.message);
-    
-    console.log("✅ [AI Agent API] Speech generated:", audioBuffer.length, "bytes");
+
+    console.log(
+      "✅ [AI Agent API] Speech generated:",
+      audioBuffer.length,
+      "bytes"
+    );
 
     return NextResponse.json({
       success: true,
@@ -80,15 +89,14 @@ export async function POST(request: NextRequest) {
       isComplete: response.isComplete,
       reservationId: response.reservationId,
     });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("❌ [AI Agent API] Stack:", message);
 
-  } catch (error: any) {
-    console.error("❌ [AI Agent API] Error:", error);
-    console.error("❌ [AI Agent API] Stack:", error.stack);
-    
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Failed to process request",
+        error: message || "Failed to process request",
       },
       { status: 500 }
     );

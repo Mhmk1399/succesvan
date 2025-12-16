@@ -174,6 +174,8 @@ export interface DynamicTableViewProps<T> {
   onMutate?: (mutate: () => Promise<any>) => void;
   itemsPerPage?: number;
   hideDelete?: boolean;
+  onDuplicate?: (item: T) => void;
+  hiddenColumns?: (keyof T)[];
 }
 
 // custom Select -------------------------------------------------------------------

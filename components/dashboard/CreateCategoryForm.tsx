@@ -83,8 +83,9 @@ export default function CategoriesContent() {
       if (data.error) throw new Error(data.error);
       setFormData((prev) => ({ ...prev, [type]: data.url }));
       showToast.success(`${type} uploaded!`);
-    } catch (error: any) {
-      showToast.error(error.message || "Upload failed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Upload failed");
     } finally {
       setUploading({ ...uploading, [type]: false });
     }
@@ -158,7 +159,8 @@ export default function CategoriesContent() {
 
   const handleDuplicate = async (item: Category) => {
     try {
-      const typeId = typeof item.type === "string" ? item.type : item.type._id || "";
+      const typeId =
+        typeof item.type === "string" ? item.type : item.type._id || "";
       const payload = {
         name: `${item.name} (Copy)`,
         description: item.description,
@@ -189,8 +191,9 @@ export default function CategoriesContent() {
 
       showToast.success("Category duplicated successfully!");
       if (mutateRef.current) mutateRef.current();
-    } catch (error: any) {
-      showToast.error(error.message || "Duplicate failed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Duplicate failed");
     }
   };
 
@@ -287,7 +290,9 @@ export default function CategoriesContent() {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="text-gray-400 text-sm mb-2 block">Category Name</label>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Category Name
+                </label>
                 <input
                   type="text"
                   name="name"
@@ -300,7 +305,9 @@ export default function CategoriesContent() {
               </div>
 
               <div>
-                <label className="text-gray-400 text-sm mb-2 block">Description</label>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Description
+                </label>
                 <textarea
                   name="description"
                   placeholder="Description"
@@ -311,43 +318,97 @@ export default function CategoriesContent() {
               </div>
 
               <div>
-                <label className="text-gray-400 text-sm mb-2 block">Image</label>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Image
+                </label>
                 {formData.image ? (
                   <div className="relative">
-                    <img src={formData.image} alt="Category" className="w-full h-32 object-cover rounded-lg" />
+                    <img
+                      src={formData.image}
+                      alt="Category"
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
                     <label className="absolute bottom-2 right-2 px-3 py-1 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg cursor-pointer text-sm font-semibold">
                       {uploading.image ? "Uploading..." : "Change"}
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "image")} disabled={uploading.image} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) =>
+                          e.target.files?.[0] &&
+                          handleFileUpload(e.target.files[0], "image")
+                        }
+                        disabled={uploading.image}
+                      />
                     </label>
                   </div>
                 ) : (
                   <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#fe9a00] transition-colors">
-                    <span className="text-gray-400 text-sm">{uploading.image ? "Uploading..." : "+ Upload Image"}</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "image")} disabled={uploading.image} />
+                    <span className="text-gray-400 text-sm">
+                      {uploading.image ? "Uploading..." : "+ Upload Image"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        e.target.files?.[0] &&
+                        handleFileUpload(e.target.files[0], "image")
+                      }
+                      disabled={uploading.image}
+                    />
                   </label>
                 )}
               </div>
 
               <div>
-                <label className="text-gray-400 text-sm mb-2 block">Video</label>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Video
+                </label>
                 {formData.video ? (
                   <div className="relative">
-                    <video src={formData.video} className="w-full h-32 object-cover rounded-lg" controls />
+                    <video
+                      src={formData.video}
+                      className="w-full h-32 object-cover rounded-lg"
+                      controls
+                    />
                     <label className="absolute bottom-2 right-2 px-3 py-1 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg cursor-pointer text-sm font-semibold">
                       {uploading.video ? "Uploading..." : "Change"}
-                      <input type="file" accept="video/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "video")} disabled={uploading.video} />
+                      <input
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={(e) =>
+                          e.target.files?.[0] &&
+                          handleFileUpload(e.target.files[0], "video")
+                        }
+                        disabled={uploading.video}
+                      />
                     </label>
                   </div>
                 ) : (
                   <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#fe9a00] transition-colors">
-                    <span className="text-gray-400 text-sm">{uploading.video ? "Uploading..." : "+ Upload Video"}</span>
-                    <input type="file" accept="video/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "video")} disabled={uploading.video} />
+                    <span className="text-gray-400 text-sm">
+                      {uploading.video ? "Uploading..." : "+ Upload Video"}
+                    </span>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        e.target.files?.[0] &&
+                        handleFileUpload(e.target.files[0], "video")
+                      }
+                      disabled={uploading.video}
+                    />
                   </label>
                 )}
               </div>
 
               <div>
-                <label className="text-gray-400 text-sm mb-2 block">Expert</label>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Expert
+                </label>
                 <input
                   type="text"
                   name="expert"
@@ -361,11 +422,11 @@ export default function CategoriesContent() {
               <div>
                 <label className="text-gray-400 text-sm mb-2 block">Type</label>
                 <CustomSelect
-                options={types}
-                value={formData.type}
-                onChange={(val) =>
-                  setFormData((prev) => ({ ...prev, type: val }))
-                }
+                  options={types}
+                  value={formData.type}
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, type: val }))
+                  }
                   placeholder="Select Type"
                 />
               </div>
@@ -398,7 +459,10 @@ export default function CategoriesContent() {
                       onChange={(e) => {
                         const newTiers = [...formData.pricingTiers];
                         newTiers[index].minDays = e.target.value;
-                        setFormData((prev) => ({ ...prev, pricingTiers: newTiers }));
+                        setFormData((prev) => ({
+                          ...prev,
+                          pricingTiers: newTiers,
+                        }));
                       }}
                       required
                       min="1"
@@ -411,7 +475,10 @@ export default function CategoriesContent() {
                       onChange={(e) => {
                         const newTiers = [...formData.pricingTiers];
                         newTiers[index].maxDays = e.target.value;
-                        setFormData((prev) => ({ ...prev, pricingTiers: newTiers }));
+                        setFormData((prev) => ({
+                          ...prev,
+                          pricingTiers: newTiers,
+                        }));
                       }}
                       required
                       min="1"
@@ -425,7 +492,10 @@ export default function CategoriesContent() {
                         onChange={(e) => {
                           const newTiers = [...formData.pricingTiers];
                           newTiers[index].pricePerDay = e.target.value;
-                          setFormData((prev) => ({ ...prev, pricingTiers: newTiers }));
+                          setFormData((prev) => ({
+                            ...prev,
+                            pricingTiers: newTiers,
+                          }));
                         }}
                         required
                         step="0.01"
@@ -438,7 +508,9 @@ export default function CategoriesContent() {
                           onClick={() =>
                             setFormData((prev) => ({
                               ...prev,
-                              pricingTiers: prev.pricingTiers.filter((_, i) => i !== index),
+                              pricingTiers: prev.pricingTiers.filter(
+                                (_, i) => i !== index
+                              ),
                             }))
                           }
                           className="px-2 text-red-400 hover:text-red-300"
@@ -452,7 +524,9 @@ export default function CategoriesContent() {
               </div>
 
               <div>
-                <label className="text-gray-400 text-sm mb-2 block">Show Price</label>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Show Price
+                </label>
                 <input
                   type="number"
                   name="showPrice"
@@ -474,7 +548,10 @@ export default function CategoriesContent() {
                     onClick={() =>
                       setFormData((prev) => ({
                         ...prev,
-                        properties: [...prev.properties, { key: "", value: "" }],
+                        properties: [
+                          ...prev.properties,
+                          { key: "", value: "" },
+                        ],
                       }))
                     }
                     className="text-[#fe9a00] hover:text-[#e68a00] text-sm font-semibold"
@@ -491,7 +568,10 @@ export default function CategoriesContent() {
                       onChange={(e) => {
                         const newProps = [...formData.properties];
                         newProps[index].key = e.target.value;
-                        setFormData((prev) => ({ ...prev, properties: newProps }));
+                        setFormData((prev) => ({
+                          ...prev,
+                          properties: newProps,
+                        }));
                       }}
                       required
                       className="px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] text-sm"
@@ -504,7 +584,10 @@ export default function CategoriesContent() {
                         onChange={(e) => {
                           const newProps = [...formData.properties];
                           newProps[index].value = e.target.value;
-                          setFormData((prev) => ({ ...prev, properties: newProps }));
+                          setFormData((prev) => ({
+                            ...prev,
+                            properties: newProps,
+                          }));
                         }}
                         required
                         className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] text-sm"
@@ -515,7 +598,9 @@ export default function CategoriesContent() {
                           onClick={() =>
                             setFormData((prev) => ({
                               ...prev,
-                              properties: prev.properties.filter((_, i) => i !== index),
+                              properties: prev.properties.filter(
+                                (_, i) => i !== index
+                              ),
                             }))
                           }
                           className="px-2 text-red-400 hover:text-red-300"
@@ -529,7 +614,9 @@ export default function CategoriesContent() {
               </div>
 
               <div>
-                <label className="text-gray-400 text-sm mb-2 block">Required License</label>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Required License
+                </label>
                 <input
                   type="text"
                   name="requiredLicense"
@@ -542,7 +629,9 @@ export default function CategoriesContent() {
               </div>
 
               <div>
-                <label className="text-gray-400 text-sm mb-2 block">Extra Hours Rate (GBP/hour)</label>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Extra Hours Rate (GBP/hour)
+                </label>
                 <input
                   type="number"
                   name="extrahoursRate"
@@ -558,7 +647,9 @@ export default function CategoriesContent() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-gray-400 text-sm mb-2 block">Fuel Type</label>
+                  <label className="text-gray-400 text-sm mb-2 block">
+                    Fuel Type
+                  </label>
                   <CustomSelect
                     options={[
                       { _id: "gas", name: "Gas" },
@@ -575,7 +666,9 @@ export default function CategoriesContent() {
                 </div>
 
                 <div>
-                  <label className="text-gray-400 text-sm mb-2 block">Gear Type</label>
+                  <label className="text-gray-400 text-sm mb-2 block">
+                    Gear Type
+                  </label>
                   <CustomSelect
                     options={[
                       { _id: "automatic", name: "Automatic" },
@@ -593,7 +686,9 @@ export default function CategoriesContent() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-gray-400 text-sm mb-2 block">Seats</label>
+                  <label className="text-gray-400 text-sm mb-2 block">
+                    Seats
+                  </label>
                   <input
                     type="number"
                     name="seats"
@@ -606,7 +701,9 @@ export default function CategoriesContent() {
                   />
                 </div>
                 <div>
-                  <label className="text-gray-400 text-sm mb-2 block">Doors</label>
+                  <label className="text-gray-400 text-sm mb-2 block">
+                    Doors
+                  </label>
                   <input
                     type="number"
                     name="doors"
@@ -622,7 +719,10 @@ export default function CategoriesContent() {
 
               <div className="space-y-3">
                 <h3 className="text-white font-semibold">
-                  Service Period <span className="text-white text-sm font-normal">(enter each service period in days)</span>
+                  Service Period{" "}
+                  <span className="text-white text-sm font-normal">
+                    (enter each service period in days)
+                  </span>
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <input
@@ -716,7 +816,7 @@ export default function CategoriesContent() {
           {
             key: "showPrice" as keyof Category,
             label: "Show Price",
-            render: (value: any) => value ? `£${value}` : "-",
+            render: (value: any) => (value ? `£${value}` : "-"),
           },
           {
             key: "properties" as keyof Category,
@@ -733,7 +833,9 @@ export default function CategoriesContent() {
                     ))}
                   </tbody>
                 </table>
-              ) : "-",
+              ) : (
+                "-"
+              ),
           },
           {
             key: "pricingTiers" as keyof Category,
@@ -744,18 +846,22 @@ export default function CategoriesContent() {
                   <tbody>
                     {value.map((t: any, i: number) => (
                       <tr key={i}>
-                        <td className="pr-2">{t.minDays}-{t.maxDays} days:</td>
+                        <td className="pr-2">
+                          {t.minDays}-{t.maxDays} days:
+                        </td>
                         <td className="font-semibold">£{t.pricePerDay}/day</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              ) : "-",
+              ) : (
+                "-"
+              ),
           },
           {
             key: "extrahoursRate" as keyof Category,
             label: "Extra Hours Rate",
-            render: (value: any) => value ? `£${value}/hr` : "-",
+            render: (value: any) => (value ? `£${value}/hr` : "-"),
           },
           {
             key: "requiredLicense" as keyof Category,
@@ -768,6 +874,14 @@ export default function CategoriesContent() {
         ]}
         onEdit={handleEdit}
         onMutate={(mutate) => (mutateRef.current = mutate)}
+        hiddenColumns={
+          [
+            "properties",
+            "pricingTiers",
+            "expert",
+            "requiredLicense",
+          ] as (keyof Category)[]
+        }
       />
     </div>
   );
