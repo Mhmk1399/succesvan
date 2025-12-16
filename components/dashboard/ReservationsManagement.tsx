@@ -40,8 +40,9 @@ export default function ReservationsManagement() {
       setNewStatus("");
       if (mutateRef.current) mutateRef.current();
       setIsDetailOpen(false);
-    } catch (error: any) {
-      showToast.error(error.message || "Update failed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Update failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -66,14 +67,12 @@ export default function ReservationsManagement() {
           {
             key: "startDate",
             label: "Start Date",
-            render: (value: string) =>
-              new Date(value).toLocaleString() || "-",
+            render: (value: string) => new Date(value).toLocaleString() || "-",
           },
           {
             key: "endDate",
             label: "End Date",
-            render: (value: string) =>
-              new Date(value).toLocaleString() || "-",
+            render: (value: string) => new Date(value).toLocaleString() || "-",
           },
           { key: "totalPrice", label: "Total Price" },
           {
@@ -171,17 +170,13 @@ export default function ReservationsManagement() {
                   <div>
                     <p className="text-gray-400">Start Date & Time</p>
                     <p className="text-white font-semibold">
-                      {new Date(
-                        selectedReservation.startDate
-                      ).toLocaleString()}
+                      {new Date(selectedReservation.startDate).toLocaleString()}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-400">End Date & Time</p>
                     <p className="text-white font-semibold">
-                      {new Date(
-                        selectedReservation.endDate
-                      ).toLocaleString()}
+                      {new Date(selectedReservation.endDate).toLocaleString()}
                     </p>
                   </div>
                   <div>
@@ -215,7 +210,7 @@ export default function ReservationsManagement() {
                           const addon = item.addOn;
                           let price = 0;
                           let tierInfo = "";
-                          
+
                           if (addon?.pricingType === "flat") {
                             price = addon.flatPrice || 0;
                           } else if (addon?.pricingType === "tiered") {
@@ -226,7 +221,7 @@ export default function ReservationsManagement() {
                               tierInfo = ` (${tier.minDays}-${tier.maxDays} days)`;
                             }
                           }
-                          
+
                           return (
                             <div
                               key={idx}

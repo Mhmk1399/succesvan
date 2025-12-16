@@ -23,8 +23,9 @@ export async function PATCH(
     }
 
     return successResponse(testimonial);
-  } catch (error: any) {
-    return errorResponse(error.message, 400);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 400);
   }
 }
 
@@ -42,7 +43,8 @@ export async function DELETE(
     }
 
     return successResponse({ message: "Testimonial deleted" });
-  } catch (error: any) {
-    return errorResponse(error.message, 400);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 400);
   }
 }

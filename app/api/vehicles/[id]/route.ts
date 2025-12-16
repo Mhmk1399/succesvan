@@ -13,8 +13,9 @@ export async function GET(
     const vehicle = await Vehicle.findById(id).populate("category");
     if (!vehicle) return errorResponse("Vehicle not found", 404);
     return successResponse(vehicle);
-  } catch (error: any) {
-    return errorResponse(error.message, 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 500);
   }
 }
 
@@ -32,8 +33,9 @@ export async function PUT(
     }).populate("category");
     if (!vehicle) return errorResponse("Vehicle not found", 404);
     return successResponse(vehicle);
-  } catch (error: any) {
-    return errorResponse(error.message, 400);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 400);
   }
 }
 
@@ -47,7 +49,8 @@ export async function DELETE(
     const vehicle = await Vehicle.findByIdAndDelete(id);
     if (!vehicle) return errorResponse("Vehicle not found", 404);
     return successResponse({ message: "Vehicle deleted" });
-  } catch (error: any) {
-    return errorResponse(error.message, 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 500);
   }
 }

@@ -19,20 +19,25 @@ interface ConversationResponse {
 
 export function useConversationalVoice() {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
+  const [conversationHistory, setConversationHistory] = useState<
+    ConversationMessage[]
+  >([]);
   const [currentData, setCurrentData] = useState<any>({});
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  
+
   // Use refs to always have access to latest state (fixes async closure issue)
   const historyRef = useRef<ConversationMessage[]>([]);
   const dataRef = useRef<any>({});
-  
+
   // Keep refs in sync with state
   useEffect(() => {
     historyRef.current = conversationHistory;
-    console.log("🔄 [Ref Sync] historyRef updated, length:", conversationHistory.length);
+    console.log(
+      "🔄 [Ref Sync] historyRef updated, length:",
+      conversationHistory.length
+    );
   }, [conversationHistory]);
-  
+
   useEffect(() => {
     dataRef.current = currentData;
     console.log("🔄 [Ref Sync] dataRef updated:", JSON.stringify(currentData));
@@ -102,13 +107,19 @@ export function useConversationalVoice() {
     async (transcript: string): Promise<ConversationResponse | null> => {
       console.log("💬 [Conversation Hook] ========== NEW MESSAGE ==========");
       console.log("💬 [Conversation Hook] User transcript:", transcript);
-      
+
       // Use refs to get current state (refs are always up-to-date, unlike closures)
       const historySnapshot = [...historyRef.current];
       const dataSnapshot = { ...dataRef.current };
-      
-      console.log("📚 [Conversation Hook] History from REF, length:", historySnapshot.length);
-      console.log("📊 [Conversation Hook] Data from REF:", JSON.stringify(dataSnapshot));
+
+      console.log(
+        "📚 [Conversation Hook] History from REF, length:",
+        historySnapshot.length
+      );
+      console.log(
+        "📊 [Conversation Hook] Data from REF:",
+        JSON.stringify(dataSnapshot)
+      );
 
       try {
         console.log("📤 [Conversation Hook] SENDING TO API:");
@@ -148,12 +159,18 @@ export function useConversationalVoice() {
           { role: "assistant" as const, content: data.message },
         ];
         const newData = { ...dataSnapshot, ...data.data };
-        
+
         // Update refs IMMEDIATELY (so next call sees new values)
         historyRef.current = newHistory;
         dataRef.current = newData;
-        console.log("📝 [Conversation Hook] Refs updated immediately - history length:", newHistory.length);
-        console.log("📝 [Conversation Hook] Refs updated immediately - data:", JSON.stringify(newData));
+        console.log(
+          "📝 [Conversation Hook] Refs updated immediately - history length:",
+          newHistory.length
+        );
+        console.log(
+          "📝 [Conversation Hook] Refs updated immediately - data:",
+          JSON.stringify(newData)
+        );
 
         // Update state for UI re-render
         setConversationHistory(newHistory);
@@ -172,9 +189,11 @@ export function useConversationalVoice() {
           isComplete: data.isComplete,
           action: data.action,
         };
-      } catch (error: any) {
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
         console.error("❌ [Conversation Hook] Error:", error);
-        showToast.error(error.message || "Failed to process conversation");
+        showToast.error(message || "Failed to process conversation");
         return null;
       }
     },

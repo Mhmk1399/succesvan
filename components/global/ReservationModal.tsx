@@ -139,14 +139,16 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
   // Fetch and filter categories when office and type selected
   useEffect(() => {
     if (formData.office && formData.type) {
-      const typeId = typeof formData.type === 'string' ? formData.type : formData.type._id;
+      const typeId =
+        typeof formData.type === "string" ? formData.type : formData.type._id;
       fetch(`/api/offices/${formData.office}`)
         .then((res) => res.json())
         .then((data) => {
           const office = data.data;
           if (office?.categories && office.categories.length > 0) {
             const filtered = office.categories.filter((cat: any) => {
-              const catTypeId = typeof cat.type === 'string' ? cat.type : cat.type?._id;
+              const catTypeId =
+                typeof cat.type === "string" ? cat.type : cat.type?._id;
               return catTypeId === typeId;
             });
             setCategories(filtered);
@@ -213,9 +215,10 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
         ? new Date(details.returnDate)
         : null;
 
-      const typeObj = typeof details.type === 'string' 
-        ? types.find((t) => t._id === details.type) || { name: "" }
-        : details.type || { name: "" };
+      const typeObj =
+        typeof details.type === "string"
+          ? types.find((t) => t._id === details.type) || { name: "" }
+          : details.type || { name: "" };
       setFormData((prev) => ({
         ...prev,
         office: details.office || "",
@@ -280,8 +283,9 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
       setAuthStep("code");
-    } catch (error: any) {
-      setErrors({ phone: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setErrors({ phone: message });
     } finally {
       setIsSubmitting(false);
     }
@@ -318,8 +322,9 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       } else {
         setAuthStep("register");
       }
-    } catch (error: any) {
-      setErrors({ code: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setErrors({ code: message });
     } finally {
       setIsSubmitting(false);
     }
@@ -353,8 +358,9 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       localStorage.setItem("user", JSON.stringify(data.data.user));
       setIsNewUser(true);
       setStep(3);
-    } catch (error: any) {
-      setErrors({ submit: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setErrors({ submit: message });
     } finally {
       setIsSubmitting(false);
     }
@@ -428,8 +434,9 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       } else {
         setTimeout(() => onClose(), 2000);
       }
-    } catch (error: any) {
-      setErrors({ submit: error.message || "Failed to create reservation" });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setErrors({ submit: message || "Failed to create reservation" });
     } finally {
       setIsSubmitting(false);
     }
@@ -492,35 +499,56 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                     {categories.map((cat) => {
                       const CategoryCard = () => {
                         const catPrice = useMemo(() => {
-                          if (!formData.startDate || !formData.endDate) return null;
-                          const start = formData.startDate ? `${formData.startDate}T${formData.startTime}` : "";
-                          const end = formData.endDate ? `${formData.endDate}T${formData.endTime}` : "";
-                          const diffTime = new Date(end).getTime() - new Date(start).getTime();
+                          if (!formData.startDate || !formData.endDate)
+                            return null;
+                          const start = formData.startDate
+                            ? `${formData.startDate}T${formData.startTime}`
+                            : "";
+                          const end = formData.endDate
+                            ? `${formData.endDate}T${formData.endTime}`
+                            : "";
+                          const diffTime =
+                            new Date(end).getTime() - new Date(start).getTime();
                           const totalMinutes = diffTime / (1000 * 60);
                           const totalHours = Math.floor(totalMinutes / 60);
                           const remainingMinutes = totalMinutes % 60;
-                          const billableHours = remainingMinutes > 15 ? totalHours + 1 : totalHours;
+                          const billableHours =
+                            remainingMinutes > 15 ? totalHours + 1 : totalHours;
                           if (billableHours <= 0) return null;
                           const totalDays = Math.floor(billableHours / 24);
                           const extraHours = billableHours % 24;
-                          const tier = cat.pricingTiers.find(
-                            (t) => totalDays >= t.minDays && totalDays <= t.maxDays
-                          ) || cat.pricingTiers[cat.pricingTiers.length - 1];
+                          const tier =
+                            cat.pricingTiers.find(
+                              (t) =>
+                                totalDays >= t.minDays && totalDays <= t.maxDays
+                            ) || cat.pricingTiers[cat.pricingTiers.length - 1];
                           const pricePerDay = tier.pricePerDay;
                           const daysPrice = totalDays * pricePerDay;
-                          const extraHoursPrice = extraHours * (cat.extrahoursRate || 0);
+                          const extraHoursPrice =
+                            extraHours * (cat.extrahoursRate || 0);
                           const totalPrice = daysPrice + extraHoursPrice;
                           let breakdown = "";
                           if (totalDays > 0 && extraHours > 0) {
-                            breakdown = `${totalDays} day${totalDays > 1 ? 's' : ''} (£${pricePerDay}/day) + ${extraHours}h (£${cat.extrahoursRate}/hr) = £${totalPrice}`;
+                            breakdown = `${totalDays} day${
+                              totalDays > 1 ? "s" : ""
+                            } (£${pricePerDay}/day) + ${extraHours}h (£${
+                              cat.extrahoursRate
+                            }/hr) = £${totalPrice}`;
                           } else if (totalDays > 0) {
-                            breakdown = `${totalDays} day${totalDays > 1 ? 's' : ''} (£${pricePerDay}/day) = £${totalPrice}`;
+                            breakdown = `${totalDays} day${
+                              totalDays > 1 ? "s" : ""
+                            } (£${pricePerDay}/day) = £${totalPrice}`;
                           } else {
                             breakdown = `${extraHours}h (£${cat.extrahoursRate}/hr) = £${totalPrice}`;
                           }
                           return { totalPrice, breakdown };
-                        }, [formData.startDate, formData.startTime, formData.endDate, formData.endTime]);
-                        
+                        }, [
+                          formData.startDate,
+                          formData.startTime,
+                          formData.endDate,
+                          formData.endTime,
+                        ]);
+
                         return (
                           <div
                             onClick={() =>
@@ -582,7 +610,9 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                         £{catPrice.totalPrice}
                                       </span>
                                     </div>
-                                    <p className="text-gray-400 text-xs">{catPrice.breakdown}</p>
+                                    <p className="text-gray-400 text-xs">
+                                      {catPrice.breakdown}
+                                    </p>
                                   </>
                                 ) : (
                                   <>
@@ -594,7 +624,9 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                         /day
                                       </span>
                                     </div>
-                                    <p className="text-gray-400 text-[9px]">from</p>
+                                    <p className="text-gray-400 text-[9px]">
+                                      from
+                                    </p>
                                   </>
                                 )}
                               </div>
@@ -607,8 +639,10 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                           </div>
                         );
                       };
-                      
-                      return <CategoryCard key={`${cat._id}-${formData.category}`} />;
+
+                      return (
+                        <CategoryCard key={`${cat._id}-${formData.category}`} />
+                      );
                     })}
                   </div>
                 ) : (

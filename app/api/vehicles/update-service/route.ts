@@ -12,27 +12,30 @@ export async function POST(req: NextRequest) {
       return errorResponse("vehicleId and serviceType are required", 400);
     }
 
-    const validServiceTypes = ['tire', 'oil', 'battery', 'air', 'service'];
+    const validServiceTypes = ["tire", "oil", "battery", "air", "service"];
     if (!validServiceTypes.includes(serviceType)) {
-      return errorResponse(`Invalid serviceType. Must be one of: ${validServiceTypes.join(', ')}`, 400);
+      return errorResponse(
+        `Invalid serviceType. Must be one of: ${validServiceTypes.join(", ")}`,
+        400
+      );
     }
 
     const updateData: any = {};
     updateData[`serviceHistory.${serviceType}`] = serviceDate || new Date();
 
-    const vehicle = await Vehicle.findByIdAndUpdate(
-      vehicleId,
-      updateData,
-      { new: true, runValidators: true }
-    ).populate("category");
+    const vehicle = await Vehicle.findByIdAndUpdate(vehicleId, updateData, {
+      new: true,
+      runValidators: true,
+    }).populate("category");
 
     if (!vehicle) return errorResponse("Vehicle not found", 404);
 
     return successResponse({
       message: `${serviceType} service updated successfully`,
-      vehicle
+      vehicle,
     });
-  } catch (error: any) {
-    return errorResponse(error.message, 400);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 400);
   }
 }

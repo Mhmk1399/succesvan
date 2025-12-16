@@ -44,8 +44,9 @@ export default function TestimonialsManagement() {
       showToast.success("Status updated successfully!");
       setIsDetailOpen(false);
       if (mutateRef.current) mutateRef.current();
-    } catch (error: any) {
-      showToast.error(error.message || "Update failed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Update failed");
     } finally {
       setIsSubmitting(false);
     }

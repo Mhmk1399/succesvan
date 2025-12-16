@@ -15,7 +15,8 @@ export async function GET() {
     ]);
 
     return successResponse({ offices, vehicles, addOns });
-  } catch (error: any) {
-    return errorResponse(error.message, 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 500);
   }
 }

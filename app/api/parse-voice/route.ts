@@ -7,12 +7,12 @@ import Category from "@/model/category";
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   console.log("🎙️ [API] Voice parse request received");
-  
+
   try {
     // Parse request - support both JSON (old) and FormData (new with audio)
     const contentType = request.headers.get("content-type");
     console.log("📝 [API] Content-Type:", contentType);
-    
+
     let transcript = "";
     let autoSubmit = false;
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
       console.log(`📊 [API] Audio file size: ${audioFile.size} bytes`);
       console.log("🎙️ [API] Transcribing with Whisper...");
-      
+
       // Transcribe audio using Whisper
       const transcription = await openai.audio.transcriptions.create({
         file: audioFile,
@@ -57,13 +57,19 @@ export async function POST(request: NextRequest) {
       Office.find({}).select("_id name").lean(),
       Category.find({}).select("_id name").lean(),
     ]);
-    console.log(`✅ [API] Found ${offices.length} offices and ${categories.length} categories`);
+    console.log(
+      `✅ [API] Found ${offices.length} offices and ${categories.length} categories`
+    );
 
     // Extract structured data using GPT-4
     const systemPrompt = `You are a helpful assistant that extracts reservation details from natural language.
 
-Available offices: ${offices.map((o: any) => `${o.name} (ID: ${o._id})`).join(", ")}
-Available categories: ${categories.map((c: any) => `${c.name} (ID: ${c._id})`).join(", ")}
+Available offices: ${offices
+      .map((o: any) => `${o.name} (ID: ${o._id})`)
+      .join(", ")}
+Available categories: ${categories
+      .map((c: any) => `${c.name} (ID: ${c._id})`)
+      .join(", ")}
 
 Extract the following information and return ONLY valid JSON:
 {
@@ -86,7 +92,7 @@ Rules:
 - Only include fields that are mentioned. Use null for missing fields.`;
 
     console.log("🤖 [API] Sending to GPT-4o-mini for extraction...");
-    
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini", // Use "gpt-4o" for better accuracy
       messages: [
@@ -99,18 +105,18 @@ Rules:
 
     const result = completion.choices[0].message.content;
     const parsedData = result ? JSON.parse(result) : {};
-    
+
     console.log("✅ [API] GPT extraction complete:", parsedData);
-    
+
     // Detect missing required fields (matching reservation model)
     const requiredFields: (keyof typeof normalizedData)[] = [
-      'office',      // Required in model
-      'category',    // Required in model
-      'startDate',   // Required in model (pickup date)
-      'endDate',     // Required in model (return date)
-      'driverAge'    // Required in model
+      "office", // Required in model
+      "category", // Required in model
+      "startDate", // Required in model (pickup date)
+      "endDate", // Required in model (return date)
+      "driverAge", // Required in model
     ];
-    
+
     // Map old field names to new ones for backwards compatibility
     const normalizedData: {
       office: any;
@@ -131,21 +137,31 @@ Rules:
       driverAge: parsedData.driverAge,
       message: parsedData.message || "",
     };
-    
-    const missingFields = requiredFields.filter(field => !normalizedData[field]);
-    
+
+    const missingFields = requiredFields.filter(
+      (field) => !normalizedData[field]
+    );
+
     if (missingFields.length > 0) {
       console.warn("⚠️ [API] Missing required fields:", missingFields);
     }
-    
+
     console.log("📋 [API] Normalized data:", normalizedData);
-    
+
     const processingTime = Date.now() - startTime;
     console.log(`⏱️ [API] Total processing time: ${processingTime}ms`);
 
     // If autoSubmit is enabled and we have enough data, create reservation
-    if (autoSubmit && parsedData.office && parsedData.category && parsedData.pickupDate && parsedData.returnDate) {
-      console.log("🚀 [API] Auto-submit enabled and all required fields present");
+    if (
+      autoSubmit &&
+      parsedData.office &&
+      parsedData.category &&
+      parsedData.pickupDate &&
+      parsedData.returnDate
+    ) {
+      console.log(
+        "🚀 [API] Auto-submit enabled and all required fields present"
+      );
       // Here you would call your reservation API
       // For now, just return the data with autoSubmit flag
       return NextResponse.json({
@@ -159,7 +175,7 @@ Rules:
     }
 
     console.log("✅ [API] Returning extracted data for form filling");
-    
+
     // Return extracted data for form filling
     return NextResponse.json({
       success: true,
@@ -168,12 +184,16 @@ Rules:
       missingFields,
       autoSubmit: false,
     });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     const processingTime = Date.now() - startTime;
     console.error("❌ [API] Error parsing voice:", error);
     console.error(`⏱️ [API] Failed after ${processingTime}ms`);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to process voice input" },
+      {
+        success: false,
+        error: message || "Failed to process voice input",
+      },
       { status: 500 }
     );
   }

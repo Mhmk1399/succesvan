@@ -41,7 +41,9 @@ export default function VanListing({
   const sectionRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const [categories, setCategories] = useState<Category[]>(vans as Category[]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
   const [fetchedAddOns, setFetchedAddOns] = useState<AddOn[]>(addOns);
 
   useEffect(() => {
@@ -53,9 +55,9 @@ export default function VanListing({
   useEffect(() => {
     if (addOns.length === 0) {
       fetch("/api/addons")
-        .then(res => res.json())
-        .then(data => data.success && setFetchedAddOns(data.data || []))
-        .catch(err => console.log("Failed to fetch add-ons", err));
+        .then((res) => res.json())
+        .then((data) => data.success && setFetchedAddOns(data.data || []))
+        .catch((err) => console.log("Failed to fetch add-ons", err));
     }
   }, [addOns.length]);
 
@@ -182,8 +184,8 @@ function ReservationPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
-  console.log('Van data:', van);
-  console.log('extrahoursRate from van:', (van as any).extrahoursRate);
+  console.log("Van data:", van);
+  console.log("extrahoursRate from van:", (van as any).extrahoursRate);
   const priceCalc = usePriceCalculation(
     formData.pickupDate ? `${formData.pickupDate}T00:00:00` : "",
     formData.returnDate ? `${formData.returnDate}T00:00:00` : "",
@@ -348,8 +350,9 @@ function ReservationPanel({
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
       setAuthStep("code");
-    } catch (error: any) {
-      setErrors({ phone: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setErrors({ phone: message });
     } finally {
       setIsSubmitting(false);
     }
@@ -388,8 +391,9 @@ function ReservationPanel({
       } else {
         setAuthStep("register");
       }
-    } catch (error: any) {
-      setErrors({ code: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setErrors({ code: message });
     } finally {
       setIsSubmitting(false);
     }
@@ -426,8 +430,9 @@ function ReservationPanel({
       localStorage.setItem("user", JSON.stringify(data.data.user));
       setIsNewUser(true);
       setStep("details");
-    } catch (error: any) {
-      setErrors({ submit: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setErrors({ submit: message });
     } finally {
       setIsSubmitting(false);
     }
@@ -497,9 +502,10 @@ function ReservationPanel({
           onClose();
         }, 2000);
       }
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
       console.log("Reservation error:", error);
-      setErrors({ submit: error.message || "Failed to create reservation" });
+      setErrors({ submit: message || "Failed to create reservation" });
     } finally {
       setIsSubmitting(false);
     }

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       query.$or = [
         { startDate: { $gte: dayStart, $lte: dayEnd } },
         { endDate: { $gte: dayStart, $lte: dayEnd } },
-        { startDate: { $lt: dayStart }, endDate: { $gt: dayEnd } }
+        { startDate: { $lt: dayStart }, endDate: { $gt: dayEnd } },
       ];
     }
 
@@ -45,18 +45,19 @@ export async function GET(req: NextRequest) {
       const resStart = new Date(r.startDate);
       const resEnd = new Date(r.endDate);
       const isSameDay = resStart.toDateString() === resEnd.toDateString();
-      
+
       return {
-        startDate: resStart.toISOString().split('T')[0],
-        endDate: resEnd.toISOString().split('T')[0],
+        startDate: resStart.toISOString().split("T")[0],
+        endDate: resEnd.toISOString().split("T")[0],
         startTime: resStart.toTimeString().slice(0, 5),
         endTime: resEnd.toTimeString().slice(0, 5),
-        isSameDay
+        isSameDay,
       };
     });
 
     return successResponse({ reservations, reservedSlots });
-  } catch (error: any) {
-    return errorResponse(error.message, 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 500);
   }
 }

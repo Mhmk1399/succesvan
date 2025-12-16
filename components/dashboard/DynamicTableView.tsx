@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import useSWR from "swr";
 import Image from "next/image";
 import {
@@ -16,7 +16,12 @@ import {
 import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
 import "./tooltip.css";
-import { DynamicTableViewProps } from "@/types/type";
+import {
+  AddOn,
+  Category,
+  DynamicTableViewProps,
+  WorkingTime,
+} from "@/types/type";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -31,18 +36,25 @@ export default function DynamicTableView<
   onMutate,
   itemsPerPage = 10,
   hideDelete = false,
+  hiddenColumns = [],
 }: DynamicTableViewProps<T>) {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<T | null>(null);
+
+  const item = viewingItem as Record<string, any>;
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data, error, isLoading, mutate } = useSWR(apiEndpoint, fetcher, {
-    revalidateOnFocus: false,
-    dedupingInterval: 60000,
-  });
+  const { data, error, isLoading, mutate } = useSWR(
+    `${apiEndpoint}?page=${currentPage}&limit=${itemsPerPage}`,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 60000,
+    }
+  );
 
   useEffect(() => {
     if (onMutate && mutate) {
@@ -50,12 +62,12 @@ export default function DynamicTableView<
     }
   }, [mutate, onMutate]);
 
-  const items = data?.data || [];
-  const totalPages = Math.ceil(items.length / itemsPerPage);
-  const paginatedItems = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return items.slice(start, start + itemsPerPage);
-  }, [items, currentPage, itemsPerPage]);
+  const items = Array.isArray(data?.data) ? data.data : [];
+  const totalPages = data?.pagination?.pages || 1;
+
+  const visibleColumns = columns.filter(
+    (col) => !hiddenColumns.includes(col.key)
+  );
 
   const handleDeleteClick = (id: string) => {
     setDeletingId(id);
@@ -77,8 +89,9 @@ export default function DynamicTableView<
       setIsDeleteOpen(false);
       setDeletingId(null);
       if (typeof mutate === "function") mutate(undefined, { revalidate: true });
-    } catch (error: any) {
-      showToast.error(error.message || "Delete failed");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Delete failed";
+      showToast.error(message);
     } finally {
       setIsDeleting(false);
     }
@@ -102,28 +115,34 @@ export default function DynamicTableView<
     <div className="space-y-6">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="border-b border-white/50">
+          <thead className="border-b border-white/70">
             <tr>
-              {columns.map((col, colIdx) => (
+              <th className="px-3 py-4 text-left text-white font-bold w-12">
+                #
+              </th>
+              {visibleColumns.map((col, colIdx) => (
                 <th
                   key={`${colIdx}-${String(col.key)}`}
-                  className="px-3 py-4 text-left text-white font-semibold"
+                  className="px-3 py-4 text-left text-white font-bold"
                 >
                   {col.label}
                 </th>
               ))}
-              <th className="px-3 py-4 text-left text-white font-semibold">
+              <th className="px-3 py-4 text-left text-white font-bold">
                 Actions
               </th>
             </tr>
           </thead>
           <tbody>
-            {paginatedItems.map((item: T, idx: number) => (
+            {items.map((item: T, idx: number) => (
               <tr
                 key={idx}
-                className="border-b border-white/10 hover:bg-white/5 transition-colors"
+                className="border-b border-white/10 hover:bg-white/10 transition-colors"
               >
-                {columns.map((col, colIdx) => (
+                <td className="px-3 py-2 text-gray-300 font-semibold">
+                  {idx + 1}
+                </td>
+                {visibleColumns.map((col, colIdx) => (
                   <td
                     key={`${colIdx}-${String(col.key)}`}
                     className="px-3 py-2 text-gray-300"
@@ -164,7 +183,9 @@ export default function DynamicTableView<
                   )}
                   {!hideDelete && (
                     <button
-                      onClick={() => handleDeleteClick(item._id || item.id || "")}
+                      onClick={() =>
+                        handleDeleteClick(item._id || item.id || "")
+                      }
                       className="p-2 hover:bg-red-500/20 rounded cursor-pointer transition-colors tooltip"
                       data-tooltip="Delete"
                     >
@@ -191,30 +212,55 @@ export default function DynamicTableView<
               </button>
             </div>
             <div className="p-6 space-y-4">
-              {columns.map((col, colIdx) => (
-                <div key={`${colIdx}-${String(col.key)}`}>
+              {item.image && (
+                <div>
                   <label className="text-sm font-semibold text-gray-400">
-                    {col.label}
+                    Image
                   </label>
-                  <div className="text-white mt-1">
-                    {col.render
-                      ? col.render(viewingItem[col.key], viewingItem)
-                      : String(viewingItem[col.key] || "-")}
+                  <div className="mt-2 w-1/2 h-1/2">
+                    <Image
+                      src={item.image}
+                      alt={title}
+                      width={300}
+                      height={200}
+                      className="rounded-lg object-contain w-full"
+                      unoptimized
+                    />
                   </div>
                 </div>
-              ))}
+              )}
+              {columns.map((col, colIdx) => {
+                const isHidden = hiddenColumns.includes(col.key);
+                return (
+                  <div key={`${colIdx}-${String(col.key)}`}>
+                    <label className="text-sm font-semibold text-gray-400">
+                      {col.label}
+                      {isHidden && (
+                        <span className="text-xs text-gray-500 ml-2">
+                          (Hidden in table)
+                        </span>
+                      )}
+                    </label>
+                    <div className="text-white mt-1">
+                      {col.render
+                        ? col.render(item[col.key as string], viewingItem)
+                        : String(item[col.key as string] || "-")}
+                    </div>
+                  </div>
+                );
+              })}
 
-              {(viewingItem as any).category && (
+              {item.category && (
                 <div>
                   <label className="text-sm font-semibold text-gray-400">
                     Category
                   </label>
                   <div className="text-white mt-1">
-                    <p className="mb-2">{(viewingItem as any).category.name}</p>
-                    {(viewingItem as any).category?.image && (
+                    <p className="mb-2">{item.category.name}</p>
+                    {item.category?.image && (
                       <div className="mt-2">
                         <Image
-                          src={(viewingItem as any).category.image}
+                          src={item.category.image}
                           alt="Category"
                           width={200}
                           height={150}
@@ -227,133 +273,127 @@ export default function DynamicTableView<
                 </div>
               )}
 
-              {(viewingItem as any).office && (
+              {item.office && (
                 <div>
                   <label className="text-sm font-semibold text-gray-400">
                     Office
                   </label>
-                  <p className="text-white mt-1">
-                    {(viewingItem as any).office.name}
-                  </p>
+                  <p className="text-white mt-1">{item.office.name}</p>
                 </div>
               )}
 
-              {(viewingItem as any).categories &&
-                (viewingItem as any).categories.length > 0 && (
-                  <div>
-                    <label className="text-sm font-semibold text-gray-400">
-                      Categories
-                    </label>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {(viewingItem as any).categories.map(
-                        (cat: any, idx: number) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 bg-[#fe9a00]/20 text-[#fe9a00] rounded-full text-sm"
-                          >
-                            {cat.name || cat}
-                          </span>
-                        )
-                      )}
-                    </div>
+              {item.categories && item.categories.length > 0 && (
+                <div>
+                  <label className="text-sm font-semibold text-gray-400">
+                    Categories
+                  </label>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {item.categories.map((cat: Category, idx: number) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 bg-[#fe9a00]/20 text-[#fe9a00] rounded-full text-sm"
+                      >
+                        {cat.name}
+                      </span>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
 
-              {(viewingItem as any).workingTime &&
-                (viewingItem as any).workingTime.length > 0 && (
-                  <div>
-                    <label className="text-sm font-semibold text-gray-400">
-                      Working Hours
-                    </label>
-                    <div className="mt-2 space-y-2">
-                      {(viewingItem as any).workingTime.map(
-                        (wt: any, idx: number) => (
+              {item.workingTime && item.workingTime.length > 0 && (
+                <div>
+                  <label className="text-sm font-semibold text-gray-400">
+                    Working Hours
+                  </label>
+                  <div className="mt-2 space-y-2">
+                    {item.workingTime.map((wt: WorkingTime, idx: number) => (
+                      <div
+                        key={idx}
+                        className="text-white text-sm bg-white/5 p-2 rounded"
+                      >
+                        <span className="font-semibold capitalize">
+                          {wt.day}:
+                        </span>{" "}
+                        {wt.isOpen
+                          ? `${wt.startTime} - ${wt.endTime}`
+                          : "Closed"}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {item.addOns && item.addOns.length > 0 && (
+                <div>
+                  <label className="text-sm font-semibold text-gray-400">
+                    Add-ons
+                  </label>
+                  <div className="mt-2 space-y-2">
+                    {item.addOns.map(
+                      (
+                        addOnItem: {
+                          addOn?: AddOn;
+                          quantity: number;
+                          selectedTierIndex?: number;
+                        },
+                        idx: number
+                      ) => {
+                        const addon = addOnItem.addOn;
+                        let price = 0;
+                        let tierInfo = "";
+
+                        if (addon?.pricingType === "flat") {
+                          price = addon.flatPrice || 0;
+                        } else if (addon?.pricingType === "tiered") {
+                          const tierIndex = addOnItem.selectedTierIndex ?? 0;
+                          const tier = addon.tiers?.[tierIndex];
+                          if (tier) {
+                            price = tier.price;
+                            tierInfo = ` (${tier.minDays}-${tier.maxDays} days)`;
+                          }
+                        }
+
+                        return (
                           <div
                             key={idx}
-                            className="text-white text-sm bg-white/5 p-2 rounded"
+                            className="text-white text-sm bg-white/5 p-3 rounded flex justify-between items-center"
                           >
-                            <span className="font-semibold capitalize">
-                              {wt.day}:
-                            </span>{" "}
-                            {wt.isOpen
-                              ? `${wt.startTime} - ${wt.endTime}`
-                              : "Closed"}
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                )}
-
-
-
-              {(viewingItem as any).addOns &&
-                (viewingItem as any).addOns.length > 0 && (
-                  <div>
-                    <label className="text-sm font-semibold text-gray-400">
-                      Add-ons
-                    </label>
-                    <div className="mt-2 space-y-2">
-                      {(viewingItem as any).addOns.map(
-                        (item: any, idx: number) => {
-                          const addon = item.addOn;
-                          let price = 0;
-                          let tierInfo = "";
-                          
-                          if (addon?.pricingType === "flat") {
-                            price = addon.flatPrice || 0;
-                          } else if (addon?.pricingType === "tiered") {
-                            const tierIndex = item.selectedTierIndex ?? 0;
-                            const tier = addon.tiers?.[tierIndex];
-                            if (tier) {
-                              price = tier.price;
-                              tierInfo = ` (${tier.minDays}-${tier.maxDays} days)`;
-                            }
-                          }
-                          
-                          return (
-                            <div
-                              key={idx}
-                              className="text-white text-sm bg-white/5 p-3 rounded flex justify-between items-center"
-                            >
-                              <div className="flex flex-col">
-                                <span className="font-semibold">
-                                  {addon?.name || "Unknown"}
+                            <div className="flex flex-col">
+                              <span className="font-semibold">
+                                {addon?.name || "Unknown"}
+                              </span>
+                              {addon?.description && (
+                                <span className="text-gray-400 text-xs mt-1">
+                                  {addon.description}
                                 </span>
-                                {addon?.description && (
-                                  <span className="text-gray-400 text-xs mt-1">
-                                    {addon.description}
-                                  </span>
-                                )}
-                                {tierInfo && (
-                                  <span className="text-[#fe9a00] text-xs mt-1">
-                                    {tierInfo}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <span className="text-gray-400">
-                                  Qty: {item.quantity}
+                              )}
+                              {tierInfo && (
+                                <span className="text-[#fe9a00] text-xs mt-1">
+                                  {tierInfo}
                                 </span>
-                                <span className="font-semibold">
-                                  £{price}
-                                </span>
-                              </div>
+                              )}
                             </div>
-                          );
-                        }
-                      )}
-                    </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-gray-400">
+                                Qty: {addOnItem.quantity}
+                              </span>
+                              <span className="font-semibold">£{price}</span>
+                            </div>
+                          </div>
+                        );
+                      }
+                    )}
                   </div>
-                )}
+                </div>
+              )}
 
-              {(viewingItem as any).servicesPeriod && (
+              {item.servicesPeriod && (
                 <div>
                   <label className="text-sm font-semibold text-gray-400">
                     Service Period (Days)
                   </label>
                   <div className="mt-2 space-y-2">
-                    {Object.entries((viewingItem as any).servicesPeriod).map(
+                    {Object.entries(item.servicesPeriod).map(
                       ([key, value]: [string, any]) => (
                         <div
                           key={key}
@@ -370,13 +410,13 @@ export default function DynamicTableView<
                 </div>
               )}
 
-              {(viewingItem as any).serviceHistory && (
+              {item.serviceHistory && (
                 <div>
                   <label className="text-sm font-semibold text-gray-400">
                     Service History
                   </label>
                   <div className="mt-2 space-y-2">
-                    {Object.entries((viewingItem as any).serviceHistory).map(
+                    {Object.entries(item.serviceHistory).map(
                       ([key, value]: [string, any]) => (
                         <div
                           key={key}
@@ -393,28 +433,25 @@ export default function DynamicTableView<
                 </div>
               )}
 
-              {(viewingItem as any).images &&
-                (viewingItem as any).images.length > 0 && (
-                  <div>
-                    <label className="text-sm font-semibold text-gray-400">
-                      Images
-                    </label>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      {(viewingItem as any).images.map(
-                        (img: string, idx: number) => (
-                          <Image
-                            key={idx}
-                            src={img}
-                            alt={`Image ${idx + 1}`}
-                            width={150}
-                            height={120}
-                            className="rounded-lg object-cover"
-                          />
-                        )
-                      )}
-                    </div>
+              {item.images && item.images.length > 0 && (
+                <div>
+                  <label className="text-sm font-semibold text-gray-400">
+                    Images
+                  </label>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {item.images.map((img: string, idx: number) => (
+                      <Image
+                        key={idx}
+                        src={img}
+                        alt={`Image ${idx + 1}`}
+                        width={150}
+                        height={120}
+                        className="rounded-lg object-cover"
+                      />
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -437,7 +474,7 @@ export default function DynamicTableView<
                 <button
                   onClick={confirmDelete}
                   disabled={isDeleting}
-                  className="flex-1 px-4 py-3   hover:bg-red-500/30 text-red-400 rounded-lg transition-colors font-semibold disabled:opacity-50"
+                  className="flex-1 px-4 py-3 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors font-semibold disabled:opacity-50"
                 >
                   {isDeleting ? "Deleting..." : "Delete"}
                 </button>
@@ -456,7 +493,7 @@ export default function DynamicTableView<
           >
             <FiChevronLeft className="text-white" />
           </button>
-          <span className="text-white">
+          <span className="text-[#fe9a00] border-b">
             Page {currentPage} of {totalPages}
           </span>
           <button

@@ -10,12 +10,15 @@ import jwt from "jsonwebtoken";
 export async function POST(req: NextRequest) {
   try {
     await connect();
-    const { action, phoneNumber, code, name, lastName, emailAddress } = await req.json();
+    const { action, phoneNumber, code, name, lastName, emailAddress } =
+      await req.json();
 
     if (action === "send-code") {
       if (!phoneNumber) return errorResponse("Phone number required", 400);
 
-      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const verificationCode = Math.floor(
+        100000 + Math.random() * 900000
+      ).toString();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
       await Verification.findOneAndUpdate(
@@ -25,20 +28,31 @@ export async function POST(req: NextRequest) {
       );
 
       try {
-        await sendSMS(phoneNumber, `Your success van hire verification code is: ${verificationCode}`);
-      } catch (smsError: any) {
-        console.log("SMS Error:", smsError.message);
+        await sendSMS(
+          phoneNumber,
+          `Your success van hire verification code is: ${verificationCode}`
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        console.log("SMS Error:", message);
       }
       console.log(`[DEV] Code for ${phoneNumber}: ${verificationCode}`);
       return successResponse({ message: "Code sent", code: verificationCode });
     }
 
     if (action === "verify") {
-      if (!phoneNumber || !code) return errorResponse("Phone and code required", 400);
+      if (!phoneNumber || !code)
+        return errorResponse("Phone and code required", 400);
 
-      const verification = await Verification.findOne({ phoneNumber, verified: false });
-      if (!verification || verification.code !== code) return errorResponse("Invalid code", 400);
-      if (verification.expiresAt < new Date()) return errorResponse("Code expired", 400);
+      const verification = await Verification.findOne({
+        phoneNumber,
+        verified: false,
+      });
+      if (!verification || verification.code !== code)
+        return errorResponse("Invalid code", 400);
+      if (verification.expiresAt < new Date())
+        return errorResponse("Code expired", 400);
 
       verification.verified = true;
       await verification.save();
@@ -46,7 +60,11 @@ export async function POST(req: NextRequest) {
       const user = await User.findOne({ "phoneData.phoneNumber": phoneNumber });
 
       if (user) {
-        const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET!, { expiresIn: "28d" });
+        const token = jwt.sign(
+          { userId: user._id, role: user.role },
+          process.env.JWT_SECRET!,
+          { expiresIn: "28d" }
+        );
         return successResponse({ userExists: true, token, user });
       }
 
@@ -54,28 +72,39 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "register") {
-      if (!phoneNumber || !name || !lastName || !emailAddress) return errorResponse("All fields required", 400);
+      if (!phoneNumber || !name || !lastName || !emailAddress)
+        return errorResponse("All fields required", 400);
 
-      const verification = await Verification.findOne({ phoneNumber, verified: true });
+      const verification = await Verification.findOne({
+        phoneNumber,
+        verified: true,
+      });
       if (!verification) return errorResponse("Phone not verified", 400);
 
-      const existingUser = await User.findOne({ "phoneData.phoneNumber": phoneNumber });
+      const existingUser = await User.findOne({
+        "phoneData.phoneNumber": phoneNumber,
+      });
       if (existingUser) return errorResponse("User already exists", 400);
 
       const user = await User.create({
         name,
         lastName,
         emaildata: { emailAddress, isVerified: false },
-        phoneData: { phoneNumber, isVerified: true }
+        phoneData: { phoneNumber, isVerified: true },
       });
 
-      const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET!, { expiresIn: "28d" });
+      const token = jwt.sign(
+        { userId: user._id, role: user.role },
+        process.env.JWT_SECRET!,
+        { expiresIn: "28d" }
+      );
       return successResponse({ token, user }, 201);
     }
 
     return errorResponse("Invalid action", 400);
-  } catch (error: any) {
-    return errorResponse(error.message, 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 500);
   }
 }
 
@@ -88,7 +117,11 @@ export async function GET(req: NextRequest) {
     if (!user) return errorResponse("User not found", 404);
 
     return successResponse(user);
-  } catch (error: any) {
-    return errorResponse(error.message === "Unauthorized" ? "Unauthorized" : error.message, error.message === "Unauthorized" ? 401 : 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(
+      message === "Unauthorized" ? "Unauthorized" : message,
+      message === "Unauthorized" ? 401 : 500
+    );
   }
 }

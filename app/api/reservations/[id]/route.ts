@@ -17,8 +17,9 @@ export async function GET(
       .populate("addOns.addOn");
     if (!reservation) return errorResponse("Reservation not found", 404);
     return successResponse(reservation);
-  } catch (error: any) {
-    return errorResponse(error.message, 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 500);
   }
 }
 
@@ -40,8 +41,9 @@ export async function PATCH(
       .populate("addOns.addOn");
     if (!reservation) return errorResponse("Reservation not found", 404);
     return successResponse(reservation);
-  } catch (error: any) {
-    return errorResponse(error.message, 400);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 400);
   }
 }
 
@@ -55,7 +57,8 @@ export async function DELETE(
     const reservation = await Reservation.findByIdAndDelete(id);
     if (!reservation) return errorResponse("Reservation not found", 404);
     return successResponse({ message: "Reservation deleted" });
-  } catch (error: any) {
-    return errorResponse(error.message, 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 500);
   }
 }

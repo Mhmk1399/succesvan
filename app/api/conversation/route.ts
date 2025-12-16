@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { conversationalReservation, textToSpeech } from "@/lib/openai";
-import { buildRAGContext, fetchFullOffices, fetchFullCategories } from "@/lib/rag-context";
+import {
+  buildRAGContext,
+  fetchFullOffices,
+  fetchFullCategories,
+} from "@/lib/rag-context";
 import connect from "@/lib/data";
 
 export async function POST(request: NextRequest) {
@@ -12,8 +16,14 @@ export async function POST(request: NextRequest) {
 
     console.log("📝 [Conversation API] Transcript:", transcript);
     console.log("📋 [Conversation API] Current data:", currentData);
-    console.log("🗣️ [Conversation API] Conversation history length:", conversationHistory.length);
-    console.log("🗣️ [Conversation API] Conversation history:", conversationHistory);
+    console.log(
+      "🗣️ [Conversation API] Conversation history length:",
+      conversationHistory.length
+    );
+    console.log(
+      "🗣️ [Conversation API] Conversation history:",
+      conversationHistory
+    );
 
     if (!transcript) {
       return NextResponse.json(
@@ -24,15 +34,19 @@ export async function POST(request: NextRequest) {
 
     // Get offices and categories from database
     await connect();
-    
-    console.log("🔍 [Conversation API] Fetching full office and category data for RAG");
-    
+
+    console.log(
+      "🔍 [Conversation API] Fetching full office and category data for RAG"
+    );
+
     // Fetch comprehensive data for RAG context
     const fullOffices = await fetchFullOffices();
     const fullCategories = await fetchFullCategories();
-    
-    console.log(`📍 [Conversation API] Loaded ${fullOffices.length} offices and ${fullCategories.length} categories with full details`);
-    
+
+    console.log(
+      `📍 [Conversation API] Loaded ${fullOffices.length} offices and ${fullCategories.length} categories with full details`
+    );
+
     // Build RAG context with all available information
     const ragContext = await buildRAGContext(
       fullOffices,
@@ -41,8 +55,12 @@ export async function POST(request: NextRequest) {
       currentData.endDate,
       currentData.office
     );
-    
-    console.log("📚 [Conversation API] RAG context size:", ragContext.length, "characters");
+
+    console.log(
+      "📚 [Conversation API] RAG context size:",
+      ragContext.length,
+      "characters"
+    );
 
     // Format data for the function (simple version for extraction)
     const formattedOffices = fullOffices.map((o: any) => ({
@@ -66,14 +84,21 @@ export async function POST(request: NextRequest) {
 
     console.log("✅ [Conversation API] AI response:", aiResponse.message);
     console.log("📊 [Conversation API] Is complete:", aiResponse.isComplete);
-    console.log("🔍 [Conversation API] Missing fields:", aiResponse.missingFields);
+    console.log(
+      "🔍 [Conversation API] Missing fields:",
+      aiResponse.missingFields
+    );
 
     // Convert AI message to speech
     console.log("🔊 [Conversation API] Generating speech...");
     const audioBuffer = await textToSpeech(aiResponse.message);
     const audioBase64 = audioBuffer.toString("base64");
 
-    console.log("✅ [Conversation API] Speech generated, size:", audioBuffer.length, "bytes");
+    console.log(
+      "✅ [Conversation API] Speech generated, size:",
+      audioBuffer.length,
+      "bytes"
+    );
 
     return NextResponse.json({
       success: true,
@@ -84,14 +109,14 @@ export async function POST(request: NextRequest) {
       isComplete: aiResponse.isComplete,
       action: aiResponse.action,
     });
-  } catch (error: any) {
-    console.error("❌ [Conversation API] Error:", error);
-    console.error("❌ [Conversation API] Stack:", error.stack);
-    
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("❌ [Conversation API] Error:", message);
+
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Failed to process conversation",
+        error: message || "Failed to process conversation",
       },
       { status: 500 }
     );

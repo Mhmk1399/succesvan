@@ -16,12 +16,15 @@ export async function GET(req: NextRequest) {
     const officeId = searchParams.get("office");
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
+
     console.log("[Reservations API] userId:", userId);
     const query: any = {};
     if (userId) query.user = userId;
     if (officeId) query.office = officeId;
-    
+
     if (startDate) {
       const start = new Date(startDate);
       start.setHours(0, 0, 0, 0);
@@ -30,7 +33,7 @@ export async function GET(req: NextRequest) {
       query.startDate = { $lte: startEnd };
       query.endDate = { $gte: start };
     }
-    
+
     if (endDate) {
       const end = new Date(endDate);
       end.setHours(0, 0, 0, 0);
@@ -39,22 +42,27 @@ export async function GET(req: NextRequest) {
       query.startDate = { ...query.startDate, $lte: endEnd };
       query.endDate = { ...query.endDate, $gte: end };
     }
-    
+
     console.log("[Reservations API] query:", query);
-    
+
     const reservations = await Reservation.find(query)
       .populate("user", "-password")
-      .populate({ path: "office", model: office})
-      .populate({ path: "category", model: Category})
-      .populate({path: "addOns.addOn", model: AddOn})
-    
-    console.log("[Reservations API] Found reservations:", reservations.length);
-    console.log("[Reservations API] First reservation:", reservations[0]);
-    
-    return successResponse(reservations);
-  } catch (error: any) {
-    console.log("[Reservations API] Error:", error.message);
-    return errorResponse(error.message, 500);
+      .populate({ path: "office", model: office })
+      .populate({ path: "category", model: Category })
+      .populate({ path: "addOns.addOn", model: AddOn })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Reservation.countDocuments(query);
+    const pages = Math.ceil(total / limit);
+
+    return successResponse({
+      data: reservations,
+      pagination: { page, limit, total, pages },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 500);
   }
 }
 
@@ -62,7 +70,7 @@ export async function POST(req: NextRequest) {
   try {
     await connect();
     const { userData, reservationData } = await req.json();
-    
+
     let user;
     if (userData.userId) {
       user = await User.findById(userData.userId);
@@ -88,7 +96,7 @@ export async function POST(req: NextRequest) {
         });
       }
     }
-    console.log(reservationData,"reserve")
+    console.log(reservationData, "reserve");
 
     const reservation = await Reservation.create({
       ...reservationData,
@@ -103,23 +111,23 @@ export async function POST(req: NextRequest) {
     ]);
 
     return successResponse(reservation, 201);
-  } catch (error: any) {
-    return errorResponse(error.message, 400);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 400);
   }
 }
-export async function DELETE(
-  req: NextRequest,
-  
-) {
+
+export async function DELETE(req: NextRequest) {
   try {
     await connect();
-     const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
-   
+
     const reservation = await Reservation.findByIdAndDelete(userId);
     if (!reservation) return errorResponse("Reservation not found", 404);
     return successResponse({ message: "Reservation deleted" });
-  } catch (error: any) {
-    return errorResponse(error.message, 500);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResponse(message, 500);
   }
 }
