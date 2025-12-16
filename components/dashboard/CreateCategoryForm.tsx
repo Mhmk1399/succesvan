@@ -27,7 +27,10 @@ export default function CategoriesContent() {
     pricingTiers: [{ minDays: "", maxDays: "", pricePerDay: "" }],
     extrahoursRate: "",
     fuel: "",
-    gear: "",
+    gear: {
+      availableTypes: [] as string[],
+      automaticExtraCost: "",
+    },
     seats: "",
     doors: "",
     servicesPeriod: {
@@ -105,7 +108,10 @@ export default function CategoriesContent() {
       pricingTiers: [{ minDays: "", maxDays: "", pricePerDay: "" }],
       extrahoursRate: "",
       fuel: "",
-      gear: "",
+      gear: {
+        availableTypes: [] as string[],
+        automaticExtraCost: "",
+      },
       seats: "",
       doors: "",
       servicesPeriod: {
@@ -142,7 +148,10 @@ export default function CategoriesContent() {
       })) || [{ minDays: "", maxDays: "", pricePerDay: "" }],
       extrahoursRate: String((item as any).extrahoursRate || ""),
       fuel: item.fuel || "",
-      gear: item.gear || "",
+      gear: {
+        availableTypes: (item.gear as any)?.availableTypes || [],
+        automaticExtraCost: String((item.gear as any)?.automaticExtraCost || ""),
+      },
       seats: String(item.seats || ""),
       doors: String(item.doors || ""),
       servicesPeriod: {
@@ -227,7 +236,10 @@ export default function CategoriesContent() {
         })),
         extrahoursRate: parseFloat(formData.extrahoursRate),
         fuel: formData.fuel,
-        gear: formData.gear,
+        gear: {
+          availableTypes: formData.gear.availableTypes,
+          automaticExtraCost: parseFloat(formData.gear.automaticExtraCost) || 0,
+        },
         seats: parseInt(formData.seats),
         doors: parseInt(formData.doors),
         servicesPeriod: {
@@ -645,43 +657,87 @@ export default function CategoriesContent() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-gray-400 text-sm mb-2 block">
-                    Fuel Type
-                  </label>
-                  <CustomSelect
-                    options={[
-                      { _id: "gas", name: "Gas" },
-                      { _id: "diesel", name: "Diesel" },
-                      { _id: "electric", name: "Electric" },
-                      { _id: "hybrid", name: "Hybrid" },
-                    ]}
-                    value={formData.fuel}
-                    onChange={(val) =>
-                      setFormData((prev) => ({ ...prev, fuel: val }))
-                    }
-                    placeholder="Select Fuel"
-                  />
-                </div>
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Fuel Type
+                </label>
+                <CustomSelect
+                  options={[
+                    { _id: "gas", name: "Gas" },
+                    { _id: "diesel", name: "Diesel" },
+                    { _id: "electric", name: "Electric" },
+                    { _id: "hybrid", name: "Hybrid" },
+                  ]}
+                  value={formData.fuel}
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, fuel: val }))
+                  }
+                  placeholder="Select Fuel"
+                />
+              </div>
 
-                <div>
-                  <label className="text-gray-400 text-sm mb-2 block">
-                    Gear Type
+              <div className="space-y-3">
+                <label className="text-gray-400 text-sm block">
+                  Gear Types
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 text-white cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.gear.availableTypes.includes("manual")}
+                      onChange={(e) => {
+                        const types = e.target.checked
+                          ? [...formData.gear.availableTypes, "manual"]
+                          : formData.gear.availableTypes.filter((t) => t !== "manual");
+                        setFormData((prev) => ({
+                          ...prev,
+                          gear: { ...prev.gear, availableTypes: types },
+                        }));
+                      }}
+                      className="w-4 h-4 accent-[#fe9a00]"
+                    />
+                    Manual
                   </label>
-                  <CustomSelect
-                    options={[
-                      { _id: "automatic", name: "Automatic" },
-                      { _id: "manual", name: "Manual" },
-                      { _id: "manual,automatic", name: "Manual & Automatic" },
-                    ]}
-                    value={formData.gear}
-                    onChange={(val) =>
-                      setFormData((prev) => ({ ...prev, gear: val }))
-                    }
-                    placeholder="Select Gear"
-                  />
+                  <label className="flex items-center gap-2 text-white cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.gear.availableTypes.includes("automatic")}
+                      onChange={(e) => {
+                        const types = e.target.checked
+                          ? [...formData.gear.availableTypes, "automatic"]
+                          : formData.gear.availableTypes.filter((t) => t !== "automatic");
+                        setFormData((prev) => ({
+                          ...prev,
+                          gear: { ...prev.gear, availableTypes: types },
+                        }));
+                      }}
+                      className="w-4 h-4 accent-[#fe9a00]"
+                    />
+                    Automatic
+                  </label>
                 </div>
+                {formData.gear.availableTypes.includes("automatic") &&
+                  formData.gear.availableTypes.includes("manual") && (
+                    <div>
+                      <label className="text-gray-400 text-sm mb-2 block">
+                        Automatic Extra Cost (per day)
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        value={formData.gear.automaticExtraCost}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            gear: { ...prev.gear, automaticExtraCost: e.target.value },
+                          }))
+                        }
+                        step="0.01"
+                        min="0"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                      />
+                    </div>
+                  )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -868,7 +924,15 @@ export default function CategoriesContent() {
             label: "License",
           },
           { key: "fuel", label: "Fuel" },
-          { key: "gear", label: "Gear" },
+          {
+            key: "gear",
+            label: "Gear",
+            render: (value: any) => {
+              const types = value?.availableTypes?.join(", ") || "-";
+              const extra = value?.automaticExtraCost > 0 ? ` (+£${value.automaticExtraCost}/day auto)` : "";
+              return types + extra;
+            },
+          },
           { key: "seats", label: "Seats" },
           { key: "doors", label: "Doors" },
         ]}

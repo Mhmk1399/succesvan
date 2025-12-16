@@ -1328,12 +1328,12 @@ function CategoryCard({
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs font-semibold">
             <span className="text-green-500">✓</span>
-            <span className="text-gray-200">
+            {/* <span className="text-gray-200">
               {category.gear === "manual,automatic"
                 ? "Manual & Automatic"
                 : category.gear.charAt(0).toUpperCase() +
                   category.gear.slice(1)}
-            </span>
+            </span> */}
           </div>
 
           <div className="flex items-end justify-between gap-3">

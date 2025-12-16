@@ -123,7 +123,7 @@ export default function ReservationForm({
   }, [formData.office, dateRange, offices]);
 
   const returnTimeSlots = useMemo(() => {
-    if (!formData.office || !dateRange[0].endDate || !formData.pickupTime)
+    if (!formData.office || !dateRange[0].endDate)
       return [];
     const office = offices.find((o) => o._id === formData.office);
     if (!office) return [];
@@ -144,22 +144,23 @@ export default function ReservationForm({
     const specialDay = office.specialDays?.find(
       (sd: any) => sd.month === month && sd.day === day
     );
-    let end = "23:59";
+    let start = "00:00", end = "23:59";
 
     if (specialDay && specialDay.isOpen) {
+      start = specialDay.startTime;
       end = specialDay.endTime;
     } else {
       const workingDay = office.workingTime?.find(
         (w: any) => w.day === dayName && w.isOpen
       );
       if (workingDay) {
+        start = workingDay.startTime;
         end = workingDay.endTime;
       }
     }
 
-    const allSlots = generateTimeSlots(formData.pickupTime, end, 15);
-    return allSlots.filter((slot) => slot > formData.pickupTime);
-  }, [formData.office, formData.pickupTime, dateRange, offices]);
+    return generateTimeSlots(start, end, 15);
+  }, [formData.office, dateRange, offices]);
 
   // Initialize voice recording hook
   const { isRecording, isProcessing, toggleRecording } = useVoiceRecording({
@@ -483,10 +484,25 @@ export default function ReservationForm({
     // Use working hours
     const workingDay = office.workingTime?.find((w) => w.day === dayName);
     if (workingDay && workingDay.isOpen) {
+      let info = `${workingDay.day}: ${workingDay.startTime} - ${workingDay.endTime}`;
+      
+      const hasPickupExt = workingDay.pickupExtension && (workingDay.pickupExtension.hoursBefore > 0 || workingDay.pickupExtension.hoursAfter > 0);
+      const hasReturnExt = workingDay.returnExtension && (workingDay.returnExtension.hoursBefore > 0 || workingDay.returnExtension.hoursAfter > 0);
+      
+      if (hasPickupExt || hasReturnExt) {
+        info += ' ';
+        if (hasPickupExt) {
+          info += `🟡 Pickup ext: ${workingDay.pickupExtension.hoursBefore}h before, ${workingDay.pickupExtension.hoursAfter}h after (+£${workingDay.pickupExtension.flatPrice}) `;
+        }
+        if (hasReturnExt) {
+          info += `🟡 Return ext: ${workingDay.returnExtension.hoursBefore}h before, ${workingDay.returnExtension.hoursAfter}h after (+£${workingDay.returnExtension.flatPrice})`;
+        }
+      }
+      
       return {
         start: workingDay.startTime,
         end: workingDay.endTime,
-        info: `${workingDay.day}: ${workingDay.startTime} - ${workingDay.endTime}`,
+        info,
       };
     }
 
