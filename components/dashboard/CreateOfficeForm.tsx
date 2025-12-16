@@ -22,13 +22,13 @@ export default function OfficesContent() {
       longitude: "",
     },
     workingTime: [
-      { day: "monday", isOpen: true, startTime: "", endTime: "" },
-      { day: "tuesday", isOpen: true, startTime: "", endTime: "" },
-      { day: "wednesday", isOpen: true, startTime: "", endTime: "" },
-      { day: "thursday", isOpen: true, startTime: "", endTime: "" },
-      { day: "friday", isOpen: true, startTime: "", endTime: "" },
-      { day: "saturday", isOpen: false, startTime: "", endTime: "" },
-      { day: "sunday", isOpen: false, startTime: "", endTime: "" },
+      { day: "monday", isOpen: true, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
+      { day: "tuesday", isOpen: true, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
+      { day: "wednesday", isOpen: true, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
+      { day: "thursday", isOpen: true, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
+      { day: "friday", isOpen: true, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
+      { day: "saturday", isOpen: false, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
+      { day: "sunday", isOpen: false, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
     ],
   });
 
@@ -76,13 +76,13 @@ export default function OfficesContent() {
         longitude: "",
       },
       workingTime: [
-        { day: "monday", isOpen: true, startTime: "", endTime: "" },
-        { day: "tuesday", isOpen: true, startTime: "", endTime: "" },
-        { day: "wednesday", isOpen: true, startTime: "", endTime: "" },
-        { day: "thursday", isOpen: true, startTime: "", endTime: "" },
-        { day: "friday", isOpen: true, startTime: "", endTime: "" },
-        { day: "saturday", isOpen: false, startTime: "", endTime: "" },
-        { day: "sunday", isOpen: false, startTime: "", endTime: "" },
+        { day: "monday", isOpen: true, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
+        { day: "tuesday", isOpen: true, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
+        { day: "wednesday", isOpen: true, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
+        { day: "thursday", isOpen: true, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
+        { day: "friday", isOpen: true, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
+        { day: "saturday", isOpen: false, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
+        { day: "sunday", isOpen: false, startTime: "", endTime: "", pickupExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 }, returnExtension: { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 } },
       ],
     });
     setEditingId(null);
@@ -103,6 +103,8 @@ export default function OfficesContent() {
         isOpen: wt.isOpen,
         startTime: wt.startTime || "",
         endTime: wt.endTime || "",
+        pickupExtension: wt.pickupExtension || { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 },
+        returnExtension: wt.returnExtension || { hoursBefore: 0, hoursAfter: 0, flatPrice: 0 },
       })),
     });
     setEditingId(item._id || null);
@@ -281,33 +283,141 @@ export default function OfficesContent() {
                         </label>
                       </div>
                       {day.isOpen && (
-                        <div className="grid grid-cols-2 gap-2">
-                          <input
-                            type="time"
-                            value={day.startTime}
-                            onChange={(e) =>
-                              handleWorkingTimeChange(
-                                idx,
-                                "startTime",
-                                e.target.value
-                              )
-                            }
-                            required
-                            className="px-3 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-sm"
-                          />
-                          <input
-                            type="time"
-                            value={day.endTime}
-                            onChange={(e) =>
-                              handleWorkingTimeChange(
-                                idx,
-                                "endTime",
-                                e.target.value
-                              )
-                            }
-                            required
-                            className="px-3 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-sm"
-                          />
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-xs text-gray-400 mb-1 block">Start Time</label>
+                              <input
+                                type="time"
+                                value={day.startTime}
+                                onChange={(e) =>
+                                  handleWorkingTimeChange(
+                                    idx,
+                                    "startTime",
+                                    e.target.value
+                                  )
+                                }
+                                required
+                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-sm"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-400 mb-1 block">End Time</label>
+                              <input
+                                type="time"
+                                value={day.endTime}
+                                onChange={(e) =>
+                                  handleWorkingTimeChange(
+                                    idx,
+                                    "endTime",
+                                    e.target.value
+                                  )
+                                }
+                                required
+                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-sm"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs text-[#fe9a00] font-semibold">Pickup Extension</label>
+                            <div className="grid grid-cols-3 gap-2">
+                              <div>
+                                <label className="text-xs text-gray-400 mb-1 block">Hrs Before</label>
+                                <input
+                                  type="number"
+                                  value={day.pickupExtension?.hoursBefore || 0}
+                                  onChange={(e) =>
+                                    handleWorkingTimeChange(idx, "pickupExtension", {
+                                      ...day.pickupExtension,
+                                      hoursBefore: Number(e.target.value),
+                                    })
+                                  }
+                                  min="0"
+                                  className="w-full px-2 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-xs"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-400 mb-1 block">Hrs After</label>
+                                <input
+                                  type="number"
+                                  value={day.pickupExtension?.hoursAfter || 0}
+                                  onChange={(e) =>
+                                    handleWorkingTimeChange(idx, "pickupExtension", {
+                                      ...day.pickupExtension,
+                                      hoursAfter: Number(e.target.value),
+                                    })
+                                  }
+                                  min="0"
+                                  className="w-full px-2 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-xs"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-400 mb-1 block">Flat Price (£)</label>
+                                <input
+                                  type="number"
+                                  value={day.pickupExtension?.flatPrice || 0}
+                                  onChange={(e) =>
+                                    handleWorkingTimeChange(idx, "pickupExtension", {
+                                      ...day.pickupExtension,
+                                      flatPrice: Number(e.target.value),
+                                    })
+                                  }
+                                  min="0"
+                                  className="w-full px-2 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-xs"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs text-[#fe9a00] font-semibold">Return Extension</label>
+                            <div className="grid grid-cols-3 gap-2">
+                              <div>
+                                <label className="text-xs text-gray-400 mb-1 block">Hrs Before</label>
+                                <input
+                                  type="number"
+                                  value={day.returnExtension?.hoursBefore || 0}
+                                  onChange={(e) =>
+                                    handleWorkingTimeChange(idx, "returnExtension", {
+                                      ...day.returnExtension,
+                                      hoursBefore: Number(e.target.value),
+                                    })
+                                  }
+                                  min="0"
+                                  className="w-full px-2 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-xs"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-400 mb-1 block">Hrs After</label>
+                                <input
+                                  type="number"
+                                  value={day.returnExtension?.hoursAfter || 0}
+                                  onChange={(e) =>
+                                    handleWorkingTimeChange(idx, "returnExtension", {
+                                      ...day.returnExtension,
+                                      hoursAfter: Number(e.target.value),
+                                    })
+                                  }
+                                  min="0"
+                                  className="w-full px-2 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-xs"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs text-gray-400 mb-1 block">Flat Price (£)</label>
+                                <input
+                                  type="number"
+                                  value={day.returnExtension?.flatPrice || 0}
+                                  onChange={(e) =>
+                                    handleWorkingTimeChange(idx, "returnExtension", {
+                                      ...day.returnExtension,
+                                      flatPrice: Number(e.target.value),
+                                    })
+                                  }
+                                  min="0"
+                                  className="w-full px-2 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-xs"
+                                />
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>

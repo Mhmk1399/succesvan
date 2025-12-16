@@ -40,6 +40,16 @@ const officeSchema = new mongoose.Schema(
           },
           match: /^([01]\d|2[0-3]):([0-5]\d)$/,
         },
+        pickupExtension: {
+          hoursBefore: { type: Number, default: 0, min: 0 },
+          hoursAfter: { type: Number, default: 0, min: 0 },
+          flatPrice: { type: Number, default: 0, min: 0 },
+        },
+        returnExtension: {
+          hoursBefore: { type: Number, default: 0, min: 0 },
+          hoursAfter: { type: Number, default: 0, min: 0 },
+          flatPrice: { type: Number, default: 0, min: 0 },
+        },
       },
     ],
     specialDays: [

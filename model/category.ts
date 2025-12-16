@@ -37,9 +37,12 @@ const categorySchema = new mongoose.Schema(
       required: true,
     },
     gear: {
-      type: String,
-      enum: ["automatic", "manual", "manual,automatic"],
-      required: true,
+      availableTypes: [{
+        type: String,
+        enum: ["automatic", "manual"],
+        required: true,
+      }],
+      automaticExtraCost: { type: Number, min: 0, default: 0 },
     },
     seats: { type: Number, required: true },
     doors: { type: Number, required: true },
