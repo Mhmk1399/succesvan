@@ -27,8 +27,9 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-interface Category extends VanData {}
-
+interface Category extends VanData {
+  expert?: string;
+}
 interface VanListingProps {
   vans?: VanData[];
   addOns?: AddOn[];
@@ -1259,7 +1260,9 @@ function CategoryCard({
           <h3 className="text-xl font-black text-white line-clamp-1 leading-tight mb-1">
             {category.name}{" "}
           </h3>
-          <p className="text-gray-300 text-sm font-medium mb-4">or similar</p>
+          <p className="text-gray-300 text-sm font-medium mb-4">
+            {category.expert} or similar
+          </p>
           {/* <p className="text-gray-300 text-sm font-medium mb-4 line-clamp-2">
             {category.description}
           </p> */}

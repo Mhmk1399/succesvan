@@ -258,7 +258,7 @@ export interface VanData {
   seats: number;
   doors: number;
   id?: number;
-  category?: string;
+  category: Category;
   transmission?: "Manual" | "Automatic";
   cargo?: string;
   features?: string[];

@@ -38,6 +38,7 @@ interface Category {
   seats: number;
   fuel: string;
   cargo: string;
+  expert: string;
 }
 
 interface AddOn {
@@ -66,7 +67,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
 
   const [formData, setFormData] = useState({
     office: "",
-    type: { name: "" },
+    type: { name: "", _id: "" },
     startDate: "",
     startTime: "10:00",
     endDate: "",
@@ -579,7 +580,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                   {cat.name}
                                 </h4>
                                 <p className="text-gray-300 text-xs mb-2">
-                                  or similar
+                                  {cat.expert} or similar
                                 </p>
                                 <div className="flex gap-1 flex-wrap">
                                   <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
