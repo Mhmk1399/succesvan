@@ -23,7 +23,7 @@ import Image from "next/image";
 import { VanData, Office } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
 import TimeSelect from "@/components/ui/TimeSelect";
-import { generateTimeSlots, isTimeSlotAvailable } from "@/utils/timeSlots";
+import { generateTimeSlots,   } from "@/utils/timeSlots";
 import { usePriceCalculation } from "@/hooks/usePriceCalculation";
 import AddOnsModal from "./AddOnsModal";
 
@@ -44,7 +44,9 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-interface Category extends VanData {}
+interface Category extends VanData {
+  expert?: string;
+}
 
 interface VanListingProps {
   vans?: VanData[];
@@ -1298,7 +1300,7 @@ function CategoryCard({
           <h3 className="text-xl font-black text-white line-clamp-1 leading-tight mb-1">
             {category.name}{" "}
           </h3>
-          <p className="text-gray-300 text-sm font-medium mb-4">or similar</p>
+          <p className="text-gray-300 text-sm font-medium mb-4">{category.expert} {" "} or similar</p>
           {/* <p className="text-gray-300 text-sm font-medium mb-4 line-clamp-2">
             {category.description}
           </p> */}
