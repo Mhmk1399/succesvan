@@ -48,7 +48,10 @@ export default function ReservationForm({
   const [categories, setCategories] = useState<Category[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState<any>(null);
-  const [reservedSlots, setReservedSlots] = useState<
+  const [startDateReservedSlots, setStartDateReservedSlots] = useState<
+    { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[]
+  >([]);
+  const [endDateReservedSlots, setEndDateReservedSlots] = useState<
     { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[]
   >([]);
 
@@ -73,8 +76,8 @@ export default function ReservationForm({
   const [formData, setFormData] = useState({
     office: "",
     type: "",
-    pickupTime: "10:00",
-    returnTime: "10:00",
+    pickupTime: "",
+    returnTime: "",
     driverAge: "",
     message: "",
     name: "",
@@ -261,28 +264,32 @@ export default function ReservationForm({
   }, [formData.office, formData.type]);
 
   useEffect(() => {
-    if (formData.office && dateRange[0].startDate && dateRange[0].endDate) {
-      const startDate = dateRange[0].startDate.toISOString().split("T")[0];
-      const endDate = dateRange[0].endDate.toISOString().split("T")[0];
-      
-      const fetchPromises = [startDate];
-      if (startDate !== endDate) {
-        fetchPromises.push(endDate);
-      }
-      
-      Promise.all(
-        fetchPromises.map(date => 
-          fetch(`/api/reservations/by-office?office=${formData.office}&startDate=${date}`)
-            .then(res => res.json())
-        )
-      )
-        .then(results => {
-          const allSlots = results.flatMap(data => data.data?.reservedSlots || []);
-          setReservedSlots(allSlots);
+    if (formData.office && dateRange[0].startDate) {
+      const date = dateRange[0].startDate;
+      const startDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      setStartDateReservedSlots([]);
+      fetch(`/api/reservations/by-office?office=${formData.office}&startDate=${startDate}&type=start`)
+        .then(res => res.json())
+        .then(data => {
+          setStartDateReservedSlots(data.data?.reservedSlots || []);
         })
         .catch((err) => console.error(err));
     }
-  }, [formData.office, dateRange]);
+  }, [formData.office, dateRange[0].startDate]);
+
+  useEffect(() => {
+    if (formData.office && dateRange[0].endDate) {
+      const date = dateRange[0].endDate;
+      const endDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      setEndDateReservedSlots([]);
+      fetch(`/api/reservations/by-office?office=${formData.office}&endDate=${endDate}&type=end`)
+        .then(res => res.json())
+        .then(data => {
+          setEndDateReservedSlots(data.data?.reservedSlots || []);
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [formData.office, dateRange[0].endDate]);
 
 
 
@@ -732,7 +739,7 @@ export default function ReservationForm({
                 value={formData.pickupTime}
                 onChange={(time) => handleTimeChange("pickupTime", time)}
                 slots={pickupTimeSlots}
-                reservedSlots={reservedSlots}
+                reservedSlots={startDateReservedSlots}
                 isInline={isInline}
                 tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
                 selectedDate={dateRange[0].startDate}
@@ -769,7 +776,7 @@ export default function ReservationForm({
                 value={formData.returnTime}
                 onChange={(time) => handleTimeChange("returnTime", time)}
                 slots={returnTimeSlots}
-                reservedSlots={reservedSlots}
+                reservedSlots={endDateReservedSlots}
                 isInline={isInline}
                 tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
                 selectedDate={dateRange[0].endDate}
@@ -809,7 +816,7 @@ export default function ReservationForm({
           <div className="flex gap-2">
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !formData.office || !formData.type || !formData.pickupTime || !formData.returnTime || !formData.driverAge}
               className="bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 disabled:opacity-50 px-4 py-1 text-xs"
             >
               {isSubmitting ? "Booking..." : "BOOK"}
@@ -833,7 +840,7 @@ export default function ReservationForm({
           <div className="col-span-2 space-y-3">
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !formData.office || !formData.type || !formData.pickupTime || !formData.returnTime || !formData.driverAge}
               className="w-full bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 disabled:opacity-50 px-8 py-3 text-sm"
             >
               {isSubmitting ? "Booking..." : "RESERVE NOW"}
@@ -944,7 +951,7 @@ export default function ReservationForm({
                   value={formData.pickupTime}
                   onChange={(time) => handleTimeChange("pickupTime", time)}
                   slots={pickupTimeSlots}
-                  reservedSlots={reservedSlots}
+                  reservedSlots={startDateReservedSlots}
                   isInline={true}
                   tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
                   selectedDate={dateRange[0].startDate}
@@ -980,7 +987,7 @@ export default function ReservationForm({
                   value={formData.returnTime}
                   onChange={(time) => handleTimeChange("returnTime", time)}
                   slots={returnTimeSlots}
-                  reservedSlots={reservedSlots}
+                  reservedSlots={endDateReservedSlots}
                   isInline={true}
                   tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
                   selectedDate={dateRange[0].endDate}
@@ -1030,7 +1037,7 @@ export default function ReservationForm({
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !formData.office || !formData.type || !formData.pickupTime || !formData.returnTime || !formData.driverAge}
           className="w-full px-4 py-2.5 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 text-sm disabled:opacity-50"
         >
           {isSubmitting ? "Booking..." : "RESERVE NOW"}

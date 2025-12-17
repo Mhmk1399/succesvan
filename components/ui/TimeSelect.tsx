@@ -48,12 +48,16 @@ export default function TimeSelect({
     const currentDateStr = selectedDate.toISOString().split('T')[0];
     
     return reservedSlots.some((r) => {
-      if (isStartTime && r.startDate === currentDateStr) {
-        return slot >= r.startTime && slot < r.endTime;
+      if (r.isSameDay && r.startDate === currentDateStr) {
+        return slot >= r.startTime && slot <= r.endTime;
       }
       
-      if (!isStartTime && r.endDate === currentDateStr) {
-        return slot > r.startTime && slot <= r.endTime;
+      if (isStartTime) {
+        return slot === r.startTime;
+      }
+      
+      if (!isStartTime) {
+        return slot === r.endTime;
       }
       
       return false;
@@ -71,7 +75,7 @@ export default function TimeSelect({
       >
         <span className="flex items-center gap-2">
           <FiClock className="text-amber-400" />
-          {value}
+          {value || "Select time"}
         </span>
         <FiChevronDown
           className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -109,10 +113,10 @@ export default function TimeSelect({
                   }`}
                 >
                   <span className="flex-1">{slot}</span>
-                  {!disabled && extensionTimes && (slot < extensionTimes.normalStart || slot > extensionTimes.normalEnd) && (
+                  {!disabled && extensionTimes && (extensionTimes.normalStart === extensionTimes.normalEnd || slot < extensionTimes.normalStart || slot > extensionTimes.normalEnd) && (
                     <>
                       <div className="w-1.5 h-1.5 absolute left-1 rounded-full bg-yellow-400"></div>
-                      <span className="text-[9px] text-yellow-400">extra(+£{extensionTimes.price})</span>
+                      <span className="text-[9px] text-yellow-400">+£{extensionTimes.price}</span>
                     </>
                   )}
                   {!disabled && extensionTimes && extensionTimes.normalStart !== extensionTimes.normalEnd && slot >= extensionTimes.normalStart && slot <= extensionTimes.normalEnd && (

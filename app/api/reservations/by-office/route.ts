@@ -11,23 +11,32 @@ export async function GET(req: NextRequest) {
     const officeId = searchParams.get("office");
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
+    const type = searchParams.get("type");
 
     if (!officeId) return errorResponse("Office ID is required", 400);
 
     const query: any = { office: officeId };
 
-    // Find reservations that overlap with the selected date
-    if (startDate) {
+    if (type === "start" && startDate) {
       const date = new Date(startDate);
       const dayStart = new Date(date);
       dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(date);
       dayEnd.setHours(23, 59, 59, 999);
-
-      // Find reservations where:
-      // - startDate is on this day, OR
-      // - endDate is on this day, OR
-      // - reservation spans across this day
+      query.startDate = { $gte: dayStart, $lte: dayEnd };
+    } else if (type === "end" && endDate) {
+      const date = new Date(endDate);
+      const dayStart = new Date(date);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(date);
+      dayEnd.setHours(23, 59, 59, 999);
+      query.endDate = { $gte: dayStart, $lte: dayEnd };
+    } else if (startDate) {
+      const date = new Date(startDate);
+      const dayStart = new Date(date);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(date);
+      dayEnd.setHours(23, 59, 59, 999);
       query.$or = [
         { startDate: { $gte: dayStart, $lte: dayEnd } },
         { endDate: { $gte: dayStart, $lte: dayEnd } },
@@ -40,7 +49,6 @@ export async function GET(req: NextRequest) {
       model: office,
     });
 
-    // Group slots by date
     const reservedSlots = reservations.map((r: any) => {
       const resStart = new Date(r.startDate);
       const resEnd = new Date(r.endDate);
