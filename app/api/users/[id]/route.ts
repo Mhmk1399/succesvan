@@ -39,7 +39,14 @@ export async function PATCH(
       body.password = await bcrypt.hash(body.password, 10);
     }
 
-    const user = await User.findByIdAndUpdate(id, body, {
+    const updateData: any = {};
+    Object.keys(body).forEach((key) => {
+      if (body[key] !== undefined && body[key] !== null) {
+        updateData[key] = body[key];
+      }
+    });
+
+    const user = await User.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
     }).select("-password");
