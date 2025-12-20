@@ -41,15 +41,19 @@ export async function PATCH(
 
     const updateData: any = {};
     Object.keys(body).forEach((key) => {
-      if (body[key] !== undefined && body[key] !== null) {
+      if (body[key] !== undefined && body[key] !== null && body[key] !== "") {
         updateData[key] = body[key];
       }
     });
 
-    const user = await User.findByIdAndUpdate(id, updateData, {
-      new: true,
-      runValidators: true,
-    }).select("-password");
+    const user = await User.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).select("-password");
     if (!user) return errorResponse("User not found", 404);
     return successResponse(user);
   } catch (error) {
