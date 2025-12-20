@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
       try {
         await sendSMS(
           phoneNumber,
-          `Your success van hire verification code is: ${verificationCode}`
+          `Your SuccessVanHire verification code is: ${verificationCode}
+          successvanhire.co.uk`
         );
       } catch (error) {
         const message =

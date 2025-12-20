@@ -46,8 +46,14 @@ interface AddOn {
   name: string;
   description?: string;
   pricingType: "flat" | "tiered";
-  flatPrice?: number;
-  tiers?: { minDays: number; maxDays: number; price: number }[];
+  flatPrice?: {
+    amount: number;
+    isPerDay: boolean;
+  };
+  tieredPrice?: {
+    isPerDay: boolean;
+    tiers: { minDays: number; maxDays: number; price: number }[];
+  };
 }
 
 export default function ReservationModal({ onClose }: { onClose: () => void }) {
@@ -64,6 +70,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     startTime: string;
     endTime: string;
   } | null>(null);
+  const [selectedOfficeData, setSelectedOfficeData] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     office: "",
@@ -117,11 +124,44 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
   }, [officeHours, formData.startTime, reservedSlots]);
 
   const selectedCategory = categories.find((c) => c._id === formData.category);
+  
+  // Calculate extension prices
+  const extensionPrices = useMemo(() => {
+    let pickupExtension = 0;
+    let returnExtension = 0;
+    
+    if (selectedOfficeData && formData.startDate && formData.startTime && formData.endDate && formData.endTime) {
+      const startDay = new Date(formData.startDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      const endDay = new Date(formData.endDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      
+      const startDaySchedule = selectedOfficeData.workingTime?.find((wt: any) => wt.day === startDay);
+      const endDaySchedule = selectedOfficeData.workingTime?.find((wt: any) => wt.day === endDay);
+      
+      if (startDaySchedule?.pickupExtension && formData.startTime < startDaySchedule.startTime) {
+        pickupExtension = startDaySchedule.pickupExtension.flatPrice || 0;
+      }
+      if (startDaySchedule?.pickupExtension && formData.startTime > startDaySchedule.endTime) {
+        pickupExtension = startDaySchedule.pickupExtension.flatPrice || 0;
+      }
+      
+      if (endDaySchedule?.returnExtension && formData.endTime < endDaySchedule.startTime) {
+        returnExtension = endDaySchedule.returnExtension.flatPrice || 0;
+      }
+      if (endDaySchedule?.returnExtension && formData.endTime > endDaySchedule.endTime) {
+        returnExtension = endDaySchedule.returnExtension.flatPrice || 0;
+      }
+    }
+    
+    return { pickupExtension, returnExtension };
+  }, [selectedOfficeData, formData.startDate, formData.startTime, formData.endDate, formData.endTime]);
+  
   const priceCalc = usePriceCalculation(
     formData.startDate ? `${formData.startDate}T${formData.startTime}` : "",
     formData.endDate ? `${formData.endDate}T${formData.endTime}` : "",
     selectedCategory?.pricingTiers || [],
-    (selectedCategory as any)?.extrahoursRate || 0
+    (selectedCategory as any)?.extrahoursRate || 0,
+    extensionPrices.pickupExtension,
+    extensionPrices.returnExtension
   );
 
   // Fetch offices and types
@@ -146,6 +186,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
         .then((res) => res.json())
         .then((data) => {
           const office = data.data;
+          setSelectedOfficeData(office);
           if (office?.categories && office.categories.length > 0) {
             const filtered = office.categories.filter((cat: any) => {
               const catTypeId =
@@ -382,13 +423,19 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
 
       const addOnsCost = selectedAddOns.reduce((total, item) => {
         const addon = addOns.find((a) => a._id === item.addOn);
-        if (!addon) return total;
+        if (!addon || !priceCalc) return total;
+        
         if (addon.pricingType === "flat") {
-          return total + (addon.flatPrice || 0) * item.quantity;
+          const amount = addon.flatPrice?.amount || 0;
+          const isPerDay = addon.flatPrice?.isPerDay || false;
+          const multiplier = isPerDay ? priceCalc.totalDays : 1;
+          return total + (amount * multiplier * item.quantity);
         } else {
           const tierIndex = item.selectedTierIndex ?? 0;
-          const price = addon.tiers?.[tierIndex]?.price || 0;
-          return total + price * item.quantity;
+          const price = addon.tieredPrice?.tiers?.[tierIndex]?.price || 0;
+          const isPerDay = addon.tieredPrice?.isPerDay || false;
+          const multiplier = isPerDay ? priceCalc.totalDays : 1;
+          return total + (price * multiplier * item.quantity);
         }
       }, 0);
 
@@ -885,7 +932,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                         const selected = selectedAddOns.find(
                           (s) => s.addOn === addon._id
                         );
-                        const rentalDays = Math.ceil(priceCalc.totalHours / 24);
+                        const rentalDays = priceCalc.totalDays;
                         return (
                           <div
                             key={addon._id}
@@ -903,45 +950,56 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                 )}
                                 {addon.pricingType === "flat" ? (
                                   <p className="text-[#fe9a00] text-sm font-bold mt-1">
-                                    £{addon.flatPrice}
+                                    £{addon.flatPrice?.amount || 0}
+                                    {addon.flatPrice?.isPerDay && (
+                                      <span className="text-gray-400 text-xs ml-1">
+                                        /day × {rentalDays} days = £{(addon.flatPrice.amount * rentalDays).toFixed(2)}
+                                      </span>
+                                    )}
                                   </p>
                                 ) : (
                                   <div className="mt-2 space-y-1">
-                                    {addon.tiers?.map((tier, idx) => (
-                                      <button
-                                        key={idx}
-                                        onClick={() => {
-                                          const existing = selectedAddOns.find(
-                                            (s) => s.addOn === addon._id
-                                          );
-                                          if (
-                                            existing?.selectedTierIndex === idx
-                                          )
-                                            return;
-                                          setSelectedAddOns((prev) => {
-                                            const filtered = prev.filter(
-                                              (s) => s.addOn !== addon._id
+                                    {addon.tieredPrice?.tiers?.map((tier, idx) => {
+                                      const isInRange = rentalDays >= tier.minDays && rentalDays <= tier.maxDays;
+                                      const totalPrice = addon.tieredPrice?.isPerDay ? tier.price * rentalDays : tier.price;
+                                      return (
+                                        <button
+                                          key={idx}
+                                          onClick={() => {
+                                            const existing = selectedAddOns.find(
+                                              (s) => s.addOn === addon._id
                                             );
-                                            return [
-                                              ...filtered,
-                                              {
-                                                addOn: addon._id,
-                                                quantity: 1,
-                                                selectedTierIndex: idx,
-                                              },
-                                            ];
-                                          });
-                                        }}
-                                        className={`text-xs px-2 py-1 rounded border transition-all ${
-                                          selected?.selectedTierIndex === idx
-                                            ? "bg-[#fe9a00] border-[#fe9a00] text-white"
-                                            : "bg-white/5 border-white/10 text-gray-400 hover:border-[#fe9a00]/50"
-                                        }`}
-                                      >
-                                        {tier.minDays}-{tier.maxDays} days: £
-                                        {tier.price}
-                                      </button>
-                                    ))}
+                                            if (existing?.selectedTierIndex === idx) return;
+                                            setSelectedAddOns((prev) => {
+                                              const filtered = prev.filter(
+                                                (s) => s.addOn !== addon._id
+                                              );
+                                              return [
+                                                ...filtered,
+                                                {
+                                                  addOn: addon._id,
+                                                  quantity: 1,
+                                                  selectedTierIndex: idx,
+                                                },
+                                              ];
+                                            });
+                                          }}
+                                          className={`text-xs px-2 py-1 rounded border transition-all ${
+                                            selected?.selectedTierIndex === idx
+                                              ? "bg-[#fe9a00] border-[#fe9a00] text-white"
+                                              : isInRange
+                                              ? "bg-green-500/20 border-green-500/50 text-green-300 hover:border-[#fe9a00]/50"
+                                              : "bg-white/5 border-white/10 text-gray-400 hover:border-[#fe9a00]/50"
+                                          }`}
+                                        >
+                                          {tier.minDays}-{tier.maxDays} days: £{tier.price}
+                                          {addon.tieredPrice?.isPerDay && (
+                                            <span className="ml-1">/day = £{totalPrice.toFixed(2)}</span>
+                                          )}
+                                          {isInRange && <span className="ml-1">✓</span>}
+                                        </button>
+                                      );
+                                    })}
                                   </div>
                                 )}
                               </div>
@@ -1029,7 +1087,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {showAddOnsModal && priceCalc && (
+      {showAddOnsModal && priceCalc && addOns.length > 0 && (
         <AddOnsModal
           addOns={addOns}
           selectedAddOns={selectedAddOns}

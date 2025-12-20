@@ -51,7 +51,7 @@ export default function DynamicTableView<
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data, error, isLoading, mutate } = useSWR(
-    `${apiEndpoint}?page=${currentPage}&limit=${itemsPerPage}`,
+    `${apiEndpoint}${apiEndpoint.includes('?') ? '&' : '?'}page=${currentPage}&limit=${itemsPerPage}`,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -164,16 +164,27 @@ export default function DynamicTableView<
                 <td className="px-3 py-2 text-gray-300 font-semibold">
                   {idx + 1}
                 </td>
-                {visibleColumns.map((col, colIdx) => (
-                  <td
-                    key={`${colIdx}-${String(col.key)}`}
-                    className="px-3 py-2 text-gray-300"
-                  >
-                    {col.render
-                      ? col.render(item[col.key], item)
-                      : String(item[col.key] || "-")}
-                  </td>
-                ))}
+                {visibleColumns.map((col, colIdx) => {
+                  const cellValue = item[col.key];
+                  let displayContent;
+                  
+                  if (col.render) {
+                    displayContent = col.render(cellValue, item);
+                  } else if (typeof cellValue === 'object' && cellValue !== null) {
+                    displayContent = JSON.stringify(cellValue);
+                  } else {
+                    displayContent = String(cellValue || "-");
+                  }
+                  
+                  return (
+                    <td
+                      key={`${colIdx}-${String(col.key)}`}
+                      className="px-3 py-2 text-gray-300"
+                    >
+                      {displayContent}
+                    </td>
+                  );
+                })}
                 <td className="px-3 py-2 flex gap-2">
                   <button
                     onClick={() => {
@@ -253,6 +264,17 @@ export default function DynamicTableView<
               )}
               {columns.map((col, colIdx) => {
                 const isHidden = hiddenColumns.includes(col.key);
+                const value = item[col.key as string];
+                let displayValue;
+                
+                if (col.render) {
+                  displayValue = col.render(value, viewingItem);
+                } else if (typeof value === 'object' && value !== null) {
+                  displayValue = JSON.stringify(value);
+                } else {
+                  displayValue = String(value || "-");
+                }
+                
                 return (
                   <div key={`${colIdx}-${String(col.key)}`}>
                     <label className="text-sm font-semibold text-gray-400">
@@ -264,9 +286,7 @@ export default function DynamicTableView<
                       )}
                     </label>
                     <div className="text-white mt-1">
-                      {col.render
-                        ? col.render(item[col.key as string], viewingItem)
-                        : String(item[col.key as string] || "-")}
+                      {displayValue}
                     </div>
                   </div>
                 );
@@ -365,7 +385,12 @@ export default function DynamicTableView<
                         let tierInfo = "";
 
                         if (addon?.pricingType === "flat") {
-                          price = addon.flatPrice || 0;
+                          // Handle both old format (number) and new format (object)
+                          if (typeof addon.flatPrice === 'object' && addon.flatPrice !== null) {
+                            price = (addon.flatPrice as any).amount || 0;
+                          } else {
+                            price = addon.flatPrice || 0;
+                          }
                         } else if (addon?.pricingType === "tiered") {
                           const tierIndex = addOnItem.selectedTierIndex ?? 0;
                           const tier = addon.tiers?.[tierIndex];

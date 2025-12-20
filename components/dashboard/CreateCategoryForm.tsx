@@ -13,6 +13,7 @@ export default function CategoriesContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const mutateRef = useRef<(() => Promise<any>) | null>(null);
   const [types, setTypes] = useState<Type[]>([]);
+  const [offices, setOffices] = useState<any[]>([]);
   const [uploading, setUploading] = useState({ image: false, video: false });
   const [formData, setFormData] = useState({
     name: "",
@@ -40,19 +41,25 @@ export default function CategoriesContent() {
       air: "",
       service: "",
     },
+    offices: [] as string[],
   });
 
   useEffect(() => {
-    const fetchTypes = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("/api/types");
-        const data = await res.json();
-        if (data.success) setTypes(data.data);
+        const [typesRes, officesRes] = await Promise.all([
+          fetch("/api/types"),
+          fetch("/api/offices?limit=100"),
+        ]);
+        const typesData = await typesRes.json();
+        const officesData = await officesRes.json();
+        if (typesData.success) setTypes(typesData.data);
+        if (officesData.success) setOffices(officesData.data);
       } catch (error) {
-        console.log("Failed to fetch types", error);
+        console.log("Failed to fetch data", error);
       }
     };
-    fetchTypes();
+    fetchData();
   }, []);
 
   const handleInputChange = (
@@ -121,6 +128,7 @@ export default function CategoriesContent() {
         air: "",
         service: "",
       },
+      offices: [] as string[],
     });
     setEditingId(null);
   };
@@ -259,6 +267,20 @@ export default function CategoriesContent() {
 
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Operation failed");
+
+      if (formData.offices.length > 0) {
+        await Promise.all(
+          formData.offices.map((officeId) =>
+            fetch(`/api/offices/${officeId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                $addToSet: { categories: data.data._id },
+              }),
+            })
+          )
+        );
+      }
 
       showToast.success(
         `Category ${editingId ? "updated" : "created"} successfully!`
@@ -770,6 +792,33 @@ export default function CategoriesContent() {
                     min="1"
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Add to Offices (Optional)
+                </label>
+                <div className="space-y-2 max-h-40 overflow-y-auto p-3 bg-white/5 border border-white/10 rounded-lg">
+                  {offices.map((office) => (
+                    <label
+                      key={office._id}
+                      className="flex items-center gap-2 text-white cursor-pointer hover:bg-white/5 p-2 rounded"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.offices.includes(office._id)}
+                        onChange={(e) => {
+                          const selected = e.target.checked
+                            ? [...formData.offices, office._id]
+                            : formData.offices.filter((id) => id !== office._id);
+                          setFormData((prev) => ({ ...prev, offices: selected }));
+                        }}
+                        className="w-4 h-4 accent-[#fe9a00]"
+                      />
+                      {office.name}
+                    </label>
+                  ))}
                 </div>
               </div>
 

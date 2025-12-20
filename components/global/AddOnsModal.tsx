@@ -8,8 +8,14 @@ interface AddOn {
   name: string;
   description?: string;
   pricingType: "flat" | "tiered";
-  flatPrice?: number;
-  tiers?: { minDays: number; maxDays: number; price: number }[];
+  flatPrice?: {
+    amount: number;
+    isPerDay: boolean;
+  };
+  tieredPrice?: {
+    isPerDay: boolean;
+    tiers: { minDays: number; maxDays: number; price: number }[];
+  };
 }
 
 interface AddOnsModalProps {
@@ -31,23 +37,49 @@ export default function AddOnsModal({
 
   const getAddOnPrice = (addon: AddOn, tierIndex?: number) => {
     if (addon.pricingType === "flat") {
-      return addon.flatPrice || 0;
+      const amount = addon.flatPrice?.amount || 0;
+      const isPerDay = addon.flatPrice?.isPerDay || false;
+      return isPerDay ? amount * rentalDays : amount;
     }
-    if (tierIndex !== undefined && addon.tiers?.[tierIndex]) {
-      return addon.tiers[tierIndex].price;
+    if (tierIndex !== undefined && addon.tieredPrice?.tiers?.[tierIndex]) {
+      const tier = addon.tieredPrice.tiers[tierIndex];
+      if (rentalDays >= tier.minDays && rentalDays <= tier.maxDays) {
+        const price = tier.price;
+        const isPerDay = addon.tieredPrice.isPerDay || false;
+        return isPerDay ? price * rentalDays : price;
+      }
     }
-    return addon.tiers?.[0]?.price || 0;
+    const matchingTier = addon.tieredPrice?.tiers?.find(
+      (tier) => rentalDays >= tier.minDays && rentalDays <= tier.maxDays
+    );
+    if (matchingTier) {
+      const isPerDay = addon.tieredPrice?.isPerDay || false;
+      return isPerDay ? matchingTier.price * rentalDays : matchingTier.price;
+    }
+    return 0;
   };
 
   const handleToggle = (addonId: string, addon: AddOn) => {
+    const hasMatchingTier = addon.pricingType === "flat" || addon.tieredPrice?.tiers?.some(
+      (tier) => rentalDays >= tier.minDays && rentalDays <= tier.maxDays
+    );
+    if (!hasMatchingTier) return;
+    
     const exists = selected.find((s) => s.addOn === addonId);
     if (exists) {
       setSelected(selected.filter((s) => s.addOn !== addonId));
     } else {
+      let defaultTierIndex = 0;
+      if (addon.pricingType === "tiered" && addon.tieredPrice?.tiers) {
+        const matchingTierIndex = addon.tieredPrice.tiers.findIndex(
+          (tier) => rentalDays >= tier.minDays && rentalDays <= tier.maxDays
+        );
+        defaultTierIndex = matchingTierIndex !== -1 ? matchingTierIndex : 0;
+      }
       setSelected([...selected, { 
         addOn: addonId, 
         quantity: 1,
-        selectedTierIndex: addon.pricingType === "tiered" ? 0 : undefined
+        selectedTierIndex: addon.pricingType === "tiered" ? defaultTierIndex : undefined
       }]);
     }
   };
@@ -84,7 +116,10 @@ export default function AddOnsModal({
       <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4">
         <div className="bg-[#1a2847] rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden border border-white/10">
           <div className="flex items-center justify-between p-6 border-b border-white/10">
-            <h2 className="text-2xl font-black text-white">Select Add-ons</h2>
+            <div>
+              <h2 className="text-2xl font-black text-white">Select Add-ons</h2>
+              <p className="text-gray-400 text-sm mt-1">Rental Duration: {rentalDays} day{rentalDays !== 1 ? 's' : ''}</p>
+            </div>
             <button
               onClick={onClose}
               className="p-2 hover:bg-white/10 rounded-lg transition-colors"
@@ -94,7 +129,11 @@ export default function AddOnsModal({
           </div>
 
           <div className="p-6 space-y-4 overflow-y-auto max-h-[50vh]">
-            {addOns.map((addon) => {
+            {addOns.filter((addon) => {
+              return addon.pricingType === "flat" || addon.tieredPrice?.tiers?.some(
+                (tier) => rentalDays >= tier.minDays && rentalDays <= tier.maxDays
+              );
+            }).map((addon) => {
               const isSelected = selected.find((s) => s.addOn === addon._id);
               const price = getAddOnPrice(addon, isSelected?.selectedTierIndex);
 
@@ -119,31 +158,49 @@ export default function AddOnsModal({
                         </p>
                       )}
                       {addon.pricingType === "flat" ? (
-                        <p className="text-[#fe9a00] font-bold mt-2">£{price}</p>
+                        <p className="text-[#fe9a00] font-bold mt-2">
+                          £{addon.flatPrice?.amount || 0}
+                          {addon.flatPrice?.isPerDay && (
+                            <span className="text-gray-400 text-xs ml-1">
+                              /day × {rentalDays} days = £{price.toFixed(2)}
+                            </span>
+                          )}
+                        </p>
                       ) : (
                         <div className="mt-2">
-                          <p className="text-gray-400 text-xs mb-2">Select tier:</p>
+                          <p className="text-gray-400 text-xs mb-2">
+                            Select tier {addon.tieredPrice?.isPerDay && `(per day × ${rentalDays} days)`}:
+                          </p>
                           <div className="flex flex-wrap gap-2">
-                            {addon.tiers?.map((tier, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (isSelected) {
-                                    handleTierChange(addon._id, idx);
-                                  }
-                                }}
-                                disabled={!isSelected}
-                                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
-                                  isSelected?.selectedTierIndex === idx
-                                    ? "bg-[#fe9a00] text-white"
-                                    : "bg-white/10 text-gray-400 hover:bg-white/20"
-                                } disabled:opacity-50`}
-                              >
-                                {tier.minDays}-{tier.maxDays} days: £{tier.price}
-                              </button>
-                            ))}
+                            {addon.tieredPrice?.tiers?.filter(
+                              (tier) => rentalDays >= tier.minDays && rentalDays <= tier.maxDays
+                            ).map((tier, idx) => {
+                              const originalIdx = addon.tieredPrice?.tiers?.indexOf(tier) || 0;
+                              const tierPrice = addon.tieredPrice?.isPerDay ? tier.price * rentalDays : tier.price;
+                              return (
+                                <button
+                                  key={originalIdx}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (isSelected) {
+                                      handleTierChange(addon._id, originalIdx);
+                                    }
+                                  }}
+                                  disabled={!isSelected}
+                                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                                    isSelected?.selectedTierIndex === originalIdx
+                                      ? "bg-[#fe9a00] text-white"
+                                      : "bg-green-500/20 border border-green-500/50 text-green-300 hover:bg-green-500/30"
+                                  } disabled:opacity-50`}
+                                >
+                                  {tier.minDays}-{tier.maxDays} days: £{tier.price}
+                                  {addon.tieredPrice?.isPerDay && (
+                                    <span className="ml-1">/day = £{tierPrice.toFixed(2)}</span>
+                                  )}
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
                       )}

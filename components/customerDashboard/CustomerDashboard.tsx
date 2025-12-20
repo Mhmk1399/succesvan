@@ -340,11 +340,17 @@ function ReservesContent() {
       apiEndpoint={`/api/reservations?userId=${userId}`}
       title="Reservation"
       hideDelete
+      hiddenColumns={[]}
       columns={[
         {
           key: "office" as keyof Reservation,
           label: "Office",
-          render: (value: any) => value?.name || "-",
+          render: (value: any) => {
+            if (typeof value === 'object' && value?.name) {
+              return value.name;
+            }
+            return value || "-";
+          },
         },
         {
           key: "startDate" as keyof Reservation,
@@ -361,6 +367,15 @@ function ReservesContent() {
         {
           key: "totalPrice" as keyof Reservation,
           label: "Total Price",
+          render: (value: any) => {
+            if (typeof value === 'object' && value !== null && value?.amount !== undefined) {
+              return <span>£{value.amount}</span>;
+            }
+            if (typeof value === 'number') {
+              return <span>£{value}</span>;
+            }
+            return <span>£0</span>;
+          },
         },
         {
           key: "status" as keyof Reservation,
