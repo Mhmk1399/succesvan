@@ -16,6 +16,7 @@ interface PriceCalculationResult {
   breakdown: string;
   pickupExtensionPrice?: number;
   returnExtensionPrice?: number;
+  addOnsPrice?: number;
 }
 
 export function usePriceCalculation(
@@ -24,7 +25,9 @@ export function usePriceCalculation(
   pricingTiers: PricingTier[],
   extraHoursRate: number = 0,
   pickupExtensionPrice: number = 0,
-  returnExtensionPrice: number = 0
+  returnExtensionPrice: number = 0,
+  gearExtraCostPerDay: number = 0,
+  addOnsPrice: number = 0
 ): PriceCalculationResult | null {
   const [result, setResult] = useState<PriceCalculationResult | null>(null);
 
@@ -76,29 +79,36 @@ export function usePriceCalculation(
 
     const pricePerDay = tier.pricePerDay;
 
-    // Calculate total price: (days * pricePerDay) + (extraHours * extraHoursRate) + extensions
+    // Calculate total price: (days * pricePerDay) + (days * gearExtraCost) + (extraHours * extraHoursRate) + extensions + addons
     const daysPrice = totalDays * pricePerDay;
+    const gearExtraPrice = totalDays * gearExtraCostPerDay;
     const extraHoursPrice = extraHours * extraHoursRate;
-    const totalPrice = daysPrice + extraHoursPrice + pickupExtensionPrice + returnExtensionPrice;
+    const totalPrice = daysPrice + gearExtraPrice + extraHoursPrice + pickupExtensionPrice + returnExtensionPrice + addOnsPrice;
 
     // Build breakdown
     let breakdown = "";
     if (totalDays > 0 && extraHours > 0) {
-      breakdown = `${totalDays} day${totalDays > 1 ? 's' : ''} (£${pricePerDay}/day) + ${extraHours}h (£${extraHoursRate}/hr)`;
+      breakdown = `(${totalDays} day${totalDays > 1 ? 's' : ''} × £${pricePerDay}) + (${extraHours}h × £${extraHoursRate})`;
     } else if (totalDays > 0) {
-      breakdown = `${totalDays} day${totalDays > 1 ? 's' : ''} (£${pricePerDay}/day)`;
+      breakdown = `(${totalDays} day${totalDays > 1 ? 's' : ''} × £${pricePerDay})`;
     } else {
-      breakdown = `${extraHours}h (£${extraHoursRate}/hr)`;
+      breakdown = `(${extraHours}h × £${extraHoursRate})`;
     }
     
     if (pickupExtensionPrice > 0) {
-      breakdown += ` + Pickup Extension (£${pickupExtensionPrice})`;
+      breakdown += ` + (Pickup Extension £${pickupExtensionPrice})`;
     }
     if (returnExtensionPrice > 0) {
-      breakdown += ` + Return Extension (£${returnExtensionPrice})`;
+      breakdown += ` + (Return Extension £${returnExtensionPrice})`;
     }
     
-    breakdown += ` = £${totalPrice}`;
+    if (gearExtraCostPerDay > 0) {
+      breakdown += ` + (${totalDays} day${totalDays > 1 ? 's' : ''} × £${gearExtraCostPerDay} Gear)`;
+    }
+    
+    if (addOnsPrice > 0) {
+      breakdown += ` + (Add-ons £${addOnsPrice})`;
+    }
 
     // Log calculation details
     console.log('=== Price Calculation ===');
@@ -112,6 +122,7 @@ export function usePriceCalculation(
     console.log('Price Per Day:', `£${pricePerDay}`);
     console.log('Extra Hours Rate:', `£${extraHoursRate}`);
     console.log('Days Price:', `£${daysPrice}`);
+    console.log('Gear Extra Price:', `£${gearExtraPrice}`);
     console.log('Extra Hours Price:', `£${extraHoursPrice}`);
     console.log('Pickup Extension Price:', `£${pickupExtensionPrice}`);
     console.log('Return Extension Price:', `£${returnExtensionPrice}`);
@@ -129,8 +140,9 @@ export function usePriceCalculation(
       breakdown,
       pickupExtensionPrice,
       returnExtensionPrice,
+      addOnsPrice,
     });
-  }, [startDate, endDate, pricingTiers, extraHoursRate, pickupExtensionPrice, returnExtensionPrice]);
+  }, [startDate, endDate, pricingTiers, extraHoursRate, pickupExtensionPrice, returnExtensionPrice, gearExtraCostPerDay, addOnsPrice]);
 
   return result;
 }

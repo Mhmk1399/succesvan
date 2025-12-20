@@ -169,6 +169,7 @@ export default function CategoriesContent() {
         air: String(item.servicesPeriod?.air || ""),
         service: String(item.servicesPeriod?.service || ""),
       },
+      offices: [],
     });
     setEditingId(item._id || null);
     setIsFormOpen(true);

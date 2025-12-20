@@ -81,6 +81,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     endTime: "10:00",
     driverAge: 25,
     category: "",
+    gearType: "manual" as "manual" | "automatic",
     phone: "",
     code: "",
     name: "",
@@ -155,13 +156,47 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     return { pickupExtension, returnExtension };
   }, [selectedOfficeData, formData.startDate, formData.startTime, formData.endDate, formData.endTime]);
   
+  const rentalDays = useMemo(() => {
+    if (!formData.startDate || !formData.endDate || !formData.startTime || !formData.endTime) return 0;
+    const start = new Date(`${formData.startDate}T${formData.startTime}`);
+    const end = new Date(`${formData.endDate}T${formData.endTime}`);
+    const diffTime = end.getTime() - start.getTime();
+    const totalMinutes = diffTime / (1000 * 60);
+    const totalHours = Math.floor(totalMinutes / 60);
+    const remainingMinutes = totalMinutes % 60;
+    const billableHours = remainingMinutes > 15 ? totalHours + 1 : totalHours;
+    return Math.floor(billableHours / 24); // Use floor to match totalDays calculation
+  }, [formData.startDate, formData.startTime, formData.endDate, formData.endTime]);
+  
+  const addOnsPrice = useMemo(() => {
+    return selectedAddOns.reduce((sum, item) => {
+      const addon = addOns.find((a) => a._id === item.addOn);
+      if (!addon) return sum;
+      if (addon.pricingType === "flat") {
+        const amount = addon.flatPrice?.amount || 0;
+        const isPerDay = addon.flatPrice?.isPerDay || false;
+        return sum + (isPerDay ? amount * rentalDays : amount) * item.quantity;
+      }
+      if (item.selectedTierIndex !== undefined && addon.tieredPrice?.tiers?.[item.selectedTierIndex]) {
+        const tier = addon.tieredPrice.tiers[item.selectedTierIndex];
+        const isPerDay = addon.tieredPrice.isPerDay || false;
+        return sum + (isPerDay ? tier.price * rentalDays : tier.price) * item.quantity;
+      }
+      return sum;
+    }, 0);
+  }, [selectedAddOns, addOns, rentalDays]);
+  
   const priceCalc = usePriceCalculation(
     formData.startDate ? `${formData.startDate}T${formData.startTime}` : "",
     formData.endDate ? `${formData.endDate}T${formData.endTime}` : "",
     selectedCategory?.pricingTiers || [],
     (selectedCategory as any)?.extrahoursRate || 0,
     extensionPrices.pickupExtension,
-    extensionPrices.returnExtension
+    extensionPrices.returnExtension,
+    formData.gearType === "automatic" && (selectedCategory as any)?.gear?.availableTypes?.includes("automatic") && (selectedCategory as any)?.gear?.availableTypes?.includes("manual")
+      ? (selectedCategory as any)?.gear?.automaticExtraCost || 0
+      : 0,
+    addOnsPrice
   );
 
   // Fetch offices and types
@@ -907,18 +942,55 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                         height={80}
                         className="rounded-lg object-cover"
                       />
-                      <div>
+                      <div className="flex-1">
                         <h4 className="text-white font-bold">
                           {selectedCategory.name}
                         </h4>
                         <p className="text-gray-400 text-sm">
                           {priceCalc.breakdown}
                         </p>
-                        <p className="text-[#fe9a00] font-bold">
-                          £{priceCalc.totalPrice}
+                        <p className="text-[#fe9a00] font-bold text-lg mt-1">
+                          Total: £{priceCalc.totalPrice}
                         </p>
                       </div>
                     </div>
+                    
+                    {selectedCategory?.gear?.availableTypes?.length > 1 && (
+                      <div className="mt-3 pt-3 border-t border-white/10">
+                        <h5 className="text-white text-sm font-semibold mb-2">Gear Type</h5>
+                        <div className="flex gap-2">
+                          {selectedCategory.gear.availableTypes.includes("manual") && (
+                            <button
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, gearType: "manual" }))}
+                              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                                formData.gearType === "manual"
+                                  ? "bg-[#fe9a00] text-white"
+                                  : "bg-white/10 text-gray-300 hover:bg-white/20"
+                              }`}
+                            >
+                              Manual
+                            </button>
+                          )}
+                          {selectedCategory.gear.availableTypes.includes("automatic") && (
+                            <button
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, gearType: "automatic" }))}
+                              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                                formData.gearType === "automatic"
+                                  ? "bg-[#fe9a00] text-white"
+                                  : "bg-white/10 text-gray-300 hover:bg-white/20"
+                              }`}
+                            >
+                              Automatic
+                              {(selectedCategory.gear as any)?.automaticExtraCost > 0 && (
+                                <span className="text-xs ml-1">(+£{(selectedCategory.gear as any).automaticExtraCost}/day)</span>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
