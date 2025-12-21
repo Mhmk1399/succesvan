@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
@@ -23,7 +23,7 @@ import Image from "next/image";
 import { VanData, Office } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
 import TimeSelect from "@/components/ui/TimeSelect";
-import { generateTimeSlots,   } from "@/utils/timeSlots";
+import { generateTimeSlots } from "@/utils/timeSlots";
 import { usePriceCalculation } from "@/hooks/usePriceCalculation";
 import AddOnsModal from "./AddOnsModal";
 
@@ -68,12 +68,24 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
 
   useEffect(() => {
     if (categories.length === 0 && vans.length === 0) {
+      console.log("Fetching categories for van listing...");
       fetch("/api/categories")
-        .then((res) => res.json())
-        .then((data) => data.success && setCategories(data.data))
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          console.log("Van listing categories response:", data);
+          // Handle double-nested data structure
+          const categories = data?.data?.data || data?.data || [];
+          if (Array.isArray(categories) && categories.length > 0) {
+            console.log("Setting van categories:", categories.length);
+            setCategories(categories);
+          }
+        })
         .catch((err) => console.log("Failed to fetch categories", err));
     }
-  }, []);
+  }, [categories.length, vans.length]);
 
   const setCardRef = useCallback((index: number, el: HTMLDivElement | null) => {
     cardsRef.current[index] = el;
@@ -223,11 +235,12 @@ function ReservationPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
-  const [reservedSlots, setReservedSlots] = useState<
-    { startTime: string; endTime: string }[]
+  const [startDateReservedSlots, setStartDateReservedSlots] = useState<
+    { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[]
   >([]);
-  const [pickupTimeSlots, setPickupTimeSlots] = useState<string[]>([]);
-  const [returnTimeSlots, setReturnTimeSlots] = useState<string[]>([]);
+  const [endDateReservedSlots, setEndDateReservedSlots] = useState<
+    { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[]
+  >([]);
   const [addOns, setAddOns] = useState<AddOn[]>([]);
   const [selectedAddOns, setSelectedAddOns] = useState<
     { addOn: string; quantity: number; selectedTierIndex?: number }[]
@@ -235,71 +248,279 @@ function ReservationPanel({
   const [showAddOnsModal, setShowAddOnsModal] = useState(false);
   const [addOnsCost, setAddOnsCost] = useState(0);
 
+  const [pickupExtensionPrice, setPickupExtensionPrice] = useState(0);
+  const [returnExtensionPrice, setReturnExtensionPrice] = useState(0);
+
   const priceCalc = usePriceCalculation(
-    formData.pickupDate
-      ? `${formData.pickupDate}T${formData.pickupTime}:00`
+    dateRange[0].startDate && formData.pickupTime
+      ? `${format(dateRange[0].startDate, "yyyy-MM-dd")}T${formData.pickupTime}:00`
       : "",
-    formData.returnDate
-      ? `${formData.returnDate}T${formData.returnTime}:00`
+    dateRange[0].endDate && formData.returnTime
+      ? `${format(dateRange[0].endDate, "yyyy-MM-dd")}T${formData.returnTime}:00`
       : "",
     (van as any).pricingTiers || [],
-    (van as any).extrahoursRate || 0
+    (van as any).extrahoursRate || 0,
+    pickupExtensionPrice,
+    returnExtensionPrice,
+    0,
+    addOnsCost
   );
 
   // Fetch offices
   useEffect(() => {
+    console.log("Fetching offices...");
     fetch("/api/offices")
-      .then((res) => res.json())
-      .then((data) => setOffices(data.data || []))
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        console.log("Offices response:", data);
+        const offices = data?.data?.data || data?.data || [];
+        if (Array.isArray(offices)) {
+          setOffices(offices);
+        }
+      })
       .catch((err) => console.log("Failed to fetch offices", err));
   }, []);
 
   // Fetch add-ons
   useEffect(() => {
     fetch("/api/addons")
-      .then((res) => res.json())
-      .then((data) => setAddOns(data.data || []))
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const addOns = data?.data?.data || data?.data || [];
+        if (Array.isArray(addOns)) {
+          setAddOns(addOns);
+        }
+      })
       .catch((err) => console.error(err));
   }, []);
 
-  // Calculate add-ons cost
+  // Calculate extension prices
   useEffect(() => {
-    if (!priceCalc) {
-      setAddOnsCost(0);
+    if (!formData.office || !dateRange[0].startDate || !formData.pickupTime) {
+      setPickupExtensionPrice(0);
       return;
     }
+    const office = offices.find((o) => o._id === formData.office);
+    if (!office) return;
+    const date = dateRange[0].startDate;
+    const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+    const workingDay = office.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+    if (workingDay?.pickupExtension) {
+      const [pickupHour, pickupMin] = formData.pickupTime.split(':').map(Number);
+      const [startHour, startMin] = workingDay.startTime.split(':').map(Number);
+      const [endHour, endMin] = workingDay.endTime.split(':').map(Number);
+      const pickupMinutes = pickupHour * 60 + pickupMin;
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+      const beforeStart = startMinutes - workingDay.pickupExtension.hoursBefore * 60;
+      const afterEnd = endMinutes + workingDay.pickupExtension.hoursAfter * 60;
+      if (pickupMinutes < startMinutes || pickupMinutes > endMinutes) {
+        if (pickupMinutes >= beforeStart && pickupMinutes < startMinutes) {
+          setPickupExtensionPrice(workingDay.pickupExtension.flatPrice || 0);
+        } else if (pickupMinutes > endMinutes && pickupMinutes <= afterEnd) {
+          setPickupExtensionPrice(workingDay.pickupExtension.flatPrice || 0);
+        } else {
+          setPickupExtensionPrice(0);
+        }
+      } else {
+        setPickupExtensionPrice(0);
+      }
+    } else {
+      setPickupExtensionPrice(0);
+    }
+  }, [formData.office, formData.pickupTime, dateRange, offices]);
+
+  useEffect(() => {
+    if (!formData.office || !dateRange[0].endDate || !formData.returnTime) {
+      setReturnExtensionPrice(0);
+      return;
+    }
+    const office = offices.find((o) => o._id === formData.office);
+    if (!office) return;
+    const date = dateRange[0].endDate;
+    const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+    const workingDay = office.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+    if (workingDay?.returnExtension) {
+      const [returnHour, returnMin] = formData.returnTime.split(':').map(Number);
+      const [startHour, startMin] = workingDay.startTime.split(':').map(Number);
+      const [endHour, endMin] = workingDay.endTime.split(':').map(Number);
+      const returnMinutes = returnHour * 60 + returnMin;
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+      const beforeStart = startMinutes - workingDay.returnExtension.hoursBefore * 60;
+      const afterEnd = endMinutes + workingDay.returnExtension.hoursAfter * 60;
+      if (returnMinutes < startMinutes || returnMinutes > endMinutes) {
+        if (returnMinutes >= beforeStart && returnMinutes < startMinutes) {
+          setReturnExtensionPrice(workingDay.returnExtension.flatPrice || 0);
+        } else if (returnMinutes > endMinutes && returnMinutes <= afterEnd) {
+          setReturnExtensionPrice(workingDay.returnExtension.flatPrice || 0);
+        } else {
+          setReturnExtensionPrice(0);
+        }
+      } else {
+        setReturnExtensionPrice(0);
+      }
+    } else {
+      setReturnExtensionPrice(0);
+    }
+  }, [formData.office, formData.returnTime, dateRange, offices]);
+
+  // Calculate add-ons cost
+  useEffect(() => {
+    const rentalDays = priceCalc?.totalDays || 1;
     const cost = selectedAddOns.reduce((total, item) => {
       const addon = addOns.find((a) => a._id === item.addOn);
       if (!addon) return total;
       if (addon.pricingType === "flat") {
-        return total + (addon.flatPrice || 0) * item.quantity;
+        const amount = addon.flatPrice?.amount || 0;
+        const isPerDay = addon.flatPrice?.isPerDay || false;
+        const price = isPerDay ? amount * rentalDays : amount;
+        return total + price * item.quantity;
       } else {
         const tierIndex = item.selectedTierIndex ?? 0;
-        const price = addon.tiers?.[tierIndex]?.price || 0;
-        return total + price * item.quantity;
+        const tier = addon.tieredPrice?.tiers?.[tierIndex];
+        if (tier) {
+          const isPerDay = addon.tieredPrice?.isPerDay || false;
+          const price = isPerDay ? tier.price * rentalDays : tier.price;
+          return total + price * item.quantity;
+        }
+        return total;
       }
     }, 0);
     setAddOnsCost(cost);
   }, [selectedAddOns, priceCalc, addOns]);
 
-  // Fetch reserved slots and generate time slots
-  useEffect(() => {
-    if (formData.office && formData.pickupDate) {
-      fetch(
-        `/api/reservations/by-office?office=${formData.office}&startDate=${formData.pickupDate}`
-      )
-        .then((res) => res.json())
-        .then((data) => setReservedSlots(data.data?.reservedSlots || []))
-        .catch((err) => console.error(err));
+  const pickupTimeSlots = useMemo(() => {
+    if (!formData.office || !dateRange[0].startDate) return [];
+    const office = offices.find((o) => o._id === formData.office);
+    if (!office) return [];
 
-      const office = offices.find((o) => o._id === formData.office);
-      if (office) {
-        const slots = generateTimeSlots("00:00", "23:45", 15);
-        setPickupTimeSlots(slots);
-        setReturnTimeSlots(slots);
+    const date = dateRange[0].startDate;
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayName = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ][date.getDay()];
+
+    const specialDay = office.specialDays?.find(
+      (sd: any) => sd.month === month && sd.day === day
+    );
+    let start = "00:00",
+      end = "23:59";
+
+    if (specialDay && specialDay.isOpen) {
+      start = specialDay.startTime;
+      end = specialDay.endTime;
+    } else {
+      const workingDay = office.workingTime?.find(
+        (w: any) => w.day === dayName && w.isOpen
+      );
+      if (workingDay) {
+        start = workingDay.startTime;
+        end = workingDay.endTime;
+        
+        if (workingDay.pickupExtension) {
+          const [startHour, startMin] = start.split(':').map(Number);
+          const [endHour, endMin] = end.split(':').map(Number);
+          const extendedStartMinutes = Math.max(0, startHour * 60 + startMin - workingDay.pickupExtension.hoursBefore * 60);
+          const extendedEndMinutes = Math.min(1439, endHour * 60 + endMin + workingDay.pickupExtension.hoursAfter * 60);
+          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(2, '0')}:${String(extendedStartMinutes % 60).padStart(2, '0')}`;
+          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(2, '0')}:${String(extendedEndMinutes % 60).padStart(2, '0')}`;
+        }
       }
     }
-  }, [formData.office, formData.pickupDate, offices]);
+
+    return generateTimeSlots(start, end, 15);
+  }, [formData.office, dateRange, offices]);
+
+  const returnTimeSlots = useMemo(() => {
+    if (!formData.office || !dateRange[0].endDate)
+      return [];
+    const office = offices.find((o) => o._id === formData.office);
+    if (!office) return [];
+
+    const date = dateRange[0].endDate;
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayName = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ][date.getDay()];
+
+    const specialDay = office.specialDays?.find(
+      (sd: any) => sd.month === month && sd.day === day
+    );
+    let start = "00:00", end = "23:59";
+
+    if (specialDay && specialDay.isOpen) {
+      start = specialDay.startTime;
+      end = specialDay.endTime;
+    } else {
+      const workingDay = office.workingTime?.find(
+        (w: any) => w.day === dayName && w.isOpen
+      );
+      if (workingDay) {
+        start = workingDay.startTime;
+        end = workingDay.endTime;
+        
+        if (workingDay.returnExtension) {
+          const [startHour, startMin] = start.split(':').map(Number);
+          const [endHour, endMin] = end.split(':').map(Number);
+          const extendedStartMinutes = Math.max(0, startHour * 60 + startMin - workingDay.returnExtension.hoursBefore * 60);
+          const extendedEndMinutes = Math.min(1439, endHour * 60 + endMin + workingDay.returnExtension.hoursAfter * 60);
+          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(2, '0')}:${String(extendedStartMinutes % 60).padStart(2, '0')}`;
+          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(2, '0')}:${String(extendedEndMinutes % 60).padStart(2, '0')}`;
+        }
+      }
+    }
+
+    return generateTimeSlots(start, end, 15);
+  }, [formData.office, dateRange, offices]);
+
+  useEffect(() => {
+    if (formData.office && dateRange[0].startDate) {
+      const date = dateRange[0].startDate;
+      const startDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      setStartDateReservedSlots([]);
+      fetch(`/api/reservations/by-office?office=${formData.office}&startDate=${startDate}&type=start`)
+        .then(res => res.json())
+        .then(data => {
+          setStartDateReservedSlots(data.data?.reservedSlots || []);
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [formData.office, dateRange]);
+
+  useEffect(() => {
+    if (formData.office && dateRange[0].endDate) {
+      const date = dateRange[0].endDate;
+      const endDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      setEndDateReservedSlots([]);
+      fetch(`/api/reservations/by-office?office=${formData.office}&endDate=${endDate}&type=end`)
+        .then(res => res.json())
+        .then(data => {
+          setEndDateReservedSlots(data.data?.reservedSlots || []);
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [formData.office, dateRange]);
 
   // Check if user is logged in and load URL params
   useEffect(() => {
@@ -548,8 +769,7 @@ function ReservationPanel({
           category: formData.category,
           startDate: pickupDateTime,
           endDate: returnDateTime,
-          totalPrice:
-            (priceCalc?.totalPrice || 0) + addOnsCost + (van.deposit || 0),
+          totalPrice: priceCalc?.totalPrice || 0,
           dirverAge: formData.driverAge || 25,
           messege: formData.notes,
           status: "pending",
@@ -589,8 +809,36 @@ function ReservationPanel({
     }
   };
 
-  // Get today's date for min attribute
-  const today = new Date().toISOString().split("T")[0];
+  const getSelectedOffice = () => {
+    return offices.find((o) => o._id === formData.office);
+  };
+
+  const isDateDisabled = (date: Date) => {
+    const office = getSelectedOffice();
+    if (!office) return false;
+
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayName = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ][date.getDay()];
+
+    const specialDay = office.specialDays?.find(
+      (sd) => sd.month === month && sd.day === day
+    );
+    if (specialDay && !specialDay.isOpen) return true;
+
+    const workingDay = office.workingTime?.find((w) => w.day === dayName);
+    if (workingDay && !workingDay.isOpen) return true;
+
+    return false;
+  };
 
   if (isSuccess) {
     return (
@@ -662,10 +910,10 @@ function ReservationPanel({
               </h3>
               <div className="flex items-baseline gap-2">
                 <span className="text-[#fe9a00] font-black text-2xl">
-                  £{(van as any).pricingTiers?.[0]?.pricePerHour || 0}
+                  £{(van as any).showPrice || 0}
                 </span>
-                <span className="text-gray-400 text-xs">per hour (from)</span>
               </div>
+              <p className="text-gray-400 text-xs">from</p>
             </div>
           </div>
 
@@ -1002,6 +1250,15 @@ function ReservationPanel({
                           }}
                           minDate={new Date()}
                           rangeColors={["#fe9a00"]}
+                          disabledDates={
+                            formData.office
+                              ? (Array.from({ length: 365 }, (_, i) => {
+                                  const date = new Date();
+                                  date.setDate(date.getDate() + i);
+                                  return isDateDisabled(date) ? date : null;
+                                }).filter(Boolean) as Date[])
+                              : []
+                          }
                         />
                         <button
                           type="button"
@@ -1021,28 +1278,64 @@ function ReservationPanel({
                       <FiClock className="text-[#fe9a00]" />
                       Pickup Time
                     </label>
-                    <TimeSelect
-                      value={formData.pickupTime}
-                      onChange={(time) =>
-                        setFormData((prev) => ({ ...prev, pickupTime: time }))
-                      }
-                      slots={pickupTimeSlots}
-                      reservedSlots={reservedSlots}
-                    />
+                    {dateRange[0].startDate && (() => {
+                      const office = getSelectedOffice();
+                      const date = dateRange[0].startDate;
+                      const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+                      const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+                      const extensionTimes = workingDay?.pickupExtension ? {
+                        start: pickupTimeSlots[0],
+                        end: pickupTimeSlots[pickupTimeSlots.length - 1],
+                        normalStart: workingDay.startTime,
+                        normalEnd: workingDay.endTime,
+                        price: workingDay.pickupExtension.flatPrice
+                      } : undefined;
+                      return (
+                        <TimeSelect
+                          value={formData.pickupTime}
+                          onChange={(time) =>
+                            setFormData((prev) => ({ ...prev, pickupTime: time }))
+                          }
+                          slots={pickupTimeSlots}
+                          reservedSlots={startDateReservedSlots}
+                          selectedDate={dateRange[0].startDate}
+                          isStartTime={true}
+                          extensionTimes={extensionTimes}
+                        />
+                      );
+                    })()}
                   </div>
                   <div>
                     <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
                       <FiClock className="text-[#fe9a00]" />
                       Return Time
                     </label>
-                    <TimeSelect
-                      value={formData.returnTime}
-                      onChange={(time) =>
-                        setFormData((prev) => ({ ...prev, returnTime: time }))
-                      }
-                      slots={returnTimeSlots}
-                      reservedSlots={reservedSlots}
-                    />
+                    {dateRange[0].endDate && (() => {
+                      const office = getSelectedOffice();
+                      const date = dateRange[0].endDate;
+                      const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+                      const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+                      const extensionTimes = workingDay?.returnExtension ? {
+                        start: returnTimeSlots[0],
+                        end: returnTimeSlots[returnTimeSlots.length - 1],
+                        normalStart: workingDay.startTime,
+                        normalEnd: workingDay.endTime,
+                        price: workingDay.returnExtension.flatPrice
+                      } : undefined;
+                      return (
+                        <TimeSelect
+                          value={formData.returnTime}
+                          onChange={(time) =>
+                            setFormData((prev) => ({ ...prev, returnTime: time }))
+                          }
+                          slots={returnTimeSlots}
+                          reservedSlots={endDateReservedSlots}
+                          selectedDate={dateRange[0].endDate}
+                          isStartTime={false}
+                          extensionTimes={extensionTimes}
+                        />
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -1144,26 +1437,47 @@ function ReservationPanel({
               </h3>
 
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Hourly Rate</span>
-                  <span className="text-white font-semibold">
-                    £{(van as any).pricingTiers?.[0]?.pricePerHour || 0} (from)
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Security Deposit</span>
-                  <span className="text-white font-semibold">
-                    £{van.deposit || 0}
-                  </span>
-                </div>
-                <div className="border-t border-[#fe9a00]/20 pt-2 mt-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-white font-bold">Deposit Due</span>
-                    <span className="text-[#fe9a00] font-black text-xl">
-                      £{van.deposit || 0}
-                    </span>
+                {priceCalc && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">Rental ({priceCalc.totalDays} days{priceCalc.extraHours > 0 && ` + ${priceCalc.extraHours}h`})</span>
+                      <span className="text-white font-semibold">
+                        £{(priceCalc.totalDays * priceCalc.pricePerDay + priceCalc.extraHours * priceCalc.extraHoursRate).toFixed(2)}
+                      </span>
+                    </div>
+                    {pickupExtensionPrice > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Pickup Extension</span>
+                        <span className="text-white font-semibold">£{pickupExtensionPrice}</span>
+                      </div>
+                    )}
+                    {returnExtensionPrice > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Return Extension</span>
+                        <span className="text-white font-semibold">£{returnExtensionPrice}</span>
+                      </div>
+                    )}
+                    {addOnsCost > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Add-ons</span>
+                        <span className="text-white font-semibold">£{addOnsCost}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-[#fe9a00]/20 pt-2 mt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white font-bold">Total Price</span>
+                        <span className="text-[#fe9a00] font-black text-xl">
+                          £{priceCalc.totalPrice}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
+                {!priceCalc && (
+                  <div className="text-center text-gray-400 py-4">
+                    Select dates and times to see pricing
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mt-3">
@@ -1263,7 +1577,7 @@ function ReservationPanel({
             selectedAddOns={selectedAddOns}
             onSave={setSelectedAddOns}
             onClose={() => setShowAddOnsModal(false)}
-            rentalDays={priceCalc ? Math.ceil(priceCalc.totalHours / 24) : 1}
+            rentalDays={priceCalc?.totalDays || 1}
           />
         )}
       </div>
@@ -1328,27 +1642,19 @@ function CategoryCard({
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs font-semibold">
-            <span className="text-green-500">✓</span>
-            {/* <span className="text-gray-200">
-              {category.gear === "manual,automatic"
-                ? "Manual & Automatic"
-                : category.gear.charAt(0).toUpperCase() +
-                  category.gear.slice(1)}
-            </span> */}
-          </div>
+          
 
           <div className="flex items-end justify-between gap-3">
             <div>
+                            <p className="text-gray-300 text-sm mt-0.5">from</p>
+
               <div className="flex items-baseline gap-1.5">
+                
                 <span className="text-3xl font-black text-white">
-                  £{(category as any).pricingTiers?.[0]?.pricePerHour || 0}
-                </span>
-                <span className="text-gray-300 text-xs font-semibold">
-                  /hour
+                  £{(category as any).showPrice || 0}
+                  <span className="text-gray-300 text-sm m-0.5 font-normal">/day</span>
                 </span>
               </div>
-              <p className="text-gray-400 text-[10px] mt-0.5">from</p>
             </div>
             <button
               onClick={onView}

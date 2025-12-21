@@ -265,7 +265,7 @@ export default function AddOnsModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors font-semibold"
+                className="mb-10 flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors font-semibold"
               >
                 Cancel
               </button>
@@ -275,9 +275,9 @@ export default function AddOnsModal({
                   onSave(selected);
                   onClose();
                 }}
-                className="flex-1 px-4 py-3 bg-[#fe9a00] hover:bg-orange-600 text-white rounded-lg transition-colors font-semibold"
+                className="flex-1 px-4 py-3 bg-[#fe9a00] hover:bg-orange-600 text-white rounded-lg transition-colors font-semibold shadow-lg"
               >
-                Save ({selected.length})
+                Confirm Add-ons ({selected.length})
               </button>
             </div>
           </div>

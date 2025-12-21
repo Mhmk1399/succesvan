@@ -58,7 +58,7 @@ interface AddOn {
 
 export default function ReservationModal({ onClose }: { onClose: () => void }) {
   const { user } = useAuth();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [offices, setOffices] = useState<Office[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [types, setTypes] = useState<any[]>([]);
@@ -563,7 +563,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
           <div className="sticky top-0 bg-[#0f172b] border-b border-white/10 p-2 flex items-center justify-between z-10">
             <div>
               <h2 className="text-2xl font-black text-white">Book Your Van</h2>
-              <p className="text-gray-400 text-sm">Step {step} of 3</p>
+              <p className="text-gray-400 text-sm">Step {step} of 4</p>
             </div>
             <button
               onClick={onClose}
@@ -751,7 +751,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                       }}
                       className="w-full bg-[#fe9a00] hover:bg-orange-600 hover:scale-[1.02] text-white font-bold py-4 rounded-xl transition-all duration-200 shadow-2xl"
                     >
-                      {user ? "Continue to Add-ons" : "Continue to Login"}
+                      {user ? "Continue" : "Continue to Login"}
                     </button>
                   </div>
                 )}
@@ -925,11 +925,11 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
               </div>
             )}
 
-            {/* Step 3: Add-ons & Submit */}
+            {/* Step 3: Add-ons */}
             {step === 3 && (
               <div className="space-y-4">
                 <h3 className="text-white font-bold text-lg mb-4">
-                  Review & Add-ons
+                  Add-ons & Gear Selection
                 </h3>
 
                 {selectedCategory && priceCalc && (
@@ -1141,12 +1141,182 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                 )}
 
                 <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="w-full bg-[#fe9a00] hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50"
+                  onClick={() => setStep(4)}
+                  className="w-full bg-[#fe9a00] hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all"
                 >
-                  {isSubmitting ? "Processing..." : "Confirm Reservation"}
+                  Continue to Review
                 </button>
+              </div>
+            )}
+
+            {/* Step 4: Final Review & Confirm */}
+            {step === 4 && (
+              <div className="space-y-4">
+                <h3 className="text-white font-bold text-lg mb-4">
+                  Review Your Booking
+                </h3>
+
+                {/* Office & Location */}
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FiMapPin className="text-[#fe9a00] text-lg" />
+                    <h4 className="text-white font-semibold">Pickup Location</h4>
+                  </div>
+                  <p className="text-white font-bold">{offices.find(o => o._id === formData.office)?.name}</p>
+                </div>
+
+                {/* Vehicle Details */}
+                {selectedCategory && (
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <h4 className="text-white font-semibold mb-3">Vehicle Details</h4>
+                    <div className="flex gap-3">
+                      <Image
+                        src={selectedCategory.image}
+                        alt={selectedCategory.name}
+                        width={100}
+                        height={100}
+                        className="rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <h5 className="text-white font-bold text-lg">{selectedCategory.name}</h5>
+                        <p className="text-gray-400 text-sm">{selectedCategory.expert} or similar</p>
+                        <div className="flex gap-2 mt-2 flex-wrap">
+                          <div className="px-2 py-1 rounded bg-white/10 text-xs text-white">
+                            <FiUsers className="inline mr-1" />{selectedCategory.seats} seats
+                          </div>
+                          <div className="px-2 py-1 rounded bg-white/10 text-xs text-white">
+                            <BsFuelPump className="inline mr-1" />{selectedCategory.fuel}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Rental Period */}
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FiCalendar className="text-[#fe9a00] text-lg" />
+                    <h4 className="text-white font-semibold">Rental Period</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Pickup:</span>
+                      <span className="text-white font-semibold">{formData.startDate} at {formData.startTime}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Return:</span>
+                      <span className="text-white font-semibold">{formData.endDate} at {formData.endTime}</span>
+                    </div>
+                    {priceCalc && (
+                      <div className="flex justify-between pt-2 border-t border-white/10">
+                        <span className="text-gray-400">Duration:</span>
+                        <span className="text-white font-semibold">{priceCalc.totalDays} days, {priceCalc.totalHours % 24} hours</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Gear Type */}
+                {formData.gearType && selectedCategory?.gear?.availableTypes?.length > 1 && (
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <h4 className="text-white font-semibold mb-2">Gear Type</h4>
+                    <p className="text-white capitalize">{formData.gearType}</p>
+                    {formData.gearType === "automatic" && (selectedCategory.gear as any)?.automaticExtraCost > 0 && (
+                      <p className="text-gray-400 text-sm mt-1">+£{(selectedCategory.gear as any).automaticExtraCost}/day</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Add-ons */}
+                {selectedAddOns.length > 0 && (
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <FiPackage className="text-[#fe9a00] text-lg" />
+                      <h4 className="text-white font-semibold">Add-ons</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {selectedAddOns.map((item) => {
+                        const addon = addOns.find((a) => a._id === item.addOn);
+                        if (!addon) return null;
+                        let price = 0;
+                        if (addon.pricingType === "flat") {
+                          const amount = addon.flatPrice?.amount || 0;
+                          const isPerDay = addon.flatPrice?.isPerDay || false;
+                          price = (isPerDay ? amount * rentalDays : amount) * item.quantity;
+                        } else if (item.selectedTierIndex !== undefined && addon.tieredPrice?.tiers?.[item.selectedTierIndex]) {
+                          const tier = addon.tieredPrice.tiers[item.selectedTierIndex];
+                          const isPerDay = addon.tieredPrice.isPerDay || false;
+                          price = (isPerDay ? tier.price * rentalDays : tier.price) * item.quantity;
+                        }
+                        return (
+                          <div key={item.addOn} className="flex justify-between">
+                            <span className="text-gray-300">{addon.name} × {item.quantity}</span>
+                            <span className="text-white font-semibold">£{price.toFixed(2)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Customer Details */}
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FiUser className="text-[#fe9a00] text-lg" />
+                    <h4 className="text-white font-semibold">Customer Details</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Name:</span>
+                      <span className="text-white font-semibold">{formData.name} {formData.lastName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Email:</span>
+                      <span className="text-white font-semibold">{formData.email}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Phone:</span>
+                      <span className="text-white font-semibold">{formData.phone}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Driver Age:</span>
+                      <span className="text-white font-semibold">{formData.driverAge} years</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Price Breakdown */}
+                {priceCalc && (
+                  <div className="bg-gradient-to-br from-[#fe9a00]/20 to-orange-600/20 border border-[#fe9a00]/30 rounded-xl p-4">
+                    <h4 className="text-white font-bold text-lg mb-3">Price Breakdown</h4>
+                    <div className="space-y-2 text-sm">
+                      <p className="text-gray-300">{priceCalc.breakdown}</p>
+                      <div className="pt-3 border-t border-white/20">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white font-bold text-lg">Total Price:</span>
+                          <span className="text-[#fe9a00] font-black text-3xl">£{priceCalc.totalPrice}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setStep(3)}
+                    className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="flex-1 bg-[#fe9a00] hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Processing..." : "Confirm Reservation"}
+                  </button>
+                </div>
 
                 {errors.submit && (
                   <p className="text-red-400 text-sm text-center">

@@ -34,8 +34,20 @@ export default function OfficesContent() {
 
   useEffect(() => {
     fetch("/api/categories")
-      .then((res) => res.json())
-      .then((data) => setCategories(data.data || []));
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        console.log("Categories API response:", data);
+        // Handle double-nested data structure
+        const categories = data?.data?.data || data?.data || [];
+        if (Array.isArray(categories) && categories.length > 0) {
+          console.log("Setting categories:", categories.length);
+          setCategories(categories);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch categories:", err));
   }, []);
 
   const handleInputChange = (
@@ -209,6 +221,7 @@ export default function OfficesContent() {
 
               <div className="space-y-2">
                 <label className="text-white font-semibold">Categories</label>
+                {categories.length === 0 && <p className="text-gray-400 text-sm">Loading categories...</p>}
                 <div className="grid grid-cols-2 gap-2">
                   {categories.map((cat) => (
                     <label key={cat._id} className="flex items-center gap-2 p-2 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10">

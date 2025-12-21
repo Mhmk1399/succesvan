@@ -87,7 +87,7 @@ export default function ReservationForm({
 
   const pickupTimeSlots = useMemo(() => {
     if (!formData.office || !dateRange[0].startDate) return [];
-    const office = offices.find((o) => o._id === formData.office);
+    const office = offices?.find((o) => o._id === formData.office);
     if (!office) return [];
 
     const date = dateRange[0].startDate;
@@ -137,7 +137,7 @@ export default function ReservationForm({
   const returnTimeSlots = useMemo(() => {
     if (!formData.office || !dateRange[0].endDate)
       return [];
-    const office = offices.find((o) => o._id === formData.office);
+    const office = offices?.find((o) => o._id === formData.office);
     if (!office) return [];
 
     const date = dateRange[0].endDate;
@@ -446,7 +446,7 @@ export default function ReservationForm({
   };
 
   const getSelectedOffice = () => {
-    return offices.find((o) => o._id === formData.office);
+    return offices?.find((o) => o._id === formData.office);
   };
 
   const isDateDisabled = (date: Date) => {
@@ -566,7 +566,7 @@ export default function ReservationForm({
         pickupTime: formData.pickupTime,
         returnTime: formData.returnTime,
         pickupLocation:
-          offices.find((o) => o._id === formData.office)?.name || "",
+          offices?.find((o) => o._id === formData.office)?.name || "",
         driverAge: formData.driverAge,
         message: formData.message,
       };
