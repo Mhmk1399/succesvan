@@ -28,19 +28,17 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function DynamicTableView<
   T extends { _id?: string; id?: string }
->(
-  {
-    apiEndpoint,
-    title,
-    columns,
-    onEdit,
-    onDuplicate,
-    onMutate,
-    itemsPerPage = 10,
-    hideDelete = false,
-    hiddenColumns = [],
-  }: DynamicTableViewProps<T>
-) {
+>({
+  apiEndpoint,
+  title,
+  columns,
+  onEdit,
+  onDuplicate,
+  onMutate,
+  itemsPerPage = 10,
+  hideDelete = false,
+  hiddenColumns = [],
+}: DynamicTableViewProps<T>) {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<T | null>(null);
 
@@ -51,7 +49,9 @@ export default function DynamicTableView<
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data, error, isLoading, mutate } = useSWR(
-    `${apiEndpoint}${apiEndpoint.includes('?') ? '&' : '?'}page=${currentPage}&limit=${itemsPerPage}`,
+    `${apiEndpoint}${
+      apiEndpoint.includes("?") ? "&" : "?"
+    }page=${currentPage}&limit=${itemsPerPage}`,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -104,7 +104,9 @@ export default function DynamicTableView<
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <div className="w-12 h-12 border-4 border-[#fe9a00]/30 border-t-[#fe9a00] rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-300 text-lg font-semibold">Loading {title}...</p>
+        <p className="text-gray-300 text-lg font-semibold">
+          Loading {title}...
+        </p>
         <p className="text-gray-500 text-sm mt-2">Please wait</p>
       </div>
     );
@@ -114,7 +116,9 @@ export default function DynamicTableView<
         <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
           <FiAlertCircle className="text-red-400 text-3xl" />
         </div>
-        <p className="text-red-400 text-lg font-semibold">Failed to load data</p>
+        <p className="text-red-400 text-lg font-semibold">
+          Failed to load data
+        </p>
         <p className="text-gray-400 text-sm mt-2">Please try again later</p>
       </div>
     );
@@ -167,15 +171,18 @@ export default function DynamicTableView<
                 {visibleColumns.map((col, colIdx) => {
                   const cellValue = item[col.key];
                   let displayContent;
-                  
+
                   if (col.render) {
                     displayContent = col.render(cellValue, item);
-                  } else if (typeof cellValue === 'object' && cellValue !== null) {
+                  } else if (
+                    typeof cellValue === "object" &&
+                    cellValue !== null
+                  ) {
                     displayContent = JSON.stringify(cellValue);
                   } else {
                     displayContent = String(cellValue || "-");
                   }
-                  
+
                   return (
                     <td
                       key={`${colIdx}-${String(col.key)}`}
@@ -233,7 +240,7 @@ export default function DynamicTableView<
       </div>
 
       {isViewOpen && viewingItem && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm min-h-screen z-50 flex items-center justify-center p-4">
           <div className="bg-[#1a2847] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/10">
             <div className="sticky top-0 flex items-center justify-between p-6 border-b border-white/10 bg-[#1a2847]">
               <h2 className="text-2xl font-black text-white">View {title}</h2>
@@ -266,15 +273,15 @@ export default function DynamicTableView<
                 const isHidden = hiddenColumns.includes(col.key);
                 const value = item[col.key as string];
                 let displayValue;
-                
+
                 if (col.render) {
                   displayValue = col.render(value, viewingItem);
-                } else if (typeof value === 'object' && value !== null) {
+                } else if (typeof value === "object" && value !== null) {
                   displayValue = JSON.stringify(value);
                 } else {
                   displayValue = String(value || "-");
                 }
-                
+
                 return (
                   <div key={`${colIdx}-${String(col.key)}`}>
                     <label className="text-sm font-semibold text-gray-400">
@@ -285,9 +292,7 @@ export default function DynamicTableView<
                         </span>
                       )}
                     </label>
-                    <div className="text-white mt-1">
-                      {displayValue}
-                    </div>
+                    <div className="text-white mt-1">{displayValue}</div>
                   </div>
                 );
               })}
@@ -386,7 +391,10 @@ export default function DynamicTableView<
 
                         if (addon?.pricingType === "flat") {
                           // Handle both old format (number) and new format (object)
-                          if (typeof addon.flatPrice === 'object' && addon.flatPrice !== null) {
+                          if (
+                            typeof addon.flatPrice === "object" &&
+                            addon.flatPrice !== null
+                          ) {
                             price = (addon.flatPrice as any).amount || 0;
                           } else {
                             price = addon.flatPrice || 0;
@@ -487,26 +495,78 @@ export default function DynamicTableView<
                   </label>
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     {item.images.map((img: string, idx: number) => (
-                      <Image
+                      <div
                         key={idx}
-                        src={img}
-                        alt={`Image ${idx + 1}`}
-                        width={150}
-                        height={120}
-                        className="rounded-lg object-cover"
-                      />
+                        onClick={() => window.open(img, "_blank")}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                      >
+                        <Image
+                          src={img}
+                          alt={`Image ${idx + 1}`}
+                          width={150}
+                          height={120}
+                          className="rounded-lg object-cover"
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>
               )}
+
+              {item.licenceAttached &&
+                (item.licenceAttached.front || item.licenceAttached.back) && (
+                  <div>
+                    <label className="text-sm font-semibold text-gray-400">
+                      License
+                    </label>
+                    <div className="mt-2 grid grid-cols-2 gap-4">
+                      {item.licenceAttached.front && (
+                        <div
+                          onClick={() =>
+                            window.open(item.licenceAttached.front, "_blank")
+                          }
+                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                        >
+                          <p className="text-xs text-gray-400 mb-2">Front</p>
+                          <Image
+                            src={item.licenceAttached.front}
+                            alt="License Front"
+                            width={150}
+                            height={100}
+                            className="rounded-lg object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      )}
+                      {item.licenceAttached.back && (
+                        <div
+                          onClick={() =>
+                            window.open(item.licenceAttached.back, "_blank")
+                          }
+                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                        >
+                          <p className="text-xs text-gray-400 mb-2">Back</p>
+                          <Image
+                            src={item.licenceAttached.back}
+                            alt="License Back"
+                            width={150}
+                            height={100}
+                            className="rounded-lg object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
             </div>
           </div>
         </div>
       )}
 
       {isDeleteOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1a2847] rounded-2xl max-w-sm w-full border border-white/10">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm min-h-screen z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a2847]/50 rounded-2xl max-w-sm w-full border border-white/10">
             <div className="p-6 space-y-4">
               <h2 className="text-xl font-black text-white">Delete {title}?</h2>
               <p className="text-gray-400">This action cannot be undone.</p>

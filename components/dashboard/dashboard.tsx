@@ -31,6 +31,7 @@ import AddOnsContent from "./CreateAddOnForm";
 import ReservationsManagement from "./ReservationsManagement";
 import TestimonialsManagement from "./TestimonialsManagement";
 import ContactsManagement from "./ContactsManagement";
+import AnnouncementManagement from "./AnnouncementManagement";
 import { MenuItem } from "@/types/type";
 
 const menuItems: MenuItem[] = [
@@ -100,6 +101,12 @@ const menuItems: MenuItem[] = [
     label: "Contacts",
     icon: <FiUsers />,
     color: "from-cyan-500 to-cyan-600",
+  },
+  {
+    id: "announcements",
+    label: "Announcements",
+    icon: <FiBell />,
+    color: "from-rose-500 to-rose-600",
   },
   {
     id: "documents",
@@ -229,6 +236,7 @@ export default function Dashboard() {
           {activeTab === "reserves" && <ReservesContent />}
           {activeTab === "Testimonial" && <TestimonialsManagement />}
           {activeTab === "contacts" && <ContactsManagement />}
+          {activeTab === "announcements" && <AnnouncementManagement />}
           {activeTab === "documents" && <DocumentsContent />}
         </div>
       </main>
