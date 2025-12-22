@@ -11,6 +11,7 @@ export type FastPhase =
   | "ask_needs"
   | "show_suggestions"
   | "collect_booking"
+  | "select_gear"
   | "select_addons"
   | "show_receipt"
   | "verify_phone"
@@ -22,7 +23,10 @@ export interface CategorySuggestion {
   description?: string;
   image?: string;
   fuel: string;
-  gear: string;
+  gear: {
+    availableTypes: string[];
+    automaticExtraCost?: number;
+  } | string;
   seats: number;
   doors: number;
   pricingTiers: Array<{
@@ -40,12 +44,18 @@ export interface AddOnOption {
   name: string;
   description?: string;
   pricingType: "flat" | "tiered";
-  flatPrice?: number;
-  tiers?: Array<{
-    minDays: number;
-    maxDays: number;
-    price: number;
-  }>;
+  flatPrice?: {
+    amount: number;
+    isPerDay: boolean;
+  };
+  tieredPrice?: {
+    isPerDay: boolean;
+    tiers: Array<{
+      minDays: number;
+      maxDays: number;
+      price: number;
+    }>;
+  };
 }
 
 export interface SelectedAddOn {
@@ -76,6 +86,7 @@ export interface FastAgentState {
     endTime?: string;
     driverAge?: number;
     phoneNumber?: string;
+    gearType?: "manual" | "automatic";
     // Price calculation fields
     totalDays?: number;
     extraHours?: number;
@@ -308,6 +319,19 @@ export function useFastAgent() {
     return sendMessage("confirm", "confirm_receipt");
   }, [sendMessage]);
 
+  // Select gear type - transition from select_gear to select_addons
+  const selectGear = useCallback((gearType: "manual" | "automatic", gearExtraCost: number) => {
+    setAgentState(prev => ({
+      ...prev,
+      phase: "select_addons",
+      booking: {
+        ...prev.booking,
+        gearType,
+        totalPrice: (prev.booking.totalPrice || 0) + gearExtraCost,
+      },
+    }));
+  }, []);
+
   // Send phone verification code
   const sendCode = useCallback(
     async (phoneNumber: string) => {
@@ -350,6 +374,7 @@ export function useFastAgent() {
     voicePhone,
     confirmAddOns,
     skipAddOns,
+    selectGear,
     confirmReceipt,
     sendCode,
     verifyCode,

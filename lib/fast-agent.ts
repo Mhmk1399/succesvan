@@ -27,6 +27,7 @@ export type FastPhase =
   | "ask_needs" // Quick question about needs
   | "show_suggestions" // Display category cards
   | "collect_booking" // Get dates, office, age
+  | "select_gear" // Select gear type
   | "select_addons" // Optional add-ons selection
   | "show_receipt" // Show price and booking summary
   | "verify_phone" // Phone verification
@@ -38,7 +39,10 @@ export interface CategorySuggestion {
   description?: string;
   image?: string;
   fuel: string;
-  gear: string;
+  gear: {
+    availableTypes: string[];
+    automaticExtraCost?: number;
+  } | string;
   seats: number;
   doors: number;
   pricingTiers: Array<{
@@ -56,12 +60,18 @@ export interface AddOnOption {
   name: string;
   description?: string;
   pricingType: "flat" | "tiered";
-  flatPrice?: number;
-  tiers?: Array<{
-    minDays: number;
-    maxDays: number;
-    price: number;
-  }>;
+  flatPrice?: {
+    amount: number;
+    isPerDay: boolean;
+  };
+  tieredPrice?: {
+    isPerDay: boolean;
+    tiers: Array<{
+      minDays: number;
+      maxDays: number;
+      price: number;
+    }>;
+  };
 }
 
 export interface SelectedAddOn {
@@ -97,6 +107,7 @@ export interface FastAgentState {
     endTime?: string;
     driverAge?: number;
     phoneNumber?: string;
+    gearType?: "manual" | "automatic";
     // Calculated price
     totalDays?: number;
     extraHours?: number;
@@ -187,6 +198,20 @@ export async function processFastAgent(
           needsPhoneInput: false,
           needsCodeInput: false,
           needsBookingForm: true,
+          needsAddOns: false,
+          needsReceipt: false,
+          isComplete: false,
+        };
+
+      case "select_gear":
+        // Gear selection is handled by the client, just provide default response
+        return {
+          message: "Please select your preferred transmission type.",
+          state: currentState,
+          showSuggestions: false,
+          needsPhoneInput: false,
+          needsCodeInput: false,
+          needsBookingForm: false,
           needsAddOns: false,
           needsReceipt: false,
           isComplete: false,
@@ -648,12 +673,12 @@ async function handleSubmitBooking(
       description: a.description,
       pricingType: a.pricingType,
       flatPrice: a.flatPrice,
-      tiers: a.tiers,
+      tieredPrice: a.tieredPrice,
     }));
 
     const newState: FastAgentState = {
       ...currentState,
-      phase: "select_addons",
+      phase: "select_gear",
       availableAddOns,
       booking: {
         ...currentState.booking,
@@ -671,13 +696,13 @@ async function handleSubmitBooking(
     };
 
     return {
-      message: "Great! Would you like to add any extras to your booking?",
+      message: "Great! Now let's select your transmission preference.",
       state: newState,
       showSuggestions: false,
       needsPhoneInput: false,
       needsCodeInput: false,
       needsBookingForm: false,
-      needsAddOns: true,
+      needsAddOns: false,
       needsReceipt: false,
       isComplete: false,
     };
@@ -816,7 +841,7 @@ Examples of date parsing:
       description: a.description,
       pricingType: a.pricingType,
       flatPrice: a.flatPrice,
-      tiers: a.tiers,
+      tieredPrice: a.tieredPrice,
     }));
 
     return {
