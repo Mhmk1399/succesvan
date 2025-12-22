@@ -4,6 +4,7 @@ const categorySchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     description: { type: String },
+    purpose: { type: String },
     expert: { type: String },
     image: { type: String },
     video: { type: String },
@@ -19,7 +20,7 @@ const categorySchema = new mongoose.Schema(
     servicesPeriod: {
       tire: { type: Number, min: 1 },
       oil: { type: Number, min: 1 },
-      battery: { type: Number,  min: 1 },
+      battery: { type: Number, min: 1 },
       air: { type: Number, min: 1 },
       service: { type: Number, min: 1 },
     },
@@ -37,11 +38,13 @@ const categorySchema = new mongoose.Schema(
       required: true,
     },
     gear: {
-      availableTypes: [{
-        type: String,
-        enum: ["automatic", "manual"],
-        required: true,
-      }],
+      availableTypes: [
+        {
+          type: String,
+          enum: ["automatic", "manual"],
+          required: true,
+        },
+      ],
       automaticExtraCost: { type: Number, min: 0, default: 0 },
     },
     seats: { type: Number, required: true },
