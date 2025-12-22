@@ -18,6 +18,7 @@ export default function CategoriesContent() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    purpose: "",
     expert: "",
     image: "",
     video: "",
@@ -105,6 +106,7 @@ export default function CategoriesContent() {
     setFormData({
       name: "",
       description: "",
+      purpose: "",
       expert: "",
       image: "",
       video: "",
@@ -139,6 +141,7 @@ export default function CategoriesContent() {
     setFormData({
       name: item.name,
       description: item.description || "",
+      purpose: (item as any).purpose || "",
       expert: (item as any).expert || "",
       image: item.image || "",
       video: (item as any).video || "",
@@ -158,7 +161,9 @@ export default function CategoriesContent() {
       fuel: item.fuel || "",
       gear: {
         availableTypes: (item.gear as any)?.availableTypes || [],
-        automaticExtraCost: String((item.gear as any)?.automaticExtraCost || ""),
+        automaticExtraCost: String(
+          (item.gear as any)?.automaticExtraCost || ""
+        ),
       },
       seats: String(item.seats || ""),
       doors: String(item.doors || ""),
@@ -182,6 +187,7 @@ export default function CategoriesContent() {
       const payload = {
         name: `${item.name} (Copy)`,
         description: item.description,
+        purpose: (item as any).purpose,
         expert: (item as any).expert,
         image: item.image,
         video: (item as any).video,
@@ -228,6 +234,7 @@ export default function CategoriesContent() {
       const payload = {
         name: formData.name,
         description: formData.description,
+        purpose: formData.purpose,
         expert: formData.expert,
         image: formData.image,
         video: formData.video,
@@ -348,6 +355,20 @@ export default function CategoriesContent() {
                   placeholder="Description"
                   value={formData.description}
                   onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                />
+              </div>
+
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Best for (What is this van suitable for?)
+                </label>
+                <textarea
+                  name="purpose"
+                  placeholder="e.g., Perfect for moving house, transporting goods, business deliveries, etc."
+                  value={formData.purpose}
+                  onChange={handleInputChange}
+                  required
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
                 />
               </div>
@@ -711,7 +732,9 @@ export default function CategoriesContent() {
                       onChange={(e) => {
                         const types = e.target.checked
                           ? [...formData.gear.availableTypes, "manual"]
-                          : formData.gear.availableTypes.filter((t) => t !== "manual");
+                          : formData.gear.availableTypes.filter(
+                              (t) => t !== "manual"
+                            );
                         setFormData((prev) => ({
                           ...prev,
                           gear: { ...prev.gear, availableTypes: types },
@@ -724,11 +747,15 @@ export default function CategoriesContent() {
                   <label className="flex items-center gap-2 text-white cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={formData.gear.availableTypes.includes("automatic")}
+                      checked={formData.gear.availableTypes.includes(
+                        "automatic"
+                      )}
                       onChange={(e) => {
                         const types = e.target.checked
                           ? [...formData.gear.availableTypes, "automatic"]
-                          : formData.gear.availableTypes.filter((t) => t !== "automatic");
+                          : formData.gear.availableTypes.filter(
+                              (t) => t !== "automatic"
+                            );
                         setFormData((prev) => ({
                           ...prev,
                           gear: { ...prev.gear, availableTypes: types },
@@ -752,7 +779,10 @@ export default function CategoriesContent() {
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
-                            gear: { ...prev.gear, automaticExtraCost: e.target.value },
+                            gear: {
+                              ...prev.gear,
+                              automaticExtraCost: e.target.value,
+                            },
                           }))
                         }
                         step="0.01"
@@ -812,8 +842,13 @@ export default function CategoriesContent() {
                         onChange={(e) => {
                           const selected = e.target.checked
                             ? [...formData.offices, office._id]
-                            : formData.offices.filter((id) => id !== office._id);
-                          setFormData((prev) => ({ ...prev, offices: selected }));
+                            : formData.offices.filter(
+                                (id) => id !== office._id
+                              );
+                          setFormData((prev) => ({
+                            ...prev,
+                            offices: selected,
+                          }));
                         }}
                         className="w-4 h-4 accent-[#fe9a00]"
                       />
@@ -912,6 +947,7 @@ export default function CategoriesContent() {
         onDuplicate={handleDuplicate}
         columns={[
           { key: "name", label: "Name" },
+          { key: "purpose", label: "Best for" },
           {
             key: "type",
             label: "Type",
@@ -979,7 +1015,10 @@ export default function CategoriesContent() {
             label: "Gear",
             render: (value: any) => {
               const types = value?.availableTypes?.join(", ") || "-";
-              const extra = value?.automaticExtraCost > 0 ? ` (+£${value.automaticExtraCost}/day auto)` : "";
+              const extra =
+                value?.automaticExtraCost > 0
+                  ? ` (+£${value.automaticExtraCost}/day auto)`
+                  : "";
               return types + extra;
             },
           },
@@ -994,6 +1033,8 @@ export default function CategoriesContent() {
             "pricingTiers",
             "expert",
             "requiredLicense",
+            "purpose",
+            "type"
           ] as (keyof Category)[]
         }
       />

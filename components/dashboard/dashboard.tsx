@@ -32,6 +32,7 @@ import ReservationsManagement from "./ReservationsManagement";
 import TestimonialsManagement from "./TestimonialsManagement";
 import ContactsManagement from "./ContactsManagement";
 import AnnouncementManagement from "./AnnouncementManagement";
+import ReportsManagement from "./ReportsManagement";
 import { MenuItem } from "@/types/type";
 
 const menuItems: MenuItem[] = [
@@ -109,10 +110,10 @@ const menuItems: MenuItem[] = [
     color: "from-rose-500 to-rose-600",
   },
   {
-    id: "documents",
-    label: "Documents",
+    id: "reports",
+    label: "Reports",
     icon: <FiFileText />,
-    color: "from-yellow-500 to-yellow-600",
+    color: "from-cyan-500 to-cyan-600",
   },
 ];
 
@@ -162,7 +163,7 @@ export default function Dashboard() {
           </h1>
         </div>
 
-        <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
+        <nav className="px-4 py-2 flex-1 overflow-y-auto">
           {menuItems.map((item) => (
             <button
               key={item.id}
@@ -237,6 +238,7 @@ export default function Dashboard() {
           {activeTab === "Testimonial" && <TestimonialsManagement />}
           {activeTab === "contacts" && <ContactsManagement />}
           {activeTab === "announcements" && <AnnouncementManagement />}
+          {activeTab === "reports" && <ReportsManagement />}
           {activeTab === "documents" && <DocumentsContent />}
         </div>
       </main>

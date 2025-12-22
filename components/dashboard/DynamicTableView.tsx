@@ -166,7 +166,7 @@ export default function DynamicTableView<
                 className="border-b border-white/10 hover:bg-white/10 transition-colors"
               >
                 <td className="px-3 py-2 text-gray-300 font-semibold">
-                  {idx + 1}
+                  {(currentPage - 1) * itemsPerPage + idx + 1}
                 </td>
                 {visibleColumns.map((col, colIdx) => {
                   const cellValue = item[col.key];

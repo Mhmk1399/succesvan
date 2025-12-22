@@ -151,6 +151,7 @@ export default function ReservationsManagement() {
         ]}
         onEdit={handleViewDetails}
         onMutate={(mutate) => (mutateRef.current = mutate)}
+        hiddenColumns={["dirverAge"] as (keyof Reservation)[]}
       />
 
       {isDetailOpen && selectedReservation && (
