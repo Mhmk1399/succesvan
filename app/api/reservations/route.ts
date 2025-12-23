@@ -126,14 +126,15 @@ export async function POST(req: NextRequest) {
       console.log("SMS Error:", error instanceof Error ? error.message : "Unknown error");
     }
 
-    if (process.env.ADMIN_PHONE_NUMBER) {
+    const admins = await User.find({ role: "admin" });
+    for (const admin of admins) {
       try {
         await sendSMS(
-          process.env.ADMIN_PHONE_NUMBER,
+          admin.phoneData.phoneNumber,
           "You have a new reservation. Check the admin dashboard."
         );
       } catch (error) {
-        console.log("Admin SMS Error:", error instanceof Error ? error.message : "Unknown error");
+        console.log(`Admin SMS Error (${admin.phoneData.phoneNumber}):`, error instanceof Error ? error.message : "Unknown error");
       }
     }
 
