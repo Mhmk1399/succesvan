@@ -7,6 +7,7 @@ import AddOn from "@/model/addOn";
 import bcrypt from "bcryptjs";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import office from "@/model/office";
+import { sendSMS } from "@/lib/sms";
 
 export async function GET(req: NextRequest) {
   try {
@@ -110,6 +111,31 @@ export async function POST(req: NextRequest) {
       { path: "office" },
       // { path: "addOns.addOn" },
     ]);
+
+    const hasLicence = user.licenceAttached?.front && user.licenceAttached?.back;
+    const licenceMessage = hasLicence
+      ? ""
+      : " Please add your licence in your dashboard to confirm your reservation.";
+
+    try {
+      await sendSMS(
+        user.phoneData.phoneNumber,
+        `Dear ${user.name} ${user.lastName}, your reservation has been confirmed.${licenceMessage}`
+      );
+    } catch (error) {
+      console.log("SMS Error:", error instanceof Error ? error.message : "Unknown error");
+    }
+
+    if (process.env.ADMIN_PHONE_NUMBER) {
+      try {
+        await sendSMS(
+          process.env.ADMIN_PHONE_NUMBER,
+          "You have a new reservation. Check the admin dashboard."
+        );
+      } catch (error) {
+        console.log("Admin SMS Error:", error instanceof Error ? error.message : "Unknown error");
+      }
+    }
 
     return successResponse(reservation, 201);
   } catch (error) {
