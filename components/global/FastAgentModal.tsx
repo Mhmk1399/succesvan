@@ -23,6 +23,7 @@ import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { useFastAgent, CategorySuggestion, FastPhase, AddOnOption, SelectedAddOn } from "@/hooks/useFastAgent";
 import TimeSelect from "@/components/ui/TimeSelect";
 import { generateTimeSlots } from "@/utils/timeSlots";
+import { showToast } from "@/lib/toast";
 
 interface FastAgentModalProps {
   isOpen: boolean;
@@ -37,6 +38,8 @@ export default function FastAgentModal({
 }: FastAgentModalProps) {
   const [mounted, setMounted] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [existingUserToken, setExistingUserToken] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   
   // Booking form state
@@ -138,6 +141,14 @@ export default function FastAgentModal({
   
   useEffect(() => {
     setMounted(true);
+    
+    // Check if user is already logged in
+    const token = localStorage.getItem("token");
+    if (token) {
+      setIsAuthenticated(true);
+      setExistingUserToken(token);
+      console.log("✅ [FastAgentModal] User is already authenticated");
+    }
   }, []);
   
   useEffect(() => {
@@ -427,6 +438,88 @@ export default function FastAgentModal({
     
     // Include gear selection in the booking
     await confirmAddOns(selectedAddOns);
+  };
+  
+  // Handle confirm receipt
+  const handleConfirmReceipt = async () => {
+    if (isAuthenticated && existingUserToken) {
+      // User is already logged in, create reservation directly
+      console.log("✅ [FastAgentModal] User is authenticated, creating reservation directly");
+      
+      try {
+        // Decode the token to get userId
+        const tokenPayload = JSON.parse(atob(existingUserToken.split('.')[1]));
+        const userId = tokenPayload.userId || tokenPayload.id;
+        
+        if (!userId) {
+          throw new Error("Invalid token: No user ID found");
+        }
+        
+        const { booking, selectedCategory } = agentState;
+        
+        // Combine date and time
+        const startDateObj = new Date(booking.startDate!);
+        const endDateObj = new Date(booking.endDate!);
+        
+        if (booking.startTime) {
+          const [startHour, startMin] = booking.startTime.split(":").map(Number);
+          startDateObj.setHours(startHour, startMin, 0, 0);
+        }
+        if (booking.endTime) {
+          const [endHour, endMin] = booking.endTime.split(":").map(Number);
+          endDateObj.setHours(endHour, endMin, 0, 0);
+        }
+        
+        // Build add-ons array
+        const reservationAddOns = (booking.selectedAddOns || []).map((addon) => ({
+          addOn: addon.addOnId,
+          quantity: addon.quantity,
+        }));
+        
+        // Create reservation via API with correct structure
+        const response = await fetch("/api/reservations", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userData: {
+              userId: userId,
+            },
+            reservationData: {
+              office: booking.officeId,
+              category: booking.categoryId,
+              startDate: startDateObj.toISOString(),
+              endDate: endDateObj.toISOString(),
+              totalPrice: booking.totalPrice || 0,
+              status: "pending",
+              dirverAge: booking.driverAge || 25,
+              messege: "Booked via AI Assistant",
+              addOns: reservationAddOns,
+              gearType: booking.gearType || "manual",
+            },
+          }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          console.log("✅ [FastAgentModal] Reservation created:", data.data._id);
+          showToast.success("Booking confirmed successfully!");
+          // Complete the booking
+          onComplete(data.data._id, existingUserToken, false);
+        } else {
+          throw new Error(data.error || "Failed to create reservation");
+        }
+      } catch (error) {
+        console.error("❌ [FastAgentModal] Failed to create reservation:", error);
+        const errorMessage = error instanceof Error ? error.message : "Failed to create reservation. Please try again.";
+        showToast.error(errorMessage);
+      }
+    } else {
+      // User not logged in, proceed to phone verification
+      confirmReceipt();
+    }
   };
   
   return createPortal(
@@ -981,12 +1074,12 @@ export default function FastAgentModal({
                 
                 {/* Confirm Button */}
                 <button
-                  onClick={confirmReceipt}
+                  onClick={handleConfirmReceipt}
                   disabled={isLoading}
                   className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
                   {isLoading ? <FiLoader className="animate-spin" /> : <FiCheck />}
-                  Confirm & Continue to Verification
+                  {isAuthenticated ? "Confirm Booking" : "Confirm & Continue to Verification"}
                 </button>
               </div>
             </div>
