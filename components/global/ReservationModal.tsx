@@ -5,7 +5,6 @@ import {
   FiX,
   FiMapPin,
   FiCalendar,
-  FiClock,
   FiUser,
   FiPhone,
   FiMail,
@@ -13,14 +12,15 @@ import {
   FiPackage,
   FiUsers,
 } from "react-icons/fi";
-import CustomSelect from "@/components/ui/CustomSelect";
 
 import AddOnsModal from "./AddOnsModal";
+import VanCard from "./VanCard";
 import { usePriceCalculation } from "@/hooks/usePriceCalculation";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
 import { BsFuelPump } from "react-icons/bs";
 import { generateTimeSlots, isTimeSlotAvailable } from "@/utils/timeSlots";
+import { WorkingTime } from "@/types/type";
 
 interface Office {
   _id: string;
@@ -235,6 +235,47 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     }, 0);
   }, [selectedAddOns, addOns, rentalDays]);
 
+  const calculateCategoryPrice = (cat: Category) => {
+    if (!formData.startDate || !formData.endDate) return null;
+    const start = formData.startDate
+      ? `${formData.startDate}T${formData.startTime}`
+      : "";
+    const end = formData.endDate
+      ? `${formData.endDate}T${formData.endTime}`
+      : "";
+    const diffTime = new Date(end).getTime() - new Date(start).getTime();
+    const totalMinutes = diffTime / (1000 * 60);
+    const totalHours = Math.floor(totalMinutes / 60);
+    const remainingMinutes = totalMinutes % 60;
+    const billableHours = remainingMinutes > 15 ? totalHours + 1 : totalHours;
+    if (billableHours <= 0) return null;
+    const totalDays = Math.floor(billableHours / 24);
+    const extraHours = billableHours % 24;
+    const tier =
+      cat.pricingTiers.find(
+        (t) => totalDays >= t.minDays && totalDays <= t.maxDays
+      ) || cat.pricingTiers[cat.pricingTiers.length - 1];
+    const pricePerDay = tier.pricePerDay;
+    const daysPrice = totalDays * pricePerDay;
+    const extraHoursPrice = extraHours * (cat.extrahoursRate || 0);
+    const totalPrice = daysPrice + extraHoursPrice;
+    let breakdown = "";
+    if (totalDays > 0 && extraHours > 0) {
+      breakdown = `${totalDays} day${
+        totalDays > 1 ? "s" : ""
+      } (£${pricePerDay}/day) + ${extraHours}h (£${
+        cat.extrahoursRate
+      }/hr) = £${totalPrice}`;
+    } else if (totalDays > 0) {
+      breakdown = `${totalDays} day${
+        totalDays > 1 ? "s" : ""
+      } (£${pricePerDay}/day) = £${totalPrice}`;
+    } else {
+      breakdown = `${extraHours}h (£${cat.extrahoursRate}/hr) = £${totalPrice}`;
+    }
+    return { totalPrice, breakdown };
+  };
+
   const priceCalc = usePriceCalculation(
     formData.startDate ? `${formData.startDate}T${formData.startTime}` : "",
     formData.endDate ? `${formData.endDate}T${formData.endTime}` : "",
@@ -314,7 +355,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
             .toLocaleDateString("en-US", { weekday: "long" })
             .toLowerCase();
           const workingDay = office?.workingTime?.find(
-            (wt: any) => wt.day === dayName && wt.isOpen
+            (wt: WorkingTime) => wt.day === dayName && wt.isOpen
           );
 
           if (workingDay) {
@@ -328,6 +369,14 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
         .catch((err) => console.error(err));
     }
   }, [formData.office, formData.startDate]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
 
   // Load data from sessionStorage and user context
   useEffect(() => {
@@ -611,14 +660,30 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       <div className="fixed inset-0 z-10000 flex items-center justify-center p-2 overflow-y-auto">
         <div className="relative bg-[#0f172b] rounded-2xl max-w-6xl w-full max-h-[99vh] overflow-y-auto border border-white/10">
           {/* Header */}
-          <div className="sticky top-0 bg-[#0f172b] border-b border-white/10 p-2 flex items-center justify-between z-10">
-            <div>
-              <h2 className="text-2xl font-black text-white">Book Your Van</h2>
-              <p className="text-gray-400 text-sm">Step {step} of 4</p>
+          <div className="sticky top-0 bg-linear-to-b from-[#0f172b] to-[#0f172b]/95 border-b border-white/10 px-4 py-3 flex items-center justify-between z-10 backdrop-blur-sm">
+            <div className="flex-1">
+              <h2 className="text-xl md:text-2xl font-black text-white">
+                Book Your Van
+              </h2>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4].map((s) => (
+                    <div
+                      key={s}
+                      className={`h-1 rounded-full transition-all ${
+                        s <= step ? "bg-[#fe9a00] w-8" : "bg-white/20 w-6"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs md:text-sm text-gray-400 ml-2">
+                  Step {step} of 4
+                </span>
+              </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors ml-4  shrink-0"
             >
               <FiX className="text-white text-xl" />
             </button>
@@ -629,62 +694,14 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
             {step === 1 && (
               <div className="relative ">
                 {categories.length > 0 ? (
-                  <div className="grid grid-cols-4 gap-2 max-h-[80vh] overflow-y-auto p-2 pt-2 pb-12">
-                    {categories.map((cat) => {
-                      const CategoryCard = () => {
-                        const catPrice = useMemo(() => {
-                          if (!formData.startDate || !formData.endDate)
-                            return null;
-                          const start = formData.startDate
-                            ? `${formData.startDate}T${formData.startTime}`
-                            : "";
-                          const end = formData.endDate
-                            ? `${formData.endDate}T${formData.endTime}`
-                            : "";
-                          const diffTime =
-                            new Date(end).getTime() - new Date(start).getTime();
-                          const totalMinutes = diffTime / (1000 * 60);
-                          const totalHours = Math.floor(totalMinutes / 60);
-                          const remainingMinutes = totalMinutes % 60;
-                          const billableHours =
-                            remainingMinutes > 15 ? totalHours + 1 : totalHours;
-                          if (billableHours <= 0) return null;
-                          const totalDays = Math.floor(billableHours / 24);
-                          const extraHours = billableHours % 24;
-                          const tier =
-                            cat.pricingTiers.find(
-                              (t) =>
-                                totalDays >= t.minDays && totalDays <= t.maxDays
-                            ) || cat.pricingTiers[cat.pricingTiers.length - 1];
-                          const pricePerDay = tier.pricePerDay;
-                          const daysPrice = totalDays * pricePerDay;
-                          const extraHoursPrice =
-                            extraHours * (cat.extrahoursRate || 0);
-                          const totalPrice = daysPrice + extraHoursPrice;
-                          let breakdown = "";
-                          if (totalDays > 0 && extraHours > 0) {
-                            breakdown = `${totalDays} day${
-                              totalDays > 1 ? "s" : ""
-                            } (£${pricePerDay}/day) + ${extraHours}h (£${
-                              cat.extrahoursRate
-                            }/hr) = £${totalPrice}`;
-                          } else if (totalDays > 0) {
-                            breakdown = `${totalDays} day${
-                              totalDays > 1 ? "s" : ""
-                            } (£${pricePerDay}/day) = £${totalPrice}`;
-                          } else {
-                            breakdown = `${extraHours}h (£${cat.extrahoursRate}/hr) = £${totalPrice}`;
-                          }
-                          return { totalPrice, breakdown };
-                        }, [
-                          formData.startDate,
-                          formData.startTime,
-                          formData.endDate,
-                          formData.endTime,
-                        ]);
-
+                  <>
+                    {/* Desktop: Grid Layout */}
+                    <div className="hidden md:grid grid-cols-4 gap-2 max-h-[80vh] overflow-y-auto p-2 pt-2 pb-12">
+                      {categories.map((cat) => {
+                        const catPrice = calculateCategoryPrice(cat);
                         return (
                           <div
+                            key={`${cat._id}-${formData.category}`}
                             onClick={() =>
                               setFormData((prev) => ({
                                 ...prev,
@@ -712,23 +729,23 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                 <h4 className="text-base font-black text-white line-clamp-1">
                                   {cat.name}
                                 </h4>
-                                <p className="text-gray-300 text-xs mb-2">
-                                  {cat.expert} or similar
+                                <p className="text-gray-300 text-xs mb-2 line-clamp-1">
+                                  {cat.expert}
                                 </p>
                                 <div className="flex gap-1 flex-wrap">
-                                  <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
+                                  <div className="px-2   rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
                                     <FiUsers className="text-[#fe9a00] text-[10px]" />
                                     <span className="text-white text-[10px] font-semibold">
                                       {cat.seats}
                                     </span>
                                   </div>
-                                  <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
+                                  <div className="px-2   rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
                                     <BsFuelPump className="text-[#fe9a00] text-[10px]" />
                                     <span className="text-white text-[10px] font-semibold">
                                       {cat.fuel}
                                     </span>
                                   </div>
-                                  <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
+                                  <div className="px-2   rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
                                     <FiPackage className="text-[#fe9a00] text-[10px]" />
                                     <span className="text-white text-[10px] font-semibold">
                                       {cat.cargo}
@@ -740,7 +757,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                 {catPrice ? (
                                   <>
                                     <div className="flex items-baseline gap-1">
-                                      <span className="text-2xl font-black text-white">
+                                      <span className="text-2xl font-black text-[#37cf6f]">
                                         £{catPrice.totalPrice}
                                       </span>
                                     </div>
@@ -751,7 +768,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                 ) : (
                                   <>
                                     <div className="flex items-baseline gap-1">
-                                      <span className="text-2xl font-black text-white">
+                                      <span className="text-2xl font-black text-[#37cf6f]">
                                         £{cat.pricingTiers[0]?.pricePerDay}
                                       </span>
                                       <span className="text-gray-300 text-sm font-semibold">
@@ -772,13 +789,31 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                             )}
                           </div>
                         );
-                      };
+                      })}
+                    </div>
 
-                      return (
-                        <CategoryCard key={`${cat._id}-${formData.category}`} />
-                      );
-                    })}
-                  </div>
+                    {/* Mobile: VanCard Layout */}
+                    <div className="md:hidden space-y-3 max-h-[80vh] overflow-y-auto p-2 pt-2 pb-12">
+                      {categories.map((cat) => {
+                        const catPrice = calculateCategoryPrice(cat);
+                        return (
+                          <VanCard
+                            key={`${cat._id}-${formData.category}`}
+                            van={cat}
+                            isSelected={formData.category === cat._id}
+                            onSelect={() =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                category: cat._id,
+                              }))
+                            }
+                            calculatedPrice={catPrice?.totalPrice}
+                            breakdown={catPrice?.breakdown}
+                          />
+                        );
+                      })}
+                    </div>
+                  </>
                 ) : (
                   <p className="text-gray-400 text-center py-8">
                     Loading categories...

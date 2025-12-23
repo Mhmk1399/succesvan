@@ -50,6 +50,7 @@ export async function GET(req: NextRequest) {
       .populate({ path: "office", model: office })
       .populate({ path: "category", model: Category })
       .populate({ path: "addOns.addOn", model: AddOn })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
