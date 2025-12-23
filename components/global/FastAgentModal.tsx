@@ -54,6 +54,9 @@ export default function FastAgentModal({
   // Add-ons selection state
   const [addOnQuantities, setAddOnQuantities] = useState<Record<string, number>>({});
   
+  // Gear type selection state
+  const [selectedGearType, setSelectedGearType] = useState<"manual" | "automatic">("manual");
+  
   const {
     isLoading,
     isPlaying,
@@ -67,6 +70,7 @@ export default function FastAgentModal({
     voicePhone,
     confirmAddOns,
     skipAddOns,
+    selectGear,
     confirmReceipt,
     sendCode,
     verifyCode,
@@ -80,6 +84,16 @@ export default function FastAgentModal({
     phaseRef.current = agentState.phase;
     console.log("📍 [FastAgentModal] Phase updated to:", agentState.phase);
   }, [agentState.phase]);
+  
+  // Initialize gear type when category is selected
+  useEffect(() => {
+    if (agentState.selectedCategory) {
+      const gear = agentState.selectedCategory.gear;
+      if (typeof gear !== "string" && gear.availableTypes?.length > 0) {
+        setSelectedGearType(gear.availableTypes[0] as "manual" | "automatic");
+      }
+    }
+  }, [agentState.selectedCategory]);
   
   const { isRecording, toggleRecording } = useVoiceRecording({
     onTranscriptionComplete: async (result) => {
@@ -212,13 +226,17 @@ export default function FastAgentModal({
     const totalDays = agentState.booking.totalDays || 1;
     
     if (addOn.pricingType === "flat") {
-      return addOn.flatPrice || 0;
+      const amount = addOn.flatPrice?.amount || 0;
+      // If flat price is per day, multiply by total days
+      return addOn.flatPrice?.isPerDay ? amount * totalDays : amount;
     }
     
     // Find matching tier for tiered pricing
-    if (addOn.tiers && addOn.tiers.length > 0) {
-      const tier = addOn.tiers.find(t => totalDays >= t.minDays && totalDays <= t.maxDays);
-      return tier?.price || addOn.tiers[0].price || 0;
+    if (addOn.tieredPrice?.tiers && addOn.tieredPrice.tiers.length > 0) {
+      const tier = addOn.tieredPrice.tiers.find(t => totalDays >= t.minDays && totalDays <= t.maxDays);
+      const tierPrice = tier?.price || addOn.tieredPrice.tiers[0].price || 0;
+      // If tiered price is per day, multiply by total days
+      return addOn.tieredPrice.isPerDay ? tierPrice * totalDays : tierPrice;
     }
     
     return 0;
@@ -231,6 +249,24 @@ export default function FastAgentModal({
       const newVal = Math.max(0, current + delta);
       return { ...prev, [addOnId]: newVal };
     });
+  };
+  
+  // Handle gear type selection
+  const handleGearSelection = () => {
+    const extraCost = getGearExtraCost();
+    selectGear(selectedGearType, extraCost);
+  };
+  
+  // Get gear extra cost
+  const getGearExtraCost = (): number => {
+    if (!agentState.selectedCategory) return 0;
+    const gear = agentState.selectedCategory.gear;
+    if (typeof gear === "string") return 0;
+    if (selectedGearType === "automatic" && gear.availableTypes?.includes("automatic") && gear.availableTypes?.includes("manual")) {
+      const totalDays = agentState.booking.totalDays || 1;
+      return (gear.automaticExtraCost || 0) * totalDays;
+    }
+    return 0;
   };
   
   // Handle confirm add-ons
@@ -251,6 +287,7 @@ export default function FastAgentModal({
       }
     }
     
+    // Include gear selection in the booking
     await confirmAddOns(selectedAddOns);
   };
   
@@ -450,6 +487,91 @@ export default function FastAgentModal({
             </div>
           )}
           
+          {/* Gear Type Selection */}
+          {agentState.phase === "select_gear" && agentState.selectedCategory && (() => {
+            const gear = agentState.selectedCategory.gear;
+            const hasGearOptions = typeof gear !== "string" && gear.availableTypes?.length > 1;
+            
+            // If no gear options, auto-advance to add-ons with default gear
+            if (!hasGearOptions) {
+              const defaultGear = typeof gear === "string" ? "manual" : (gear.availableTypes?.[0] as "manual" | "automatic" || "manual");
+              selectGear(defaultGear, 0);
+              return null;
+            }
+            
+            return (
+              <div className="px-4 pb-4">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
+                  {/* Header */}
+                  <div className="text-center border-b border-white/10 pb-3">
+                    <h3 className="text-xl font-bold text-white">⚙️ Select Gear Type</h3>
+                    <p className="text-gray-400 text-sm">Choose your preferred transmission</p>
+                  </div>
+                  
+                  {/* Vehicle Info */}
+                  <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                    <FiTruck className="text-orange-500 text-xl shrink-0" />
+                    <div>
+                      <p className="text-white font-medium">{agentState.selectedCategory.name}</p>
+                      <p className="text-gray-400 text-xs">
+                        {agentState.booking.totalDays} day(s) rental
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Gear Options */}
+                  <div className="space-y-3">
+                    {typeof gear !== "string" && gear.availableTypes?.map((type) => {
+                      const isSelected = selectedGearType === type;
+                      const extraCost = type === "automatic" && gear.automaticExtraCost ? gear.automaticExtraCost : 0;
+                      const totalDays = agentState.booking.totalDays || 1;
+                      const totalExtraCost = extraCost * totalDays;
+                      
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => setSelectedGearType(type as "manual" | "automatic")}
+                          className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+                            isSelected
+                              ? "border-orange-500 bg-orange-500/10"
+                              : "border-white/10 bg-white/5 hover:bg-white/10"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-white font-medium capitalize">{type}</p>
+                              {extraCost > 0 && (
+                                <p className="text-orange-400 text-sm mt-1">
+                                  +£{extraCost}/day (£{totalExtraCost} total)
+                                </p>
+                              )}
+                              {extraCost === 0 && (
+                                <p className="text-green-400 text-sm mt-1">Included</p>
+                              )}
+                            </div>
+                            {isSelected && (
+                              <FiCheck className="text-orange-500 text-xl" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Continue Button */}
+                  <button
+                    onClick={handleGearSelection}
+                    disabled={isLoading}
+                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? <FiLoader className="animate-spin" /> : <FiCheck />}
+                    Continue to Add-ons
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+          
           {/* Add-ons Selection */}
           {agentState.phase === "select_addons" && agentState.availableAddOns && (
             <div className="px-4 pb-4">
@@ -601,6 +723,14 @@ export default function FastAgentModal({
                       {agentState.booking.extraHours ? ` + ${agentState.booking.extraHours}h` : ""}
                     </p>
                   </div>
+                  
+                  {/* Gear Type */}
+                  {agentState.booking.gearType && (
+                    <div className="bg-white/5 rounded-lg p-3">
+                      <p className="text-gray-400 text-xs mb-1">Transmission</p>
+                      <p className="text-white font-medium capitalize">{agentState.booking.gearType}</p>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Price Breakdown */}
@@ -628,6 +758,26 @@ export default function FastAgentModal({
                       </span>
                     </div>
                   )}
+                  
+                  {/* Automatic Gear Extra Cost */}
+                  {agentState.booking.gearType === "automatic" && agentState.selectedCategory && (() => {
+                    const gear = agentState.selectedCategory.gear;
+                    if (typeof gear !== "string" && gear.automaticExtraCost && gear.availableTypes?.includes("manual")) {
+                      const totalDays = agentState.booking.totalDays || 1;
+                      const totalCost = gear.automaticExtraCost * totalDays;
+                      return (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-300">
+                            Automatic transmission × {totalDays} day(s)
+                          </span>
+                          <span className="text-white">
+                            £{totalCost.toFixed(2)}
+                          </span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                   
                   {/* Add-ons */}
                   {agentState.booking.selectedAddOns && agentState.booking.selectedAddOns.length > 0 && (
