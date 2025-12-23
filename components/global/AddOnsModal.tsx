@@ -114,7 +114,7 @@ export default function AddOnsModal({
         onClick={onClose}
       />
       <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4">
-        <div className="bg-[#1a2847] rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden border border-white/10">
+        <div className="bg-[#1a2847] rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-white/10">
           <div className="flex items-center justify-between p-6 border-b border-white/10">
             <div>
               <h2 className="text-2xl font-black text-white">Select Add-ons</h2>
@@ -128,7 +128,7 @@ export default function AddOnsModal({
             </button>
           </div>
 
-          <div className="p-6 space-y-4 overflow-y-auto max-h-[50vh]">
+          <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-250px)]">
             {addOns.filter((addon) => {
               return addon.pricingType === "flat" || addon.tieredPrice?.tiers?.some(
                 (tier) => rentalDays >= tier.minDays && rentalDays <= tier.maxDays
@@ -140,7 +140,7 @@ export default function AddOnsModal({
               return (
                 <div
                   key={addon._id}
-                  className={`border rounded-xl p-4 transition-all cursor-pointer ${
+                  className={`border rounded-xl p-2 transition-all cursor-pointer ${
                     isSelected
                       ? "border-[#fe9a00] bg-[#fe9a00]/10"
                       : "border-white/10 bg-white/5 hover:border-white/20"
@@ -167,11 +167,11 @@ export default function AddOnsModal({
                           )}
                         </p>
                       ) : (
-                        <div className="mt-2">
-                          <p className="text-gray-400 text-xs mb-2">
+                        <div className="mt-1">
+                          <p className="text-gray-400 text-xs mb-1">
                             Select tier {addon.tieredPrice?.isPerDay && `(per day × ${rentalDays} days)`}:
                           </p>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-1">
                             {addon.tieredPrice?.tiers?.filter(
                               (tier) => rentalDays >= tier.minDays && rentalDays <= tier.maxDays
                             ).map((tier, idx) => {
@@ -218,7 +218,7 @@ export default function AddOnsModal({
                               handleQuantityChange(addon._id, -1);
                             }
                           }}
-                          className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                          className="w-8 h-5 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
                         >
                           <FiMinus />
                         </button>
@@ -254,18 +254,20 @@ export default function AddOnsModal({
             })}
           </div>
 
-          <div className="border-t border-white/10 p-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400">Total Add-ons Cost</span>
-              <span className="text-[#fe9a00] font-black text-2xl">
-                £{totalCost}
-              </span>
+          <div className="border-t border-white/10 p-3">
+            <div className="bg-white/5 rounded-xl p-2 mb-4 border border-white/10">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400 font-semibold">Total Add-ons Cost</span>
+                <span className="text-[#fe9a00] font-black text-lg">
+                  £{totalCost.toFixed(2)}
+                </span>
+              </div>
             </div>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="mb-10 flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors font-semibold"
+                className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors font-semibold"
               >
                 Cancel
               </button>

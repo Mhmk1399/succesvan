@@ -219,6 +219,7 @@ function ReservationPanel({
     office: "",
     category: van._id,
     driverAge: 25,
+    gearType: "manual" as "manual" | "automatic",
   });
 
   const [dateRange, setDateRange] = useState<Range[]>([
@@ -262,7 +263,11 @@ function ReservationPanel({
     (van as any).extrahoursRate || 0,
     pickupExtensionPrice,
     returnExtensionPrice,
-    0,
+    formData.gearType === "automatic" &&
+      (van as any)?.gear?.availableTypes?.includes("automatic") &&
+      (van as any)?.gear?.availableTypes?.includes("manual")
+      ? (van as any)?.gear?.automaticExtraCost || 0
+      : 0,
     addOnsCost
   );
 
@@ -875,7 +880,7 @@ function ReservationPanel({
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 h-screen z-10000 w-full sm:max-w-md bg-linear-to-br from-[#0f172b] to-[#1e293b] border-l border-white/10 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+      <div className="fixed right-0 top-0 h-screen z-10000 w-full sm:max-w-lg bg-linear-to-br from-[#0f172b] to-[#1e293b] border-l border-white/10 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-300 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
         {/* Header */}
         <div className="sticky top-0 bg-linear-to-r from-[#0f172b] to-[#1e293b] backdrop-blur-xl border-b border-white/10 p-6 z-10">
           <div className="flex items-center justify-between mb-2">
@@ -1379,14 +1384,66 @@ function ReservationPanel({
             {/* Divider */}
             <div className="border-t border-white/10"></div>
 
+            {/* Gear Selection */}
+            {(van as any)?.gear?.availableTypes?.length > 1 && (
+              <div>
+                <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
+                    3
+                  </div>
+                  Gear Type
+                </h3>
+                <div className="flex gap-2">
+                  {(van as any).gear.availableTypes.includes("manual") && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({ ...prev, gearType: "manual" }))
+                      }
+                      className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
+                        formData.gearType === "manual"
+                          ? "bg-[#fe9a00] text-white"
+                          : "bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10"
+                      }`}
+                    >
+                      Manual
+                    </button>
+                  )}
+                  {(van as any).gear.availableTypes.includes("automatic") && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({ ...prev, gearType: "automatic" }))
+                      }
+                      className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
+                        formData.gearType === "automatic"
+                          ? "bg-[#fe9a00] text-white"
+                          : "bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10"
+                      }`}
+                    >
+                      <div>Automatic</div>
+                      {(van as any)?.gear?.automaticExtraCost > 0 && (
+                        <div className="text-xs mt-0.5">
+                          +£{(van as any).gear.automaticExtraCost}/day
+                        </div>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="border-t border-white/10"></div>
+
             {/* Add-ons Section */}
             {addOns.length > 0 &&
-              formData.pickupDate &&
-              formData.returnDate && (
+              dateRange[0].startDate &&
+              dateRange[0].endDate && (
                 <div>
                   <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
-                      3
+                      {(van as any)?.gear?.availableTypes?.length > 1 ? "4" : "3"}
                     </div>
                     Add-ons
                   </h3>
@@ -1418,8 +1475,8 @@ function ReservationPanel({
 
             {/* Divider */}
             {addOns.length > 0 &&
-              formData.pickupDate &&
-              formData.returnDate && (
+              dateRange[0].startDate &&
+              dateRange[0].endDate && (
                 <div className="border-t border-white/10"></div>
               )}
 
@@ -1430,8 +1487,8 @@ function ReservationPanel({
                   {addOns.length > 0 &&
                   formData.pickupDate &&
                   formData.returnDate
-                    ? "4"
-                    : "3"}
+                    ? (van as any)?.gear?.availableTypes?.length > 1 ? "5" : "4"
+                    : (van as any)?.gear?.availableTypes?.length > 1 ? "4" : "3"}
                 </div>
                 Cost Summary
               </h3>
@@ -1439,12 +1496,28 @@ function ReservationPanel({
               <div className="space-y-2 text-sm">
                 {priceCalc && (
                   <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Rental ({priceCalc.totalDays} days{priceCalc.extraHours > 0 && ` + ${priceCalc.extraHours}h`})</span>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-gray-400">Rental charges</span>
+                        <div className="text-gray-500 text-xs mt-0.5">
+                          {priceCalc.totalDays} days x £{priceCalc.pricePerDay}{priceCalc.extraHours > 0 && ` + ${priceCalc.extraHours}h x £${priceCalc.extraHoursRate}`}
+                        </div>
+                      </div>
                       <span className="text-white font-semibold">
                         £{(priceCalc.totalDays * priceCalc.pricePerDay + priceCalc.extraHours * priceCalc.extraHoursRate).toFixed(2)}
                       </span>
                     </div>
+                    {formData.gearType === "automatic" && (van as any)?.gear?.automaticExtraCost > 0 && (
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-gray-400">Automatic gear</span>
+                          <div className="text-gray-500 text-xs mt-0.5">
+                            {priceCalc.totalDays} days x £{(van as any).gear.automaticExtraCost}
+                          </div>
+                        </div>
+                        <span className="text-white font-semibold">£{((van as any).gear.automaticExtraCost * priceCalc.totalDays).toFixed(2)}</span>
+                      </div>
+                    )}
                     {pickupExtensionPrice > 0 && (
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Pickup Extension</span>
@@ -1457,12 +1530,26 @@ function ReservationPanel({
                         <span className="text-white font-semibold">£{returnExtensionPrice}</span>
                       </div>
                     )}
-                    {addOnsCost > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Add-ons</span>
-                        <span className="text-white font-semibold">£{addOnsCost}</span>
-                      </div>
-                    )}
+                    {selectedAddOns.map((item) => {
+                      const addon = addOns.find((a) => a._id === item.addOn);
+                      if (!addon) return null;
+                      let price = 0;
+                      if (addon.pricingType === "flat") {
+                        const amount = addon.flatPrice?.amount || 0;
+                        const isPerDay = addon.flatPrice?.isPerDay || false;
+                        price = (isPerDay ? amount * priceCalc.totalDays : amount) * item.quantity;
+                      } else if (item.selectedTierIndex !== undefined && addon.tieredPrice?.tiers?.[item.selectedTierIndex]) {
+                        const tier = addon.tieredPrice.tiers[item.selectedTierIndex];
+                        const isPerDay = addon.tieredPrice.isPerDay || false;
+                        price = (isPerDay ? tier.price * priceCalc.totalDays : tier.price) * item.quantity;
+                      }
+                      return (
+                        <div key={item.addOn} className="flex justify-between items-center">
+                          <span className="text-gray-400">{addon.name}{item.quantity > 1 && ` x ${item.quantity}`}</span>
+                          <span className="text-white font-semibold">£{price.toFixed(2)}</span>
+                        </div>
+                      );
+                    })}
                     <div className="border-t border-[#fe9a00]/20 pt-2 mt-2">
                       <div className="flex justify-between items-center">
                         <span className="text-white font-bold">Total Price</span>
