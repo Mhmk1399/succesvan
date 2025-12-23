@@ -13,10 +13,12 @@ export async function GET(req: NextRequest) {
 
     // If pagination params not provided, return all data
     if (!page && !limit) {
-      const categories = await Category.find().populate({
-        model: Type,
-        path: "type",
-      });
+      const categories = await Category.find()
+        .populate({
+          model: Type,
+          path: "type",
+        })
+        .sort({ showPrice: 1 });
       return successResponse({ data: categories });
     }
 
@@ -31,6 +33,7 @@ export async function GET(req: NextRequest) {
           model: Type,
           path: "type",
         })
+        .sort({ showPrice: 1 })
         .skip(skip)
         .limit(limitNum),
       Category.countDocuments(),
