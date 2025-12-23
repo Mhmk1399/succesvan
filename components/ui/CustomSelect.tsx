@@ -46,12 +46,12 @@ export default function CustomSelect({
           isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
         }`}
       >
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-2 min-w-0">
           {icon}
-          {selectedOption?.name || placeholder}
+          <span className="truncate">{selectedOption?.name || placeholder}</span>
         </span>
         <FiChevronDown
-          className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`transition-transform  shrink-0 ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
