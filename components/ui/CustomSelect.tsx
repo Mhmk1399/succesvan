@@ -16,11 +16,12 @@ export default function CustomSelect({
   const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const filtered = options.filter((opt) =>
+  const optionsArray = Array.isArray(options) ? options : [];
+  const filtered = optionsArray.filter((opt) =>
     opt.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const selectedOption = options.find((opt) => opt._id === value);
+  const selectedOption = optionsArray.find((opt) => opt._id === value);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

@@ -14,6 +14,13 @@ export async function GET(req: NextRequest) {
     const vehicles = await Vehicle.find()
       .populate("category")
       .populate({
+        path: "reservation",
+        populate: [
+          { path: "user", select: "name lastName" },
+          { path: "office", select: "name" },
+        ],
+      })
+      .populate({
         path: "office",
         select: "name",
       })

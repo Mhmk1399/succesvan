@@ -32,15 +32,34 @@ interface CategoryData {
   _id: string;
   name: string;
   description?: string;
+  purpose?: string;
+  expert?: string;
   fuel: string;
-  gear: string;
+  gear: {
+    availableTypes: string[];
+    automaticExtraCost?: number;
+  };
   seats: number;
   doors: number;
-  pricingTiers: Array<{
-    minHours: number;
-    maxHours: number;
-    pricePerHour: number;
+  requiredLicense: string;
+  showPrice: number;
+  properties?: Array<{
+    key: string;
+    value: string;
   }>;
+  servicesPeriod?: {
+    tire?: number;
+    oil?: number;
+    battery?: number;
+    air?: number;
+    service?: number;
+  };
+  pricingTiers: Array<{
+    minDays: number;
+    maxDays: number;
+    pricePerDay: number;
+  }>;
+  extrahoursRate?: number;
 }
 
 /**
@@ -93,21 +112,66 @@ export async function buildRAGContext(
   for (const category of categories) {
     context += `### ${category.name.toUpperCase()}\n`;
     context += `- ID: ${category._id}\n`;
+    
     if (category.description) {
       context += `- Description: ${category.description}\n`;
     }
+    
+    if (category.purpose) {
+      context += `- Best For: ${category.purpose}\n`;
+    }
+    
+    if (category.expert) {
+      context += `- Expert Advice: ${category.expert}\n`;
+    }
+    
     context += `- Fuel Type: ${category.fuel}\n`;
-    context += `- Transmission: ${category.gear}\n`;
+    
+    // Gear/Transmission
+    if (typeof category.gear === 'object' && category.gear.availableTypes) {
+      const gearTypes = category.gear.availableTypes.join(" and ");
+      context += `- Transmission: ${gearTypes}`;
+      if (category.gear.automaticExtraCost && category.gear.automaticExtraCost > 0) {
+        context += ` (automatic +£${category.gear.automaticExtraCost}/day)`;
+      }
+      context += "\n";
+    } else {
+      context += `- Transmission: ${category.gear}\n`;
+    }
+    
     context += `- Seats: ${category.seats}\n`;
     context += `- Doors: ${category.doors}\n`;
+    context += `- Required License: ${category.requiredLicense}\n`;
+    context += `- Starting Price: £${category.showPrice}/day\n`;
     
-    // Pricing information
-    if (category.pricingTiers && category.pricingTiers.length > 0) {
-      context += `- Pricing:\n`;
-      for (const tier of category.pricingTiers) {
-        const maxHours = tier.maxHours === Infinity ? "∞" : tier.maxHours;
-        context += `  * ${tier.minHours}-${maxHours} hours: $${tier.pricePerHour}/hour\n`;
+    // Vehicle Properties (cargo space, dimensions, etc.)
+    if (category.properties && category.properties.length > 0) {
+      context += `- Specifications:\n`;
+      for (const prop of category.properties) {
+        context += `  * ${prop.key}: ${prop.value}\n`;
       }
+    }
+    
+    // Pricing tiers
+    if (category.pricingTiers && category.pricingTiers.length > 0) {
+      context += `- Pricing Tiers:\n`;
+      for (const tier of category.pricingTiers) {
+        const maxDays = tier.maxDays === Infinity ? "∞" : tier.maxDays;
+        context += `  * ${tier.minDays}-${maxDays} days: £${tier.pricePerDay}/day\n`;
+      }
+    }
+    
+    if (category.extrahoursRate) {
+      context += `- Extra Hours Rate: £${category.extrahoursRate}/hour\n`;
+    }
+    
+    // Service periods
+    if (category.servicesPeriod) {
+      context += `- Maintenance Schedule:\n`;
+      if (category.servicesPeriod.tire) context += `  * Tire check: every ${category.servicesPeriod.tire} months\n`;
+      if (category.servicesPeriod.oil) context += `  * Oil change: every ${category.servicesPeriod.oil} months\n`;
+      if (category.servicesPeriod.battery) context += `  * Battery check: every ${category.servicesPeriod.battery} months\n`;
+      if (category.servicesPeriod.service) context += `  * Full service: every ${category.servicesPeriod.service} months\n`;
     }
     
     context += "\n";
@@ -152,7 +216,11 @@ export async function buildRAGContext(
   context += "- Use the category IDs when extracting category data\n";
   context += "- If user asks about hours, tell them from the working hours above\n";
   context += "- If user asks about special days or holidays, reference the special days section\n";
-  context += "- When listing options, mention the key features (fuel type, seats, pricing)\n";
+  context += "- When user gives VAGUE requests, ask clarifying questions about weight, size, quantity, or number of people\n";
+  context += "- Use the 'Best For' and 'Specifications' fields to match vehicles to user needs\n";
+  context += "- Consider payload capacity, cargo space dimensions when suggesting vehicles\n";
+  context += "- Mention transmission options (manual/automatic) and any extra costs\n";
+  context += "- When listing options, mention key features (fuel, seats, pricing, cargo space)\n";
   context += "- If dates conflict with existing reservations, inform the user\n";
   context += "- Today's date is " + new Date().toISOString().split("T")[0] + "\n";
 
@@ -187,10 +255,17 @@ export async function fetchFullCategories(): Promise<CategoryData[]> {
     _id: category._id.toString(),
     name: category.name,
     description: category.description,
+    purpose: category.purpose,
+    expert: category.expert,
     fuel: category.fuel,
     gear: category.gear,
     seats: category.seats,
     doors: category.doors,
+    requiredLicense: category.requiredLicense,
+    showPrice: category.showPrice,
+    properties: category.properties,
+    servicesPeriod: category.servicesPeriod,
     pricingTiers: category.pricingTiers || [],
+    extrahoursRate: category.extrahoursRate,
   }));
 }

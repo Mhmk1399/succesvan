@@ -15,8 +15,10 @@ export default function VehiclesContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [offices, setOffices] = useState<Office[]>([]);
+  const [categories, setCategories] = useState<
+    { _id?: string; name: string }[]
+  >([]);
+  const [offices, setOffices] = useState<{ _id?: string; name: string }[]>([]);
   const [reservations, setReservations] = useState<
     { _id: string; name: string }[]
   >([]);
@@ -51,15 +53,25 @@ export default function VehiclesContent() {
     const fetchData = async () => {
       try {
         const [catRes, offRes, resRes] = await Promise.all([
-          fetch("/api/categories"),
-          fetch("/api/offices"),
-          fetch("/api/reservations"),
+          fetch("/api/categories?limit=100"),
+          fetch("/api/offices?limit=100"),
+          fetch("/api/reservations?limit=100"),
         ]);
         const catData = await catRes.json();
         const offData = await offRes.json();
         const resData = await resRes.json();
-        setCategories(catData.data || []);
-        setOffices(offData.data || []);
+
+        const categoriesData = (catData.data || []).map((cat: Category) => ({
+          _id: cat._id,
+          name: cat.name,
+        }));
+        const officesData = (offData.data || []).map((off: Office) => ({
+          _id: off._id,
+          name: off.name,
+        }));
+
+        setCategories(categoriesData);
+        setOffices(officesData);
         setReservations(
           (resData.data || []).map((res: Reservation) => ({
             _id: res._id,
@@ -77,6 +89,7 @@ export default function VehiclesContent() {
     fetchData();
   }, []);
 
+ 
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -150,23 +163,25 @@ export default function VehiclesContent() {
   };
 
   const handleEdit = (item: Vehicle) => {
+    const categoryId =
+      typeof item.category === "string"
+        ? item.category
+        : (item.category as any)?._id || "";
+    const officeId =
+      typeof (item as any).office === "string"
+        ? (item as any).office
+        : (item as any).office?._id || "";
+    const reservationId =
+      (item as any).reservation?._id || (item as any).reservation || "";
+
     setFormData({
       title: item.title,
       description: item.description,
       images: Array.isArray(item.images) ? item.images.join(", ") : item.images,
       number: (item as any).number || "",
-      category:
-        typeof item.category === "string"
-          ? item.category
-          : (item.category as any)._id,
-      office:
-        typeof (item as any).office === "string"
-          ? (item as any).office
-          : (item as any).office?._id || "",
-      reservation:
-        typeof (item as any).reservation === "string"
-          ? (item as any).reservation
-          : (item as any).reservation?._id || "",
+      category: categoryId,
+      office: officeId,
+      reservation: reservationId,
       properties: item.properties || [{ name: "", value: "" }],
       needsService: item.needsService,
       serviceHistory: item.serviceHistory || {
