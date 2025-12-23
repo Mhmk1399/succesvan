@@ -272,7 +272,9 @@ export default function ReservationsManagement() {
                           let tierInfo = "";
 
                           if (addon?.pricingType === "flat") {
-                            price = addon.flatPrice || 0;
+                            price = typeof addon.flatPrice === "object" 
+                              ? addon.flatPrice?.amount || 0 
+                              : addon.flatPrice || 0;
                           } else if (addon?.pricingType === "tiered") {
                             const tierIndex = item.selectedTierIndex ?? 0;
                             const tier = addon.tiers?.[tierIndex];

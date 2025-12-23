@@ -2,50 +2,50 @@
 
 import { useState, useEffect } from "react";
 import { FiDownload } from "react-icons/fi";
-import { showToast } from "@/lib/toast";
 
-interface CategoryReport {
+interface CustomerData {
   _id: string;
-  categoryName: string;
-  count: number;
+  name: string;
+  reservationCount: number;
   totalPrice: number;
-  avgPrice: number;
+  createdAt: string;
 }
 
 interface ReportSummary {
-  mostUsed: CategoryReport | null;
-  leastUsed: CategoryReport | null;
+  totalCustomers: number;
   totalRevenue: number;
-  totalReservations: number;
-  categoriesCount: number;
+  avgReservationsPerCustomer: number;
+  newUsersThisMonth: number;
+  usersThisMonth: number;
+  mostReserved: CustomerData | null;
+  leastReserved: CustomerData | null;
 }
 
-export default function CategoryReportComponent() {
+export default function CustomerReport() {
   const [summary, setSummary] = useState<ReportSummary | null>(null);
-  const [data, setData] = useState<CategoryReport[]>([]);
+  const [data, setData] = useState<CustomerData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchSummary();
+    fetchData();
   }, []);
 
-  const fetchSummary = async () => {
+  const fetchData = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/reports/categories");
+      const response = await fetch("/api/reports/customers");
       const result = await response.json();
 
       if (result.success) {
-        setSummary(result.data.summary || result.summary);
+        setSummary(result.data.summary);
         setData(result.data.data || []);
       } else {
         setError(result.message || "Failed to fetch data");
       }
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error fetching report";
+      const message = err instanceof Error ? err.message : "Error fetching report";
       console.error("Error:", message);
       setError(message);
     } finally {
@@ -54,12 +54,12 @@ export default function CategoryReportComponent() {
   };
 
   const exportToCSV = () => {
-    const headers = ["Category", "Reservations", "Total Revenue", "Avg Price"];
-    const rows = data.map((category) => [
-      category.categoryName,
-      category.count,
-      category.totalPrice,
-      category.avgPrice,
+    const headers = ["Customer Name", "Reservations", "Total Price", "Joined Date"];
+    const rows = data.map((customer) => [
+      customer.name,
+      customer.reservationCount,
+      customer.totalPrice,
+      new Date(customer.createdAt).toLocaleDateString(),
     ]);
 
     const csv = [
@@ -71,7 +71,7 @@ export default function CategoryReportComponent() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `category-report-${new Date().toISOString().split("T")[0]}.csv`;
+    a.download = `customer-report-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
   };
 
@@ -95,74 +95,66 @@ export default function CategoryReportComponent() {
     <div className="space-y-6">
       {/* Summary Cards */}
       {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+            <p className="text-gray-400 text-sm mb-2">Total Customers</p>
+            <p className="text-2xl font-bold text-[#fe9a00]">
+              {summary.totalCustomers}
+            </p>
+          </div>
           <div className="bg-white/5 border border-white/10 rounded-lg p-4">
             <p className="text-gray-400 text-sm mb-2">Total Revenue</p>
-            <p className="text-2xl font-bold text-[#fe9a00]">
+            <p className="text-2xl font-bold text-white">
               ${summary.totalRevenue.toLocaleString()}
             </p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <p className="text-gray-400 text-sm mb-2">Total Reservations</p>
+            <p className="text-gray-400 text-sm mb-2">Avg Reservations</p>
             <p className="text-2xl font-bold text-white">
-              {summary.totalReservations}
+              {summary.avgReservationsPerCustomer.toFixed(1)}
             </p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <p className="text-gray-400 text-sm mb-2">Active Categories</p>
-            <p className="text-2xl font-bold text-white">
-              {summary.categoriesCount}
+            <p className="text-gray-400 text-sm mb-2">New Users (This Month)</p>
+            <p className="text-2xl font-bold text-green-400">
+              {summary.newUsersThisMonth}
             </p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <p className="text-gray-400 text-sm mb-2">Avg per Category</p>
-            <p className="text-2xl font-bold text-white">
-              $
-              {summary.categoriesCount > 0
-                ? (
-                    summary.totalRevenue / summary.categoriesCount
-                  ).toLocaleString(undefined, { maximumFractionDigits: 0 })
-                : 0}
+            <p className="text-gray-400 text-sm mb-2">Active (This Month)</p>
+            <p className="text-2xl font-bold text-blue-400">
+              {summary.usersThisMonth}
             </p>
           </div>
         </div>
       )}
 
-      {/* Most/Least Used */}
+      {/* Most/Least Reserved */}
       {summary && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {summary.mostUsed && (
+          {summary.mostReserved && (
             <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
-              <p className="text-green-400 font-semibold mb-3">
-                Most Used Category
-              </p>
+              <p className="text-green-400 font-semibold mb-3">Most Reserved User</p>
               <p className="text-white text-lg font-bold mb-2">
-                {summary.mostUsed.categoryName}
+                {summary.mostReserved.name}
               </p>
               <div className="space-y-1 text-sm text-gray-300">
-                <p>Reservations: {summary.mostUsed.count}</p>
-                <p>
-                  Total Revenue: ${summary.mostUsed.totalPrice.toLocaleString()}
-                </p>
-                <p>Avg Price: ${summary.mostUsed.avgPrice.toLocaleString()}</p>
+                <p>Reservations: {summary.mostReserved.reservationCount}</p>
+                <p>Total Price: ${summary.mostReserved.totalPrice.toLocaleString()}</p>
+                <p>Joined: {new Date(summary.mostReserved.createdAt).toLocaleDateString()}</p>
               </div>
             </div>
           )}
-          {summary.leastUsed && (
+          {summary.leastReserved && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-              <p className="text-red-400 font-semibold mb-3">
-                Least Used Category
-              </p>
+              <p className="text-red-400 font-semibold mb-3">Least Reserved User</p>
               <p className="text-white text-lg font-bold mb-2">
-                {summary.leastUsed.categoryName}
+                {summary.leastReserved.name}
               </p>
               <div className="space-y-1 text-sm text-gray-300">
-                <p>Reservations: {summary.leastUsed.count}</p>
-                <p>
-                  Total Revenue: $
-                  {summary.leastUsed.totalPrice.toLocaleString()}
-                </p>
-                <p>Avg Price: ${summary.leastUsed.avgPrice.toLocaleString()}</p>
+                <p>Reservations: {summary.leastReserved.reservationCount}</p>
+                <p>Total Price: ${summary.leastReserved.totalPrice.toLocaleString()}</p>
+                <p>Joined: {new Date(summary.leastReserved.createdAt).toLocaleDateString()}</p>
               </div>
             </div>
           )}
@@ -172,7 +164,7 @@ export default function CategoryReportComponent() {
       {/* Table with Export */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white">Categories Details</h3>
+          <h3 className="text-lg font-semibold text-white">All Customers</h3>
           <button
             onClick={exportToCSV}
             className="flex items-center gap-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors"
@@ -185,23 +177,25 @@ export default function CategoryReportComponent() {
             <thead className="border-b border-white/70">
               <tr>
                 <th className="px-4 py-3 text-left text-white font-bold">#</th>
-                <th className="px-4 py-3 text-left text-white font-bold">Category</th>
+                <th className="px-4 py-3 text-left text-white font-bold">Customer Name</th>
                 <th className="px-4 py-3 text-left text-white font-bold">Reservations</th>
-                <th className="px-4 py-3 text-left text-white font-bold">Total Revenue</th>
-                <th className="px-4 py-3 text-left text-white font-bold">Avg Price</th>
+                <th className="px-4 py-3 text-left text-white font-bold">Total Price</th>
+                <th className="px-4 py-3 text-left text-white font-bold">Joined Date</th>
               </tr>
             </thead>
             <tbody>
-              {data.map((category, idx) => (
+              {data.map((customer, idx) => (
                 <tr
-                  key={category._id}
+                  key={customer._id}
                   className="border-b border-white/10 hover:bg-white/10 transition-colors"
                 >
                   <td className="px-4 py-3 text-gray-300">{idx + 1}</td>
-                  <td className="px-4 py-3 text-white font-semibold">{category.categoryName}</td>
-                  <td className="px-4 py-3 text-gray-300">{category.count}</td>
-                  <td className="px-4 py-3 text-gray-300">${category.totalPrice.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-gray-300">${category.avgPrice.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-white font-semibold">{customer.name}</td>
+                  <td className="px-4 py-3 text-gray-300">{customer.reservationCount}</td>
+                  <td className="px-4 py-3 text-[#fe9a00] font-semibold">${customer.totalPrice}</td>
+                  <td className="px-4 py-3 text-gray-300">
+                    {new Date(customer.createdAt).toLocaleDateString()}
+                  </td>
                 </tr>
               ))}
             </tbody>

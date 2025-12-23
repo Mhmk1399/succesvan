@@ -494,21 +494,24 @@ export default function DynamicTableView<
                     Images
                   </label>
                   <div className="mt-2 grid grid-cols-2 gap-2">
-                    {item.images.map((img: string, idx: number) => (
-                      <div
-                        key={idx}
-                        onClick={() => window.open(img, "_blank")}
-                        className="cursor-pointer hover:opacity-80 transition-opacity"
-                      >
-                        <Image
-                          src={img}
-                          alt={`Image ${idx + 1}`}
-                          width={150}
-                          height={120}
-                          className="rounded-lg object-cover"
-                        />
-                      </div>
-                    ))}
+                    {item.images
+                      .filter((img: string) => img && img.trim())
+                      .map((img: string, idx: number) => (
+                        <div
+                          key={idx}
+                          onClick={() => window.open(img, "_blank")}
+                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                        >
+                          <Image
+                            src={img}
+                            alt={`Image ${idx + 1}`}
+                            width={150}
+                            height={120}
+                            className="rounded-lg object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      ))}
                   </div>
                 </div>
               )}

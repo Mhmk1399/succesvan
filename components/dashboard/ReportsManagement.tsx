@@ -1,16 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { FiChevronDown, FiDownload } from "react-icons/fi";
+import {
+  FiChevronDown,
+  FiBarChart2,
+  FiHome,
+  FiClipboard,
+  FiTruck,
+  FiUsers,
+  FiGift,
+} from "react-icons/fi";
 import CategoryReport from "./reports/CategoryReport";
 import OfficeReport from "./reports/OfficeReport";
 import DefaultReport from "./reports/DefaultReport";
+import VehicleReservationReport from "./reports/VehicleReservationReport";
+import ReservationReport from "./reports/ReservationReport";
+import CustomerReport from "./reports/CustomerReport";
+import AddOnReport from "./reports/AddOnReport";
 
 interface Report {
   id: string;
   name: string;
   description: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 const reports: Report[] = [
@@ -18,49 +30,38 @@ const reports: Report[] = [
     id: "categories",
     name: "Categories Report",
     description: "Most/least used categories with revenue analysis",
-    icon: "📊",
+    icon: <FiBarChart2 />,
   },
   {
     id: "offices",
     name: "Offices Report",
     description: "Most/least used offices with revenue analysis",
-    icon: "🏢",
+    icon: <FiHome />,
   },
   {
     id: "reservations",
     name: "Reservations Report",
-    description: "View all reservations and booking details",
-    icon: "📋",
-  },
-  {
-    id: "revenue",
-    name: "Revenue Report",
-    description: "Track income and financial performance",
-    icon: "💰",
+    description: "Top price reservations with customer and category details",
+    icon: <FiClipboard />,
   },
   {
     id: "vehicles",
-    name: "Vehicles Report",
-    description: "Fleet status and vehicle utilization",
-    icon: "🚐",
+    name: "Vehicle Reservations Report",
+    description: "Vehicles with reservation counts and details",
+    icon: <FiTruck />,
   },
   {
     id: "customers",
     name: "Customers Report",
-    description: "Customer statistics and analytics",
-    icon: "👥",
+    description: "Most/least reserved users, revenue, and monthly stats",
+    icon: <FiUsers />,
   },
   {
-    id: "occupancy",
-    name: "Occupancy Report",
-    description: "Vehicle occupancy rates and trends",
-    icon: "📊",
-  },
-  {
-    id: "maintenance",
-    name: "Maintenance Report",
-    description: "Maintenance schedules and history",
-    icon: "🔧",
+    id: "addons",
+    name: "Add-Ons Report",
+    description:
+      "Most used add-ons, customer preferences, and revenue analysis",
+    icon: <FiGift />,
   },
 ];
 
@@ -71,10 +72,6 @@ export default function ReportsManagement() {
   const handleViewReport = (reportId: string) => {
     setSelectedReport(reportId);
     setIsDropdownOpen(false);
-  };
-
-  const handleDownloadReport = (reportId: string) => {
-    console.log(`Downloading report: ${reportId}`);
   };
 
   const currentReport = reports.find((r) => r.id === selectedReport);
@@ -141,6 +138,14 @@ export default function ReportsManagement() {
             <CategoryReport />
           ) : selectedReport === "offices" ? (
             <OfficeReport />
+          ) : selectedReport === "vehicles" ? (
+            <VehicleReservationReport />
+          ) : selectedReport === "reservations" ? (
+            <ReservationReport />
+          ) : selectedReport === "customers" ? (
+            <CustomerReport />
+          ) : selectedReport === "addons" ? (
+            <AddOnReport />
           ) : (
             <DefaultReport reportName={currentReport.name} />
           )}

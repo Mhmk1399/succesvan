@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import DynamicTableView from "../DynamicTableView";
+import { FiDownload, FiFilter } from "react-icons/fi";
+import { showToast } from "@/lib/toast";
 
 interface OfficeReport {
   _id: string;
@@ -9,7 +10,6 @@ interface OfficeReport {
   count: number;
   totalPrice: number;
   avgPrice: number;
-  id?: string;
 }
 
 interface ReportSummary {
@@ -20,8 +20,9 @@ interface ReportSummary {
   officesCount: number;
 }
 
-export default function OfficeReport() {
+export default function OfficeReportComponent() {
   const [summary, setSummary] = useState<ReportSummary | null>(null);
+  const [data, setData] = useState<OfficeReport[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,9 +36,10 @@ export default function OfficeReport() {
     try {
       const response = await fetch("/api/reports/offices");
       const result = await response.json();
-      
+
       if (result.success) {
         setSummary(result.data.summary || result.summary);
+        setData(result.data.data || []);
       } else {
         setError(result.message || "Failed to fetch data");
       }
@@ -48,6 +50,28 @@ export default function OfficeReport() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const exportToCSV = () => {
+    const headers = ["Office", "Reservations", "Total Revenue", "Avg Price"];
+    const rows = data.map((office) => [
+      office.officeName,
+      office.count,
+      office.totalPrice,
+      office.avgPrice,
+    ]);
+
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `office-report-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
   };
 
   if (error) {
@@ -65,27 +89,6 @@ export default function OfficeReport() {
       </div>
     );
   }
-
-  const columns = [
-    {
-      key: "officeName",
-      label: "Office",
-    },
-    {
-      key: "count",
-      label: "Reservations",
-    },
-    {
-      key: "totalPrice",
-      label: "Total Revenue",
-      render: (value: number) => `$${value.toLocaleString()}`,
-    },
-    {
-      key: "avgPrice",
-      label: "Avg Price",
-      render: (value: number) => `$${value.toLocaleString()}`,
-    },
-  ];
 
   return (
     <div className="space-y-6">
@@ -160,14 +163,45 @@ export default function OfficeReport() {
         </div>
       )}
 
-      {/* Offices Table using DynamicTableView */}
-      <DynamicTableView
-        apiEndpoint="/api/reports/offices"
-        title="Offices"
-        columns={columns}
-        itemsPerPage={10}
-        hideDelete={true}
-      />
+      {/* Table with Export */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white">Offices Details</h3>
+          <button
+            onClick={exportToCSV}
+            className="flex items-center gap-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors"
+          >
+            <FiDownload /> Export CSV
+          </button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="border-b border-white/70">
+              <tr>
+                <th className="px-4 py-3 text-left text-white font-bold">#</th>
+                <th className="px-4 py-3 text-left text-white font-bold">Office</th>
+                <th className="px-4 py-3 text-left text-white font-bold">Reservations</th>
+                <th className="px-4 py-3 text-left text-white font-bold">Total Revenue</th>
+                <th className="px-4 py-3 text-left text-white font-bold">Avg Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((office, idx) => (
+                <tr
+                  key={office._id}
+                  className="border-b border-white/10 hover:bg-white/10 transition-colors"
+                >
+                  <td className="px-4 py-3 text-gray-300">{idx + 1}</td>
+                  <td className="px-4 py-3 text-white font-semibold">{office.officeName}</td>
+                  <td className="px-4 py-3 text-gray-300">{office.count}</td>
+                  <td className="px-4 py-3 text-gray-300">${office.totalPrice.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-gray-300">${office.avgPrice.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
