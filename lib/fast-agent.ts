@@ -355,6 +355,11 @@ async function handleAskNeeds(
         role: "system",
         content: `You are a van hire expert. Analyze what the customer needs and match them to the best van categories.
 
+IMPORTANT: Before suggesting vans, you MUST gather these key details:
+1. What items/things they're moving (type and quantity)
+2. Approximate weight or size of items
+3. How many items/boxes/pieces of furniture
+
 AVAILABLE CATEGORIES:
 ${categories
   .map(
@@ -370,11 +375,12 @@ ${offices
 
 Respond with valid JSON:
 {
-  "understood": true/false,
+  "hasEnoughInfo": true/false (true only if you know: what, how much/many, approximate size/weight),
   "needs": {
     "purpose": "what they're doing (moving, delivery, transport, etc.)",
     "description": "brief description of items",
-    "size": "small|medium|large"
+    "size": "small|medium|large",
+    "quantity": "approximate number or amount if known"
   },
   "suggestions": [
     {
@@ -383,8 +389,14 @@ Respond with valid JSON:
       "matchReason": "Why this van is perfect for them (1 sentence)"
     }
   ],
-  "followUpQuestion": "Only if you truly can't understand, ask ONE clarifying question"
-}`,
+  "followUpQuestion": "If hasEnoughInfo is false, ask ONE specific question about quantity, weight, or size to help recommend the right van"
+}
+
+EXAMPLES:
+- User: "I need to move boxes" → hasEnoughInfo: false, ask "How many boxes approximately, and do you know their total weight or size?"
+- User: "I need to move 50 heavy boxes" → hasEnoughInfo: true, suggest appropriate vans
+- User: "Moving furniture" → hasEnoughInfo: false, ask "What furniture items and approximately how many pieces?"
+- User: "Moving a 3-bedroom house" → hasEnoughInfo: true, suggest large vans`,
       },
       { role: "user", content: userMessage },
     ],
@@ -395,11 +407,15 @@ Respond with valid JSON:
   const result = JSON.parse(completion.choices[0].message.content || "{}");
   console.log("🧠 [Fast Agent] Analysis:", JSON.stringify(result, null, 2));
 
-  // If not understood, ask follow-up
-  if (!result.understood && result.followUpQuestion) {
+  // If we don't have enough info yet, ask follow-up question and STAY in ask_needs phase
+  if (!result.hasEnoughInfo && result.followUpQuestion) {
     return {
       message: result.followUpQuestion,
-      state: { ...currentState, phase: "ask_needs" },
+      state: { 
+        ...currentState, 
+        phase: "ask_needs",
+        needs: result.needs // Save partial needs info
+      },
       showSuggestions: false,
       needsPhoneInput: false,
       needsCodeInput: false,

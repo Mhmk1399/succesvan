@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import {
   FiX,
@@ -21,6 +21,8 @@ import { BsFuelPump } from "react-icons/bs";
 import Image from "next/image";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { useFastAgent, CategorySuggestion, FastPhase, AddOnOption, SelectedAddOn } from "@/hooks/useFastAgent";
+import TimeSelect from "@/components/ui/TimeSelect";
+import { generateTimeSlots } from "@/utils/timeSlots";
 
 interface FastAgentModalProps {
   isOpen: boolean;
@@ -56,6 +58,14 @@ export default function FastAgentModal({
   
   // Gear type selection state
   const [selectedGearType, setSelectedGearType] = useState<"manual" | "automatic">("manual");
+  
+  // Reserved time slots state
+  const [startDateReservedSlots, setStartDateReservedSlots] = useState<
+    { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[]
+  >([]);
+  const [endDateReservedSlots, setEndDateReservedSlots] = useState<
+    { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[]
+  >([]);
   
   const {
     isLoading,
@@ -148,6 +158,32 @@ export default function FastAgentModal({
     }
   }, [agentState.booking]);
   
+  // Fetch reserved slots for start date
+  useEffect(() => {
+    if (bookingForm.officeId && bookingForm.startDate) {
+      setStartDateReservedSlots([]);
+      fetch(`/api/reservations/by-office?office=${bookingForm.officeId}&startDate=${bookingForm.startDate}&type=start`)
+        .then(res => res.json())
+        .then(data => {
+          setStartDateReservedSlots(data.data?.reservedSlots || []);
+        })
+        .catch((err) => console.error("Failed to fetch start date reserved slots:", err));
+    }
+  }, [bookingForm.officeId, bookingForm.startDate]);
+  
+  // Fetch reserved slots for end date
+  useEffect(() => {
+    if (bookingForm.officeId && bookingForm.endDate) {
+      setEndDateReservedSlots([]);
+      fetch(`/api/reservations/by-office?office=${bookingForm.officeId}&endDate=${bookingForm.endDate}&type=end`)
+        .then(res => res.json())
+        .then(data => {
+          setEndDateReservedSlots(data.data?.reservedSlots || []);
+        })
+        .catch((err) => console.error("Failed to fetch end date reserved slots:", err));
+    }
+  }, [bookingForm.officeId, bookingForm.endDate]);
+  
   // Start conversation when modal opens
   useEffect(() => {
     if (isOpen && !hasStarted && mounted) {
@@ -168,6 +204,106 @@ export default function FastAgentModal({
       }, 2500);
     }
   }, [agentState, onComplete]);
+  
+  // Generate pickup time slots based on office working hours
+  const pickupTimeSlots = useMemo(() => {
+    if (!bookingForm.officeId || !bookingForm.startDate) return [];
+    const office = offices?.find((o) => o._id === bookingForm.officeId) as any;
+    if (!office) return [];
+
+    const date = new Date(bookingForm.startDate);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayName = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ][date.getDay()];
+
+    const specialDay = office.specialDays?.find(
+      (sd: any) => sd.month === month && sd.day === day
+    );
+    let start = "00:00",
+      end = "23:59";
+
+    if (specialDay && specialDay.isOpen) {
+      start = specialDay.startTime;
+      end = specialDay.endTime;
+    } else {
+      const workingDay = office.workingTime?.find(
+        (w: any) => w.day === dayName && w.isOpen
+      );
+      if (workingDay) {
+        start = workingDay.startTime;
+        end = workingDay.endTime;
+        
+        if (workingDay.pickupExtension) {
+          const [startHour, startMin] = start.split(":").map(Number);
+          const [endHour, endMin] = end.split(":").map(Number);
+          const extendedStart = startHour * 60 + startMin - (workingDay.pickupExtension.hoursBefore || 0) * 60;
+          const extendedEnd = endHour * 60 + endMin + (workingDay.pickupExtension.hoursAfter || 0) * 60;
+          start = `${String(Math.floor(extendedStart / 60)).padStart(2, "0")}:${String(extendedStart % 60).padStart(2, "0")}`;
+          end = `${String(Math.floor(extendedEnd / 60)).padStart(2, "0")}:${String(extendedEnd % 60).padStart(2, "0")}`;
+        }
+      }
+    }
+
+    return generateTimeSlots(start, end, 15);
+  }, [bookingForm.officeId, bookingForm.startDate, offices]);
+
+  // Generate return time slots based on office working hours
+  const returnTimeSlots = useMemo(() => {
+    if (!bookingForm.officeId || !bookingForm.endDate) return [];
+    const office = offices?.find((o) => o._id === bookingForm.officeId) as any;
+    if (!office) return [];
+
+    const date = new Date(bookingForm.endDate);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayName = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ][date.getDay()];
+
+    const specialDay = office.specialDays?.find(
+      (sd: any) => sd.month === month && sd.day === day
+    );
+    let start = "00:00",
+      end = "23:59";
+
+    if (specialDay && specialDay.isOpen) {
+      start = specialDay.startTime;
+      end = specialDay.endTime;
+    } else {
+      const workingDay = office.workingTime?.find(
+        (w: any) => w.day === dayName && w.isOpen
+      );
+      if (workingDay) {
+        start = workingDay.startTime;
+        end = workingDay.endTime;
+        
+        if (workingDay.returnExtension) {
+          const [startHour, startMin] = start.split(":").map(Number);
+          const [endHour, endMin] = end.split(":").map(Number);
+          const extendedStart = startHour * 60 + startMin - (workingDay.returnExtension.hoursBefore || 0) * 60;
+          const extendedEnd = endHour * 60 + endMin + (workingDay.returnExtension.hoursAfter || 0) * 60;
+          start = `${String(Math.floor(extendedStart / 60)).padStart(2, "0")}:${String(extendedStart % 60).padStart(2, "0")}`;
+          end = `${String(Math.floor(extendedEnd / 60)).padStart(2, "0")}:${String(extendedEnd % 60).padStart(2, "0")}`;
+        }
+      }
+    }
+
+    return generateTimeSlots(start, end, 15);
+  }, [bookingForm.officeId, bookingForm.endDate, offices]);
   
   if (!isOpen || !mounted) return null;
   
@@ -214,10 +350,12 @@ export default function FastAgentModal({
       case "ask_needs": return 10;
       case "show_suggestions": return 25;
       case "collect_booking": return 40;
+      case "select_gear": return 50;
       case "select_addons": return 55;
       case "show_receipt": return 70;
       case "verify_phone": return 85;
       case "complete": return 100;
+      default: return 0;
     }
   };
   
@@ -441,23 +579,59 @@ export default function FastAgentModal({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-gray-300 text-sm mb-1.5">Pickup Time *</label>
-                    <input
-                      type="time"
-                      value={bookingForm.startTime}
-                      onChange={(e) => setBookingForm(p => ({ ...p, startTime: e.target.value }))}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500"
-                      required
-                    />
+                    {bookingForm.startDate && (() => {
+                      const office = offices?.find((o) => o._id === bookingForm.officeId) as any;
+                      const date = new Date(bookingForm.startDate);
+                      const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+                      const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+                      const extensionTimes = workingDay?.pickupExtension ? {
+                        start: pickupTimeSlots[0],
+                        end: pickupTimeSlots[pickupTimeSlots.length - 1],
+                        normalStart: workingDay.startTime,
+                        normalEnd: workingDay.endTime,
+                        price: workingDay.pickupExtension.flatPrice
+                      } : undefined;
+                      return (
+                        <TimeSelect
+                          value={bookingForm.startTime}
+                          onChange={(time) => setBookingForm(p => ({ ...p, startTime: time }))}
+                          slots={pickupTimeSlots}
+                          reservedSlots={startDateReservedSlots}
+                          selectedDate={new Date(bookingForm.startDate)}
+                          isStartTime={true}
+                          isInline={false}
+                          extensionTimes={extensionTimes}
+                        />
+                      );
+                    })()}
                   </div>
                   <div>
                     <label className="block text-gray-300 text-sm mb-1.5">Return Time *</label>
-                    <input
-                      type="time"
-                      value={bookingForm.endTime}
-                      onChange={(e) => setBookingForm(p => ({ ...p, endTime: e.target.value }))}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500"
-                      required
-                    />
+                    {bookingForm.endDate && (() => {
+                      const office = offices?.find((o) => o._id === bookingForm.officeId) as any;
+                      const date = new Date(bookingForm.endDate);
+                      const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+                      const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+                      const extensionTimes = workingDay?.returnExtension ? {
+                        start: returnTimeSlots[0],
+                        end: returnTimeSlots[returnTimeSlots.length - 1],
+                        normalStart: workingDay.startTime,
+                        normalEnd: workingDay.endTime,
+                        price: workingDay.returnExtension.flatPrice
+                      } : undefined;
+                      return (
+                        <TimeSelect
+                          value={bookingForm.endTime}
+                          onChange={(time) => setBookingForm(p => ({ ...p, endTime: time }))}
+                          slots={returnTimeSlots}
+                          reservedSlots={endDateReservedSlots}
+                          selectedDate={new Date(bookingForm.endDate)}
+                          isStartTime={false}
+                          isInline={false}
+                          extensionTimes={extensionTimes}
+                        />
+                      );
+                    })()}
                   </div>
                 </div>
                 
