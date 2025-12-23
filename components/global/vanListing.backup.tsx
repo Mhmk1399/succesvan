@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { IoIosArrowForward } from "react-icons/io";
+
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import {
@@ -46,6 +48,8 @@ if (typeof window !== "undefined") {
 
 interface Category extends VanData {
   expert?: string;
+  properties?: { key: string; value: string }[];
+  purpose?: string;
 }
 
 interface VanListingProps {
@@ -59,6 +63,7 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
   );
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   useEffect(() => {
     if (vans.length > 0) {
@@ -151,6 +156,10 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
                   <CategoryCard
                     category={category}
                     onView={() => setSelectedCategory(category)}
+                    onDetails={() => {
+                      setSelectedCategory(category);
+                      setShowDetailsModal(true);
+                    }}
                   />
                 </div>
               ))}
@@ -159,8 +168,16 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
         )}
       </div>
 
+      {/* Details Modal */}
+      {showDetailsModal && selectedCategory && (
+        <CategoryDetailsModal
+          category={selectedCategory}
+          onClose={() => setShowDetailsModal(false)}
+        />
+      )}
+
       {/* Reservation Panel */}
-      {selectedCategory && (
+      {selectedCategory && !showDetailsModal && (
         <ReservationPanelPortal
           van={selectedCategory}
           onClose={() => setSelectedCategory(null)}
@@ -237,10 +254,22 @@ function ReservationPanel({
   const [isSuccess, setIsSuccess] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
   const [startDateReservedSlots, setStartDateReservedSlots] = useState<
-    { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[]
+    {
+      startDate: string;
+      endDate: string;
+      startTime: string;
+      endTime: string;
+      isSameDay: boolean;
+    }[]
   >([]);
   const [endDateReservedSlots, setEndDateReservedSlots] = useState<
-    { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[]
+    {
+      startDate: string;
+      endDate: string;
+      startTime: string;
+      endTime: string;
+      isSameDay: boolean;
+    }[]
   >([]);
   const [addOns, setAddOns] = useState<AddOn[]>([]);
   const [selectedAddOns, setSelectedAddOns] = useState<
@@ -254,10 +283,14 @@ function ReservationPanel({
 
   const priceCalc = usePriceCalculation(
     dateRange[0].startDate && formData.pickupTime
-      ? `${format(dateRange[0].startDate, "yyyy-MM-dd")}T${formData.pickupTime}:00`
+      ? `${format(dateRange[0].startDate, "yyyy-MM-dd")}T${
+          formData.pickupTime
+        }:00`
       : "",
     dateRange[0].endDate && formData.returnTime
-      ? `${format(dateRange[0].endDate, "yyyy-MM-dd")}T${formData.returnTime}:00`
+      ? `${format(dateRange[0].endDate, "yyyy-MM-dd")}T${
+          formData.returnTime
+        }:00`
       : "",
     (van as any).pricingTiers || [],
     (van as any).extrahoursRate || 0,
@@ -314,16 +347,29 @@ function ReservationPanel({
     const office = offices.find((o) => o._id === formData.office);
     if (!office) return;
     const date = dateRange[0].startDate;
-    const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
-    const workingDay = office.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+    const dayName = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ][date.getDay()];
+    const workingDay = office.workingTime?.find(
+      (w: any) => w.day === dayName && w.isOpen
+    );
     if (workingDay?.pickupExtension) {
-      const [pickupHour, pickupMin] = formData.pickupTime.split(':').map(Number);
-      const [startHour, startMin] = workingDay.startTime.split(':').map(Number);
-      const [endHour, endMin] = workingDay.endTime.split(':').map(Number);
+      const [pickupHour, pickupMin] = formData.pickupTime
+        .split(":")
+        .map(Number);
+      const [startHour, startMin] = workingDay.startTime.split(":").map(Number);
+      const [endHour, endMin] = workingDay.endTime.split(":").map(Number);
       const pickupMinutes = pickupHour * 60 + pickupMin;
       const startMinutes = startHour * 60 + startMin;
       const endMinutes = endHour * 60 + endMin;
-      const beforeStart = startMinutes - workingDay.pickupExtension.hoursBefore * 60;
+      const beforeStart =
+        startMinutes - workingDay.pickupExtension.hoursBefore * 60;
       const afterEnd = endMinutes + workingDay.pickupExtension.hoursAfter * 60;
       if (pickupMinutes < startMinutes || pickupMinutes > endMinutes) {
         if (pickupMinutes >= beforeStart && pickupMinutes < startMinutes) {
@@ -349,16 +395,29 @@ function ReservationPanel({
     const office = offices.find((o) => o._id === formData.office);
     if (!office) return;
     const date = dateRange[0].endDate;
-    const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
-    const workingDay = office.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+    const dayName = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ][date.getDay()];
+    const workingDay = office.workingTime?.find(
+      (w: any) => w.day === dayName && w.isOpen
+    );
     if (workingDay?.returnExtension) {
-      const [returnHour, returnMin] = formData.returnTime.split(':').map(Number);
-      const [startHour, startMin] = workingDay.startTime.split(':').map(Number);
-      const [endHour, endMin] = workingDay.endTime.split(':').map(Number);
+      const [returnHour, returnMin] = formData.returnTime
+        .split(":")
+        .map(Number);
+      const [startHour, startMin] = workingDay.startTime.split(":").map(Number);
+      const [endHour, endMin] = workingDay.endTime.split(":").map(Number);
       const returnMinutes = returnHour * 60 + returnMin;
       const startMinutes = startHour * 60 + startMin;
       const endMinutes = endHour * 60 + endMin;
-      const beforeStart = startMinutes - workingDay.returnExtension.hoursBefore * 60;
+      const beforeStart =
+        startMinutes - workingDay.returnExtension.hoursBefore * 60;
       const afterEnd = endMinutes + workingDay.returnExtension.hoursAfter * 60;
       if (returnMinutes < startMinutes || returnMinutes > endMinutes) {
         if (returnMinutes >= beforeStart && returnMinutes < startMinutes) {
@@ -435,14 +494,28 @@ function ReservationPanel({
       if (workingDay) {
         start = workingDay.startTime;
         end = workingDay.endTime;
-        
+
         if (workingDay.pickupExtension) {
-          const [startHour, startMin] = start.split(':').map(Number);
-          const [endHour, endMin] = end.split(':').map(Number);
-          const extendedStartMinutes = Math.max(0, startHour * 60 + startMin - workingDay.pickupExtension.hoursBefore * 60);
-          const extendedEndMinutes = Math.min(1439, endHour * 60 + endMin + workingDay.pickupExtension.hoursAfter * 60);
-          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(2, '0')}:${String(extendedStartMinutes % 60).padStart(2, '0')}`;
-          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(2, '0')}:${String(extendedEndMinutes % 60).padStart(2, '0')}`;
+          const [startHour, startMin] = start.split(":").map(Number);
+          const [endHour, endMin] = end.split(":").map(Number);
+          const extendedStartMinutes = Math.max(
+            0,
+            startHour * 60 +
+              startMin -
+              workingDay.pickupExtension.hoursBefore * 60
+          );
+          const extendedEndMinutes = Math.min(
+            1439,
+            endHour * 60 + endMin + workingDay.pickupExtension.hoursAfter * 60
+          );
+          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(
+            2,
+            "0"
+          )}:${String(extendedStartMinutes % 60).padStart(2, "0")}`;
+          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(
+            2,
+            "0"
+          )}:${String(extendedEndMinutes % 60).padStart(2, "0")}`;
         }
       }
     }
@@ -451,8 +524,7 @@ function ReservationPanel({
   }, [formData.office, dateRange, offices]);
 
   const returnTimeSlots = useMemo(() => {
-    if (!formData.office || !dateRange[0].endDate)
-      return [];
+    if (!formData.office || !dateRange[0].endDate) return [];
     const office = offices.find((o) => o._id === formData.office);
     if (!office) return [];
 
@@ -472,7 +544,8 @@ function ReservationPanel({
     const specialDay = office.specialDays?.find(
       (sd: any) => sd.month === month && sd.day === day
     );
-    let start = "00:00", end = "23:59";
+    let start = "00:00",
+      end = "23:59";
 
     if (specialDay && specialDay.isOpen) {
       start = specialDay.startTime;
@@ -484,14 +557,28 @@ function ReservationPanel({
       if (workingDay) {
         start = workingDay.startTime;
         end = workingDay.endTime;
-        
+
         if (workingDay.returnExtension) {
-          const [startHour, startMin] = start.split(':').map(Number);
-          const [endHour, endMin] = end.split(':').map(Number);
-          const extendedStartMinutes = Math.max(0, startHour * 60 + startMin - workingDay.returnExtension.hoursBefore * 60);
-          const extendedEndMinutes = Math.min(1439, endHour * 60 + endMin + workingDay.returnExtension.hoursAfter * 60);
-          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(2, '0')}:${String(extendedStartMinutes % 60).padStart(2, '0')}`;
-          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(2, '0')}:${String(extendedEndMinutes % 60).padStart(2, '0')}`;
+          const [startHour, startMin] = start.split(":").map(Number);
+          const [endHour, endMin] = end.split(":").map(Number);
+          const extendedStartMinutes = Math.max(
+            0,
+            startHour * 60 +
+              startMin -
+              workingDay.returnExtension.hoursBefore * 60
+          );
+          const extendedEndMinutes = Math.min(
+            1439,
+            endHour * 60 + endMin + workingDay.returnExtension.hoursAfter * 60
+          );
+          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(
+            2,
+            "0"
+          )}:${String(extendedStartMinutes % 60).padStart(2, "0")}`;
+          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(
+            2,
+            "0"
+          )}:${String(extendedEndMinutes % 60).padStart(2, "0")}`;
         }
       }
     }
@@ -502,11 +589,15 @@ function ReservationPanel({
   useEffect(() => {
     if (formData.office && dateRange[0].startDate) {
       const date = dateRange[0].startDate;
-      const startDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const startDate = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       setStartDateReservedSlots([]);
-      fetch(`/api/reservations/by-office?office=${formData.office}&startDate=${startDate}&type=start`)
-        .then(res => res.json())
-        .then(data => {
+      fetch(
+        `/api/reservations/by-office?office=${formData.office}&startDate=${startDate}&type=start`
+      )
+        .then((res) => res.json())
+        .then((data) => {
           setStartDateReservedSlots(data.data?.reservedSlots || []);
         })
         .catch((err) => console.error(err));
@@ -516,11 +607,15 @@ function ReservationPanel({
   useEffect(() => {
     if (formData.office && dateRange[0].endDate) {
       const date = dateRange[0].endDate;
-      const endDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const endDate = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       setEndDateReservedSlots([]);
-      fetch(`/api/reservations/by-office?office=${formData.office}&endDate=${endDate}&type=end`)
-        .then(res => res.json())
-        .then(data => {
+      fetch(
+        `/api/reservations/by-office?office=${formData.office}&endDate=${endDate}&type=end`
+      )
+        .then((res) => res.json())
+        .then((data) => {
           setEndDateReservedSlots(data.data?.reservedSlots || []);
         })
         .catch((err) => console.error(err));
@@ -1283,64 +1378,96 @@ function ReservationPanel({
                       <FiClock className="text-[#fe9a00]" />
                       Pickup Time
                     </label>
-                    {dateRange[0].startDate && (() => {
-                      const office = getSelectedOffice();
-                      const date = dateRange[0].startDate;
-                      const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
-                      const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
-                      const extensionTimes = workingDay?.pickupExtension ? {
-                        start: pickupTimeSlots[0],
-                        end: pickupTimeSlots[pickupTimeSlots.length - 1],
-                        normalStart: workingDay.startTime,
-                        normalEnd: workingDay.endTime,
-                        price: workingDay.pickupExtension.flatPrice
-                      } : undefined;
-                      return (
-                        <TimeSelect
-                          value={formData.pickupTime}
-                          onChange={(time) =>
-                            setFormData((prev) => ({ ...prev, pickupTime: time }))
-                          }
-                          slots={pickupTimeSlots}
-                          reservedSlots={startDateReservedSlots}
-                          selectedDate={dateRange[0].startDate}
-                          isStartTime={true}
-                          extensionTimes={extensionTimes}
-                        />
-                      );
-                    })()}
+                    {dateRange[0].startDate &&
+                      (() => {
+                        const office = getSelectedOffice();
+                        const date = dateRange[0].startDate;
+                        const dayName = [
+                          "sunday",
+                          "monday",
+                          "tuesday",
+                          "wednesday",
+                          "thursday",
+                          "friday",
+                          "saturday",
+                        ][date.getDay()];
+                        const workingDay = office?.workingTime?.find(
+                          (w: any) => w.day === dayName && w.isOpen
+                        );
+                        const extensionTimes = workingDay?.pickupExtension
+                          ? {
+                              start: pickupTimeSlots[0],
+                              end: pickupTimeSlots[pickupTimeSlots.length - 1],
+                              normalStart: workingDay.startTime,
+                              normalEnd: workingDay.endTime,
+                              price: workingDay.pickupExtension.flatPrice,
+                            }
+                          : undefined;
+                        return (
+                          <TimeSelect
+                            value={formData.pickupTime}
+                            onChange={(time) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                pickupTime: time,
+                              }))
+                            }
+                            slots={pickupTimeSlots}
+                            reservedSlots={startDateReservedSlots}
+                            selectedDate={dateRange[0].startDate}
+                            isStartTime={true}
+                            extensionTimes={extensionTimes}
+                          />
+                        );
+                      })()}
                   </div>
                   <div>
                     <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
                       <FiClock className="text-[#fe9a00]" />
                       Return Time
                     </label>
-                    {dateRange[0].endDate && (() => {
-                      const office = getSelectedOffice();
-                      const date = dateRange[0].endDate;
-                      const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
-                      const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
-                      const extensionTimes = workingDay?.returnExtension ? {
-                        start: returnTimeSlots[0],
-                        end: returnTimeSlots[returnTimeSlots.length - 1],
-                        normalStart: workingDay.startTime,
-                        normalEnd: workingDay.endTime,
-                        price: workingDay.returnExtension.flatPrice
-                      } : undefined;
-                      return (
-                        <TimeSelect
-                          value={formData.returnTime}
-                          onChange={(time) =>
-                            setFormData((prev) => ({ ...prev, returnTime: time }))
-                          }
-                          slots={returnTimeSlots}
-                          reservedSlots={endDateReservedSlots}
-                          selectedDate={dateRange[0].endDate}
-                          isStartTime={false}
-                          extensionTimes={extensionTimes}
-                        />
-                      );
-                    })()}
+                    {dateRange[0].endDate &&
+                      (() => {
+                        const office = getSelectedOffice();
+                        const date = dateRange[0].endDate;
+                        const dayName = [
+                          "sunday",
+                          "monday",
+                          "tuesday",
+                          "wednesday",
+                          "thursday",
+                          "friday",
+                          "saturday",
+                        ][date.getDay()];
+                        const workingDay = office?.workingTime?.find(
+                          (w: any) => w.day === dayName && w.isOpen
+                        );
+                        const extensionTimes = workingDay?.returnExtension
+                          ? {
+                              start: returnTimeSlots[0],
+                              end: returnTimeSlots[returnTimeSlots.length - 1],
+                              normalStart: workingDay.startTime,
+                              normalEnd: workingDay.endTime,
+                              price: workingDay.returnExtension.flatPrice,
+                            }
+                          : undefined;
+                        return (
+                          <TimeSelect
+                            value={formData.returnTime}
+                            onChange={(time) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                returnTime: time,
+                              }))
+                            }
+                            slots={returnTimeSlots}
+                            reservedSlots={endDateReservedSlots}
+                            selectedDate={dateRange[0].endDate}
+                            isStartTime={false}
+                            extensionTimes={extensionTimes}
+                          />
+                        );
+                      })()}
                   </div>
                 </div>
 
@@ -1413,7 +1540,10 @@ function ReservationPanel({
                     <button
                       type="button"
                       onClick={() =>
-                        setFormData((prev) => ({ ...prev, gearType: "automatic" }))
+                        setFormData((prev) => ({
+                          ...prev,
+                          gearType: "automatic",
+                        }))
                       }
                       className={`flex-1 py-3 px-4 rounded-xl text-sm font-semibold transition-all ${
                         formData.gearType === "automatic"
@@ -1443,7 +1573,9 @@ function ReservationPanel({
                 <div>
                   <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
-                      {(van as any)?.gear?.availableTypes?.length > 1 ? "4" : "3"}
+                      {(van as any)?.gear?.availableTypes?.length > 1
+                        ? "4"
+                        : "3"}
                     </div>
                     Add-ons
                   </h3>
@@ -1487,8 +1619,12 @@ function ReservationPanel({
                   {addOns.length > 0 &&
                   formData.pickupDate &&
                   formData.returnDate
-                    ? (van as any)?.gear?.availableTypes?.length > 1 ? "5" : "4"
-                    : (van as any)?.gear?.availableTypes?.length > 1 ? "4" : "3"}
+                    ? (van as any)?.gear?.availableTypes?.length > 1
+                      ? "5"
+                      : "4"
+                    : (van as any)?.gear?.availableTypes?.length > 1
+                    ? "4"
+                    : "3"}
                 </div>
                 Cost Summary
               </h3>
@@ -1500,34 +1636,54 @@ function ReservationPanel({
                       <div>
                         <span className="text-gray-400">Rental charges</span>
                         <div className="text-gray-500 text-xs mt-0.5">
-                          {priceCalc.totalDays} days x £{priceCalc.pricePerDay}{priceCalc.extraHours > 0 && ` + ${priceCalc.extraHours}h x £${priceCalc.extraHoursRate}`}
+                          {priceCalc.totalDays} days x £{priceCalc.pricePerDay}
+                          {priceCalc.extraHours > 0 &&
+                            ` + ${priceCalc.extraHours}h x £${priceCalc.extraHoursRate}`}
                         </div>
                       </div>
                       <span className="text-white font-semibold">
-                        £{(priceCalc.totalDays * priceCalc.pricePerDay + priceCalc.extraHours * priceCalc.extraHoursRate).toFixed(2)}
+                        £
+                        {(
+                          priceCalc.totalDays * priceCalc.pricePerDay +
+                          priceCalc.extraHours * priceCalc.extraHoursRate
+                        ).toFixed(2)}
                       </span>
                     </div>
-                    {formData.gearType === "automatic" && (van as any)?.gear?.automaticExtraCost > 0 && (
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="text-gray-400">Automatic gear</span>
-                          <div className="text-gray-500 text-xs mt-0.5">
-                            {priceCalc.totalDays} days x £{(van as any).gear.automaticExtraCost}
+                    {formData.gearType === "automatic" &&
+                      (van as any)?.gear?.automaticExtraCost > 0 && (
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-gray-400">
+                              Automatic gear
+                            </span>
+                            <div className="text-gray-500 text-xs mt-0.5">
+                              {priceCalc.totalDays} days x £
+                              {(van as any).gear.automaticExtraCost}
+                            </div>
                           </div>
+                          <span className="text-white font-semibold">
+                            £
+                            {(
+                              (van as any).gear.automaticExtraCost *
+                              priceCalc.totalDays
+                            ).toFixed(2)}
+                          </span>
                         </div>
-                        <span className="text-white font-semibold">£{((van as any).gear.automaticExtraCost * priceCalc.totalDays).toFixed(2)}</span>
-                      </div>
-                    )}
+                      )}
                     {pickupExtensionPrice > 0 && (
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Pickup Extension</span>
-                        <span className="text-white font-semibold">£{pickupExtensionPrice}</span>
+                        <span className="text-white font-semibold">
+                          £{pickupExtensionPrice}
+                        </span>
                       </div>
                     )}
                     {returnExtensionPrice > 0 && (
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Return Extension</span>
-                        <span className="text-white font-semibold">£{returnExtensionPrice}</span>
+                        <span className="text-white font-semibold">
+                          £{returnExtensionPrice}
+                        </span>
                       </div>
                     )}
                     {selectedAddOns.map((item) => {
@@ -1537,22 +1693,41 @@ function ReservationPanel({
                       if (addon.pricingType === "flat") {
                         const amount = addon.flatPrice?.amount || 0;
                         const isPerDay = addon.flatPrice?.isPerDay || false;
-                        price = (isPerDay ? amount * priceCalc.totalDays : amount) * item.quantity;
-                      } else if (item.selectedTierIndex !== undefined && addon.tieredPrice?.tiers?.[item.selectedTierIndex]) {
-                        const tier = addon.tieredPrice.tiers[item.selectedTierIndex];
+                        price =
+                          (isPerDay ? amount * priceCalc.totalDays : amount) *
+                          item.quantity;
+                      } else if (
+                        item.selectedTierIndex !== undefined &&
+                        addon.tieredPrice?.tiers?.[item.selectedTierIndex]
+                      ) {
+                        const tier =
+                          addon.tieredPrice.tiers[item.selectedTierIndex];
                         const isPerDay = addon.tieredPrice.isPerDay || false;
-                        price = (isPerDay ? tier.price * priceCalc.totalDays : tier.price) * item.quantity;
+                        price =
+                          (isPerDay
+                            ? tier.price * priceCalc.totalDays
+                            : tier.price) * item.quantity;
                       }
                       return (
-                        <div key={item.addOn} className="flex justify-between items-center">
-                          <span className="text-gray-400">{addon.name}{item.quantity > 1 && ` x ${item.quantity}`}</span>
-                          <span className="text-white font-semibold">£{price.toFixed(2)}</span>
+                        <div
+                          key={item.addOn}
+                          className="flex justify-between items-center"
+                        >
+                          <span className="text-gray-400">
+                            {addon.name}
+                            {item.quantity > 1 && ` x ${item.quantity}`}
+                          </span>
+                          <span className="text-white font-semibold">
+                            £{price.toFixed(2)}
+                          </span>
                         </div>
                       );
                     })}
                     <div className="border-t border-[#fe9a00]/20 pt-2 mt-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-white font-bold">Total Price</span>
+                        <span className="text-white font-bold">
+                          Total Price
+                        </span>
                         <span className="text-[#fe9a00] font-black text-xl">
                           £{priceCalc.totalPrice}
                         </span>
@@ -1675,9 +1850,11 @@ function ReservationPanel({
 function CategoryCard({
   category,
   onView,
+  onDetails,
 }: {
   category: Category;
   onView: () => void;
+  onDetails: () => void;
 }) {
   return (
     <div className="group relative h-125 rounded-3xl overflow-hidden">
@@ -1701,7 +1878,9 @@ function CategoryCard({
           <h3 className="text-xl font-black text-white line-clamp-1 leading-tight mb-1">
             {category.name}{" "}
           </h3>
-          <p className="text-gray-300 text-sm font-medium mb-4">{category.expert} {" "} or similar</p>
+          <p className="text-gray-300 text-sm line-clamp-1 font-medium mb-4">
+            {category.expert}
+          </p>
           {/* <p className="text-gray-300 text-sm font-medium mb-4 line-clamp-2">
             {category.description}
           </p> */}
@@ -1729,30 +1908,153 @@ function CategoryCard({
         </div>
 
         <div className="space-y-2">
-          
-
+          <button
+            onClick={onDetails}
+            className="group/btn relative cursor-pointer flex items-center gap-1 border-b-2   border-white/50   py-0.5 font-bold text-sm overflow-hidden transition-all duration-300 whitespace-nowrap text-white  shadow-lg"
+          >
+            <span className="relative text-[#fe9a00] z-10 text-xs">
+              Van Dimensions
+            </span>
+            <IoIosArrowForward className="group group-hover:translate-x-1  transition-all duration-300" />
+          </button>
           <div className="flex items-end justify-between gap-3">
             <div>
-                            <p className="text-gray-300 text-sm mt-0.5">from</p>
+              <p className="text-gray-300 text-sm mt-0.5">from</p>
 
               <div className="flex items-baseline gap-1.5">
-                
                 <span className="text-3xl font-black text-white">
                   £{(category as any).showPrice || 0}
-                  <span className="text-gray-300 text-sm m-0.5 font-normal">/day</span>
+                  <span className="text-gray-300 text-sm m-0.5 font-normal">
+                    /day
+                  </span>
                 </span>
               </div>
             </div>
+
             <button
               onClick={onView}
               className="group/btn relative cursor-pointer border-2 rounded-md border-white/50 px-6 py-2.5 font-bold text-sm overflow-hidden transition-all duration-300 whitespace-nowrap text-white hover:scale-105 shadow-lg"
             >
-              <span className="relative text-[#fe9a00] z-10">Book Now </span>
+              <span className="relative text-[#fe9a00] z-10">Book Now</span>
               <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000"></div>
             </button>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function CategoryDetailsModal({
+  category,
+  onClose,
+}: {
+  category: Category;
+  onClose: () => void;
+}) {
+  const [activeTab, setActiveTab] = useState<"dimensions" | "purpose">(
+    "dimensions"
+  );
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 transition-opacity duration-300"
+        onClick={onClose}
+      />
+      <div className="fixed inset-0 z-10000 flex items-center justify-center p-4">
+        <div className="bg-linear-to-br from-[#0f172b] to-[#1e293b] rounded-2xl border border-white/10 max-w-2xl w-full max-h-[70vh] overflow-y-auto shadow-2xl animate-in z-9999 zoom-in duration-300">
+          {/* Header */}
+          <div className="sticky top-0 bg-linear-to-r from-[#0f172b] to-[#1e293b] backdrop-blur-xl border-b border-white/10 p-6 flex items-center justify-between">
+            <h2 className="text-2xl font-black text-white">{category.name}</h2>
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all hover:rotate-90 duration-300"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 space-y-6">
+            {/* Image */}
+            <div className="relative w-46 h-68 rounded-xl overflow-hidden border border-white/10">
+              <Image
+                src={category.image}
+                alt={category.name}
+                fill
+                className="object-contain"
+              />
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-2 border-b border-white/10">
+              <button
+                onClick={() => setActiveTab("dimensions")}
+                className={`px-4 py-3 font-semibold transition-all ${
+                  activeTab === "dimensions"
+                    ? "text-[#fe9a00] border-b-2 border-[#fe9a00]"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Dimensions
+              </button>
+              <button
+                onClick={() => setActiveTab("purpose")}
+                className={`px-4 py-3 font-semibold transition-all ${
+                  activeTab === "purpose"
+                    ? "text-[#fe9a00] border-b-2 border-[#fe9a00]"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                Purpose
+              </button>
+            </div>
+
+            {/* Dimensions Tab */}
+            {activeTab === "dimensions" && (
+              <div className="space-y-3">
+                {category.properties && category.properties.length > 0 ? (
+                  category.properties.map((prop, idx) => (
+                    <div
+                      key={idx}
+                      className="flex justify-between items-start p-3 bg-white/5 rounded-lg border border-white/10 hover:border-[#fe9a00]/30 transition-all"
+                    >
+                      <span className="text-gray-300 font-semibold">
+                        {prop.key}
+                      </span>
+                      <span className="text-white text-right">
+                        {prop.value}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-400 text-center py-4">
+                    No dimensions available
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Purpose Tab */}
+            {activeTab === "purpose" && (
+              <div className="space-y-4">
+                {category.purpose ? (
+                  <div className="p-4 bg-[#fe9a00]/10 border border-[#fe9a00]/20 rounded-lg">
+                    <p className="text-white leading-relaxed">
+                      {category.purpose}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-gray-400 text-center py-4">
+                    No purpose information available
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

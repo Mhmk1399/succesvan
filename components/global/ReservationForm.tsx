@@ -228,7 +228,7 @@ export default function ReservationForm({
         const [offRes, typeRes] = await Promise.all([
           fetch("/api/offices"),
           fetch("/api/types"),
-        ]);
+        ]); 
         const offData = await offRes.json();
         const typeData = await typeRes.json();
         setOffices(offData.data || []);
@@ -658,17 +658,7 @@ export default function ReservationForm({
                 isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
               }`}
             >
-              {isInline ? (
-                <>
-                  {format(dateRange[0].startDate || new Date(), "dd/MM")} -{" "}
-                  {format(dateRange[0].endDate || new Date(), "dd/MM")}
-                </>
-              ) : (
-                <>
-                  {format(dateRange[0].startDate || new Date(), "dd/MM/yyyy")} -{" "}
-                  {format(dateRange[0].endDate || new Date(), "dd/MM/yyyy")}
-                </>
-              )}
+              Select Dates
             </button>
             {showDateRange && (
               <div
@@ -898,8 +888,7 @@ export default function ReservationForm({
             onClick={() => setShowDateRange(!showDateRange)}
             className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs text-left focus:outline-none focus:border-amber-400 transition-colors"
           >
-            {format(dateRange[0].startDate || new Date(), "dd/MM")} -{" "}
-            {format(dateRange[0].endDate || new Date(), "dd/MM")}
+            Select Dates
           </button>
           {showDateRange && (
             <div className="mt-2 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-2 overflow-x-auto">
