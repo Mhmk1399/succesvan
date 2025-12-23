@@ -1367,5 +1367,7 @@ export async function getOfficesList() {
     _id: o._id.toString(),
     name: o.name,
     address: o.address,
+    workingTime: o.workingTime || [],
+    specialDays: o.specialDays || [],
   }));
 }
