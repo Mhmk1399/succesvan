@@ -23,6 +23,7 @@ interface VanCardProps {
   isSelected: boolean;
   onSelect: () => void;
   calculatedPrice?: number;
+  originalPrice?: number;
   breakdown?: string;
 }
 
@@ -31,6 +32,7 @@ export default function VanCard({
   isSelected,
   onSelect,
   calculatedPrice,
+  originalPrice,
   breakdown,
 }: VanCardProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -103,11 +105,27 @@ export default function VanCard({
           <div>
             {calculatedPrice ? (
               <>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-lg font-black text-[#37cf6f]">
-                   <span className="font-medium text-gray-400 text-xs">cost:</span> £{calculatedPrice}
-                  </span>
-                </div>
+                {(van as any).selloffer && (van as any).selloffer > 0 && originalPrice ? (
+                  <>
+                    <div className="flex items-baseline gap-1 mb-0.5">
+                      <span className="text-xs font-bold text-gray-400 line-through">
+                        £{originalPrice}
+                      </span>
+                      <span className="text-lg font-black text-[#37cf6f]">
+                        £{calculatedPrice}
+                      </span>
+                    </div>
+                    <p className="text-[#fe9a00] text-[10px] font-bold mb-0.5">
+                      {(van as any).selloffer}% OFF
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-lg font-black text-[#37cf6f]">
+                     <span className="font-medium text-gray-400 text-xs">cost:</span> £{calculatedPrice}
+                    </span>
+                  </div>
+                )}
                 <p className="text-gray-300 text-[10px] line-clamp-1">
                   {breakdown}
                 </p>

@@ -257,9 +257,15 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       cat.pricingTiers.find(
         (t) => totalDays >= t.minDays && totalDays <= t.maxDays
       ) || cat.pricingTiers[cat.pricingTiers.length - 1];
-    const pricePerDay = tier.pricePerDay;
+    const originalPricePerDay = tier.pricePerDay;
+    let pricePerDay = tier.pricePerDay;
+    if (cat.selloffer && cat.selloffer > 0) {
+      pricePerDay = pricePerDay * (1 - cat.selloffer / 100);
+    }
+    const originalDaysPrice = totalDays * originalPricePerDay;
     const daysPrice = totalDays * pricePerDay;
     const extraHoursPrice = extraHours * (cat.extrahoursRate || 0);
+    const originalTotalPrice = originalDaysPrice + extraHoursPrice;
     const totalPrice = daysPrice + extraHoursPrice;
     let breakdown = "";
     if (totalDays > 0 && extraHours > 0) {
@@ -275,7 +281,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     } else {
       breakdown = `${extraHours}h (£${cat.extrahoursRate}/hr) = £${totalPrice}`;
     }
-    return { totalPrice, breakdown };
+    return { totalPrice: parseFloat(totalPrice.toFixed(2)), originalTotalPrice: parseFloat(originalTotalPrice.toFixed(2)), breakdown };
   };
 
   const priceCalc = usePriceCalculation(
@@ -758,11 +764,27 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                               <div>
                                 {catPrice ? (
                                   <>
-                                    <div className="flex items-baseline gap-1">
-                                      <span className="text-2xl font-black text-[#37cf6f]">
-                                        £{catPrice.totalPrice}
-                                      </span>
-                                    </div>
+                                    {(cat as any).selloffer && (cat as any).selloffer > 0 ? (
+                                      <>
+                                        <div className="flex items-baseline gap-1 mb-1">
+                                          <span className="text-sm font-bold text-gray-400 line-through">
+                                            £{catPrice.originalTotalPrice}
+                                          </span>
+                                          <span className="text-2xl font-black text-[#37cf6f]">
+                                            £{catPrice.totalPrice}
+                                          </span>
+                                        </div>
+                                        <p className="text-[#fe9a00] text-[10px] font-bold mb-1">
+                                          {(cat as any).selloffer}% OFF
+                                        </p>
+                                      </>
+                                    ) : (
+                                      <div className="flex items-baseline gap-1">
+                                        <span className="text-2xl font-black text-[#37cf6f]">
+                                          £{catPrice.totalPrice}
+                                        </span>
+                                      </div>
+                                    )}
                                     <p className="text-gray-400 text-xs">
                                       {catPrice.breakdown}
                                     </p>
@@ -810,6 +832,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                               }))
                             }
                             calculatedPrice={catPrice?.totalPrice}
+                            originalPrice={catPrice?.originalTotalPrice}
                             breakdown={catPrice?.breakdown}
                           />
                         );
