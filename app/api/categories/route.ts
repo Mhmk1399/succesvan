@@ -10,10 +10,16 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const page = searchParams.get("page");
     const limit = searchParams.get("limit");
+    const status = searchParams.get("status");
+
+    const filter: any = {};
+    if (status) {
+      filter.status = status;
+    }
 
     // If pagination params not provided, return all data
     if (!page && !limit) {
-      const categories = await Category.find()
+      const categories = await Category.find(filter)
         .populate({
           model: Type,
           path: "type",
@@ -28,7 +34,7 @@ export async function GET(req: NextRequest) {
     const skip = (pageNum - 1) * limitNum;
 
     const [categories, total] = await Promise.all([
-      Category.find()
+      Category.find(filter)
         .populate({
           model: Type,
           path: "type",
@@ -36,7 +42,7 @@ export async function GET(req: NextRequest) {
         .sort({ showPrice: 1 })
         .skip(skip)
         .limit(limitNum),
-      Category.countDocuments(),
+      Category.countDocuments(filter),
     ]);
 
     return successResponse({

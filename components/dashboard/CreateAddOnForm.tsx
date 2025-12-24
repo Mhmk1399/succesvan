@@ -19,6 +19,7 @@ export default function AddOnsContent() {
     pricingType: "flat" as "flat" | "tiered",
     flatPrice: { amount: "", isPerDay: false },
     tieredPrice: { isPerDay: false, tiers: [{ minDays: "", maxDays: "", price: "" }] },
+    status: "active",
   });
 
   const handleInputChange = (
@@ -59,6 +60,7 @@ export default function AddOnsContent() {
       pricingType: "flat",
       flatPrice: { amount: "", isPerDay: false },
       tieredPrice: { isPerDay: false, tiers: [{ minDays: "", maxDays: "", price: "" }] },
+      status: "active",
     });
     setEditingId(null);
   };
@@ -82,6 +84,7 @@ export default function AddOnsContent() {
           })
         ),
       },
+      status: (item as any).status || "active",
     });
     setEditingId(item._id || null);
     setIsFormOpen(true);
@@ -99,6 +102,7 @@ export default function AddOnsContent() {
         name: formData.name,
         description: formData.description,
         pricingType: formData.pricingType,
+        status: formData.status,
       };
 
       if (formData.pricingType === "flat") {
@@ -198,6 +202,18 @@ export default function AddOnsContent() {
                   }))
                 }
                 placeholder="Select Pricing Type"
+              />
+
+              <CustomSelect
+                options={[
+                  { _id: "active", name: "Active" },
+                  { _id: "inactive", name: "Inactive" },
+                ]}
+                value={formData.status}
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, status: val }))
+                }
+                placeholder="Select Status"
               />
 
               {formData.pricingType === "flat" ? (

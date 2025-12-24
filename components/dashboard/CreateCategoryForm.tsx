@@ -24,6 +24,7 @@ export default function CategoriesContent() {
     video: "",
     type: "",
     showPrice: "",
+    selloffer: "",
     properties: [{ key: "", value: "" }],
     requiredLicense: "",
     pricingTiers: [{ minDays: "", maxDays: "", pricePerDay: "" }],
@@ -43,6 +44,7 @@ export default function CategoriesContent() {
       service: "",
     },
     offices: [] as string[],
+    status: "active",
   });
 
   useEffect(() => {
@@ -112,6 +114,7 @@ export default function CategoriesContent() {
       video: "",
       type: "",
       showPrice: "",
+      selloffer: "",
       properties: [{ key: "", value: "" }],
       requiredLicense: "",
       pricingTiers: [{ minDays: "", maxDays: "", pricePerDay: "" }],
@@ -131,6 +134,7 @@ export default function CategoriesContent() {
         service: "",
       },
       offices: [] as string[],
+      status: "active",
     });
     setEditingId(null);
   };
@@ -147,6 +151,7 @@ export default function CategoriesContent() {
       video: (item as any).video || "",
       type: typeId,
       showPrice: String((item as any).showPrice || ""),
+      selloffer: String((item as any).selloffer || ""),
       properties: (item as any).properties?.map((p: any) => ({
         key: p.key || "",
         value: p.value || "",
@@ -175,6 +180,7 @@ export default function CategoriesContent() {
         service: String(item.servicesPeriod?.service || ""),
       },
       offices: [],
+      status: (item as any).status || "active",
     });
     setEditingId(item._id || null);
     setIsFormOpen(true);
@@ -193,6 +199,7 @@ export default function CategoriesContent() {
         video: (item as any).video,
         type: typeId,
         showPrice: (item as any).showPrice,
+        selloffer: (item as any).selloffer,
         properties: (item as any).properties || [],
         requiredLicense: (item as any).requiredLicense,
         pricingTiers: (item as any).pricingTiers || [],
@@ -240,6 +247,7 @@ export default function CategoriesContent() {
         video: formData.video,
         type: formData.type,
         showPrice: parseFloat(formData.showPrice),
+        selloffer: formData.selloffer ? parseFloat(formData.selloffer) : undefined,
         properties: formData.properties.map((p) => ({
           key: p.key,
           value: p.value,
@@ -265,6 +273,7 @@ export default function CategoriesContent() {
           air: parseInt(formData.servicesPeriod.air),
           service: parseInt(formData.servicesPeriod.service),
         },
+        status: formData.status,
       };
 
       const res = await fetch(url, {
@@ -487,6 +496,21 @@ export default function CategoriesContent() {
                 />
               </div>
 
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">Status</label>
+                <CustomSelect
+                  options={[
+                    { _id: "active", name: "Active" },
+                    { _id: "inactive", name: "Inactive" },
+                  ]}
+                  value={formData.status}
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, status: val }))
+                  }
+                  placeholder="Select Status"
+                />
+              </div>
+
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-white font-semibold">Pricing Tiers</h3>
@@ -579,21 +603,38 @@ export default function CategoriesContent() {
                 ))}
               </div>
 
-              <div>
-                <label className="text-gray-400 text-sm mb-2 block">
-                  Show Price
-                </label>
-                <input
-                  type="number"
-                  name="showPrice"
-                  placeholder="Show Price"
-                  value={formData.showPrice}
-                  onChange={handleInputChange}
-                  required
-                  step="0.01"
-                  min="0"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-gray-400 text-sm mb-2 block">
+                    Show Price
+                  </label>
+                  <input
+                    type="number"
+                    name="showPrice"
+                    placeholder="Show Price"
+                    value={formData.showPrice}
+                    onChange={handleInputChange}
+                    required
+                    step="0.01"
+                    min="0"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                  />
+                </div>
+                <div>
+                  <label className="text-gray-400 text-sm mb-2 block">
+                    Sell Offer (Optional)
+                  </label>
+                  <input
+                    type="number"
+                    name="selloffer"
+                    placeholder="Sell Offer"
+                    value={formData.selloffer}
+                    onChange={handleInputChange}
+                    step="0.01"
+                    min="0"
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                  />
+                </div>
               </div>
 
               <div className="space-y-3">

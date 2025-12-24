@@ -12,6 +12,7 @@ const addOnSchema = new mongoose.Schema(
       },
       isPerDay: { type: Boolean, default: false },
     },
+    status: { type: String, enum: ["active", "inactive"], default: "active" },
     tieredPrice: {
       isPerDay: { type: Boolean, default: false },
       tiers: [

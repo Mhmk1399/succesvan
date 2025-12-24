@@ -11,6 +11,7 @@ const categorySchema = new mongoose.Schema(
     type: { type: mongoose.Schema.Types.ObjectId, ref: "Type", required: true },
     showPrice: { type: Number, required: true, min: 0 },
     selloffer: { type: Number, min: 0 },
+    status: { type: String, enum: ["active", "inactive"], default: "active" },
     properties: [
       {
         key: { type: String, required: true },

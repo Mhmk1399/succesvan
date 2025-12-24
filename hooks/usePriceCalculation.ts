@@ -27,7 +27,8 @@ export function usePriceCalculation(
   pickupExtensionPrice: number = 0,
   returnExtensionPrice: number = 0,
   gearExtraCostPerDay: number = 0,
-  addOnsPrice: number = 0
+  addOnsPrice: number = 0,
+  sellOffer: number = 0
 ): PriceCalculationResult | null {
   const [result, setResult] = useState<PriceCalculationResult | null>(null);
 
@@ -77,7 +78,10 @@ export function usePriceCalculation(
       (t) => totalDays >= t.minDays && totalDays <= t.maxDays
     ) || pricingTiers[pricingTiers.length - 1];
 
-    const pricePerDay = tier.pricePerDay;
+    let pricePerDay = tier.pricePerDay;
+    if (sellOffer && sellOffer > 0) {
+      pricePerDay = pricePerDay * (1 - sellOffer / 100);
+    }
 
     // Calculate total price: (days * pricePerDay) + (days * gearExtraCost) + (extraHours * extraHoursRate) + extensions + addons
     const daysPrice = totalDays * pricePerDay;
@@ -142,7 +146,7 @@ export function usePriceCalculation(
       returnExtensionPrice,
       addOnsPrice,
     });
-  }, [startDate, endDate, pricingTiers, extraHoursRate, pickupExtensionPrice, returnExtensionPrice, gearExtraCostPerDay, addOnsPrice]);
+  }, [startDate, endDate, pricingTiers, extraHoursRate, pickupExtensionPrice, returnExtensionPrice, gearExtraCostPerDay, addOnsPrice, sellOffer]);
 
   return result;
 }

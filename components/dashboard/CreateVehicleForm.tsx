@@ -47,6 +47,7 @@ export default function VehiclesContent() {
       air: new Date(),
       service: new Date(),
     },
+    status: "active",
   });
 
   useEffect(() => {
@@ -158,6 +159,7 @@ export default function VehiclesContent() {
         air: new Date(),
         service: new Date(),
       },
+      status: "active",
     });
     setEditingId(null);
   };
@@ -191,6 +193,7 @@ export default function VehiclesContent() {
         air: new Date(),
         service: new Date(),
       },
+      status: (item as any).status || "active",
     });
     setEditingId(item._id || null);
     setIsFormOpen(true);
@@ -221,6 +224,7 @@ export default function VehiclesContent() {
           air: formData.serviceHistory.air,
           service: formData.serviceHistory.service,
         },
+        status: formData.status,
       };
 
       const res = await fetch(url, {
@@ -347,6 +351,18 @@ export default function VehiclesContent() {
                     ? "Loading reservations..."
                     : "Select Reservation (Optional)"
                 }
+              />
+
+              <CustomSelect
+                options={[
+                  { _id: "active", name: "Active" },
+                  { _id: "inactive", name: "Inactive" },
+                ]}
+                value={formData.status}
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, status: val }))
+                }
+                placeholder="Select Status"
               />
 
               <div className="space-y-3">

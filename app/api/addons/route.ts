@@ -9,10 +9,16 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const page = searchParams.get("page");
     const limit = searchParams.get("limit");
+    const status = searchParams.get("status");
+
+    const filter: any = {};
+    if (status) {
+      filter.status = status;
+    }
 
     // If pagination params not provided, return all data
     if (!page && !limit) {
-      const addOns = await AddOn.find();
+      const addOns = await AddOn.find(filter);
       return successResponse({ data: addOns });
     }
 
@@ -22,8 +28,8 @@ export async function GET(req: NextRequest) {
     const skip = (pageNum - 1) * limitNum;
 
     const [addOns, total] = await Promise.all([
-      AddOn.find().skip(skip).limit(limitNum),
-      AddOn.countDocuments(),
+      AddOn.find(filter).skip(skip).limit(limitNum),
+      AddOn.countDocuments(filter),
     ]);
 
     return successResponse({

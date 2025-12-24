@@ -18,6 +18,7 @@ interface VanCardProps {
     expert: string;
     pricingTiers: { minDays: number; maxDays: number; pricePerDay: number }[];
     extrahoursRate: number;
+    selloffer?: number;
   };
   isSelected: boolean;
   onSelect: () => void;
@@ -113,14 +114,33 @@ export default function VanCard({
               </>
             ) : (
               <>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-lg font-black text-white">
-                    £{van.pricingTiers[0]?.pricePerDay}
-                  </span>
-                  <span className="text-gray-300 text-xs font-semibold">
-                    /day
-                  </span>
-                </div>
+                {(van as any).selloffer && (van as any).selloffer > 0 ? (
+                  <>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-sm font-bold text-gray-400 line-through">
+                        £{van.pricingTiers[0]?.pricePerDay}
+                      </span>
+                      <span className="text-lg font-black text-[#37cf6f]">
+                        £{(van.pricingTiers[0]?.pricePerDay * (1 - (van as any).selloffer / 100)).toFixed(2)}
+                      </span>
+                      <span className="text-gray-300 text-xs font-semibold">
+                        /day
+                      </span>
+                    </div>
+                    <p className="text-[#fe9a00] text-[10px] font-bold">
+                      {(van as any).selloffer}% OFF
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-lg font-black text-white">
+                      £{van.pricingTiers[0]?.pricePerDay}
+                    </span>
+                    <span className="text-gray-300 text-xs font-semibold">
+                      /day
+                    </span>
+                  </div>
+                )}
               </>
             )}
           </div>

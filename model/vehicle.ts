@@ -10,6 +10,8 @@ const vehicleSchema = new mongoose.Schema(
       ref: "Category",
       required: true,
     },
+        status: { type: String, enum: ["active", "inactive"], default: "active" },
+
     reservation: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Reservation",
