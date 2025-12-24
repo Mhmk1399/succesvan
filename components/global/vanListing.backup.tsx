@@ -280,8 +280,12 @@ function ReservationPanel({
 
   const [pickupExtensionPrice, setPickupExtensionPrice] = useState(0);
   const [returnExtensionPrice, setReturnExtensionPrice] = useState(0);
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
+  const [discountError, setDiscountError] = useState("");
+  const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
 
-  const priceCalc = usePriceCalculation(
+  const basePriceCalc = usePriceCalculation(
     dateRange[0].startDate && formData.pickupTime
       ? `${format(dateRange[0].startDate, "yyyy-MM-dd")}T${
           formData.pickupTime
@@ -304,6 +308,17 @@ function ReservationPanel({
     addOnsCost,
     (van as any)?.selloffer || 0
   );
+
+  const priceCalc = useMemo(() => {
+    if (!basePriceCalc) return null;
+    if (!appliedDiscount) return basePriceCalc;
+    const discountAmount = (basePriceCalc.totalPrice * appliedDiscount.percentage) / 100;
+    return {
+      ...basePriceCalc,
+      totalPrice: parseFloat((basePriceCalc.totalPrice - discountAmount).toFixed(2)),
+      discountAmount,
+    };
+  }, [basePriceCalc, appliedDiscount]);
 
   // Fetch offices
   useEffect(() => {
@@ -436,9 +451,49 @@ function ReservationPanel({
     }
   }, [formData.office, formData.returnTime, dateRange, offices]);
 
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) {
+      setDiscountError("Please enter a discount code");
+      return;
+    }
+    setIsApplyingDiscount(true);
+    setDiscountError("");
+    try {
+      const res = await fetch(`/api/discounts?code=${discountCode}&status=active`);
+      const data = await res.json();
+      if (!data.success) throw new Error("Invalid discount code");
+      const discounts = data.data.data || data.data;
+      const discount = discounts.find((d: any) => d.code.toUpperCase() === discountCode.toUpperCase());
+      if (!discount) throw new Error("Invalid discount code");
+      const now = new Date();
+      const validFrom = new Date(discount.validFrom);
+      const validTo = new Date(discount.validTo);
+      if (now < validFrom || now > validTo) throw new Error("Discount code has expired");
+      if (discount.usageLimit && discount.usageCount >= discount.usageLimit) throw new Error("Discount code usage limit reached");
+      if (discount.categories?.length > 0) {
+        const categoryIds = discount.categories.map((c: any) => c._id || c);
+        if (!categoryIds.includes(van._id)) throw new Error("Discount not valid for this vehicle");
+      }
+      setAppliedDiscount(discount);
+      setDiscountError("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid discount code";
+      setDiscountError(message);
+      setAppliedDiscount(null);
+    } finally {
+      setIsApplyingDiscount(false);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCode("");
+    setDiscountError("");
+  };
+
   // Calculate add-ons cost
   useEffect(() => {
-    const rentalDays = priceCalc?.totalDays || 1;
+    const rentalDays = basePriceCalc?.totalDays || 1;
     const cost = selectedAddOns.reduce((total, item) => {
       const addon = addOns.find((a) => a._id === item.addOn);
       if (!addon) return total;
@@ -459,7 +514,7 @@ function ReservationPanel({
       }
     }, 0);
     setAddOnsCost(cost);
-  }, [selectedAddOns, priceCalc, addOns]);
+  }, [selectedAddOns, basePriceCalc, addOns]);
 
   const pickupTimeSlots = useMemo(() => {
     if (!formData.office || !dateRange[0].startDate) return [];
@@ -875,8 +930,17 @@ function ReservationPanel({
           messege: formData.notes,
           status: "pending",
           addOns: selectedAddOns,
+          discountCode: appliedDiscount?.code || null,
         },
       };
+
+      if (appliedDiscount) {
+        await fetch(`/api/discounts?id=${appliedDiscount._id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ usageCount: appliedDiscount.usageCount + 1 }),
+        });
+      }
 
       const res = await fetch("/api/reservations", {
         method: "POST",
@@ -1009,11 +1073,27 @@ function ReservationPanel({
               <h3 className="text-white font-bold text-base line-clamp-2 mb-1">
                 {van.name}
               </h3>
-              <div className="flex items-baseline gap-2">
-                <span className="text-[#fe9a00] font-black text-2xl">
-                  £{(van as any).showPrice || 0}
-                </span>
+              <div className="flex items-baseline gap-2 ">
+                {(van as any).selloffer && (van as any).selloffer > 0 ? (
+                  <>
+                    <span className="text-gray-500 font-semibold text-sm line-through">
+                      £{(van as any).showPrice || 0}
+                    </span>
+                    <span className="text-[#fe9a00] font-black text-2xl">
+                      £{(((van as any).showPrice || 0) * (1 - (van as any).selloffer / 100)).toFixed(2)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[#fe9a00] font-black text-2xl">
+                    £{(van as any).showPrice || 0}
+                  </span>
+                )}
               </div>
+              {(van as any).selloffer && (van as any).selloffer > 0 && (
+                <span className="inline-block px-2 py-0.5 bg-[#fe9a00] text-slate-900 text-[10px] font-bold rounded">
+                  {(van as any).selloffer}% OFF
+                </span>
+              )}
               <p className="text-gray-400 text-xs">from</p>
             </div>
           </div>
@@ -1022,8 +1102,8 @@ function ReservationPanel({
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
               <FiPackage className="text-[#fe9a00] mx-auto mb-1 text-sm" />
-              <p className="text-white font-semibold text-xs">{van.cargo}</p>
-              <p className="text-gray-400 text-[10px]">Cargo</p>
+              <p className="text-white font-semibold text-xs">{van.doors}</p>
+              <p className="text-gray-400 text-[10px]">doors</p>
             </div>
             <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
               <BsFuelPump className="text-[#fe9a00] mx-auto mb-1 text-sm" />
@@ -1613,6 +1693,75 @@ function ReservationPanel({
                 <div className="border-t border-white/10"></div>
               )}
 
+            {/* Discount Code Section */}
+            <div>
+              <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
+                  {addOns.length > 0 &&
+                  formData.pickupDate &&
+                  formData.returnDate
+                    ? (van as any)?.gear?.availableTypes?.length > 1
+                      ? "5"
+                      : "4"
+                    : (van as any)?.gear?.availableTypes?.length > 1
+                    ? "4"
+                    : "3"}
+                </div>
+                Discount Code
+              </h3>
+              {!appliedDiscount ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={discountCode}
+                      onChange={(e) => {
+                        setDiscountCode(e.target.value.toUpperCase());
+                        setDiscountError("");
+                      }}
+                      placeholder="Enter discount code"
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all uppercase"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyDiscount}
+                      disabled={isApplyingDiscount || !discountCode.trim()}
+                      className="px-6 py-3 bg-[#fe9a00] hover:bg-orange-600 text-white font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isApplyingDiscount ? "..." : "Apply"}
+                    </button>
+                  </div>
+                  {discountError && (
+                    <p className="text-red-400 text-xs flex items-center gap-1">
+                      <FiAlertCircle className="text-xs" />
+                      {discountError}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-green-400 font-bold">{appliedDiscount.code}</p>
+                      <p className="text-green-300 text-xs mt-1">
+                        {appliedDiscount.percentage}% discount applied
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveDiscount}
+                      className="text-red-400 hover:text-red-300 text-sm font-semibold"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-white/10"></div>
+
             {/* Cost Summary */}
             <div className="bg-linear-to-br from-white/5 to-transparent border border-white/10 rounded-2xl p-4 space-y-3">
               <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
@@ -1724,6 +1873,16 @@ function ReservationPanel({
                         </div>
                       );
                     })}
+                    {appliedDiscount && (
+                      <div className="flex justify-between items-center text-green-400">
+                        <span className="font-semibold">
+                          Discount ({appliedDiscount.percentage}%)
+                        </span>
+                        <span className="font-semibold">
+                          -£{(priceCalc as any).discountAmount?.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
                     <div className="border-t border-[#fe9a00]/20 pt-2 mt-2">
                       <div className="flex justify-between items-center">
                         <span className="text-white font-bold">
@@ -1928,7 +2087,7 @@ function CategoryCard({
                     <span className="text-lg font-bold text-gray-400 line-through">
                       £{(category as any).showPrice || 0}
                     </span>
-                    <span className="text-3xl font-black text-white">
+                    <span className="text-2xl font-black text-white">
                       £{((category as any).showPrice * (1 - (category as any).selloffer / 100)).toFixed(2)}
                       <span className="text-gray-300 text-sm m-0.5 font-normal">
                         /day

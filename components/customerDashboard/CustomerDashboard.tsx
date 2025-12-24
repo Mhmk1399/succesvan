@@ -427,24 +427,93 @@ function OffersContent() {
 }
 
 function DiscountsContent() {
+  const [discounts, setDiscounts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDiscounts();
+  }, []);
+
+  const fetchDiscounts = async () => {
+    try {
+      const res = await fetch("/api/discounts?status=active");
+      const data = await res.json();
+      if (data.success) {
+        const activeDiscounts = (data.data.data || data.data).filter(
+          (d: any) => {
+            const now = new Date();
+            const validFrom = new Date(d.validFrom);
+            const validTo = new Date(d.validTo);
+            return (
+              d.status === "active" &&
+              now >= validFrom &&
+              now <= validTo &&
+              (!d.usageLimit || d.usageCount < d.usageLimit)
+            );
+          }
+        );
+        setDiscounts(activeDiscounts);
+      }
+    } catch (error) {
+      console.error("Failed to fetch discounts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    showToast.success("Code copied to clipboard!");
+  };
+
+  if (loading) {
+    return <div className="text-gray-400">Loading discounts...</div>;
+  }
+
+  if (discounts.length === 0) {
+    return (
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
+        <FiTag className="text-gray-500 text-5xl mx-auto mb-4" />
+        <h3 className="text-xl font-black text-white mb-2">
+          No Active Discounts
+        </h3>
+        <p className="text-gray-400">Check back later for new discount codes!</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[1, 2, 3].map((i) => (
+        {discounts.map((discount) => (
           <div
-            key={i}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6"
+            key={discount._id}
+            className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-[#fe9a00]/30 transition-colors"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black text-white">
-                Discount Code {i}
-              </h3>
+              <h3 className="text-lg font-black text-white">{discount.code}</h3>
               <span className="text-2xl font-black text-[#fe9a00]">
-                {10 + i * 5}%
+                {discount.percentage}%
               </span>
             </div>
-            <p className="text-gray-400 text-sm mb-4">Code: SAVE{i}0</p>
-            <button className="w-full px-4 py-2 bg-[#fe9a00]/20 text-[#fe9a00] rounded-lg hover:bg-[#fe9a00]/30 transition-colors font-semibold text-sm">
+            {discount.categories?.length > 0 && (
+              <p className="text-gray-400 text-sm mb-2">
+                Valid for:{" "}
+                {discount.categories.map((c: any) => c.name).join(", ")}
+              </p>
+            )}
+            <p className="text-gray-500 text-xs mb-4">
+              Valid until {new Date(discount.validTo).toLocaleDateString()}
+              {discount.usageLimit && (
+                <span className="ml-2">
+                  • {discount.usageLimit - discount.usageCount} uses left
+                </span>
+              )}
+            </p>
+            <button
+              onClick={() => copyCode(discount.code)}
+              className="w-full px-4 py-2 bg-[#fe9a00]/20 text-[#fe9a00] rounded-lg hover:bg-[#fe9a00]/30 transition-colors font-semibold text-sm"
+            >
               Copy Code
             </button>
           </div>

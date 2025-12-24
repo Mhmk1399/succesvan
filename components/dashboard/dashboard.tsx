@@ -34,6 +34,7 @@ import ContactsManagement from "./ContactsManagement";
 import AnnouncementManagement from "./AnnouncementManagement";
 import ReportsManagement from "./ReportsManagement";
 import { MenuItem } from "@/types/type";
+import DiscountManagement from "./DiscountManagement";
 
 const menuItems: MenuItem[] = [
   {
@@ -78,6 +79,12 @@ const menuItems: MenuItem[] = [
     label: "AddOns",
     icon: <FiGift />,
     color: "from-teal-500 to-teal-600",
+  },
+  {
+    id: "discounts",
+    label: "Discounts",
+    icon: <FiTag />,
+    color: "from-yellow-500 to-yellow-600",
   },
   {
     id: "notifications",
@@ -233,6 +240,7 @@ export default function Dashboard() {
           {activeTab === "holidays" && <HolidaysContent />}
           {activeTab === "categories" && <CategoriesContent />}
           {activeTab === "addons" && <AddOnsContent />}
+          {activeTab === "discounts" && <DiscountManagement />}
           {activeTab === "notifications" && <NotificationsContent />}
           {activeTab === "reserves" && <ReservesContent />}
           {activeTab === "Testimonial" && <TestimonialsManagement />}
