@@ -1009,11 +1009,27 @@ function ReservationPanel({
               <h3 className="text-white font-bold text-base line-clamp-2 mb-1">
                 {van.name}
               </h3>
-              <div className="flex items-baseline gap-2">
-                <span className="text-[#fe9a00] font-black text-2xl">
-                  £{(van as any).showPrice || 0}
-                </span>
+              <div className="flex items-baseline gap-2 ">
+                {(van as any).selloffer && (van as any).selloffer > 0 ? (
+                  <>
+                    <span className="text-gray-500 font-semibold text-sm line-through">
+                      £{(van as any).showPrice || 0}
+                    </span>
+                    <span className="text-[#fe9a00] font-black text-2xl">
+                      £{(((van as any).showPrice || 0) * (1 - (van as any).selloffer / 100)).toFixed(2)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[#fe9a00] font-black text-2xl">
+                    £{(van as any).showPrice || 0}
+                  </span>
+                )}
               </div>
+              {(van as any).selloffer && (van as any).selloffer > 0 && (
+                <span className="inline-block px-2 py-0.5 bg-[#fe9a00] text-slate-900 text-[10px] font-bold rounded">
+                  {(van as any).selloffer}% OFF
+                </span>
+              )}
               <p className="text-gray-400 text-xs">from</p>
             </div>
           </div>
@@ -1022,8 +1038,8 @@ function ReservationPanel({
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
               <FiPackage className="text-[#fe9a00] mx-auto mb-1 text-sm" />
-              <p className="text-white font-semibold text-xs">{van.cargo}</p>
-              <p className="text-gray-400 text-[10px]">Cargo</p>
+              <p className="text-white font-semibold text-xs">{van.doors}</p>
+              <p className="text-gray-400 text-[10px]">doors</p>
             </div>
             <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
               <BsFuelPump className="text-[#fe9a00] mx-auto mb-1 text-sm" />
@@ -1928,7 +1944,7 @@ function CategoryCard({
                     <span className="text-lg font-bold text-gray-400 line-through">
                       £{(category as any).showPrice || 0}
                     </span>
-                    <span className="text-3xl font-black text-white">
+                    <span className="text-2xl font-black text-white">
                       £{((category as any).showPrice * (1 - (category as any).selloffer / 100)).toFixed(2)}
                       <span className="text-gray-300 text-sm m-0.5 font-normal">
                         /day
