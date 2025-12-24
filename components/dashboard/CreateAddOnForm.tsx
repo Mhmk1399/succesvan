@@ -18,7 +18,10 @@ export default function AddOnsContent() {
     description: "",
     pricingType: "flat" as "flat" | "tiered",
     flatPrice: { amount: "", isPerDay: false },
-    tieredPrice: { isPerDay: false, tiers: [{ minDays: "", maxDays: "", price: "" }] },
+    tieredPrice: {
+      isPerDay: false,
+      tiers: [{ minDays: "", maxDays: "", price: "" }],
+    },
     status: "active",
   });
 
@@ -42,14 +45,23 @@ export default function AddOnsContent() {
   const addTier = () => {
     setFormData((prev) => ({
       ...prev,
-      tieredPrice: { ...prev.tieredPrice, tiers: [...prev.tieredPrice.tiers, { minDays: "", maxDays: "", price: "" }] },
+      tieredPrice: {
+        ...prev.tieredPrice,
+        tiers: [
+          ...prev.tieredPrice.tiers,
+          { minDays: "", maxDays: "", price: "" },
+        ],
+      },
     }));
   };
 
   const removeTier = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      tieredPrice: { ...prev.tieredPrice, tiers: prev.tieredPrice.tiers.filter((_, i) => i !== index) },
+      tieredPrice: {
+        ...prev.tieredPrice,
+        tiers: prev.tieredPrice.tiers.filter((_, i) => i !== index),
+      },
     }));
   };
 
@@ -59,7 +71,10 @@ export default function AddOnsContent() {
       description: "",
       pricingType: "flat",
       flatPrice: { amount: "", isPerDay: false },
-      tieredPrice: { isPerDay: false, tiers: [{ minDays: "", maxDays: "", price: "" }] },
+      tieredPrice: {
+        isPerDay: false,
+        tiers: [{ minDays: "", maxDays: "", price: "" }],
+      },
       status: "active",
     });
     setEditingId(null);
@@ -76,13 +91,15 @@ export default function AddOnsContent() {
       },
       tieredPrice: {
         isPerDay: (item as any).tieredPrice?.isPerDay || false,
-        tiers: ((item as any).tieredPrice?.tiers || [{ minDays: "", maxDays: "", price: "" }]).map(
-          (t: any) => ({
-            minDays: String(t.minDays),
-            maxDays: String(t.maxDays),
-            price: String(t.price),
-          })
-        ),
+        tiers: (
+          (item as any).tieredPrice?.tiers || [
+            { minDays: "", maxDays: "", price: "" },
+          ]
+        ).map((t: any) => ({
+          minDays: String(t.minDays),
+          maxDays: String(t.maxDays),
+          price: String(t.price),
+        })),
       },
       status: (item as any).status || "active",
     });
@@ -171,6 +188,7 @@ export default function AddOnsContent() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <label className="text-gray-400 text-sm mb-2 block">Name</label>
               <input
                 type="text"
                 name="name"
@@ -180,7 +198,9 @@ export default function AddOnsContent() {
                 required
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
-
+              <label className="text-gray-400 text-sm mb-2 block">
+                description
+              </label>
               <textarea
                 name="description"
                 placeholder="Description"
@@ -188,7 +208,9 @@ export default function AddOnsContent() {
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
-
+              <label className="text-gray-400 text-sm mb-2 block">
+                pricingType
+              </label>
               <CustomSelect
                 options={[
                   { _id: "flat", name: "Flat Price" },
@@ -203,6 +225,7 @@ export default function AddOnsContent() {
                 }
                 placeholder="Select Pricing Type"
               />
+              <label className="text-gray-400 text-sm mb-2 block">status</label>
 
               <CustomSelect
                 options={[
@@ -226,7 +249,10 @@ export default function AddOnsContent() {
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        flatPrice: { ...prev.flatPrice, amount: e.target.value },
+                        flatPrice: {
+                          ...prev.flatPrice,
+                          amount: e.target.value,
+                        },
                       }))
                     }
                     required
@@ -241,7 +267,10 @@ export default function AddOnsContent() {
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          flatPrice: { ...prev.flatPrice, isPerDay: e.target.checked },
+                          flatPrice: {
+                            ...prev.flatPrice,
+                            isPerDay: e.target.checked,
+                          },
                         }))
                       }
                       className="w-4 h-4 accent-[#fe9a00]"
@@ -268,7 +297,10 @@ export default function AddOnsContent() {
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          tieredPrice: { ...prev.tieredPrice, isPerDay: e.target.checked },
+                          tieredPrice: {
+                            ...prev.tieredPrice,
+                            isPerDay: e.target.checked,
+                          },
                         }))
                       }
                       className="w-4 h-4 accent-[#fe9a00]"
@@ -372,7 +404,10 @@ export default function AddOnsContent() {
               const perDay = tp?.isPerDay ? "/day" : "";
               return (
                 tp?.tiers
-                  ?.map((t: any) => `${t.minDays}-${t.maxDays}d: £${t.price}${perDay}`)
+                  ?.map(
+                    (t: any) =>
+                      `${t.minDays}-${t.maxDays}d: £${t.price}${perDay}`
+                  )
                   .join(" | ") || "-"
               );
             },
@@ -380,7 +415,7 @@ export default function AddOnsContent() {
         ]}
         onEdit={handleEdit}
         onMutate={(mutate) => (mutateRef.current = mutate)}
-        hiddenColumns={["pricingType", "description" ]}
+        hiddenColumns={["pricingType", "description"]}
       />
     </div>
   );

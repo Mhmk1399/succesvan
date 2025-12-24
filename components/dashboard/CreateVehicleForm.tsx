@@ -54,8 +54,8 @@ export default function VehiclesContent() {
     const fetchData = async () => {
       try {
         const [catRes, offRes, resRes] = await Promise.all([
-          fetch("/api/categories?limit=100"),
-          fetch("/api/offices?limit=100"),
+          fetch("/api/categories?limit=100&status=active"),
+          fetch("/api/offices?limit=100&status=active"),
           fetch("/api/reservations?limit=100"),
         ]);
         const catData = await catRes.json();
@@ -276,16 +276,21 @@ export default function VehiclesContent() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <label className="text-gray-400 text-sm mb-2 block">
+                Vehicle Name
+              </label>
               <input
                 type="text"
                 name="title"
-                placeholder="Vehicle Title"
+                placeholder="Vehicle Name"
                 value={formData.title}
                 onChange={handleInputChange}
                 required
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
-
+              <label className="text-gray-400 text-sm mb-2 block">
+                Vehicle description
+              </label>
               <textarea
                 name="description"
                 placeholder="Description"
@@ -294,7 +299,9 @@ export default function VehiclesContent() {
                 required
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
-
+              <label className="text-gray-400 text-sm mb-2 block">
+                Vehicle Image
+              </label>
               <input
                 type="text"
                 name="images"
@@ -304,7 +311,9 @@ export default function VehiclesContent() {
                 required
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
-
+              <label className="text-gray-400 text-sm mb-2 block">
+                Vehicle number
+              </label>
               <input
                 type="text"
                 name="number"
@@ -314,7 +323,9 @@ export default function VehiclesContent() {
                 required
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
-
+              <label className="text-gray-400 text-sm mb-2 block">
+                office  
+              </label>
               <CustomSelect
                 options={offices}
                 value={formData.office}
@@ -325,7 +336,9 @@ export default function VehiclesContent() {
                   loadingOffices ? "Loading offices..." : "Select Office"
                 }
               />
-
+              <label className="text-gray-400 text-sm mb-2 block">
+                category  
+              </label>
               <CustomSelect
                 options={categories}
                 value={formData.category}
@@ -338,7 +351,9 @@ export default function VehiclesContent() {
                     : "Select Category"
                 }
               />
-
+              <label className="text-gray-400 text-sm mb-2 block">
+                reservation  
+              </label>
               <CustomSelect
                 options={reservations}
                 value={formData.reservation}
@@ -351,7 +366,9 @@ export default function VehiclesContent() {
                     : "Select Reservation (Optional)"
                 }
               />
-
+              <label className="text-gray-400 text-sm mb-2 block">
+                status
+              </label>
               <CustomSelect
                 options={[
                   { _id: "active", name: "Active" },

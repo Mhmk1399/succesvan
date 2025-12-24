@@ -8,7 +8,7 @@ export async function GET() {
     await connect();
 
     const totalVehicles = await Vehicle.countDocuments();
-
+ 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);

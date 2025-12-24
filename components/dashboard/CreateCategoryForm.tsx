@@ -247,7 +247,9 @@ export default function CategoriesContent() {
         video: formData.video,
         type: formData.type,
         showPrice: parseFloat(formData.showPrice),
-        selloffer: formData.selloffer ? parseFloat(formData.selloffer) : undefined,
+        selloffer: formData.selloffer
+          ? parseFloat(formData.selloffer)
+          : undefined,
         properties: formData.properties.map((p) => ({
           key: p.key,
           value: p.value,
@@ -377,7 +379,6 @@ export default function CategoriesContent() {
                   placeholder="e.g., Perfect for moving house, transporting goods, business deliveries, etc."
                   value={formData.purpose}
                   onChange={handleInputChange}
-                  required
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
                 />
               </div>
@@ -497,7 +498,9 @@ export default function CategoriesContent() {
               </div>
 
               <div>
-                <label className="text-gray-400 text-sm mb-2 block">Status</label>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Status
+                </label>
                 <CustomSelect
                   options={[
                     { _id: "active", name: "Active" },

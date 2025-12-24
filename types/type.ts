@@ -151,6 +151,8 @@ export interface AddOn {
     maxDays: number;
     price: number;
   }>;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 // Reservation ------------------------------------------------------------------------------------------

@@ -74,7 +74,7 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
   useEffect(() => {
     if (categories.length === 0 && vans.length === 0) {
       console.log("Fetching categories for van listing...");
-      fetch("/api/categories")
+      fetch("/api/categories?status=active")
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.json();
@@ -324,7 +324,7 @@ function ReservationPanel({
 
   // Fetch add-ons
   useEffect(() => {
-    fetch("/api/addons")
+    fetch("/api/addons?status=active")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -1955,43 +1955,29 @@ function CategoryDetailsModal({
   const [activeTab, setActiveTab] = useState<"dimensions" | "purpose">(
     "dimensions"
   );
-  const [isOpen, setIsOpen] = useState(true);
-
-  const handleClose = () => {
-    setIsOpen(false);
-    setTimeout(onClose, 300);
-  };
 
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0"
-        }`}
-        onClick={handleClose}
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 transition-opacity duration-300"
+        onClick={onClose}
       />
       <div
-        className={`fixed inset-0 flex items-center justify-center p-4 z-9999 transition-all duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-      >
-        <div
-          className={`bg-linear-to-br from-[#0f172b] to-[#1e293b] rounded-2xl border border-white/10 max-w-3xl w-full max-h-[80vh] overflow-y-auto shadow-2xl transition-all duration-300 ${
-            isOpen
-              ? "scale-100 translate-y-0"
-              : "scale-95 translate-y-4"
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="p-7 w-full">
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 transition-opacity duration-300"
+        onClick={onClose}
+      />
+      <div className="fixed inset-0 flex items-center justify-center p-4 z-9999">
+        <div className="bg-linear-to-br from-[#0f172b] to-[#1e293b] rounded-2xl border border-white/10 max-w-3xl w-full max-h-[80vh] overflow-y-auto shadow-2xl animate-in z-9999 zoom-in duration-300">
+          {/* Content */}
+          <div className="p-7  w-full z-50">
             {/* Tabs */}
-            <div className="flex justify-between w-full gap-3 border-b border-white/10 mb-6 overflow-hidden">
+            <div className="flex justify-between items- w-full gap-3 border-b border-white/10 mb-1 overflow-hidden">
               <button
                 onClick={() => setActiveTab("dimensions")}
                 className={`px-4 py-3 font-semibold rounded-lg w-full transition-all relative ${
                   activeTab === "dimensions"
                     ? "text-gray-100 bg-[#fe9a00] hover:text-white"
-                    : "text-white bg-black/50 hover:bg-black/70"
+                    : "text-white bg-black/50"
                 }`}
               >
                 Dimensions
@@ -2001,7 +1987,7 @@ function CategoryDetailsModal({
                 className={`px-4 py-3 font-semibold w-full rounded-lg transition-all relative ${
                   activeTab === "purpose"
                     ? "text-gray-100 bg-[#fe9a00] hover:text-white"
-                    : "text-white bg-black/50 hover:bg-black/70"
+                    : "text-white bg-black/50"
                 }`}
               >
                 Purpose
@@ -2010,23 +1996,23 @@ function CategoryDetailsModal({
 
             {/* Dimensions Tab */}
             {activeTab === "dimensions" && (
-              <div className="space-y-1 mb-6 grid grid-cols-2 gap-2 animate-in fade-in duration-200">
+              <div className="space-y-1 mb-1 grid grid-cols-2 gap-2">
                 {category.properties && category.properties.length > 0 ? (
                   category.properties.map((prop, idx) => (
                     <div
                       key={idx}
-                      className="flex justify-between items-center p-3 bg-linear-to-r from-white/5 to-white/0 rounded-lg border border-white/10 hover:border-[#fe9a00]/50 hover:bg-linear-to-r hover:from-[#fe9a00]/10 hover:to-white/0 transition-all group"
+                      className="flex justify-between items-center p-2 bg-linear-to-r from-white/5 to-white/0 rounded-lg border border-white/10 hover:border-[#fe9a00]/50 hover:bg-linear-to-r hover:from-[#fe9a00]/10 hover:to-white/0 transition-all group"
                     >
-                      <span className="text-gray-300 text-sm font-semibold group-hover:text-white transition-colors">
+                      <span className="text-gray-300 text-xs font-semibold group-hover:text-white transition-colors">
                         {prop.key}
                       </span>
-                      <span className="text-[#fe9a00] text-sm font-bold text-right">
+                      <span className="text-[#fe9a00] text-[12px] font-bold text-right">
                         {prop.value}
                       </span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-400 text-center py-8 col-span-2">
+                  <p className="text-gray-400 text-center py-8">
                     No dimensions available
                   </p>
                 )}
@@ -2035,7 +2021,7 @@ function CategoryDetailsModal({
 
             {/* Purpose Tab */}
             {activeTab === "purpose" && (
-              <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="space-y-4">
                 {category.purpose ? (
                   <div className="p-5 bg-linear-to-br from-[#fe9a00]/15 to-[#fe9a00]/5 border border-[#fe9a00]/30 rounded-lg">
                     <p className="text-white whitespace-break-spaces leading-relaxed text-base">
@@ -2050,10 +2036,10 @@ function CategoryDetailsModal({
               </div>
             )}
 
-            {/* Close Button */}
-            <div className="pt-6 border-t border-white/10">
+            {/* Action Button */}
+            <div className="pt-4 border-t border-white/10">
               <button
-                onClick={handleClose}
+                onClick={onClose}
                 className="w-full py-3 px-4 bg-linear-to-r from-[#fe9a00] to-[#ff9f1c] hover:from-[#ff9f1c] hover:to-[#fe9a00] text-black font-bold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-[#fe9a00]/50 active:scale-95"
               >
                 Close
