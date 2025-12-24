@@ -55,7 +55,7 @@ export default function VanListing({
 
   useEffect(() => {
     if (addOns.length === 0) {
-      fetch("/api/addons")
+      fetch("/api/addons?status=active")
         .then((res) => res.json())
         .then((data) => data.success && setFetchedAddOns(data.data || []))
         .catch((err) => console.log("Failed to fetch add-ons", err));

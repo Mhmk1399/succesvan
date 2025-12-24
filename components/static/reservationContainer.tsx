@@ -14,8 +14,8 @@ export function ReservationContent() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/categories").then(res => res.json()),
-      fetch("/api/addons").then(res => res.json())
+      fetch("/api/categories?status=active").then(res => res.json()),
+      fetch("/api/addons?status=active").then(res => res.json())
     ])
       .then(([categoriesData, addOnsData]) => {
         if (categoriesData.success) setCategories(categoriesData.data);

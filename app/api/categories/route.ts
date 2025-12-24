@@ -1,8 +1,7 @@
 import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Category from "@/model/category";
-import Type from "@/model/type";
-import { successResponse, errorResponse } from "@/lib/api-response";
+ import { successResponse, errorResponse } from "@/lib/api-response";
 
 export async function GET(req: NextRequest) {
   try {

@@ -25,7 +25,7 @@ export default function ReservationsManagement() {
     const fetchData = async () => {
       try {
         const [vehiclesRes, usersRes] = await Promise.all([
-          fetch("/api/vehicles"),
+          fetch("/api/vehicles?status=active"),
           fetch("/api/users?limit=100"),
         ]);
         const vehiclesData = await vehiclesRes.json();

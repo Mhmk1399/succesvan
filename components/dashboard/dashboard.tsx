@@ -33,7 +33,7 @@ import TestimonialsManagement from "./TestimonialsManagement";
 import ContactsManagement from "./ContactsManagement";
 import AnnouncementManagement from "./AnnouncementManagement";
 import ReportsManagement from "./ReportsManagement";
- import { MenuItem } from "@/types/type";
+import { MenuItem } from "@/types/type";
 
 const menuItems: MenuItem[] = [
   {
@@ -317,27 +317,49 @@ function DashboardContent() {
               reservations.map((res) => (
                 <div
                   key={res._id}
-                  className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
+                  className="p-3 bg-white/5 rounded-lg border border-white/5 hover:border-white/10 transition-colors"
                 >
-                  <div>
-                    <p className="text-white font-semibold">
-                      Reserve #{res._id?.slice(-4).toUpperCase()}
-                    </p>
-                    <p className="text-gray-400 text-sm">
-                      {new Date(res.createdAt!).toLocaleDateString()}
-                    </p>
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="text-white font-semibold">
+                        Reserve #{res._id?.slice(-4).toUpperCase()}
+                      </p>
+                      <p className="text-gray-400 text-xs">
+                        {new Date(res.createdAt!).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        res.status === "confirmed"
+                          ? "bg-green-500/20 text-green-400"
+                          : res.status === "pending"
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : "bg-red-500/20 text-red-400"
+                      }`}
+                    >
+                      {res.status.charAt(0).toUpperCase() + res.status.slice(1)}
+                    </span>
                   </div>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      res.status === "confirmed"
-                        ? "bg-green-500/20 text-green-400"
-                        : res.status === "pending"
-                        ? "bg-yellow-500/20 text-yellow-400"
-                        : "bg-red-500/20 text-red-400"
-                    }`}
-                  >
-                    {res.status.charAt(0).toUpperCase() + res.status.slice(1)}
-                  </span>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <p className="text-gray-500">Price</p>
+                      <p className="text-[#07da54] font-bold">
+                        £{res.totalPrice}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Pickup</p>
+                      <p className="text-gray-300 font-medium">
+                        {new Date(res.startDate!).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Return</p>
+                      <p className="text-gray-300 font-medium">
+                        {new Date(res.endDate!).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ))
             ) : (

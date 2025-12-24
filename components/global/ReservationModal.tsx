@@ -12,7 +12,6 @@ import {
   FiPackage,
   FiUsers,
 } from "react-icons/fi";
-import { MdDoorSliding } from "react-icons/md";
 
 import AddOnsModal from "./AddOnsModal";
 import VanCard from "./VanCard";
@@ -22,6 +21,7 @@ import Image from "next/image";
 import { BsFuelPump } from "react-icons/bs";
 import { generateTimeSlots, isTimeSlotAvailable } from "@/utils/timeSlots";
 import { WorkingTime } from "@/types/type";
+import { MdDoorSliding } from "react-icons/md";
 
 interface Office {
   _id: string;
@@ -37,10 +37,10 @@ interface Category {
   extrahoursRate: number;
   deposit: number;
   seats: number;
+  doors: number;
   fuel: string;
   cargo: string;
   expert: string;
-  selloffer?: number;
 }
 
 interface AddOn {
@@ -257,10 +257,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       cat.pricingTiers.find(
         (t) => totalDays >= t.minDays && totalDays <= t.maxDays
       ) || cat.pricingTiers[cat.pricingTiers.length - 1];
-    let pricePerDay = tier.pricePerDay;
-    if (cat.selloffer && cat.selloffer > 0) {
-      pricePerDay = pricePerDay * (1 - cat.selloffer / 100);
-    }
+    const pricePerDay = tier.pricePerDay;
     const daysPrice = totalDays * pricePerDay;
     const extraHoursPrice = extraHours * (cat.extrahoursRate || 0);
     const totalPrice = daysPrice + extraHoursPrice;
@@ -268,17 +265,17 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     if (totalDays > 0 && extraHours > 0) {
       breakdown = `${totalDays} day${
         totalDays > 1 ? "s" : ""
-      } (£${pricePerDay.toFixed(2)}/day) + ${extraHours}h (£${
+      } (£${pricePerDay}/day) + ${extraHours}h (£${
         cat.extrahoursRate
-      }/hr) = £${totalPrice.toFixed(2)}`;
+      }/hr) = £${totalPrice}`;
     } else if (totalDays > 0) {
       breakdown = `${totalDays} day${
         totalDays > 1 ? "s" : ""
-      } (£${pricePerDay.toFixed(2)}/day) = £${totalPrice.toFixed(2)}`;
+      } (£${pricePerDay}/day) = £${totalPrice}`;
     } else {
-      breakdown = `${extraHours}h (£${cat.extrahoursRate}/hr) = £${totalPrice.toFixed(2)}`;
+      breakdown = `${extraHours}h (£${cat.extrahoursRate}/hr) = £${totalPrice}`;
     }
-    return { totalPrice: parseFloat(totalPrice.toFixed(2)), breakdown };
+    return { totalPrice, breakdown };
   };
 
   const priceCalc = usePriceCalculation(
@@ -293,8 +290,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       (selectedCategory as any)?.gear?.availableTypes?.includes("manual")
       ? (selectedCategory as any)?.gear?.automaticExtraCost || 0
       : 0,
-    addOnsPrice,
-    (selectedCategory as any)?.selloffer || 0
+    addOnsPrice
   );
 
   // Fetch offices and types
@@ -339,7 +335,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
 
   // Fetch add-ons
   useEffect(() => {
-    fetch("/api/addons")
+    fetch("/api/addons?status=active")
       .then((res) => res.json())
       .then((data) => setAddOns(data.data || []))
       .catch((err) => console.error(err));
@@ -705,7 +701,6 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                     <div className="hidden md:grid grid-cols-4 gap-2 max-h-[80vh] overflow-y-auto p-2 pt-2 pb-12">
                       {categories.map((cat) => {
                         const catPrice = calculateCategoryPrice(cat);
-                        console.log('Category:', cat.name, 'selloffer:', (cat as any).selloffer);
                         return (
                           <div
                             key={`${cat._id}-${formData.category}`}
@@ -753,7 +748,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                     </span>
                                   </div>
                                   <div className="px-2   rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
-                                    <MdDoorSliding className="text-[#fe9a00] text-[11px]" />
+                                    <MdDoorSliding  className="text-[#fe9a00] text-[10px]" />
                                     <span className="text-white text-[10px] font-semibold">
                                       {cat.doors}
                                     </span>
@@ -774,38 +769,17 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                   </>
                                 ) : (
                                   <>
-                                    {(cat as any).selloffer && (cat as any).selloffer > 0 ? (
-                                      <>
-                                        <div className="flex items-baseline gap-2">
-                                          <span className="text-lg font-bold text-gray-400 line-through">
-                                            £{cat.pricingTiers[0]?.pricePerDay}
-                                          </span>
-                                          <span className="text-2xl font-black text-[#37cf6f]">
-                                            £{(cat.pricingTiers[0]?.pricePerDay * (1 - (cat as any).selloffer / 100)).toFixed(2)}
-                                          </span>
-                                          <span className="text-gray-300 text-sm font-semibold">
-                                            /day
-                                          </span>
-                                        </div>
-                                        <p className="text-[#fe9a00] text-[10px] font-bold">
-                                          {(cat as any).selloffer}% OFF
-                                        </p>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <div className="flex items-baseline gap-1">
-                                          <span className="text-2xl font-black text-[#37cf6f]">
-                                            £{cat.pricingTiers[0]?.pricePerDay}
-                                          </span>
-                                          <span className="text-gray-300 text-sm font-semibold">
-                                            /day
-                                          </span>
-                                        </div>
-                                        <p className="text-gray-400 text-[9px]">
-                                          from
-                                        </p>
-                                      </>
-                                    )}
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="text-2xl font-black text-[#37cf6f]">
+                                        £{cat.pricingTiers[0]?.pricePerDay}
+                                      </span>
+                                      <span className="text-gray-300 text-sm font-semibold">
+                                        /day
+                                      </span>
+                                    </div>
+                                    <p className="text-gray-400 text-[9px]">
+                                      from
+                                    </p>
                                   </>
                                 )}
                               </div>
