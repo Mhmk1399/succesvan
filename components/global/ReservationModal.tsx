@@ -19,7 +19,6 @@ import { usePriceCalculation } from "@/hooks/usePriceCalculation";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
 import { BsFuelPump } from "react-icons/bs";
-import { generateTimeSlots, isTimeSlotAvailable } from "@/utils/timeSlots";
 import { WorkingTime } from "@/types/type";
 import { MdDoorSliding } from "react-icons/md";
 
@@ -280,7 +279,6 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     addOnsPrice
   );
 
-
   // Fetch offices and types
   useEffect(() => {
     Promise.all([
@@ -332,9 +330,8 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       .catch((err) => console.error(err));
   }, []);
 
-  console.log(priceCalc , "priceCalc")
-    console.log(addOns , "addOns")
-
+  console.log(priceCalc, "priceCalc");
+  console.log(addOns, "addOns");
 
   // Fetch office hours and reserved slots
   useEffect(() => {
