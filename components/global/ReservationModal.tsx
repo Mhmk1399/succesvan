@@ -591,7 +591,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
             (priceCalc?.totalPrice || 0) +
             addOnsCost +
             (selectedCategory?.deposit || 0),
-          dirverAge: formData.driverAge,
+          driverAge: formData.driverAge,
           messege: "",
           status: "pending",
           addOns: selectedAddOns,

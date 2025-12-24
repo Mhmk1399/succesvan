@@ -130,7 +130,7 @@ async function runTests() {
       startDate: '2025-12-20T09:00:00Z',
       endDate: '2025-12-25T18:00:00Z',
       totalPrice: 500,
-      dirverAge: 25,
+      driverAge: 25,
       messege: 'Please have the van ready by 9am',
       addOns: [{ addOn: addonId, quantity: 2 }]
     });

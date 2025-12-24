@@ -21,6 +21,7 @@ import { getReportRAGContext } from "./report-rag";
 
 /**
  * Parse natural language date queries into date ranges
+ * Uses UK convention: week starts on Monday (ISO week)
  */
 export function parseDateQuery(query: string): { startDate?: string; endDate?: string } {
   const today = new Date();
@@ -31,17 +32,38 @@ export function parseDateQuery(query: string): { startDate?: string; endDate?: s
     return date.toISOString().split('T')[0];
   };
   
-  // Last week
+  // Helper to get Monday of given week (ISO week start)
+  const getMonday = (d: Date): Date => {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = day === 0 ? -6 : 1 - day; // If Sunday, go back 6 days; otherwise go to Monday
+    date.setDate(date.getDate() + diff);
+    return date;
+  };
+  
+  // Last week (previous full week, Mon-Sun)
   if (queryLower.includes("last week")) {
-    const lastWeekStart = new Date(today);
-    lastWeekStart.setDate(today.getDate() - 7);
+    const thisMonday = getMonday(today);
+    const lastMonday = new Date(thisMonday);
+    lastMonday.setDate(thisMonday.getDate() - 7);
+    const lastSunday = new Date(lastMonday);
+    lastSunday.setDate(lastMonday.getDate() + 6);
     return {
-      startDate: formatDate(lastWeekStart),
+      startDate: formatDate(lastMonday),
+      endDate: formatDate(lastSunday),
+    };
+  }
+  
+  // This week (Monday of current week to today) - UK standard
+  if (queryLower.includes("this week")) {
+    const thisMonday = getMonday(today);
+    return {
+      startDate: formatDate(thisMonday),
       endDate: formatDate(today),
     };
   }
   
-  // Last month
+  // Last month (calendar month)
   if (queryLower.includes("last month")) {
     const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
@@ -60,18 +82,37 @@ export function parseDateQuery(query: string): { startDate?: string; endDate?: s
     };
   }
   
-  // This week
-  if (queryLower.includes("this week")) {
-    const thisWeekStart = new Date(today);
-    thisWeekStart.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+  // This year
+  if (queryLower.includes("this year")) {
+    const thisYearStart = new Date(today.getFullYear(), 0, 1);
     return {
-      startDate: formatDate(thisWeekStart),
+      startDate: formatDate(thisYearStart),
       endDate: formatDate(today),
     };
   }
   
-  // Last 30 days
-  if (queryLower.includes("last 30 days") || queryLower.includes("last month")) {
+  // Last year (full calendar year)
+  if (queryLower.includes("last year")) {
+    const lastYearStart = new Date(today.getFullYear() - 1, 0, 1);
+    const lastYearEnd = new Date(today.getFullYear() - 1, 11, 31);
+    return {
+      startDate: formatDate(lastYearStart),
+      endDate: formatDate(lastYearEnd),
+    };
+  }
+  
+  // Last 90 days / past 90 days
+  if (queryLower.includes("last 90 days") || queryLower.includes("past 90 days")) {
+    const last90Start = new Date(today);
+    last90Start.setDate(today.getDate() - 90);
+    return {
+      startDate: formatDate(last90Start),
+      endDate: formatDate(today),
+    };
+  }
+  
+  // Last 30 days (rolling, NOT calendar month)
+  if (queryLower.includes("last 30 days") || queryLower.includes("past 30 days")) {
     const last30Start = new Date(today);
     last30Start.setDate(today.getDate() - 30);
     return {
@@ -80,7 +121,17 @@ export function parseDateQuery(query: string): { startDate?: string; endDate?: s
     };
   }
   
-  // Last 7 days
+  // Last 14 days / past 2 weeks
+  if (queryLower.includes("last 14 days") || queryLower.includes("past 14 days") || queryLower.includes("past 2 weeks")) {
+    const last14Start = new Date(today);
+    last14Start.setDate(today.getDate() - 14);
+    return {
+      startDate: formatDate(last14Start),
+      endDate: formatDate(today),
+    };
+  }
+  
+  // Last 7 days / past week
   if (queryLower.includes("last 7 days") || queryLower.includes("past week")) {
     const last7Start = new Date(today);
     last7Start.setDate(today.getDate() - 7);
@@ -222,6 +273,19 @@ IMPORTANT GUIDELINES:
 - For specific questions, focus on relevant data
 - Always provide context: "£5,000 revenue is 15% above your monthly average"
 - End with actionable recommendations
+
+GROUNDING RULES (CRITICAL - NEVER VIOLATE):
+1. NO GUESSING: If a metric is not present in the data, say "Not available in the data for this period." NEVER invent numbers.
+2. SOURCE ATTRIBUTION: Every number you cite MUST include which section it came from, e.g., "(from Reservations Summary)" or "(from Add-Ons Report)".
+3. CLARIFY AMBIGUITY: If the user's question requires choosing between offices, categories, or time periods, ask ONE clarifying question instead of guessing. Example: "Which office did you want to focus on: Hendon or Mill Hill?"
+4. MISSING DATA: If the report section shows zero or null values, explicitly state "No data recorded for [X] in this period" rather than skipping it.
+5. CONFIDENCE LEVELS: If drawing conclusions from limited data (e.g., < 5 data points), add a disclaimer: "Note: Based on limited data - interpret with caution."
+
+EXAMPLE OF PROPER SOURCING:
+✅ "Revenue reached £12,450 (from Reservations Summary) across 47 bookings."
+✅ "The attachment rate is 35% (from Add-Ons Summary), which is above your usual 28%."
+❌ "Revenue was probably around £12,000." (NO - never approximate without data)
+❌ "Hendon is your best office." (NO - must cite the metric proving this)
 
 EXAMPLE RESPONSE STYLES:
 

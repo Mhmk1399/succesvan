@@ -616,7 +616,7 @@ async function createReservation(state: ConversationState): Promise<string | und
       endDate: endDate,
       totalPrice: totalPrice,
       status: "pending",
-      dirverAge: bookingData.driverAge, // Note: typo matches the model
+      driverAge: bookingData.driverAge, // Note: typo matches the model
       messege: `Phone: ${bookingData.phoneNumber || "N/A"}. ${bookingData.message || ""}`,
       addOns: [],
     });

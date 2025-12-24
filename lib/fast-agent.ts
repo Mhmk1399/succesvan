@@ -1156,7 +1156,7 @@ async function handleVerifyCode(
       endDate: endDateObj,
       totalPrice,
       status: "pending",
-      dirverAge: booking.driverAge || 25,
+      driverAge: booking.driverAge || 25,
       messege: `Booked via AI Assistant. Phone: ${phoneNumber}`,
       addOns: reservationAddOns,
     });

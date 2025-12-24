@@ -163,7 +163,7 @@ export interface Reservation {
   endDate: Date;
   totalPrice: number;
   status: "pending" | "confirmed" | "canceled" | "completed";
-  dirverAge: number;
+  driverAge: number;
   messege?: string;
   addOns?: Array<{
     addOn?: AddOn;

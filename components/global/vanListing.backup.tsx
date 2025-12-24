@@ -775,7 +775,7 @@ function ReservationPanel({
           startDate: pickupDateTime,
           endDate: returnDateTime,
           totalPrice: priceCalc?.totalPrice || 0,
-          dirverAge: formData.driverAge || 25,
+          driverAge: formData.driverAge || 25,
           messege: formData.notes,
           status: "pending",
           addOns: selectedAddOns,

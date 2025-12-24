@@ -473,7 +473,7 @@ function ReservationPanel({
           endDate: new Date(formData.returnDate),
           totalPrice:
             (priceCalc?.totalPrice || 0) + addOnsCost + (van.deposit || 0),
-          dirverAge: formData.driverAge || 25,
+          driverAge: formData.driverAge || 25,
           messege: formData.notes,
           status: "pending",
           addOns: selectedAddOns,

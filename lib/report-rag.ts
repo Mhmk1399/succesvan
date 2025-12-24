@@ -38,6 +38,8 @@ export interface AddOnReportData {
     totalAddOns: number;
     totalAddOnRevenue: number;
     avgAddOnsPerReservation: number;
+    reservationsWithAddOns: number;
+    totalReservationsForAddOns: number;
     mostUsedAddOn: any;
     leastUsedAddOn: any;
   };
@@ -154,9 +156,13 @@ export interface ComprehensiveReportRAG {
  * Fetch add-ons report data
  * Provides: Usage statistics, revenue analysis, customer preferences
  */
-async function fetchAddOnsReport(): Promise<AddOnReportData> {
+async function fetchAddOnsReport(startDate?: string, endDate?: string): Promise<AddOnReportData> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/reports/addons`);
+    let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/reports/addons`;
+    if (startDate && endDate) {
+      url += `?startDate=${startDate}&endDate=${endDate}`;
+    }
+    const response = await fetch(url);
     const result = await response.json();
     return result.data;
   } catch (error) {
@@ -168,6 +174,8 @@ async function fetchAddOnsReport(): Promise<AddOnReportData> {
         totalAddOns: 0,
         totalAddOnRevenue: 0,
         avgAddOnsPerReservation: 0,
+        reservationsWithAddOns: 0,
+        totalReservationsForAddOns: 0,
         mostUsedAddOn: null,
         leastUsedAddOn: null,
       },
@@ -261,9 +269,13 @@ async function fetchOfficesReport(startDate?: string, endDate?: string): Promise
  * Fetch reservations report data
  * Provides: Booking trends, revenue analysis, customer spending
  */
-async function fetchReservationsReport(): Promise<ReservationReportData> {
+async function fetchReservationsReport(startDate?: string, endDate?: string): Promise<ReservationReportData> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/reports/reservations`);
+    let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/reports/reservations`;
+    if (startDate && endDate) {
+      url += `?startDate=${startDate}&endDate=${endDate}`;
+    }
+    const response = await fetch(url);
     const result = await response.json();
     return result.data;
   } catch (error) {
@@ -316,11 +328,11 @@ export async function buildReportRAGContext(
   
   // Fetch all reports in parallel for efficiency
   const [addOns, categories, customers, offices, reservations, vehicles] = await Promise.all([
-    fetchAddOnsReport(),
+    fetchAddOnsReport(startDate, endDate),
     fetchCategoriesReport(startDate, endDate),
     fetchCustomersReport(),
     fetchOfficesReport(startDate, endDate),
-    fetchReservationsReport(),
+    fetchReservationsReport(startDate, endDate),
     fetchVehiclesReport(),
   ]);
   
@@ -558,7 +570,13 @@ export function formatReportRAGForAI(rag: ComprehensiveReportRAG): string {
   }
   
   sections.push(`  • Customer Lifetime Value: £${revenuePerCustomer.toFixed(2)}`);
-  sections.push(`  • Add-on Attachment Rate: ${(rag.addOns.summary.avgAddOnsPerReservation * 100).toFixed(1)}%`);
+  
+  // Calculate true attachment rate: % of reservations with at least one add-on
+  const reservationsWithAddOns = rag.addOns.summary.reservationsWithAddOns || 0;
+  const totalReservationsForAddOns = rag.addOns.summary.totalReservationsForAddOns || 1;
+  const attachmentRate = (reservationsWithAddOns / totalReservationsForAddOns) * 100;
+  sections.push(`  • Add-on Attachment Rate: ${attachmentRate.toFixed(1)}% (${reservationsWithAddOns}/${totalReservationsForAddOns} bookings)`);
+  sections.push(`  • Avg Add-ons per Booking: ${(rag.addOns.summary.avgAddOnsPerReservation || 0).toFixed(2)}`);
   sections.push("");
   
   sections.push("=".repeat(80));

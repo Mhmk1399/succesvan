@@ -25,7 +25,7 @@ const reservationSchema = new mongoose.Schema(
       enum: ["pending", "confirmed", "canceled", "completed"],
       default: "pending",
     },
-    dirverAge: { type: Number, required: true },
+    driverAge: { type: Number, required: true },
     messege: { type: String },
     addOns: [
       {

@@ -147,11 +147,11 @@ export default function ReservationsManagement() {
               </span>
             ),
           },
-          { key: "dirverAge", label: "Driver Age" },
+          { key: "driverAge", label: "Driver Age" },
         ]}
         onEdit={handleViewDetails}
         onMutate={(mutate) => (mutateRef.current = mutate)}
-        hiddenColumns={["dirverAge"] as (keyof Reservation)[]}
+        hiddenColumns={["driverAge"] as (keyof Reservation)[]}
       />
 
       {isDetailOpen && selectedReservation && (
@@ -197,7 +197,7 @@ export default function ReservationsManagement() {
                   <div>
                     <p className="text-gray-400">Driver Age</p>
                     <p className="text-white font-semibold">
-                      {selectedReservation.dirverAge}
+                      {selectedReservation.driverAge}
                     </p>
                   </div>
                 </div>

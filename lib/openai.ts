@@ -269,7 +269,7 @@ export async function conversationalReservation(
     "category",    // Required: Category ObjectId
     "startDate",   // Required: Pickup date (maps to startDate in DB)
     "endDate",     // Required: Return date (maps to endDate in DB)
-    "driverAge"    // Required: Driver age (maps to dirverAge in DB - note the typo in model)
+    "driverAge"    // Required: Driver age (maps to driverAge in DB - note the typo in model)
   ];
   
   // Normalize field names for backwards compatibility
@@ -321,7 +321,7 @@ REQUIRED FIELDS for booking (matching database schema):
 2. category - Van size/type (ObjectId reference)  
 3. startDate - Pickup date (stored as startDate in DB)
 4. endDate - Return date (stored as endDate in DB)
-5. driverAge - Driver's age (stored as dirverAge in DB)
+5. driverAge - Driver's age (stored as driverAge in DB)
 
 OPTIONAL FIELDS:
 - startTime - Pickup time (default: 10:00)

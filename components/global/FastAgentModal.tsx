@@ -493,7 +493,7 @@ export default function FastAgentModal({
               endDate: endDateObj.toISOString(),
               totalPrice: booking.totalPrice || 0,
               status: "pending",
-              dirverAge: booking.driverAge || 25,
+              driverAge: booking.driverAge || 25,
               messege: "Booked via AI Assistant",
               addOns: reservationAddOns,
               gearType: booking.gearType || "manual",

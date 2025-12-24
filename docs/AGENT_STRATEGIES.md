@@ -177,7 +177,7 @@ Both agents now use the same field names matching [model/reservation.ts](model/r
 2. `category` - Category ObjectId  
 3. `startDate` - Pickup date (not pickupDate)
 4. `endDate` - Return date (not returnDate)
-5. `driverAge` - Driver age (maps to `dirverAge` in DB - typo in model)
+5. `driverAge` - Driver age (maps to `driverAge` in DB - typo in model)
 
 ### Optional Fields
 - `startTime` - Pickup time (default: "10:00")
