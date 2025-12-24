@@ -657,7 +657,7 @@ export default function ReservationForm({
         className={
           isInline
             ? "grid grid-cols-8 gap-1 mx-auto justify-center items-end"
-            : "hidden md:grid grid-cols-2 gap-4"
+            : " grid grid-cols-2 gap-4"
         }
       >
         {/* Office */}
@@ -1132,19 +1132,7 @@ export default function ReservationForm({
               min="18"
             />
           </div>
-          <div>
-            <label className="text-white text-xs font-semibold mb-1 flex items-center gap-1">
-              <FiMessageSquare className="text-amber-400" /> Message
-            </label>
-            <input
-              type="text"
-              name="message"
-              value={formData.message}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors"
-              placeholder="Optional"
-            />
-          </div>
+    
         </div>
 
         <button
