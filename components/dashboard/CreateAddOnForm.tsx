@@ -332,11 +332,16 @@ export default function AddOnsContent() {
 
       <DynamicTableView<AddOn>
         apiEndpoint="/api/addons"
+        filters={[
+          { key: "name", label: "Name", type: "text" },
+          { key: "createdAt", label: "Created Date", type: "date" },
+        ]}
         title="AddOn"
         columns={[
           { key: "name", label: "Name" },
           { key: "description", label: "Description" },
           { key: "pricingType", label: "Type" },
+          { key: "createdAt", label: "Create" },
           {
             key: "flatPrice" as keyof AddOn,
             label: "Price",
@@ -359,6 +364,7 @@ export default function AddOnsContent() {
         ]}
         onEdit={handleEdit}
         onMutate={(mutate) => (mutateRef.current = mutate)}
+        hiddenColumns={["pricingType", "description" ]}
       />
     </div>
   );

@@ -17,27 +17,38 @@ export default function ReservationsManagement() {
   const [newStatus, setNewStatus] = useState("");
   const [newVehicle, setNewVehicle] = useState("");
   const [vehicles, setVehicles] = useState<{ _id: string; name: string }[]>([]);
+  const [users, setUsers] = useState<{ _id: string; name: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingVehicles, setLoadingVehicles] = useState(true);
 
   useEffect(() => {
-    const fetchVehicles = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("/api/vehicles");
-        const data = await res.json();
+        const [vehiclesRes, usersRes] = await Promise.all([
+          fetch("/api/vehicles"),
+          fetch("/api/users?limit=100"),
+        ]);
+        const vehiclesData = await vehiclesRes.json();
+        const usersData = await usersRes.json();
         setVehicles(
-          (data.data || []).map((vehicle: any) => ({
+          (vehiclesData.data || []).map((vehicle: any) => ({
             _id: vehicle._id,
             name: vehicle.title || vehicle.number || "Unknown",
           }))
         );
+        setUsers(
+          (usersData.data || []).map((user: any) => ({
+            _id: user._id,
+            name: `${user.name} ${user.lastName || ""}`.trim(),
+          }))
+        );
       } catch (error) {
-        console.log("Failed to fetch vehicles:", error);
+        console.log("Failed to fetch data:", error);
       } finally {
         setLoadingVehicles(false);
       }
     };
-    fetchVehicles();
+    fetchData();
   }, []);
 
   const handleViewDetails = (item: Reservation) => {
@@ -105,6 +116,12 @@ export default function ReservationsManagement() {
     <div className="space-y-6">
       <DynamicTableView<Reservation>
         apiEndpoint="/api/reservations"
+        filters={[
+          { key: "name", label: "User", type: "select", options: users },
+          { key: "startDate", label: "Start Date", type: "date" },
+          { key: "endDate", label: "End Date", type: "date" },
+          { key: "totalPrice", label: "Total Price", type: "text" },
+        ]}
         title="Reservation"
         columns={[
           {

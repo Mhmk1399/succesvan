@@ -9,12 +9,11 @@ import {
   FiCalendar,
   FiClock,
   FiMic,
-  FiMapPin, 
+  FiMapPin,
   FiTruck,
   FiUser,
   FiMessageSquare,
 } from "react-icons/fi";
-import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
 import { Office, Category } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
@@ -49,10 +48,22 @@ export default function ReservationForm({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState<any>(null);
   const [startDateReservedSlots, setStartDateReservedSlots] = useState<
-    { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[]
+    {
+      startDate: string;
+      endDate: string;
+      startTime: string;
+      endTime: string;
+      isSameDay: boolean;
+    }[]
   >([]);
   const [endDateReservedSlots, setEndDateReservedSlots] = useState<
-    { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[]
+    {
+      startDate: string;
+      endDate: string;
+      startTime: string;
+      endTime: string;
+      isSameDay: boolean;
+    }[]
   >([]);
 
   // Voice modal state
@@ -119,14 +130,28 @@ export default function ReservationForm({
       if (workingDay) {
         start = workingDay.startTime;
         end = workingDay.endTime;
-        
+
         if (workingDay.pickupExtension) {
-          const [startHour, startMin] = start.split(':').map(Number);
-          const [endHour, endMin] = end.split(':').map(Number);
-          const extendedStartMinutes = Math.max(0, startHour * 60 + startMin - workingDay.pickupExtension.hoursBefore * 60);
-          const extendedEndMinutes = Math.min(1439, endHour * 60 + endMin + workingDay.pickupExtension.hoursAfter * 60);
-          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(2, '0')}:${String(extendedStartMinutes % 60).padStart(2, '0')}`;
-          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(2, '0')}:${String(extendedEndMinutes % 60).padStart(2, '0')}`;
+          const [startHour, startMin] = start.split(":").map(Number);
+          const [endHour, endMin] = end.split(":").map(Number);
+          const extendedStartMinutes = Math.max(
+            0,
+            startHour * 60 +
+              startMin -
+              workingDay.pickupExtension.hoursBefore * 60
+          );
+          const extendedEndMinutes = Math.min(
+            1439,
+            endHour * 60 + endMin + workingDay.pickupExtension.hoursAfter * 60
+          );
+          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(
+            2,
+            "0"
+          )}:${String(extendedStartMinutes % 60).padStart(2, "0")}`;
+          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(
+            2,
+            "0"
+          )}:${String(extendedEndMinutes % 60).padStart(2, "0")}`;
         }
       }
     }
@@ -135,8 +160,7 @@ export default function ReservationForm({
   }, [formData.office, dateRange, offices]);
 
   const returnTimeSlots = useMemo(() => {
-    if (!formData.office || !dateRange[0].endDate)
-      return [];
+    if (!formData.office || !dateRange[0].endDate) return [];
     const office = offices?.find((o) => o._id === formData.office);
     if (!office) return [];
 
@@ -156,7 +180,8 @@ export default function ReservationForm({
     const specialDay = office.specialDays?.find(
       (sd: any) => sd.month === month && sd.day === day
     );
-    let start = "00:00", end = "23:59";
+    let start = "00:00",
+      end = "23:59";
 
     if (specialDay && specialDay.isOpen) {
       start = specialDay.startTime;
@@ -168,14 +193,28 @@ export default function ReservationForm({
       if (workingDay) {
         start = workingDay.startTime;
         end = workingDay.endTime;
-        
+
         if (workingDay.returnExtension) {
-          const [startHour, startMin] = start.split(':').map(Number);
-          const [endHour, endMin] = end.split(':').map(Number);
-          const extendedStartMinutes = Math.max(0, startHour * 60 + startMin - workingDay.returnExtension.hoursBefore * 60);
-          const extendedEndMinutes = Math.min(1439, endHour * 60 + endMin + workingDay.returnExtension.hoursAfter * 60);
-          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(2, '0')}:${String(extendedStartMinutes % 60).padStart(2, '0')}`;
-          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(2, '0')}:${String(extendedEndMinutes % 60).padStart(2, '0')}`;
+          const [startHour, startMin] = start.split(":").map(Number);
+          const [endHour, endMin] = end.split(":").map(Number);
+          const extendedStartMinutes = Math.max(
+            0,
+            startHour * 60 +
+              startMin -
+              workingDay.returnExtension.hoursBefore * 60
+          );
+          const extendedEndMinutes = Math.min(
+            1439,
+            endHour * 60 + endMin + workingDay.returnExtension.hoursAfter * 60
+          );
+          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(
+            2,
+            "0"
+          )}:${String(extendedStartMinutes % 60).padStart(2, "0")}`;
+          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(
+            2,
+            "0"
+          )}:${String(extendedEndMinutes % 60).padStart(2, "0")}`;
         }
       }
     }
@@ -228,7 +267,7 @@ export default function ReservationForm({
         const [offRes, typeRes] = await Promise.all([
           fetch("/api/offices"),
           fetch("/api/types"),
-        ]); 
+        ]);
         const offData = await offRes.json();
         const typeData = await typeRes.json();
         setOffices(offData.data || []);
@@ -249,7 +288,8 @@ export default function ReservationForm({
           const office = data.data;
           if (office?.categories && office.categories.length > 0) {
             const filtered = office.categories.filter((cat: any) => {
-              const catTypeId = typeof cat.type === 'string' ? cat.type : cat.type?._id;
+              const catTypeId =
+                typeof cat.type === "string" ? cat.type : cat.type?._id;
               return catTypeId === formData.type;
             });
             setCategories(filtered);
@@ -266,11 +306,15 @@ export default function ReservationForm({
   useEffect(() => {
     if (formData.office && dateRange[0].startDate) {
       const date = dateRange[0].startDate;
-      const startDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const startDate = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       setStartDateReservedSlots([]);
-      fetch(`/api/reservations/by-office?office=${formData.office}&startDate=${startDate}&type=start`)
-        .then(res => res.json())
-        .then(data => {
+      fetch(
+        `/api/reservations/by-office?office=${formData.office}&startDate=${startDate}&type=start`
+      )
+        .then((res) => res.json())
+        .then((data) => {
           setStartDateReservedSlots(data.data?.reservedSlots || []);
         })
         .catch((err) => console.error(err));
@@ -280,18 +324,20 @@ export default function ReservationForm({
   useEffect(() => {
     if (formData.office && dateRange[0].endDate) {
       const date = dateRange[0].endDate;
-      const endDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const endDate = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       setEndDateReservedSlots([]);
-      fetch(`/api/reservations/by-office?office=${formData.office}&endDate=${endDate}&type=end`)
-        .then(res => res.json())
-        .then(data => {
+      fetch(
+        `/api/reservations/by-office?office=${formData.office}&endDate=${endDate}&type=end`
+      )
+        .then((res) => res.json())
+        .then((data) => {
           setEndDateReservedSlots(data.data?.reservedSlots || []);
         })
         .catch((err) => console.error(err));
     }
   }, [formData.office, dateRange[0].endDate]);
-
-
 
   const handleGlobalVoice = () => {
     console.log("🎤 [Form] Voice button clicked");
@@ -308,11 +354,16 @@ export default function ReservationForm({
     setShowFastAgentModal(true);
   };
 
-  const handleFastAgentComplete = (reservationId: string, userToken: string, isNewUser: boolean) => {
+  const handleFastAgentComplete = (
+    reservationId: string,
+    userToken: string,
+    isNewUser: boolean
+  ) => {
     console.log(
       "✅ [Form] Fast Agent completed booking:",
       reservationId,
-      "isNewUser:", isNewUser
+      "isNewUser:",
+      isNewUser
     );
     setShowFastAgentModal(false);
 
@@ -322,17 +373,17 @@ export default function ReservationForm({
     }
 
     showToast.success("Booking created successfully!");
-    
+
     // Close any parent modal before navigation
     if (onClose) {
       onClose();
     }
-    
+
     // Navigate based on whether it's a new user
     if (isNewUser) {
       router.push(`/customerDashboard?uploadLicense=true`);
     } else {
-      router.push(`/customerDashboard`);  
+      router.push(`/customerDashboard`);
     }
   };
 
@@ -510,12 +561,18 @@ export default function ReservationForm({
     const workingDay = office.workingTime?.find((w) => w.day === dayName);
     if (workingDay && workingDay.isOpen) {
       let info = `${workingDay.day}: ${workingDay.startTime} - ${workingDay.endTime}`;
-      
-      const hasPickupExt = workingDay.pickupExtension && (workingDay.pickupExtension.hoursBefore > 0 || workingDay.pickupExtension.hoursAfter > 0);
-      const hasReturnExt = workingDay.returnExtension && (workingDay.returnExtension.hoursBefore > 0 || workingDay.returnExtension.hoursAfter > 0);
-      
+
+      const hasPickupExt =
+        workingDay.pickupExtension &&
+        (workingDay.pickupExtension.hoursBefore > 0 ||
+          workingDay.pickupExtension.hoursAfter > 0);
+      const hasReturnExt =
+        workingDay.returnExtension &&
+        (workingDay.returnExtension.hoursBefore > 0 ||
+          workingDay.returnExtension.hoursAfter > 0);
+
       if (hasPickupExt || hasReturnExt) {
-        info += ' ';
+        info += " ";
         if (hasPickupExt) {
           info += `🟡 Pickup ext: ${workingDay.pickupExtension.hoursBefore}h before, ${workingDay.pickupExtension.hoursAfter}h after (+£${workingDay.pickupExtension.flatPrice}) `;
         }
@@ -523,7 +580,7 @@ export default function ReservationForm({
           info += `🟡 Return ext: ${workingDay.returnExtension.hoursBefore}h before, ${workingDay.returnExtension.hoursAfter}h after (+£${workingDay.returnExtension.flatPrice})`;
         }
       }
-      
+
       return {
         start: workingDay.startTime,
         end: workingDay.endTime,
@@ -712,32 +769,45 @@ export default function ReservationForm({
             <FiClock className="text-amber-400 text-lg" /> From
           </label>
 
-          {dateRange[0].startDate && (() => {
-            const office = getSelectedOffice();
-            const date = dateRange[0].startDate;
-            const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
-            const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
-            const extensionTimes = workingDay?.pickupExtension ? {
-              start: pickupTimeSlots[0],
-              end: pickupTimeSlots[pickupTimeSlots.length - 1],
-              normalStart: workingDay.startTime,
-              normalEnd: workingDay.endTime,
-              price: workingDay.pickupExtension.flatPrice
-            } : undefined;
-            return (
-              <TimeSelect
-                value={formData.pickupTime}
-                onChange={(time) => handleTimeChange("pickupTime", time)}
-                slots={pickupTimeSlots}
-                reservedSlots={startDateReservedSlots}
-                isInline={isInline}
-                tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
-                selectedDate={dateRange[0].startDate}
-                isStartTime={true}
-                extensionTimes={extensionTimes}
-              />
-            );
-          })()}
+          {dateRange[0].startDate &&
+            (() => {
+              const office = getSelectedOffice();
+              const date = dateRange[0].startDate;
+              const dayName = [
+                "sunday",
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+              ][date.getDay()];
+              const workingDay = office?.workingTime?.find(
+                (w: any) => w.day === dayName && w.isOpen
+              );
+              const extensionTimes = workingDay?.pickupExtension
+                ? {
+                    start: pickupTimeSlots[0],
+                    end: pickupTimeSlots[pickupTimeSlots.length - 1],
+                    normalStart: workingDay.startTime,
+                    normalEnd: workingDay.endTime,
+                    price: workingDay.pickupExtension.flatPrice,
+                  }
+                : undefined;
+              return (
+                <TimeSelect
+                  value={formData.pickupTime}
+                  onChange={(time) => handleTimeChange("pickupTime", time)}
+                  slots={pickupTimeSlots}
+                  reservedSlots={startDateReservedSlots}
+                  isInline={isInline}
+                  tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
+                  selectedDate={dateRange[0].startDate}
+                  isStartTime={true}
+                  extensionTimes={extensionTimes}
+                />
+              );
+            })()}
         </div>
 
         {/* Return Time */}
@@ -749,32 +819,45 @@ export default function ReservationForm({
           >
             <FiClock className="text-amber-400 text-lg" /> To
           </label>
-          {dateRange[0].endDate && (() => {
-            const office = getSelectedOffice();
-            const date = dateRange[0].endDate;
-            const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
-            const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
-            const extensionTimes = workingDay?.returnExtension ? {
-              start: returnTimeSlots[0],
-              end: returnTimeSlots[returnTimeSlots.length - 1],
-              normalStart: workingDay.startTime,
-              normalEnd: workingDay.endTime,
-              price: workingDay.returnExtension.flatPrice
-            } : undefined;
-            return (
-              <TimeSelect
-                value={formData.returnTime}
-                onChange={(time) => handleTimeChange("returnTime", time)}
-                slots={returnTimeSlots}
-                reservedSlots={endDateReservedSlots}
-                isInline={isInline}
-                tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
-                selectedDate={dateRange[0].endDate}
-                isStartTime={false}
-                extensionTimes={extensionTimes}
-              />
-            );
-          })()}
+          {dateRange[0].endDate &&
+            (() => {
+              const office = getSelectedOffice();
+              const date = dateRange[0].endDate;
+              const dayName = [
+                "sunday",
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+              ][date.getDay()];
+              const workingDay = office?.workingTime?.find(
+                (w: any) => w.day === dayName && w.isOpen
+              );
+              const extensionTimes = workingDay?.returnExtension
+                ? {
+                    start: returnTimeSlots[0],
+                    end: returnTimeSlots[returnTimeSlots.length - 1],
+                    normalStart: workingDay.startTime,
+                    normalEnd: workingDay.endTime,
+                    price: workingDay.returnExtension.flatPrice,
+                  }
+                : undefined;
+              return (
+                <TimeSelect
+                  value={formData.returnTime}
+                  onChange={(time) => handleTimeChange("returnTime", time)}
+                  slots={returnTimeSlots}
+                  reservedSlots={endDateReservedSlots}
+                  isInline={isInline}
+                  tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
+                  selectedDate={dateRange[0].endDate}
+                  isStartTime={false}
+                  extensionTimes={extensionTimes}
+                />
+              );
+            })()}
         </div>
 
         {/* Driver Age */}
@@ -806,7 +889,14 @@ export default function ReservationForm({
           <div className="flex gap-2">
             <button
               type="submit"
-              disabled={isSubmitting || !formData.office || !formData.type || !formData.pickupTime || !formData.returnTime || !formData.driverAge}
+              disabled={
+                isSubmitting ||
+                !formData.office ||
+                !formData.type ||
+                !formData.pickupTime ||
+                !formData.returnTime ||
+                !formData.driverAge
+              }
               className="bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 disabled:opacity-50 px-4 py-1 text-xs"
             >
               {isSubmitting ? "Booking..." : "BOOK"}
@@ -830,7 +920,14 @@ export default function ReservationForm({
           <div className="col-span-2 space-y-3">
             <button
               type="submit"
-              disabled={isSubmitting || !formData.office || !formData.type || !formData.pickupTime || !formData.returnTime || !formData.driverAge}
+              disabled={
+                isSubmitting ||
+                !formData.office ||
+                !formData.type ||
+                !formData.pickupTime ||
+                !formData.returnTime ||
+                !formData.driverAge
+              }
               className="w-full bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 disabled:opacity-50 px-8 py-3 text-sm"
             >
               {isSubmitting ? "Booking..." : "RESERVE NOW"}
@@ -923,32 +1020,45 @@ export default function ReservationForm({
             <label className="block text-white text-xs font-semibold mb-1">
               Pickup Time
             </label>
-            {dateRange[0].startDate && (() => {
-              const office = getSelectedOffice();
-              const date = dateRange[0].startDate;
-              const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
-              const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
-              const extensionTimes = workingDay?.pickupExtension ? {
-                start: pickupTimeSlots[0],
-                end: pickupTimeSlots[pickupTimeSlots.length - 1],
-                normalStart: workingDay.startTime,
-                normalEnd: workingDay.endTime,
-                price: workingDay.pickupExtension.flatPrice
-              } : undefined;
-              return (
-                <TimeSelect
-                  value={formData.pickupTime}
-                  onChange={(time) => handleTimeChange("pickupTime", time)}
-                  slots={pickupTimeSlots}
-                  reservedSlots={startDateReservedSlots}
-                  isInline={true}
-                  tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
-                  selectedDate={dateRange[0].startDate}
-                  isStartTime={true}
-                  extensionTimes={extensionTimes}
-                />
-              );
-            })()}
+            {dateRange[0].startDate &&
+              (() => {
+                const office = getSelectedOffice();
+                const date = dateRange[0].startDate;
+                const dayName = [
+                  "sunday",
+                  "monday",
+                  "tuesday",
+                  "wednesday",
+                  "thursday",
+                  "friday",
+                  "saturday",
+                ][date.getDay()];
+                const workingDay = office?.workingTime?.find(
+                  (w: any) => w.day === dayName && w.isOpen
+                );
+                const extensionTimes = workingDay?.pickupExtension
+                  ? {
+                      start: pickupTimeSlots[0],
+                      end: pickupTimeSlots[pickupTimeSlots.length - 1],
+                      normalStart: workingDay.startTime,
+                      normalEnd: workingDay.endTime,
+                      price: workingDay.pickupExtension.flatPrice,
+                    }
+                  : undefined;
+                return (
+                  <TimeSelect
+                    value={formData.pickupTime}
+                    onChange={(time) => handleTimeChange("pickupTime", time)}
+                    slots={pickupTimeSlots}
+                    reservedSlots={startDateReservedSlots}
+                    isInline={true}
+                    tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
+                    selectedDate={dateRange[0].startDate}
+                    isStartTime={true}
+                    extensionTimes={extensionTimes}
+                  />
+                );
+              })()}
             {dateRange[0].startDate && (
               <p className="text-amber-300 text-[10px] mt-0.5">
                 {getAvailableTimeSlots(dateRange[0].startDate).info}
@@ -959,32 +1069,45 @@ export default function ReservationForm({
             <label className="block text-white text-xs font-semibold mb-1">
               Return Time
             </label>
-            {dateRange[0].endDate && (() => {
-              const office = getSelectedOffice();
-              const date = dateRange[0].endDate;
-              const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
-              const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
-              const extensionTimes = workingDay?.returnExtension ? {
-                start: returnTimeSlots[0],
-                end: returnTimeSlots[returnTimeSlots.length - 1],
-                normalStart: workingDay.startTime,
-                normalEnd: workingDay.endTime,
-                price: workingDay.returnExtension.flatPrice
-              } : undefined;
-              return (
-                <TimeSelect
-                  value={formData.returnTime}
-                  onChange={(time) => handleTimeChange("returnTime", time)}
-                  slots={returnTimeSlots}
-                  reservedSlots={endDateReservedSlots}
-                  isInline={true}
-                  tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
-                  selectedDate={dateRange[0].endDate}
-                  isStartTime={false}
-                  extensionTimes={extensionTimes}
-                />
-              );
-            })()}
+            {dateRange[0].endDate &&
+              (() => {
+                const office = getSelectedOffice();
+                const date = dateRange[0].endDate;
+                const dayName = [
+                  "sunday",
+                  "monday",
+                  "tuesday",
+                  "wednesday",
+                  "thursday",
+                  "friday",
+                  "saturday",
+                ][date.getDay()];
+                const workingDay = office?.workingTime?.find(
+                  (w: any) => w.day === dayName && w.isOpen
+                );
+                const extensionTimes = workingDay?.returnExtension
+                  ? {
+                      start: returnTimeSlots[0],
+                      end: returnTimeSlots[returnTimeSlots.length - 1],
+                      normalStart: workingDay.startTime,
+                      normalEnd: workingDay.endTime,
+                      price: workingDay.returnExtension.flatPrice,
+                    }
+                  : undefined;
+                return (
+                  <TimeSelect
+                    value={formData.returnTime}
+                    onChange={(time) => handleTimeChange("returnTime", time)}
+                    slots={returnTimeSlots}
+                    reservedSlots={endDateReservedSlots}
+                    isInline={true}
+                    tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
+                    selectedDate={dateRange[0].endDate}
+                    isStartTime={false}
+                    extensionTimes={extensionTimes}
+                  />
+                );
+              })()}
             {dateRange[0].endDate && (
               <p className="text-amber-300 text-[10px] mt-0.5">
                 {getAvailableTimeSlots(dateRange[0].endDate).info}
@@ -1026,12 +1149,19 @@ export default function ReservationForm({
 
         <button
           type="submit"
-          disabled={isSubmitting || !formData.office || !formData.type || !formData.pickupTime || !formData.returnTime || !formData.driverAge}
+          disabled={
+            isSubmitting ||
+            !formData.office ||
+            !formData.type ||
+            !formData.pickupTime ||
+            !formData.returnTime ||
+            !formData.driverAge
+          }
           className="w-full px-4 py-2.5 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 text-sm disabled:opacity-50"
         >
           {isSubmitting ? "Booking..." : "RESERVE NOW"}
         </button>
-        
+
         {/* AI Consultant Button - Mobile */}
         <button
           type="button"

@@ -10,33 +10,33 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const page = searchParams.get("page");
     const limit = searchParams.get("limit");
+    const name = searchParams.get("name");
+    const type = searchParams.get("type");
 
-    // If pagination params not provided, return all data
     if (!page && !limit) {
-      const categories = await Category.find()
-        .populate({
-          model: Type,
-          path: "type",
-        })
+      const query: any = {};
+      if (name) query.name = { $regex: name, $options: "i" };
+      if (type) query.type = type;
+      const categories = await Category.find(query)
+        .populate("type")
         .sort({ showPrice: 1 });
       return successResponse({ data: categories });
     }
 
-    // With pagination
     const pageNum = parseInt(page || "1");
     const limitNum = parseInt(limit || "10");
     const skip = (pageNum - 1) * limitNum;
+    const query: any = {};
+    if (name) query.name = { $regex: name, $options: "i" };
+    if (type) query.type = type;
 
     const [categories, total] = await Promise.all([
-      Category.find()
-        .populate({
-          model: Type,
-          path: "type",
-        })
+      Category.find(query)
+        .populate("type")
         .sort({ showPrice: 1 })
         .skip(skip)
         .limit(limitNum),
-      Category.countDocuments(),
+      Category.countDocuments(query),
     ]);
 
     return successResponse({
@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
     await connect();
     const body = await req.json();
     const category = await Category.create(body);
+    await category.populate("type");
     return successResponse(category, 201);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -74,7 +75,7 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const category = await Category.findByIdAndUpdate(id, body, {
       new: true,
-    });
+    }).populate("type");
     return successResponse(category);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

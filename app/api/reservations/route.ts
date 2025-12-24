@@ -14,34 +14,35 @@ export async function GET(req: NextRequest) {
     await connect();
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
-    const officeId = searchParams.get("office");
-    const startDate = searchParams.get("startDate");
-    const endDate = searchParams.get("endDate");
+    const name = searchParams.get("name");
+    const totalPrice = searchParams.get("totalPrice");
+    const startDateRange = searchParams.get("startDateRangeStart");
+    const startDateRangeEnd = searchParams.get("startDateRangeEnd");
+    const endDateRange = searchParams.get("endDateRangeStart");
+    const endDateRangeEnd = searchParams.get("endDateRangeEnd");
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    console.log("[Reservations API] userId:", userId);
     const query: any = {};
     if (userId) query.user = userId;
-    if (officeId) query.office = officeId;
-
-    if (startDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      const startEnd = new Date(startDate);
-      startEnd.setHours(23, 59, 59, 999);
-      query.startDate = { $lte: startEnd };
-      query.endDate = { $gte: start };
+    if (name) query.user = name;
+    if (totalPrice) {
+      query.totalPrice = parseFloat(totalPrice);
     }
-
-    if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(0, 0, 0, 0);
-      const endEnd = new Date(endDate);
-      endEnd.setHours(23, 59, 59, 999);
-      query.startDate = { ...query.startDate, $lte: endEnd };
-      query.endDate = { ...query.endDate, $gte: end };
+    if (startDateRange) {
+      const start = new Date(startDateRange);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(startDateRangeEnd || startDateRange);
+      end.setHours(23, 59, 59, 999);
+      query.startDate = { $gte: start, $lte: end };
+    }
+    if (endDateRange) {
+      const start = new Date(endDateRange);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDateRangeEnd || endDateRange);
+      end.setHours(23, 59, 59, 999);
+      query.endDate = { $gte: start, $lte: end };
     }
 
     console.log("[Reservations API] query:", query);
@@ -112,7 +113,8 @@ export async function POST(req: NextRequest) {
       // { path: "addOns.addOn" },
     ]);
 
-    const hasLicence = user.licenceAttached?.front && user.licenceAttached?.back;
+    const hasLicence =
+      user.licenceAttached?.front && user.licenceAttached?.back;
     const licenceMessage = hasLicence
       ? ""
       : " Please add your licence in your dashboard to confirm your reservation.";
@@ -123,7 +125,10 @@ export async function POST(req: NextRequest) {
         `Dear ${user.name} ${user.lastName}, your reservation has been confirmed.${licenceMessage}`
       );
     } catch (error) {
-      console.log("SMS Error:", error instanceof Error ? error.message : "Unknown error");
+      console.log(
+        "SMS Error:",
+        error instanceof Error ? error.message : "Unknown error"
+      );
     }
 
     const admins = await User.find({ role: "admin" });
@@ -134,7 +139,10 @@ export async function POST(req: NextRequest) {
           "You have a new reservation. Check the admin dashboard."
         );
       } catch (error) {
-        console.log(`Admin SMS Error (${admin.phoneData.phoneNumber}):`, error instanceof Error ? error.message : "Unknown error");
+        console.log(
+          `Admin SMS Error (${admin.phoneData.phoneNumber}):`,
+          error instanceof Error ? error.message : "Unknown error"
+        );
       }
     }
 

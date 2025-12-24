@@ -1962,49 +1962,44 @@ function CategoryDetailsModal({
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 transition-opacity duration-300"
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-10000 flex items-center justify-center p-4">
-        <div className="bg-linear-to-br from-[#0f172b] to-[#1e293b] rounded-2xl border border-white/10 max-w-2xl w-full max-h-[70vh] overflow-y-auto shadow-2xl animate-in z-9999 zoom-in duration-300">
+      <div className="fixed inset-0   flex items-center justify-center p-4 z-9999">
+        <div className="bg-linear-to-br from-[#0f172b] to-[#1e293b] rounded-2xl border border-white/10 max-w-3xl w-full max-h-[80vh] overflow-y-auto shadow-2xl animate-in z-9999 zoom-in duration-300">
           {/* Header */}
           <div className="sticky top-0 bg-linear-to-r from-[#0f172b] to-[#1e293b] backdrop-blur-xl border-b border-white/10 p-6 flex items-center justify-between">
-            <h2 className="text-2xl font-black text-white">{category.name}</h2>
+            <div>
+              <h2 className="text-2xl font-black text-white">
+                {category.name}
+              </h2>
+              <p className="text-gray-400 text-sm mt-1">{category.expert}</p>
+            </div>
             <button
               onClick={onClose}
-              className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all hover:rotate-90 duration-300"
+              className="w-10 h-10 rounded-xl bg-[#fe9a00]/20 hover:bg-[#fe9a00]/30 border border-[#fe9a00]/30 flex items-center justify-center text-[#fe9a00] transition-all hover:rotate-90 duration-300  shrink-0"
             >
               ✕
             </button>
           </div>
 
           {/* Content */}
-          <div className="p-6 space-y-6">
-            {/* Image */}
-            <div className="relative w-46 h-68 rounded-xl overflow-hidden border border-white/10">
-              <Image
-                src={category.image}
-                alt={category.name}
-                fill
-                className="object-contain"
-              />
-            </div>
-
+          <div className="p-6 space-y-6 z-50">
             {/* Tabs */}
-            <div className="flex gap-2 border-b border-white/10">
+            <div className="flex justify-between gap-3 border-b border-white/10 overflow-hidden">
               <button
                 onClick={() => setActiveTab("dimensions")}
-                className={`px-4 py-3 font-semibold transition-all ${
+                className={`px-4 py-3 font-semibold rounded-lg transition-all relative ${
                   activeTab === "dimensions"
-                    ? "text-[#fe9a00] border-b-2 border-[#fe9a00]"
-                    : "text-gray-400 hover:text-white"
+                    ? "text-white bg-black/50"
+                    : "text-gray-100 bg-[#fe9a00] hover:text-white"
                 }`}
               >
                 Dimensions
               </button>
               <button
                 onClick={() => setActiveTab("purpose")}
-                className={`px-4 py-3 font-semibold transition-all ${
+                className={`px-4 py-3 font-semibold rounded-lg transition-all relative ${
                   activeTab === "purpose"
-                    ? "text-[#fe9a00] border-b-2 border-[#fe9a00]"
-                    : "text-gray-400 hover:text-white"
+                    ? "text-white bg-black/50"
+                    : "text-gray-100 bg-[#fe9a00] hover:text-white"
                 }`}
               >
                 Purpose
@@ -2013,23 +2008,23 @@ function CategoryDetailsModal({
 
             {/* Dimensions Tab */}
             {activeTab === "dimensions" && (
-              <div className="space-y-3">
+              <div className="space-y-1 grid grid-cols-2">
                 {category.properties && category.properties.length > 0 ? (
                   category.properties.map((prop, idx) => (
                     <div
                       key={idx}
-                      className="flex justify-between items-start p-3 bg-white/5 rounded-lg border border-white/10 hover:border-[#fe9a00]/30 transition-all"
+                      className="flex justify-between items-center p-2 bg-linear-to-r from-white/5 to-white/0 rounded-lg border border-white/10 hover:border-[#fe9a00]/50 hover:bg-linear-to-r hover:from-[#fe9a00]/10 hover:to-white/0 transition-all group"
                     >
-                      <span className="text-gray-300 font-semibold">
+                      <span className="text-gray-300 text-sm font-semibold group-hover:text-white transition-colors">
                         {prop.key}
                       </span>
-                      <span className="text-white text-right">
+                      <span className="text-[#fe9a00] text-[12px] font-bold text-right">
                         {prop.value}
                       </span>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-400 text-center py-4">
+                  <p className="text-gray-400 text-center py-8">
                     No dimensions available
                   </p>
                 )}
@@ -2040,18 +2035,28 @@ function CategoryDetailsModal({
             {activeTab === "purpose" && (
               <div className="space-y-4">
                 {category.purpose ? (
-                  <div className="p-4 bg-[#fe9a00]/10 border border-[#fe9a00]/20 rounded-lg">
-                    <p className="text-white leading-relaxed">
+                  <div className="p-5 bg-linear-to-br from-[#fe9a00]/15 to-[#fe9a00]/5 border border-[#fe9a00]/30 rounded-lg">
+                    <p className="text-white leading-relaxed text-base">
                       {category.purpose}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-gray-400 text-center py-4">
+                  <p className="text-gray-400 text-center py-8">
                     No purpose information available
                   </p>
                 )}
               </div>
             )}
+
+            {/* Action Button */}
+            <div className="pt-4 border-t border-white/10">
+              <button
+                onClick={onClose}
+                className="w-full py-3 px-4 bg-linear-to-r from-[#fe9a00] to-[#ff9f1c] hover:from-[#ff9f1c] hover:to-[#fe9a00] text-black font-bold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-[#fe9a00]/50 active:scale-95"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>

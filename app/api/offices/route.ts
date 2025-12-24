@@ -11,9 +11,19 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
+    const name = searchParams.get("name");
+    const phone = searchParams.get("phone");
     const skip = (page - 1) * limit;
 
-    const offices = await Office.find()
+    const query: any = {};
+    if (name) {
+      query.name = { $regex: name, $options: "i" };
+    }
+    if (phone) {
+      query.phone = { $regex: phone, $options: "i" };
+    }
+
+    const offices = await Office.find(query)
       .populate([
         { path: "vehicles.vehicle", model: Vehicle },
         { path: "categories", model: Category },
@@ -21,7 +31,7 @@ export async function GET(req: NextRequest) {
       .skip(skip)
       .limit(limit);
 
-    const total = await Office.countDocuments();
+    const total = await Office.countDocuments(query);
     const pages = Math.ceil(total / limit);
 
     return successResponse({

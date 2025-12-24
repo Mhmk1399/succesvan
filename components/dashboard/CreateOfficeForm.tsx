@@ -461,6 +461,10 @@ export default function OfficesContent() {
 
       <DynamicTableView<Office>
         apiEndpoint="/api/offices"
+        filters={[
+          { key: "name", label: "Name", type: "text" },
+          { key: "phone", label: "Phone", type: "text" },
+        ]}
         title="Office"
         columns={[
           { key: "name", label: "Name" },

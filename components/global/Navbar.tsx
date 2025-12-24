@@ -134,6 +134,7 @@ export default function Navbar() {
     });
     return () => ctx.revert();
   }, []);
+  
 
   // Mobile detection
   useEffect(() => {
@@ -149,7 +150,7 @@ export default function Navbar() {
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          setIsScrolled(window.scrollY > 50);
+          setIsScrolled(window.scrollY > 100);
           ticking = false;
         });
         ticking = true;

@@ -19,6 +19,12 @@ export default function ContactsManagement() {
     <div className="space-y-6">
       <DynamicTableView
         apiEndpoint="/api/users"
+        filters={[
+          { key: "username", label: "Username", type: "text" },
+          { key: "email", label: "Email", type: "text" },
+          { key: "phone", label: "Phone", type: "text" },
+          { key: "createdAt", label: "Joined Date", type: "date" },
+        ]}
         title="User"
         columns={[
           {

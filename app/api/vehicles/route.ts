@@ -9,9 +9,27 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
+    const name = searchParams.get("name");
+    const title = searchParams.get("title");
+    const number = searchParams.get("number");
+    const office = searchParams.get("office");
     const skip = (page - 1) * limit;
 
-    const vehicles = await Vehicle.find()
+    const query: any = {};
+    if (name) {
+      query.title = { $regex: name, $options: "i" };
+    }
+    if (title) {
+      query.title = { $regex: title, $options: "i" };
+    }
+    if (number) {
+      query.number = { $regex: number, $options: "i" };
+    }
+    if (office) {
+      query.office = office;
+    }
+
+    const vehicles = await Vehicle.find(query)
       .populate("category")
       .populate({
         path: "reservation",
@@ -27,7 +45,7 @@ export async function GET(req: NextRequest) {
       .skip(skip)
       .limit(limit);
 
-    const total = await Vehicle.countDocuments();
+    const total = await Vehicle.countDocuments(query);
     const pages = Math.ceil(total / limit);
 
     return successResponse({
