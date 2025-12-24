@@ -79,6 +79,10 @@ export default function TypesManagement() {
 
       <DynamicTableView<Type>
         apiEndpoint="/api/types"
+        filters={[
+          { key: "name", label: "Name", type: "text" },
+          { key: "createdAt", label: "Created Date", type: "date" },
+        ]}
         title="Type"
         columns={[
           { key: "name", label: "Name" },

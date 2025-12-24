@@ -189,6 +189,12 @@ export interface DynamicTableViewProps<T> {
   hideDelete?: boolean;
   onDuplicate?: (item: T) => void;
   hiddenColumns?: (keyof T)[];
+  filters?: Array<{
+    key: string;
+    label: string;
+    type: "text" | "date" | "select";
+    options?: Array<{ _id: string; name: string }>;
+  }>;
 }
 
 // custom Select -------------------------------------------------------------------

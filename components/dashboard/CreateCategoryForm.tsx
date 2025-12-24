@@ -984,6 +984,18 @@ export default function CategoriesContent() {
 
       <DynamicTableView<Category>
         apiEndpoint="/api/categories"
+        filters={[
+          { key: "name", label: "Category Name", type: "text" },
+          {
+            key: "type",
+            label: "Type",
+            type: "select",
+            options: types.filter((t) => t._id) as {
+              _id: string;
+              name: string;
+            }[],
+          },
+        ]}
         title="Category"
         onDuplicate={handleDuplicate}
         columns={[
@@ -992,8 +1004,12 @@ export default function CategoriesContent() {
           {
             key: "type",
             label: "Type",
-            render: (value: string | Type) =>
-              typeof value === "string" ? value : value?.name || "-",
+            render: (value: any) => {
+              if (!value) return "-";
+              if (typeof value === "object" && value.name) return value.name;
+              const typeObj = types.find((t) => t._id === value);
+              return typeObj?.name || String(value);
+            },
           },
           { key: "expert", label: "Expert" },
           {
@@ -1075,7 +1091,7 @@ export default function CategoriesContent() {
             "expert",
             "requiredLicense",
             "purpose",
-            "type"
+            "fuel",
           ] as (keyof Category)[]
         }
       />

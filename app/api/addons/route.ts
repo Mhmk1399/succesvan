@@ -9,16 +9,31 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const page = searchParams.get("page");
     const limit = searchParams.get("limit");
+    const name = searchParams.get("name");
+    const createdAtStart = searchParams.get("createdAtStart");
+    const createdAtEnd = searchParams.get("createdAtEnd");
     const status = searchParams.get("status");
 
-    const filter: any = {};
+    const query: any = {};
+    if (name) {
+      query.name = { $regex: name, $options: "i" };
+    }
+    if (createdAtStart || createdAtEnd) {
+      query.createdAt = {};
+      if (createdAtStart) query.createdAt.$gte = new Date(createdAtStart);
+      if (createdAtEnd) {
+        const endDate = new Date(createdAtEnd);
+        endDate.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = endDate;
+      }
+    }
     if (status) {
-      filter.status = status;
+      query.status = status;
     }
 
     // If pagination params not provided, return all data
     if (!page && !limit) {
-      const addOns = await AddOn.find(filter);
+      const addOns = await AddOn.find(query);
       return successResponse({ data: addOns });
     }
 
@@ -28,8 +43,8 @@ export async function GET(req: NextRequest) {
     const skip = (pageNum - 1) * limitNum;
 
     const [addOns, total] = await Promise.all([
-      AddOn.find(filter).skip(skip).limit(limitNum),
-      AddOn.countDocuments(filter),
+      AddOn.find(query).skip(skip).limit(limitNum),
+      AddOn.countDocuments(query),
     ]);
 
     return successResponse({

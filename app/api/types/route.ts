@@ -9,10 +9,25 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
+    const name = searchParams.get("name");
+    const createdAtStart = searchParams.get("createdAtStart");
+    const createdAtEnd = searchParams.get("createdAtEnd");
     const skip = (page - 1) * limit;
 
-    const types = await Type.find().skip(skip).limit(limit);
-    const total = await Type.countDocuments();
+    const query: any = {};
+    if (name) query.name = { $regex: name, $options: "i" };
+    if (createdAtStart || createdAtEnd) {
+      query.createdAt = {};
+      if (createdAtStart) query.createdAt.$gte = new Date(createdAtStart);
+      if (createdAtEnd) {
+        const endDate = new Date(createdAtEnd);
+        endDate.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = endDate;
+      }
+    }
+
+    const types = await Type.find(query).skip(skip).limit(limit);
+    const total = await Type.countDocuments(query);
     const pages = Math.ceil(total / limit);
 
     return successResponse({

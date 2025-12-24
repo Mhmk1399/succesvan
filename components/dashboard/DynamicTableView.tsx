@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import useSWR from "swr";
 import Image from "next/image";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import {
   FiTrash2,
   FiChevronLeft,
@@ -13,10 +15,13 @@ import {
   FiCopy,
   FiInbox,
   FiAlertCircle,
+  FiFilter,
 } from "react-icons/fi";
 import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
 import "./tooltip.css";
+import "./datepicker.css";
+import CustomSelect from "@/components/ui/CustomSelect";
 import {
   AddOn,
   Category,
@@ -38,26 +43,42 @@ export default function DynamicTableView<
   itemsPerPage = 10,
   hideDelete = false,
   hiddenColumns = [],
+  filters = [],
 }: DynamicTableViewProps<T>) {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<T | null>(null);
-
-  const item = viewingItem as Record<string, any>;
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-
-  const { data, error, isLoading, mutate } = useSWR(
-    `${apiEndpoint}${
-      apiEndpoint.includes("?") ? "&" : "?"
-    }page=${currentPage}&limit=${itemsPerPage}`,
-    fetcher,
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 60000,
-    }
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const [dateRanges, setDateRanges] = useState<Record<string, [Date | null, Date | null]>>({});
+  const [appliedFilters, setAppliedFilters] = useState<Record<string, string>>(
+    {}
   );
+
+  const item = viewingItem as Record<string, any>;
+
+  const buildUrl = () => {
+    const params = new URLSearchParams();
+    params.append("page", currentPage.toString());
+    params.append("limit", itemsPerPage.toString());
+    Object.entries(appliedFilters).forEach(([key, value]) => {
+      if (value) params.append(key, value);
+    });
+    Object.entries(dateRanges).forEach(([key, [start, end]]) => {
+      if (start) params.append(`${key}Start`, start.toISOString().split('T')[0]);
+      if (end) params.append(`${key}End`, end.toISOString().split('T')[0]);
+    });
+    const separator = apiEndpoint.includes("?") ? "&" : "?";
+    return `${apiEndpoint}${separator}${params.toString()}`;
+  };
+
+  const { data, error, isLoading, mutate } = useSWR(buildUrl(), fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  });
 
   useEffect(() => {
     if (onMutate && mutate) {
@@ -65,8 +86,25 @@ export default function DynamicTableView<
     }
   }, [mutate, onMutate]);
 
+  const handleFilterApply = () => {
+    setAppliedFilters(filterValues);
+    setCurrentPage(1);
+    setIsFilterOpen(false);
+  };
+
+  const handleFilterReset = () => {
+    setFilterValues({});
+    setDateRanges({});
+    setAppliedFilters({});
+    setCurrentPage(1);
+    setIsFilterOpen(false);
+  };
+
   const items = Array.isArray(data?.data) ? data.data : [];
   const totalPages = data?.pagination?.pages || 1;
+  const hasFilters = Object.values(appliedFilters).some((v) => v) || Object.values(dateRanges).some(([start, end]) => start || end);
+  const isEmptyAfterFilter =
+    !isLoading && !error && items.length === 0 && hasFilters;
 
   const visibleColumns = columns.filter(
     (col) => !hiddenColumns.includes(col.key)
@@ -122,6 +160,80 @@ export default function DynamicTableView<
         <p className="text-gray-400 text-sm mt-2">Please try again later</p>
       </div>
     );
+  if (isEmptyAfterFilter)
+    return (
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 ${
+                isFilterOpen
+                  ? "bg-[#fe9a00] text-slate-900 shadow-lg shadow-[#fe9a00]/30"
+                  : "bg-[#fe9a00]/20 hover:bg-[#fe9a00]/30 text-[#fe9a00]"
+              }`}
+            >
+              <FiFilter className="text-lg" />
+              {isFilterOpen ? "Hide Filters" : "Show Filters"}
+            </button>
+            <button
+              onClick={handleFilterReset}
+              className="px-3 py-2 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors font-medium"
+            >
+              Clear All Filters
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {filters.map(
+              (filter) =>
+                appliedFilters[filter.key] && (
+                  <div
+                    key={filter.key}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 text-blue-300 rounded-full text-sm"
+                  >
+                    <span>
+                      {filter.label}: {appliedFilters[filter.key]}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setAppliedFilters((prev) => ({
+                          ...prev,
+                          [filter.key]: "",
+                        }));
+                        setFilterValues((prev) => ({
+                          ...prev,
+                          [filter.key]: "",
+                        }));
+                      }}
+                      className="hover:text-blue-200"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="w-16 h-16 bg-[#fe9a00]/20 rounded-full flex items-center justify-center mb-4">
+            <FiInbox className="text-[#fe9a00] text-3xl" />
+          </div>
+          <p className="text-gray-300 text-lg font-semibold">
+            No {title.toLowerCase()} found
+          </p>
+          <p className="text-gray-500 text-sm mt-2">
+            Try adjusting your filters
+          </p>
+          <button
+            onClick={handleFilterReset}
+            className="mt-4 px-4 py-2 bg-[#fe9a00]/20 hover:bg-[#fe9a00]/30 text-[#fe9a00] rounded-lg transition-colors font-medium"
+          >
+            Clear Filters
+          </button>
+        </div>
+      </div>
+    );
+
   if (items.length === 0)
     return (
       <div className="flex flex-col items-center justify-center py-16">
@@ -139,6 +251,119 @@ export default function DynamicTableView<
 
   return (
     <div className="space-y-6">
+      {/* Filter Section */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold transition-all duration-200 ${
+              isFilterOpen
+                ? "bg-[#fe9a00] text-slate-900 shadow-lg shadow-[#fe9a00]/30"
+                : "bg-[#fe9a00]/20 hover:bg-[#fe9a00]/30 text-[#fe9a00]"
+            }`}
+          >
+            <FiFilter className="text-lg" />
+            {isFilterOpen ? "Hide Filters" : "Show Filters"}
+          </button>
+          {hasFilters && (
+            <button
+              onClick={handleFilterReset}
+              className="px-3 py-2 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors font-medium"
+            >
+              Clear All Filters
+            </button>
+          )}
+        </div>
+      </div>
+
+      {isFilterOpen && filters.length > 0 && (
+        <div className="bg-linear-to-br from-white/5 to-white/2 border border-white/10 rounded-xl p-6 space-y-4 backdrop-blur-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {filters.map((f) => (
+              <div key={f.key} className="space-y-2">
+                <label className="text-sm font-semibold text-gray-300 block">
+                  {f.label}
+                </label>
+                {f.type === "text" && (
+                  <input
+                    type="text"
+                    placeholder={`Enter ${f.label.toLowerCase()}...`}
+                    value={filterValues[f.key] || ""}
+                    onChange={(e) =>
+                      setFilterValues((p) => ({
+                        ...p,
+                        [f.key]: e.target.value,
+                      }))
+                    }
+                    onKeyDown={(e) => e.key === "Enter" && handleFilterApply()}
+                    className="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:bg-white/15 transition-all"
+                  />
+                )}
+                {f.type === "date" && (
+                  <div className="flex gap-2">
+                    <DatePicker
+                      selected={dateRanges[f.key]?.[0] || null}
+                      onChange={(date) => {
+                        const [start, end] = dateRanges[f.key] || [null, null];
+                        setDateRanges((p) => ({
+                          ...p,
+                          [f.key]: [date, end],
+                        }));
+                        setCurrentPage(1);
+                      }}
+                      placeholderText="Start date"
+                      dateFormat="yyyy-MM-dd"
+                      className="flex-1 px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-[#fe9a00] focus:bg-white/15 transition-all"
+                    />
+                    <DatePicker
+                      selected={dateRanges[f.key]?.[1] || null}
+                      onChange={(date) => {
+                        const [start, end] = dateRanges[f.key] || [null, null];
+                        setDateRanges((p) => ({
+                          ...p,
+                          [f.key]: [start, date],
+                        }));
+                        setCurrentPage(1);
+                      }}
+                      placeholderText="End date"
+                      dateFormat="yyyy-MM-dd"
+                      className="flex-1 px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-[#fe9a00] focus:bg-white/15 transition-all"
+                    />
+                  </div>
+                )}
+                {f.type === "select" && (
+                  <CustomSelect
+                    options={f.options || []}
+                    value={filterValues[f.key] || ""}
+                    onChange={(val) =>
+                      setFilterValues((p) => ({
+                        ...p,
+                        [f.key]: val,
+                      }))
+                    }
+                    placeholder={`Select ${f.label}`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-3 justify-end pt-2">
+            <button
+              onClick={handleFilterReset}
+              className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors font-medium"
+            >
+              Reset
+            </button>
+            <button
+              onClick={handleFilterApply}
+              className="px-6 py-2.5 bg-[#fe9a00] hover:bg-[#fe9a00]/90 text-slate-900 font-bold rounded-lg transition-all shadow-lg shadow-[#fe9a00]/30 hover:shadow-[#fe9a00]/50"
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="border-b border-white/70">

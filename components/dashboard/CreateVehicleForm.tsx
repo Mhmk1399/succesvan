@@ -90,7 +90,6 @@ export default function VehiclesContent() {
     fetchData();
   }, []);
 
- 
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -507,6 +506,19 @@ export default function VehiclesContent() {
 
       <DynamicTableView<Vehicle>
         apiEndpoint="/api/vehicles"
+        filters={[
+          { key: "title", label: "Title", type: "text" },
+          { key: "number", label: "Number", type: "text" },
+          {
+            key: "office",
+            label: "Office",
+            type: "select",
+            options: offices.filter((o) => o._id) as {
+              _id: string;
+              name: string;
+            }[],
+          },
+        ]}
         title="Vehicle"
         columns={[
           { key: "title", label: "Title" },

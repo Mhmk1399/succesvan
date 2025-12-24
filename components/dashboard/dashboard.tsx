@@ -33,7 +33,7 @@ import TestimonialsManagement from "./TestimonialsManagement";
 import ContactsManagement from "./ContactsManagement";
 import AnnouncementManagement from "./AnnouncementManagement";
 import ReportsManagement from "./ReportsManagement";
-import { MenuItem } from "@/types/type";
+ import { MenuItem } from "@/types/type";
 
 const menuItems: MenuItem[] = [
   {
