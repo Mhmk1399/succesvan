@@ -150,7 +150,7 @@ export default function Navbar() {
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          setIsScrolled(window.scrollY > 100);
+          setIsScrolled(window.scrollY > 30);
           ticking = false;
         });
         ticking = true;
