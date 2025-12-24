@@ -815,9 +815,13 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                     </div>
                   </>
                 ) : (
-                  <p className="text-gray-400 text-center py-8">
-                    Loading categories...
-                  </p>
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <div className="w-12 h-12 border-4 border-[#fe9a00]/30 border-t-[#fe9a00] rounded-full animate-spin mb-4"></div>
+                    <p className="text-gray-300 text-lg font-semibold">
+                      Loading categories...
+                    </p>
+                    <p className="text-gray-500 text-sm mt-2">Please wait</p>
+                  </div>
                 )}
 
                 {formData.category && (

@@ -254,7 +254,7 @@ export default function Navbar() {
         className={`fixed w-full z-9999 transition-all duration-500 ${
           isScrolled
             ? "bg-[#0a0f1c]/50 backdrop-blur-xl shadow-2xl shadow-black/20"
-            : "bg-linear-to-b from-[#0a0f1c]/80 to-transparent backdrop-blur-sm"
+            : "bg-linear-to-b from-[#0a0f1c]/10 to-[#0a0f1c]/10 backdrop-blur-sm"
         }`}
         style={{ top: navTopPosition }}
       >
