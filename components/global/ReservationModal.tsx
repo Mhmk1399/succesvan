@@ -19,7 +19,6 @@ import { usePriceCalculation } from "@/hooks/usePriceCalculation";
 import { useAuth } from "@/context/AuthContext";
 import Image from "next/image";
 import { BsFuelPump } from "react-icons/bs";
-import { generateTimeSlots, isTimeSlotAvailable } from "@/utils/timeSlots";
 import { WorkingTime } from "@/types/type";
 import { MdDoorSliding } from "react-icons/md";
 
@@ -102,29 +101,6 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
-
-  const availableStartTimes = useMemo(() => {
-    if (!officeHours) return [];
-    const allSlots = generateTimeSlots(
-      officeHours.startTime,
-      officeHours.endTime,
-      15
-    );
-    return allSlots.filter((slot) => isTimeSlotAvailable(slot, reservedSlots));
-  }, [officeHours, reservedSlots]);
-
-  const availableEndTimes = useMemo(() => {
-    if (!officeHours || !formData.startTime) return [];
-    const allSlots = generateTimeSlots(
-      formData.startTime,
-      officeHours.endTime,
-      15
-    );
-    return allSlots.filter(
-      (slot) =>
-        slot > formData.startTime && isTimeSlotAvailable(slot, reservedSlots)
-    );
-  }, [officeHours, formData.startTime, reservedSlots]);
 
   const selectedCategory = categories.find((c) => c._id === formData.category);
 
@@ -281,7 +257,11 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     } else {
       breakdown = `${extraHours}h (£${cat.extrahoursRate}/hr) = £${totalPrice}`;
     }
-    return { totalPrice: parseFloat(totalPrice.toFixed(2)), originalTotalPrice: parseFloat(originalTotalPrice.toFixed(2)), breakdown };
+    return {
+      totalPrice: parseFloat(totalPrice.toFixed(2)),
+      originalTotalPrice: parseFloat(originalTotalPrice.toFixed(2)),
+      breakdown,
+    };
   };
 
   const priceCalc = usePriceCalculation(
@@ -343,9 +323,15 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     fetch("/api/addons?status=active")
       .then((res) => res.json())
-      .then((data) => setAddOns(data.data || []))
+      .then((data) => {
+        console.log("Add-ons response:", data);
+        setAddOns(data.data || []);
+      })
       .catch((err) => console.error(err));
   }, []);
+
+  console.log(priceCalc, "priceCalc");
+  console.log(addOns, "addOns");
 
   // Fetch office hours and reserved slots
   useEffect(() => {
@@ -754,7 +740,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                     </span>
                                   </div>
                                   <div className="px-2   rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
-                                    <MdDoorSliding  className="text-[#fe9a00] text-[10px]" />
+                                    <MdDoorSliding className="text-[#fe9a00] text-[10px]" />
                                     <span className="text-white text-[10px] font-semibold">
                                       {cat.doors}
                                     </span>
@@ -764,7 +750,8 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                               <div>
                                 {catPrice ? (
                                   <>
-                                    {(cat as any).selloffer && (cat as any).selloffer > 0 ? (
+                                    {(cat as any).selloffer &&
+                                    (cat as any).selloffer > 0 ? (
                                       <>
                                         <div className="flex items-baseline gap-1 mb-1">
                                           <span className="text-sm font-bold text-gray-400 line-through">

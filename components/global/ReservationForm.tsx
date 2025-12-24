@@ -657,7 +657,7 @@ export default function ReservationForm({
         className={
           isInline
             ? "grid grid-cols-8 gap-1 mx-auto justify-center items-end"
-            : " grid grid-cols-2 gap-4"
+            : "hidden md:grid grid-cols-2 gap-4"
         }
       >
         {/* Office */}
@@ -715,11 +715,13 @@ export default function ReservationForm({
                 isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
               }`}
             >
-              Select Dates
+              {dateRange[0].startDate && dateRange[0].endDate
+                ? `${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`
+                : "Select Dates"}
             </button>
             {showDateRange && (
               <div
-                className={`absolute left-0 mt-2 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 ${
+                className={`absolute left-0 -mt-20 md:mt-20 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 ${
                   isInline ? "-top-72" : "-top-50"
                 }`}
               >
@@ -985,10 +987,12 @@ export default function ReservationForm({
             onClick={() => setShowDateRange(!showDateRange)}
             className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs text-left focus:outline-none focus:border-amber-400 transition-colors"
           >
-            Select Dates
+               {dateRange[0].startDate && dateRange[0].endDate
+                ? `${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`
+                : "Select Dates"}
           </button>
           {showDateRange && (
-            <div className="mt-2 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-2 overflow-x-auto">
+            <div className="-mt-46 bg-slate-800 z-99999 backdrop-blur-xl border border-white/20 rounded-lg p-2 overflow-x-auto">
               <DateRange
                 ranges={dateRange}
                 onChange={(item) => {
@@ -1132,7 +1136,6 @@ export default function ReservationForm({
               min="18"
             />
           </div>
-    
         </div>
 
         <button
