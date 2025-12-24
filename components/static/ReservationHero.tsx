@@ -1,27 +1,28 @@
 "use client";
-import Image from "next/image";
-import Link from "next/link";
-import { useRef, useState, useEffect } from "react";
-import { FiX } from "react-icons/fi";
+import { useRef } from "react";
 import ReservationForm from "@/components/global/ReservationForm";
 
-export default function ReservationHero({ onBookNow }: { onBookNow?: () => void }) {
+export default function ReservationHero({
+  onBookNow,
+}: {
+  onBookNow?: () => void;
+}) {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  // const [isFormOpen, setIsFormOpen] = useState(false);
+  // const [isScrolled, setIsScrolled] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 300);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  // useEffect(() => {
+  //   const handleScroll = () => {
+  //     setIsScrolled(window.scrollY > 300);
+  //   };
+  //   window.addEventListener("scroll", handleScroll);
+  //   return () => window.removeEventListener("scroll", handleScroll);
+  // }, []);
 
   return (
     <>
       {/* Fixed Search Bar */}
-      {isScrolled && (
+      {/* {isScrolled && (
         <div className="fixed top-0 left-0 right-0 z-9999 bg-[#0f172b]/20 backdrop-blur-2xl shadow-2xl border-b border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex items-center justify-between">
             <div className="group cursor-pointer">
@@ -46,10 +47,10 @@ export default function ReservationHero({ onBookNow }: { onBookNow?: () => void 
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Full Screen Form Modal */}
-      {isFormOpen && (
+      {/* {isFormOpen && (
         <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm overflow-y-auto">
           <div className="min-h-screen flex items-center justify-center p-2 sm:p-4">
             <div className="w-full max-w-md sm:max-w-2xl lg:max-w-7xl bg-[#0f172b]/20 backdrop-blur-sm border border-white/20 rounded-2xl p-4 sm:p-6 shadow-2xl shadow-gray-900/50">
@@ -72,7 +73,7 @@ export default function ReservationHero({ onBookNow }: { onBookNow?: () => void 
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       <section
         ref={sectionRef}
@@ -104,9 +105,9 @@ export default function ReservationHero({ onBookNow }: { onBookNow?: () => void 
               <p className="text-sm md:text-base lg:text-lg text-gray-200 leading-relaxed">
                 Success Van Hire offers affordable van rental services in
                 London, providing reliable options for individuals, businesses,
-                and movers alike. Whether you're relocating,  
-                or simply need a larger vehicle for a few days, our wide range
-                of vans ensures you'll find the perfect fit.
+                and movers alike. Whether you're relocating, or simply need a
+                larger vehicle for a few days, our wide range of vans ensures
+                you'll find the perfect fit.
               </p>
             </div>
 
@@ -128,9 +129,9 @@ export default function ReservationHero({ onBookNow }: { onBookNow?: () => void 
               <p className="text-sm sm:text-base text-gray-200 leading-relaxed">
                 Success Van Hire offers affordable van rental services in
                 London, providing reliable options for individuals, businesses,
-                and movers alike. Whether you're relocating,  
-                or simply need a larger vehicle for a few days, our wide range
-                of vans ensures you'll find the perfect fit.
+                and movers alike. Whether you're relocating, or simply need a
+                larger vehicle for a few days, our wide range of vans ensures
+                you'll find the perfect fit.
               </p>
             </div>
 

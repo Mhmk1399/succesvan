@@ -12,6 +12,7 @@ import {
   FiPackage,
   FiUsers,
 } from "react-icons/fi";
+import { MdDoorSliding } from "react-icons/md";
 
 import AddOnsModal from "./AddOnsModal";
 import VanCard from "./VanCard";
@@ -752,9 +753,9 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                     </span>
                                   </div>
                                   <div className="px-2   rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1">
-                                    <FiPackage className="text-[#fe9a00] text-[10px]" />
+                                    <MdDoorSliding className="text-[#fe9a00] text-[11px]" />
                                     <span className="text-white text-[10px] font-semibold">
-                                      {cat.cargo}
+                                      {cat.doors}
                                     </span>
                                   </div>
                                 </div>
