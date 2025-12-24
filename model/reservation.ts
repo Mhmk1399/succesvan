@@ -37,6 +37,7 @@ const reservationSchema = new mongoose.Schema(
         selectedTierIndex: { type: Number },
       },
     ],
+    discountCode: { type: String },
   },
   { timestamps: true }
 );

@@ -10,7 +10,7 @@ const categorySchema = new mongoose.Schema(
     video: { type: String },
     type: { type: mongoose.Schema.Types.ObjectId, ref: "Type", required: true },
     showPrice: { type: Number, required: true, min: 0 },
-    sellPrice: { type: Number, min: 0 },
+    selloffer: { type: Number, min: 0 },
     properties: [
       {
         key: { type: String, required: true },
