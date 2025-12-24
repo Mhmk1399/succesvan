@@ -1,4 +1,7 @@
 export const datePickerStyles = `
+  .rdrDateDisplayWrapper {
+    display: none !important;
+  }
   select {
     cursor: pointer;
     max-height: 200px !important;
