@@ -301,7 +301,8 @@ function ReservationPanel({
       (van as any)?.gear?.availableTypes?.includes("manual")
       ? (van as any)?.gear?.automaticExtraCost || 0
       : 0,
-    addOnsCost
+    addOnsCost,
+    (van as any)?.selloffer || 0
   );
 
   // Fetch offices
@@ -1921,14 +1922,33 @@ function CategoryCard({
             <div>
               <p className="text-gray-300 text-sm mt-0.5">from</p>
 
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-black text-white">
-                  £{(category as any).showPrice || 0}
-                  <span className="text-gray-300 text-sm m-0.5 font-normal">
-                    /day
+              {(category as any).selloffer && (category as any).selloffer > 0 ? (
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-lg font-bold text-gray-400 line-through">
+                      £{(category as any).showPrice || 0}
+                    </span>
+                    <span className="text-3xl font-black text-white">
+                      £{((category as any).showPrice * (1 - (category as any).selloffer / 100)).toFixed(2)}
+                      <span className="text-gray-300 text-sm m-0.5 font-normal">
+                        /day
+                      </span>
+                    </span>
+                  </div>
+                  <p className="text-[#fe9a00] text-xs font-bold mt-1">
+                    {(category as any).selloffer}% OFF
+                  </p>
+                </>
+              ) : (
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-black text-white">
+                    £{(category as any).showPrice || 0}
+                    <span className="text-gray-300 text-sm m-0.5 font-normal">
+                      /day
+                    </span>
                   </span>
-                </span>
-              </div>
+                </div>
+              )}
             </div>
 
             <button
