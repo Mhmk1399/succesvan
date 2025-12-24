@@ -13,7 +13,7 @@
  */
 
 import { openai } from "./openai";
-import { getReportRAGContext } from "./report-rag";
+import { getReportRAGContext, selectReportSections } from "./report-rag";
 
 // ============================================================================
 // DATE PARSING UTILITIES
@@ -188,15 +188,137 @@ export interface BusinessConversationMessage {
   content: string;
 }
 
+export interface BusinessMetric {
+  name: string;
+  value: number | string;
+  unit?: string;
+  source: string; // e.g., "Reservations Summary", "Add-Ons Report"
+  trend?: "up" | "down" | "stable";
+  changePercent?: number;
+}
+
+// ============================================================================
+// ACTION PROPOSAL TYPES (Automation Roadmap)
+// ============================================================================
+
+/**
+ * Discount creation proposal
+ * Agent suggests but does NOT execute - requires admin approval
+ */
+export interface CreateDiscountAction {
+  type: "createDiscount";
+  params: {
+    name: string;
+    discountPercent: number;
+    targetAudience: "all" | "new_customers" | "returning_customers" | "inactive_customers" | "vip_customers";
+    validFrom?: string; // ISO date
+    validUntil?: string; // ISO date
+    applicableCategories?: string[]; // category names or "all"
+    applicableOffices?: string[]; // office names or "all"
+    minimumBookingValue?: number;
+    usageLimit?: number; // max redemptions
+  };
+  confidence: number; // 0-1 how confident AI is in this recommendation
+  reasoningEvidence: string[]; // e.g., ["Reservations Summary: 15% drop in weekend bookings", "Customer Report: 23 inactive customers"]
+}
+
+/**
+ * Marketing campaign proposal
+ * Agent suggests but does NOT execute - requires admin approval
+ */
+export interface LaunchCampaignAction {
+  type: "launchCampaign";
+  params: {
+    name: string;
+    channel: "email" | "sms" | "both";
+    targetSegment: "all" | "new_customers" | "returning_customers" | "inactive_customers" | "high_value_customers";
+    message: string; // Campaign message/copy
+    callToAction: string; // e.g., "Book now", "Claim your discount"
+    scheduledDate?: string; // ISO date, or "immediate"
+    linkedDiscountCode?: string; // optional discount to include
+  };
+  confidence: number;
+  reasoningEvidence: string[];
+}
+
+/**
+ * Direct customer offer proposal
+ * Agent suggests but does NOT execute - requires admin approval
+ */
+export interface SendOfferToCustomersAction {
+  type: "sendOfferToCustomers";
+  params: {
+    customerIds?: string[]; // specific customer IDs, or use segment
+    customerSegment?: "top_spenders" | "frequent_bookers" | "at_risk" | "dormant" | "new";
+    offerType: "percentage_discount" | "fixed_amount" | "free_addon" | "loyalty_bonus";
+    offerValue: number | string; // e.g., 15 for 15% or "Free GPS"
+    personalizedMessage: string;
+    expiresInDays: number;
+  };
+  confidence: number;
+  reasoningEvidence: string[];
+}
+
+/**
+ * Category pricing update proposal
+ * Suggests new sellPrice for categories + optional campaign
+ * Agent suggests but does NOT execute - requires admin approval
+ */
+export interface UpdateCategoryPricingAction {
+  type: "updateCategoryPricing";
+  params: {
+    /** Array of category pricing changes */
+    pricingChanges: Array<{
+      categoryName: string;
+      currentShowPrice: number; // Current display price (for reference)
+      suggestedSellPrice: number; // New promotional sell price
+      discountPercent: number; // Calculated discount from showPrice
+      reason: string; // Why this specific price for this category
+    }>;
+    /** Optional campaign to advertise the price drop */
+    linkedCampaign?: {
+      name: string;
+      channel: "email" | "sms" | "both";
+      message: string;
+      callToAction: string;
+      targetSegment: "all" | "new_customers" | "returning_customers" | "inactive_customers";
+    };
+    /** How long the sale prices should last */
+    saleDurationDays: number;
+    /** When the sale starts */
+    saleStartDate?: string; // ISO date, defaults to today
+  };
+  confidence: number;
+  reasoningEvidence: string[];
+}
+
+/**
+ * Union type for all proposed actions
+ * IMPORTANT: These are PROPOSALS only - they require admin review and approval before execution
+ */
+export type ProposedAction = CreateDiscountAction | LaunchCampaignAction | SendOfferToCustomersAction | UpdateCategoryPricingAction;
+
+/**
+ * Legacy simple action format (for backwards compatibility)
+ */
+export interface SimpleProposedAction {
+  action: string;
+  priority: "high" | "medium" | "low";
+  category: string;
+}
+
 export interface BusinessAnalysisResponse {
   message: string;
-  insights?: {
-    keyMetrics?: Record<string, any>;
-    trends?: string[];
-    recommendations?: string[];
-    warnings?: string[];
-  };
+  metrics: BusinessMetric[];
+  insights: string[];
+  risks: string[];
+  recommendations: string[];
+  /** Structured automation proposals - requires admin approval before execution */
+  proposedActions: ProposedAction[];
+  /** Legacy simple actions for backwards compatibility */
+  simpleActions?: SimpleProposedAction[];
   conversationHistory: BusinessConversationMessage[];
+  dataPeriod?: { startDate: string; endDate: string };
 }
 
 // ============================================================================
@@ -221,10 +343,14 @@ export async function analyzeBusinessQuery(
   const { startDate, endDate } = parseDateQuery(query);
   console.log("📅 [Business Analyst] Date range:", { startDate, endDate });
   
-  // Fetch comprehensive report RAG context
+  // Select relevant sections based on query keywords
+  const sections = selectReportSections(query);
+  console.log("🎯 [Business Analyst] Selected sections:", sections);
+  
+  // Fetch comprehensive report RAG context (only relevant sections)
   console.log("🔍 [Business Analyst] Fetching report data...");
-  const reportContext = await getReportRAGContext(startDate, endDate);
-  console.log("✅ [Business Analyst] Report data fetched");
+  const reportContext = await getReportRAGContext(startDate, endDate, { sections });
+  console.log("✅ [Business Analyst] Report data fetched (", sections.length, "sections)");
   
   // Build system prompt
   const systemPrompt = `You are an expert BUSINESS ANALYST and CONSULTANT for Success Van Hire, a vehicle rental company.
@@ -287,6 +413,140 @@ EXAMPLE OF PROPER SOURCING:
 ❌ "Revenue was probably around £12,000." (NO - never approximate without data)
 ❌ "Hendon is your best office." (NO - must cite the metric proving this)
 
+RESPONSE FORMAT (MANDATORY JSON):
+You MUST respond with a valid JSON object containing:
+{
+  "message": "Your human-readable analysis with formatting (use emoji, bullet points, sections)",
+  "metrics": [
+    { "name": "Total Revenue", "value": 12450, "unit": "GBP", "source": "Reservations Summary", "trend": "up", "changePercent": 15 }
+  ],
+  "insights": ["Key insight 1", "Key insight 2"],
+  "risks": ["Risk or concern 1", "Risk 2"],
+  "recommendations": ["Specific recommendation 1", "Recommendation 2"],
+  "proposedActions": [
+    {
+      "type": "createDiscount",
+      "params": {
+        "name": "Weekend Revival 15%",
+        "discountPercent": 15,
+        "targetAudience": "all",
+        "validFrom": "2025-01-01",
+        "validUntil": "2025-01-31",
+        "applicableCategories": ["Medium Van", "Large Van"]
+      },
+      "confidence": 0.85,
+      "reasoningEvidence": ["Reservations Summary: Weekend bookings down 23%", "Category Report: Medium Van utilization at 45%"]
+    }
+  ]
+}
+
+IMPORTANT:
+- "message" should be the full conversational response (what the user sees)
+- "metrics" extracts KEY numbers mentioned (max 10 most important)
+- "insights" are observations/patterns (max 5)
+- "risks" are concerns/warnings (max 3)
+- "recommendations" are action items (max 5)
+- "proposedActions" are STRUCTURED automation proposals (max 3) - see format below
+
+PROPOSED ACTIONS FORMAT (AUTOMATION ROADMAP):
+These are structured proposals that the admin can review and approve. You suggest, but NEVER execute.
+
+Action Type 1 - createDiscount:
+{
+  "type": "createDiscount",
+  "params": {
+    "name": "string - discount name",
+    "discountPercent": number (1-50),
+    "targetAudience": "all" | "new_customers" | "returning_customers" | "inactive_customers" | "vip_customers",
+    "validFrom": "YYYY-MM-DD" (optional),
+    "validUntil": "YYYY-MM-DD" (optional),
+    "applicableCategories": ["category names"] or null for all,
+    "applicableOffices": ["office names"] or null for all,
+    "minimumBookingValue": number (optional),
+    "usageLimit": number (optional)
+  },
+  "confidence": 0.0-1.0,
+  "reasoningEvidence": ["Section: specific data point", "Section: another data point"]
+}
+
+Action Type 2 - launchCampaign:
+{
+  "type": "launchCampaign",
+  "params": {
+    "name": "string - campaign name",
+    "channel": "email" | "sms" | "both",
+    "targetSegment": "all" | "new_customers" | "returning_customers" | "inactive_customers" | "high_value_customers",
+    "message": "string - the campaign message copy",
+    "callToAction": "string - e.g., Book Now, Claim Discount",
+    "scheduledDate": "YYYY-MM-DD" or "immediate" (optional),
+    "linkedDiscountCode": "string" (optional)
+  },
+  "confidence": 0.0-1.0,
+  "reasoningEvidence": ["Section: specific data point"]
+}
+
+Action Type 3 - sendOfferToCustomers:
+{
+  "type": "sendOfferToCustomers",
+  "params": {
+    "customerSegment": "top_spenders" | "frequent_bookers" | "at_risk" | "dormant" | "new",
+    "offerType": "percentage_discount" | "fixed_amount" | "free_addon" | "loyalty_bonus",
+    "offerValue": number or string (e.g., 15 for 15%, or "Free GPS"),
+    "personalizedMessage": "string - personalized offer message",
+    "expiresInDays": number
+  },
+  "confidence": 0.0-1.0,
+  "reasoningEvidence": ["Customer Report: 23 customers inactive 6+ months"]
+}
+
+Action Type 4 - updateCategoryPricing (PRICE REDUCTION + CAMPAIGN):
+Use this when suggesting price reductions to boost sales for underperforming categories.
+{
+  "type": "updateCategoryPricing",
+  "params": {
+    "pricingChanges": [
+      {
+        "categoryName": "Large Van",
+        "currentShowPrice": 120,
+        "suggestedSellPrice": 99,
+        "discountPercent": 17.5,
+        "reason": "Only 3 bookings last month vs 12 for Medium Van - price too high"
+      }
+    ],
+    "linkedCampaign": {
+      "name": "Large Van Flash Sale",
+      "channel": "email",
+      "message": "Get our spacious Large Vans at just £99/day - save 17%! Perfect for house moves.",
+      "callToAction": "Book Your Large Van Now",
+      "targetSegment": "all"
+    },
+    "saleDurationDays": 14,
+    "saleStartDate": "2025-01-01"
+  },
+  "confidence": 0.0-1.0,
+  "reasoningEvidence": ["Category Report: Large Van 3 bookings vs Medium Van 12", "Category Report: Large Van £0 revenue"]
+}
+
+PRICING CHANGE GUIDELINES:
+- Suggest sellPrice based on ACTUAL report data (booking counts, revenue, utilization)
+- Maximum discount: 30% from showPrice
+- Include specific reason for each category's suggested price
+- ALWAYS pair with a linkedCampaign to advertise the sale
+- Use saleDurationDays to create urgency (7-30 days recommended)
+- Calculate discountPercent accurately: ((showPrice - sellPrice) / showPrice) * 100
+
+PROPOSED ACTIONS GUARDRAILS:
+1. ONLY PROPOSE, NEVER EXECUTE: These are suggestions for admin review. State "Proposed action (requires approval)" in your message.
+2. CONFIDENCE SCORING: Set confidence based on data strength:
+   - 0.9-1.0: Strong data support (multiple metrics align)
+   - 0.7-0.89: Good data support (clear trend)
+   - 0.5-0.69: Moderate support (some indicators)
+   - Below 0.5: Don't propose (not enough evidence)
+3. EVIDENCE REQUIRED: Every proposal MUST have 1-3 reasoningEvidence entries citing specific report sections and numbers.
+4. CONSERVATIVE DISCOUNTS: Never propose discounts above 25% without very strong justification (confidence > 0.9).
+5. REALISTIC CAMPAIGNS: Campaign messages should be professional and appropriate for a van hire business.
+6. MAX 3 PROPOSALS: Don't overwhelm with too many actions - focus on highest impact.
+
 EXAMPLE RESPONSE STYLES:
 
 Q: "What happened last week?"
@@ -331,17 +591,68 @@ Remember: Be the trusted advisor who helps the admin make SMART DECISIONS backed
   
   console.log("🤖 [Business Analyst] Sending to GPT-4...");
   
-  // Call OpenAI
+  // Call OpenAI with JSON response format
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: messages as any,
     temperature: 0.4, // Balanced for analytical yet natural responses
-    max_tokens: 1500,
+    max_tokens: 2000,
+    response_format: { type: "json_object" },
   });
   
-  const response = completion.choices[0].message.content || "I couldn't analyze that data. Please try again.";
+  const rawResponse = completion.choices[0].message.content || "{}";
   
   console.log("✅ [Business Analyst] Analysis complete");
+  
+  // Parse JSON response
+  let parsedResponse: {
+    message: string;
+    metrics: BusinessMetric[];
+    insights: string[];
+    risks: string[];
+    recommendations: string[];
+    proposedActions: ProposedAction[];
+  };
+  
+  try {
+    parsedResponse = JSON.parse(rawResponse);
+  } catch (e) {
+    console.error("❌ [Business Analyst] Failed to parse JSON response:", e);
+    // Fallback: treat as plain message
+    parsedResponse = {
+      message: rawResponse,
+      metrics: [],
+      insights: [],
+      risks: [],
+      recommendations: [],
+      proposedActions: [],
+    };
+  }
+  
+  // Ensure all fields have defaults
+  const response = parsedResponse.message || "I couldn't analyze that data. Please try again.";
+  const metrics = parsedResponse.metrics || [];
+  const insights = parsedResponse.insights || [];
+  const risks = parsedResponse.risks || [];
+  const recommendations = parsedResponse.recommendations || [];
+  
+  // Validate and filter proposed actions
+  const proposedActions = (parsedResponse.proposedActions || []).filter((action): action is ProposedAction => {
+    // Ensure action has required fields
+    if (!action || typeof action !== 'object') return false;
+    if (!('type' in action) || !('params' in action) || !('confidence' in action)) return false;
+    // Only include actions with sufficient confidence
+    if (action.confidence < 0.5) {
+      console.log("⚠️ [Business Analyst] Filtered out low-confidence action:", action.type, action.confidence);
+      return false;
+    }
+    // Validate action type
+    if (!['createDiscount', 'launchCampaign', 'sendOfferToCustomers', 'updateCategoryPricing'].includes(action.type)) {
+      console.log("⚠️ [Business Analyst] Filtered out unknown action type:", action.type);
+      return false;
+    }
+    return true;
+  });
   
   // Update conversation history
   const updatedHistory = [
@@ -352,7 +663,13 @@ Remember: Be the trusted advisor who helps the admin make SMART DECISIONS backed
   
   return {
     message: response,
+    metrics,
+    insights,
+    risks,
+    recommendations,
+    proposedActions,
     conversationHistory: updatedHistory,
+    dataPeriod: startDate && endDate ? { startDate, endDate } : undefined,
   };
 }
 
