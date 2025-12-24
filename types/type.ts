@@ -241,8 +241,16 @@ export interface User {
   _id: string;
   name: string;
   lastName: string;
-  emaildata: string;
-  phoneData: string;
+  address?: string;
+  emaildata: {
+    emailAddress: string;
+    isVerified: boolean;
+  };
+  phoneData: {
+    phoneNumber: string;
+    isVerified: boolean;
+  };
+  role?: string;
   createdAt: Date;
 }
 

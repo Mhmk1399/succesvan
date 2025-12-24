@@ -5,12 +5,13 @@ import { FiX, FiPlus } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import { Office, Category } from "@/types/type";
 import DynamicTableView from "./DynamicTableView";
+type MutateFn = () => Promise<void>;
 
 export default function OfficesContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const mutateRef = useRef<(() => Promise<any>) | null>(null);
+  const mutateRef = useRef<MutateFn | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [formData, setFormData] = useState({
     name: "",

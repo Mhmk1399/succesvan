@@ -6,12 +6,13 @@ import { showToast } from "@/lib/toast";
 import { Category, Type } from "@/types/type";
 import DynamicTableView from "./DynamicTableView";
 import CustomSelect from "@/components/ui/CustomSelect";
+type MutateFn = () => Promise<void>;
 
 export default function CategoriesContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const mutateRef = useRef<(() => Promise<any>) | null>(null);
+  const mutateRef = useRef<MutateFn | null>(null);
   const [types, setTypes] = useState<Type[]>([]);
   const [offices, setOffices] = useState<any[]>([]);
   const [uploading, setUploading] = useState({ image: false, video: false });

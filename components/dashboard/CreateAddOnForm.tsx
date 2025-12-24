@@ -6,12 +6,13 @@ import { showToast } from "@/lib/toast";
 import DynamicTableView from "./DynamicTableView";
 import { AddOn } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
+type MutateFn = () => Promise<void>;
 
 export default function AddOnsContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const mutateRef = useRef<(() => Promise<any>) | null>(null);
+  const mutateRef = useRef<MutateFn | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",

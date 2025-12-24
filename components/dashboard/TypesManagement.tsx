@@ -5,13 +5,14 @@ import { FiPlus, FiX } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import DynamicTableView from "./DynamicTableView";
 import { Type } from "@/types/type";
+type MutateFn = () => Promise<void>;
 
 export default function TypesManagement() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingType, setEditingType] = useState<Type | null>(null);
   const [formData, setFormData] = useState<Type>({ name: "", description: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const mutateRef = useRef<(() => Promise<any>) | null>(null);
+  const mutateRef = useRef<MutateFn | null>(null);
 
   const handleOpenForm = (type?: Type) => {
     if (type) {

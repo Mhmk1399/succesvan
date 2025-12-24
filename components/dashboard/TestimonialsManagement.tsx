@@ -14,9 +14,10 @@ interface Testimonial {
   status: "pending" | "approved" | "rejected";
   createdAt: Date;
 }
+type MutateFn = () => Promise<void>;
 
 export default function TestimonialsManagement() {
-  const mutateRef = useRef<(() => Promise<any>) | null>(null);
+  const mutateRef = useRef<MutateFn | null>(null);
   const [selectedTestimonial, setSelectedTestimonial] =
     useState<Testimonial | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);

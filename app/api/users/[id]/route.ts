@@ -21,7 +21,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
+export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -40,11 +40,12 @@ export async function PATCH(
     }
 
     const updateData: any = {};
-    Object.keys(body).forEach((key) => {
-      if (body[key] !== undefined && body[key] !== null && body[key] !== "") {
-        updateData[key] = body[key];
-      }
-    });
+    if (body.name) updateData.name = body.name;
+    if (body.lastName) updateData.lastName = body.lastName;
+    if (body.address) updateData.address = body.address;
+    if (body.email) updateData["emaildata.emailAddress"] = body.email;
+    if (body.phone) updateData["phoneData.phoneNumber"] = body.phone;
+    if (body.password) updateData.password = body.password;
 
     const user = await User.findByIdAndUpdate(
       id,

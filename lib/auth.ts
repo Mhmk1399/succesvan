@@ -1,12 +1,14 @@
 import { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
-import { errorResponse } from "./api-response";
 
 export function verifyToken(req: NextRequest) {
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!token) throw new Error("No token provided");
-  
-  return jwt.verify(token, process.env.JWT_SECRET!) as { userId: string; role: string };
+
+  return jwt.verify(token, process.env.JWT_SECRET!) as {
+    userId: string;
+    role: string;
+  };
 }
 
 export function requireAuth(req: NextRequest) {

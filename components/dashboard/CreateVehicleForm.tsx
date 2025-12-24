@@ -10,6 +10,7 @@ import { showToast } from "@/lib/toast";
 import { Category, Office, Reservation, Vehicle } from "@/types/type";
 import DynamicTableView from "./DynamicTableView";
 import CustomSelect from "@/components/ui/CustomSelect";
+type MutateFn = () => Promise<void>;
 
 export default function VehiclesContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -28,7 +29,7 @@ export default function VehiclesContent() {
   const [showServiceDatePicker, setShowServiceDatePicker] = useState<
     string | null
   >(null);
-  const mutateRef = useRef<(() => Promise<any>) | null>(null);
+  const mutateRef = useRef<MutateFn | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
