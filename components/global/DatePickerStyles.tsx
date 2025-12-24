@@ -2,6 +2,9 @@ export const datePickerStyles = `
   .rdrDateDisplayWrapper {
     display: none !important;
   }
+  .rdrDateDisplay {
+    display: none !important;
+  }
   select {
     cursor: pointer;
     max-height: 200px !important;
@@ -46,8 +49,7 @@ export const datePickerStyles = `
     color: rgba(255, 255, 255, 0.25) !important;
   }
   .rdrDayToday .rdrDayNumber span {
-    color: #fbbf24 !important;
-    font-weight: 700 !important;
+     font-weight: 700 !important;
     background-color: rgba(251, 191, 36, 0.2) !important;
     border-radius: 4px !important;
     padding: 4px 6px !important;
@@ -71,13 +73,11 @@ export const datePickerStyles = `
   }
   .rdrDayStartOfMonth,
   .rdrDayEndOfMonth {
-    background-color: rgba(251, 191, 36, 0.4) !important;
-    border-radius: 4px !important;
+     border-radius: 4px !important;
   }
   .rdrDayStartOfMonth .rdrDayNumber span,
   .rdrDayEndOfMonth .rdrDayNumber span {
-    color: #000 !important;
-    font-weight: 700 !important;
+     font-weight: 700 !important;
   }
   .rdrDayInRange .rdrDayNumber span {
     color: #000 !important;

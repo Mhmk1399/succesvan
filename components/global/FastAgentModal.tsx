@@ -523,7 +523,7 @@ export default function FastAgentModal({
   };
   
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="bg-[#0f172b] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border border-white/10">
         {/* Header */}
         <div className="bg-linear-to-r from-orange-500 to-orange-600 text-white px-6 py-4">
