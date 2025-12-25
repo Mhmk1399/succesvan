@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { FiX, FiPlus } from "react-icons/fi";
+import { FiX, FiPlus, FiRefreshCw } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import DynamicTableView from "./DynamicTableView";
 import CustomSelect from "@/components/ui/CustomSelect";
+import { DateRange, Range } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 
 interface Discount {
   _id?: string;
@@ -40,6 +43,15 @@ export default function DiscountManagement() {
     status: "inactive" as "active" | "inactive" | "expired",
   });
 
+  const [dateRange, setDateRange] = useState<Range[]>([
+    {
+      startDate: new Date(),
+      endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
+      key: "selection",
+    },
+  ]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -64,19 +76,30 @@ export default function DiscountManagement() {
   };
 
   const resetForm = () => {
+    const today = new Date();
+    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
     setFormData({
       code: "",
       percentage: "",
       categories: [],
-      validFrom: "",
-      validTo: "",
+      validFrom: today.toISOString().split("T")[0],
+      validTo: nextWeek.toISOString().split("T")[0],
       usageLimit: "",
       status: "inactive",
     });
+    setDateRange([
+      {
+        startDate: today,
+        endDate: nextWeek,
+        key: "selection",
+      },
+    ]);
     setEditingId(null);
   };
 
   const handleEdit = (item: Discount) => {
+    const validFrom = new Date(item.validFrom);
+    const validTo = new Date(item.validTo);
     setFormData({
       code: item.code,
       percentage: String(item.percentage),
@@ -86,6 +109,13 @@ export default function DiscountManagement() {
       usageLimit: item.usageLimit ? String(item.usageLimit) : "",
       status: item.status,
     });
+    setDateRange([
+      {
+        startDate: validFrom,
+        endDate: validTo,
+        key: "selection",
+      },
+    ]);
     setEditingId(item._id || null);
     setIsFormOpen(true);
   };
@@ -130,6 +160,15 @@ export default function DiscountManagement() {
     }
   };
 
+  const generateCode = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setFormData((prev) => ({ ...prev, code }));
+  };
+
   const toggleCategory = (categoryId: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -169,15 +208,25 @@ export default function DiscountManagement() {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="text-gray-400 text-sm mb-2 block">Code</label>
-                <input
-                  type="text"
-                  name="code"
-                  placeholder="SUMMER2024"
-                  value={formData.code}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="code"
+                    placeholder="SUMMER2024"
+                    value={formData.code}
+                    onChange={handleInputChange}
+                    required
+                    className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={generateCode}
+                    className="px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-white transition-colors"
+                    title="Generate Code"
+                  >
+                    <FiRefreshCw className="text-lg" />
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -220,33 +269,48 @@ export default function DiscountManagement() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-gray-400 text-sm mb-2 block">
-                    Valid From
-                  </label>
-                  <input
-                    type="date"
-                    name="validFrom"
-                    value={formData.validFrom}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#fe9a00]"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-gray-400 text-sm mb-2 block">
-                    Valid To
-                  </label>
-                  <input
-                    type="date"
-                    name="validTo"
-                    value={formData.validTo}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#fe9a00]"
-                  />
+              <div>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Valid Period
+                </label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowDatePicker(!showDatePicker)}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white text-left focus:outline-none focus:border-[#fe9a00] transition-colors"
+                  >
+                    {dateRange[0].startDate && dateRange[0].endDate
+                      ? `${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`
+                      : "Select dates"}
+                  </button>
+                  {showDatePicker && (
+                    <div className="absolute z-50 mt-2 bg-slate-800 border border-white/20 rounded-xl p-4 shadow-2xl">
+                      <DateRange
+                        ranges={dateRange}
+                        onChange={(item) => {
+                          setDateRange([item.selection]);
+                          setFormData((prev) => ({
+                            ...prev,
+                            validFrom: item.selection.startDate
+                              ? item.selection.startDate.toISOString().split("T")[0]
+                              : "",
+                            validTo: item.selection.endDate
+                              ? item.selection.endDate.toISOString().split("T")[0]
+                              : "",
+                          }));
+                        }}
+                        minDate={new Date()}
+                        rangeColors={["#fe9a00"]}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowDatePicker(false)}
+                        className="w-full mt-3 px-4 py-2 bg-[#fe9a00] text-white font-semibold rounded-lg hover:bg-[#e68a00] transition-colors"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

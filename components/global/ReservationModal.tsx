@@ -11,6 +11,7 @@ import {
   FiCheckCircle,
   FiPackage,
   FiUsers,
+  FiAlertCircle,
 } from "react-icons/fi";
 
 import AddOnsModal from "./AddOnsModal";
@@ -101,6 +102,10 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
+  const [discountError, setDiscountError] = useState("");
+  const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
 
   const selectedCategory = categories.find((c) => c._id === formData.category);
 
@@ -279,6 +284,13 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     addOnsPrice
   );
 
+  const finalPrice = useMemo(() => {
+    if (!priceCalc) return null;
+    if (!appliedDiscount) return priceCalc.totalPrice;
+    const discountAmount = (priceCalc.totalPrice * appliedDiscount.percentage) / 100;
+    return parseFloat((priceCalc.totalPrice - discountAmount).toFixed(2));
+  }, [priceCalc, appliedDiscount]);
+
   // Fetch offices and types
   useEffect(() => {
     Promise.all([
@@ -325,7 +337,8 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       .then((res) => res.json())
       .then((data) => {
         console.log("Add-ons response:", data);
-        setAddOns(data.data || []);
+        const addonsData = data.data?.data || data.data || [];
+        setAddOns(Array.isArray(addonsData) ? addonsData : []);
       })
       .catch((err) => console.error(err));
   }, []);
@@ -537,6 +550,52 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) {
+      setDiscountError("Please enter a discount code");
+      return;
+    }
+    const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!) : null;
+    if (!user) {
+      setDiscountError("Please login to apply discount");
+      return;
+    }
+    setIsApplyingDiscount(true);
+    setDiscountError("");
+    try {
+      const res = await fetch(`/api/discounts?status=active`);
+      const data = await res.json();
+      if (!data.success) throw new Error("Invalid discount code");
+      const discounts = data.data.data || data.data;
+      const discount = discounts.find((d: any) => d.code.toUpperCase() === discountCode.toUpperCase());
+      if (!discount) throw new Error("Invalid discount code");
+      const now = new Date();
+      const validFrom = new Date(discount.validFrom);
+      const validTo = new Date(discount.validTo);
+      if (now < validFrom || now > validTo) throw new Error("Discount code has expired");
+      if (discount.usageLimit && discount.usageCount >= discount.usageLimit) throw new Error("Discount code usage limit reached");
+      if (discount.usedBy?.includes(user._id)) throw new Error("You have already used this discount code");
+      if (discount.categories?.length > 0 && formData.category) {
+        const categoryIds = discount.categories.map((c: any) => c._id || c);
+        if (!categoryIds.includes(formData.category)) throw new Error("Discount not valid for this vehicle");
+      }
+      setAppliedDiscount(discount);
+      setDiscountError("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid discount code";
+      setDiscountError(message);
+      setAppliedDiscount(null);
+    } finally {
+      setIsApplyingDiscount(false);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCode("");
+    setDiscountError("");
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -582,15 +641,24 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
           startDate: new Date(`${formData.startDate}T${formData.startTime}`),
           endDate: new Date(`${formData.endDate}T${formData.endTime}`),
           totalPrice:
-            (priceCalc?.totalPrice || 0) +
+            (finalPrice || priceCalc?.totalPrice || 0) +
             addOnsCost +
             (selectedCategory?.deposit || 0),
           driverAge: formData.driverAge,
           messege: "",
           status: "pending",
           addOns: selectedAddOns,
+          discountCode: appliedDiscount?.code || null,
         },
       };
+
+      if (appliedDiscount) {
+        await fetch(`/api/discounts?id=${appliedDiscount._id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ addUserToUsedBy: user._id }),
+        });
+      }
 
       const res = await fetch("/api/reservations", {
         method: "POST",
@@ -1120,11 +1188,21 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                   </div>
                 )}
 
-                {addOns.length > 0 && priceCalc && (
-                  <div>
-                    <h4 className="text-white font-semibold mb-3">
-                      Available Add-ons
-                    </h4>
+                <div>
+                  <h4 className="text-white font-semibold mb-3">
+                    Available Add-ons
+                  </h4>
+                  {!Array.isArray(addOns) || addOns.length === 0 ? (
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                      <FiAlertCircle className="text-gray-400 text-2xl mx-auto mb-2" />
+                      <p className="text-gray-400 text-sm">No add-ons available</p>
+                    </div>
+                  ) : !priceCalc ? (
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+                      <div className="w-8 h-8 border-2 border-[#fe9a00]/30 border-t-[#fe9a00] rounded-full animate-spin mx-auto mb-2"></div>
+                      <p className="text-gray-400 text-sm">Loading pricing...</p>
+                    </div>
+                  ) : (
                     <div className="space-y-2 max-h-[40vh] overflow-y-auto">
                       {addOns.map((addon) => {
                         const selected = selectedAddOns.find(
@@ -1284,8 +1362,8 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                         );
                       })}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 <button
                   onClick={() => setStep(4)}
@@ -1488,6 +1566,54 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                   </div>
                 </div>
 
+                {/* Discount Code */}
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                  <h4 className="text-white font-semibold mb-3">Discount Code</h4>
+                  {!appliedDiscount ? (
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={discountCode}
+                          onChange={(e) => {
+                            setDiscountCode(e.target.value.toUpperCase());
+                            setDiscountError("");
+                          }}
+                          placeholder="Enter code"
+                          className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] uppercase text-sm"
+                        />
+                        <button
+                          onClick={handleApplyDiscount}
+                          disabled={isApplyingDiscount || !discountCode.trim()}
+                          className="px-4 py-2 bg-[#fe9a00] hover:bg-orange-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 text-sm"
+                        >
+                          {isApplyingDiscount ? "..." : "Apply"}
+                        </button>
+                      </div>
+                      {discountError && (
+                        <p className="text-red-400 text-xs">{discountError}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-green-400 font-bold">{appliedDiscount.code}</p>
+                          <p className="text-green-300 text-xs mt-1">
+                            {appliedDiscount.percentage}% discount applied
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleRemoveDiscount}
+                          className="text-red-400 hover:text-red-300 text-sm font-semibold"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Price Breakdown */}
                 {priceCalc && (
                   <div className="bg-linear-to-br from-[#fe9a00]/20 to-orange-600/20 border border-[#fe9a00]/30 rounded-xl p-4">
@@ -1496,13 +1622,23 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                     </h4>
                     <div className="space-y-2 text-sm">
                       <p className="text-gray-300">{priceCalc.breakdown}</p>
+                      {appliedDiscount && (
+                        <div className="flex justify-between items-center text-green-400 pt-2">
+                          <span className="font-semibold">
+                            Discount ({appliedDiscount.percentage}%)
+                          </span>
+                          <span className="font-semibold">
+                            -£{((priceCalc.totalPrice * appliedDiscount.percentage) / 100).toFixed(2)}
+                          </span>
+                        </div>
+                      )}
                       <div className="pt-3 border-t border-white/20">
                         <div className="flex justify-between items-center">
                           <span className="text-white font-bold text-lg">
                             Total Price:
                           </span>
                           <span className="text-[#fe9a00] font-black text-3xl">
-                            £{priceCalc.totalPrice}
+                            £{finalPrice || priceCalc.totalPrice}
                           </span>
                         </div>
                       </div>

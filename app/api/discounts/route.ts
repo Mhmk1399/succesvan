@@ -78,10 +78,28 @@ export async function PATCH(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     const body = await req.json();
+    
+    // Handle adding user to usedBy array
+    if (body.addUserToUsedBy) {
+      const userId = body.addUserToUsedBy;
+      delete body.addUserToUsedBy;
+      
+      const discount = await Discount.findByIdAndUpdate(
+        id,
+        { 
+          $inc: { usageCount: 1 },
+          $addToSet: { usedBy: userId }
+        },
+        { new: true }
+      );
+      return successResponse(discount);
+    }
+    
     const discount = await Discount.findByIdAndUpdate(id, body, { new: true });
     return successResponse(discount);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("PATCH discount error:", error);
     return errorResponse(message, 400);
   }
 }

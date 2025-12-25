@@ -456,10 +456,15 @@ function ReservationPanel({
       setDiscountError("Please enter a discount code");
       return;
     }
+    const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!) : null;
+    if (!user) {
+      setDiscountError("Please login to apply discount");
+      return;
+    }
     setIsApplyingDiscount(true);
     setDiscountError("");
     try {
-      const res = await fetch(`/api/discounts?code=${discountCode}&status=active`);
+      const res = await fetch(`/api/discounts?status=active`);
       const data = await res.json();
       if (!data.success) throw new Error("Invalid discount code");
       const discounts = data.data.data || data.data;
@@ -470,6 +475,7 @@ function ReservationPanel({
       const validTo = new Date(discount.validTo);
       if (now < validFrom || now > validTo) throw new Error("Discount code has expired");
       if (discount.usageLimit && discount.usageCount >= discount.usageLimit) throw new Error("Discount code usage limit reached");
+      if (discount.usedBy?.includes(user._id)) throw new Error("You have already used this discount code");
       if (discount.categories?.length > 0) {
         const categoryIds = discount.categories.map((c: any) => c._id || c);
         if (!categoryIds.includes(van._id)) throw new Error("Discount not valid for this vehicle");
@@ -938,7 +944,7 @@ function ReservationPanel({
         await fetch(`/api/discounts?id=${appliedDiscount._id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ usageCount: appliedDiscount.usageCount + 1 }),
+          body: JSON.stringify({ addUserToUsedBy: user._id }),
         });
       }
 
