@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { FiDownload, FiFilter, FiX } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
-import { Office } from "@/types/type";
+import { Office, Pagination } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
 import DatePicker from "@/components/dashboard/reports/DatePicker";
 
@@ -27,12 +27,7 @@ interface VehicleReport {
   }>;
 }
 
-interface Pagination {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+ 
 
 export default function VehicleReservationReport() {
   const [data, setData] = useState<VehicleReport[]>([]);
@@ -40,7 +35,7 @@ export default function VehicleReservationReport() {
     total: 0,
     page: 1,
     limit: 10,
-    totalPages: 1,
+    pages: 1,
   });
   const [loading, setLoading] = useState(true);
 
@@ -97,7 +92,7 @@ export default function VehicleReservationReport() {
   };
 
   const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > pagination.totalPages) return;
+    if (newPage < 1 || newPage > pagination.pages) return;
     setPagination((prev) => ({ ...prev, page: newPage }));
     fetchData(newPage);
   };
@@ -282,7 +277,7 @@ export default function VehicleReservationReport() {
 
       <div className="flex items-center justify-between">
         <span className="text-gray-400 text-sm">
-          Page {pagination.page} of {pagination.totalPages} (Total:{" "}
+          Page {pagination.page} of {pagination.pages} (Total:{" "}
           {pagination.total})
         </span>
         <div className="flex gap-2">
@@ -295,7 +290,7 @@ export default function VehicleReservationReport() {
           </button>
           <button
             onClick={() => handlePageChange(pagination.page + 1)}
-            disabled={pagination.page === pagination.totalPages}
+            disabled={pagination.page === pagination.pages}
             className="px-4 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white rounded-lg transition-colors"
           >
             Next

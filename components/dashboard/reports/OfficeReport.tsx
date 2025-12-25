@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { FiDownload, FiFilter, FiX } from "react-icons/fi";
 import CustomSelect from "@/components/ui/CustomSelect";
 import DatePicker from "@/components/dashboard/reports/DatePicker";
+import { Pagination } from "@/types/type";
 
 interface OfficeReport {
   officeId: string;
@@ -20,13 +21,7 @@ interface ReportSummary {
   totalReservations: number;
   officesCount: number;
 }
-
-interface Pagination {
-  total: number;
-  page: number;
-  limit: number;
-  pages: number;
-}
+ 
 
 export default function OfficeReportComponent() {
   const [data, setData] = useState<OfficeReport[]>([]);

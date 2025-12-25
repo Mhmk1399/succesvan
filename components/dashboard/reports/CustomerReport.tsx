@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { FiDownload, FiFilter, FiX } from "react-icons/fi";
 import CustomSelect from "@/components/ui/CustomSelect";
 import DatePicker from "@/components/dashboard/reports/DatePicker";
+import { Pagination } from "@/types/type";
 
 interface Customer {
   _id: string;
@@ -23,12 +24,7 @@ interface Summary {
   leastActive: { name: string; reservationCount: number; totalSpent: number } | null;
 }
 
-interface Pagination {
-  total: number;
-  page: number;
-  limit: number;
-  pages: number;
-}
+ 
 
 export default function CustomerReport() {
   const [data, setData] = useState<Customer[]>([]);

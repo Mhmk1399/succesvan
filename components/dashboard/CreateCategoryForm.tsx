@@ -1098,6 +1098,7 @@ export default function CategoriesContent() {
             "fuel",
           ] as (keyof Category)[]
         }
+        hideDelete={true}
       />
     </div>
   );

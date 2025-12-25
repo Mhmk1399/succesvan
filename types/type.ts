@@ -285,3 +285,11 @@ export interface VanData {
   mileage?: string;
   priceUnit?: string;
 }
+
+
+export interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}

@@ -324,9 +324,7 @@ export default function VehiclesContent() {
                 required
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
-              <label className="text-gray-400 text-sm mb-2 block">
-                office  
-              </label>
+              <label className="text-gray-400 text-sm mb-2 block">office</label>
               <CustomSelect
                 options={offices}
                 value={formData.office}
@@ -338,7 +336,7 @@ export default function VehiclesContent() {
                 }
               />
               <label className="text-gray-400 text-sm mb-2 block">
-                category  
+                category
               </label>
               <CustomSelect
                 options={categories}
@@ -353,7 +351,7 @@ export default function VehiclesContent() {
                 }
               />
               <label className="text-gray-400 text-sm mb-2 block">
-                reservation  
+                reservation
               </label>
               <CustomSelect
                 options={reservations}
@@ -367,9 +365,7 @@ export default function VehiclesContent() {
                     : "Select Reservation (Optional)"
                 }
               />
-              <label className="text-gray-400 text-sm mb-2 block">
-                status
-              </label>
+              <label className="text-gray-400 text-sm mb-2 block">status</label>
               <CustomSelect
                 options={[
                   { _id: "active", name: "Active" },
@@ -524,6 +520,7 @@ export default function VehiclesContent() {
 
       <DynamicTableView<Vehicle>
         apiEndpoint="/api/vehicles"
+        hideDelete={true}
         filters={[
           { key: "title", label: "Title", type: "text" },
           { key: "number", label: "Number", type: "text" },

@@ -381,6 +381,7 @@ export default function AddOnsContent() {
 
       <DynamicTableView<AddOn>
         apiEndpoint="/api/addons"
+        hideDelete={true}
         filters={[
           { key: "name", label: "Name", type: "text" },
           { key: "createdAt", label: "Created Date", type: "date" },

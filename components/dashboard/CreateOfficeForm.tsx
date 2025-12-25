@@ -623,6 +623,7 @@ export default function OfficesContent() {
 
       <DynamicTableView<Office>
         apiEndpoint="/api/offices"
+        hideDelete={true}
         filters={[
           { key: "name", label: "Name", type: "text" },
           { key: "phone", label: "Phone", type: "text" },

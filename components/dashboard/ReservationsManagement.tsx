@@ -268,6 +268,7 @@ export default function ReservationsManagement() {
   return (
     <div className="space-y-6">
       <DynamicTableView<Reservation>
+        hideDelete={true}
         apiEndpoint="/api/reservations"
         filters={[
           { key: "name", label: "User", type: "select", options: users },
