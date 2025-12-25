@@ -1,28 +1,41 @@
+// app/api/reports/categories/route.ts
 import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Reservation from "@/model/reservation";
-import { successResponse, errorResponse } from "@/lib/api-response";
+import { PipelineStage } from "mongoose";
 
 export async function GET(req: NextRequest) {
   try {
     await connect();
+
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    const page = searchParams.get("page");
-    const limit = searchParams.get("limit");
+    const status = searchParams.get("status"); // e.g., confirmed, completed
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
 
-    const query: any = { category: { $ne: null } };
+    // Base match: only reservations with a valid category
+    const match: any = {
+      category: { $exists: true, $ne: null },
+    };
 
+    // Date filter on reservation creation (or you can use startDate/endDate of booking)
     if (startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
-      query.createdAt = { $gte: start, $lte: end };
+      match.createdAt = { $gte: start, $lte: end };
     }
 
-    const allCategoryReports = await Reservation.aggregate([
-      { $match: query },
+    // Optional: only count specific statuses (e.g., completed for real revenue)
+    if (status) {
+      match.status = status;
+    }
+
+    const pipeline: PipelineStage[] = [
+      { $match: match },
+
       {
         $group: {
           _id: "$category",
@@ -31,6 +44,7 @@ export async function GET(req: NextRequest) {
           avgPrice: { $avg: "$totalPrice" },
         },
       },
+
       {
         $lookup: {
           from: "categories",
@@ -40,67 +54,71 @@ export async function GET(req: NextRequest) {
         },
       },
       { $unwind: { path: "$categoryData", preserveNullAndEmptyArrays: false } },
+
       {
         $project: {
-          _id: 1,
+          categoryId: "$_id",
           categoryName: "$categoryData.name",
           count: 1,
           totalPrice: { $round: ["$totalPrice", 2] },
           avgPrice: { $round: ["$avgPrice", 2] },
         },
       },
+
       { $sort: { count: -1 } },
-    ]);
 
-    const mostUsed = allCategoryReports[0] || null;
-    const leastUsed = allCategoryReports[allCategoryReports.length - 1] || null;
-    const totalRevenue = allCategoryReports.reduce(
-      (sum, cat) => sum + (cat.totalPrice || 0),
-      0
-    );
-    const totalReservations = allCategoryReports.reduce(
-      (sum, cat) => sum + (cat.count || 0),
-      0
-    );
+      // Facet: pagination + summary in one go
+      {
+        $facet: {
+          metadata: [{ $count: "totalCategories" }],
+          data: [{ $skip: (page - 1) * limit }, { $limit: limit }],
 
-    // If pagination params not provided, return all data
-    if (!page && !limit) {
-      return successResponse({
-        data: allCategoryReports,
-        summary: {
-          mostUsed,
-          leastUsed,
-          totalRevenue: Math.round(totalRevenue * 100) / 100,
-          totalReservations,
-          categoriesCount: allCategoryReports.length,
+          // Summary stats
+          totalRevenue: [
+            { $group: { _id: null, sum: { $sum: "$totalPrice" } } },
+          ],
+          totalReservations: [
+            { $group: { _id: null, sum: { $sum: "$count" } } },
+          ],
+          mostUsed: [{ $limit: 1 }], // already sorted by count desc
+          leastUsed: [{ $sort: { count: 1 } }, { $limit: 1 }], // reverse for least
         },
-      });
-    }
-
-    // With pagination
-    const pageNum = parseInt(page || "1");
-    const limitNum = parseInt(limit || "10");
-    const skip = (pageNum - 1) * limitNum;
-    const paginatedData = allCategoryReports.slice(skip, skip + limitNum);
-
-    return successResponse({
-      data: paginatedData,
-      summary: {
-        mostUsed,
-        leastUsed,
-        totalRevenue: Math.round(totalRevenue * 100) / 100,
-        totalReservations,
-        categoriesCount: allCategoryReports.length,
       },
+    ];
+
+    const result = await Reservation.aggregate(pipeline);
+    const facet = result[0];
+
+    const data = facet.data || [];
+    const totalCategories = facet.metadata[0]?.totalCategories || 0;
+
+    const summary = {
+      mostUsed: facet.mostUsed[0] || null,
+      leastUsed: facet.leastUsed[0] || null,
+      totalRevenue: Math.round((facet.totalRevenue[0]?.sum || 0) * 100) / 100,
+      totalReservations: facet.totalReservations[0]?.sum || 0,
+      categoriesCount: totalCategories,
+    };
+
+    return Response.json({
+      success: true,
+      data,
+      summary,
       pagination: {
-        total: allCategoryReports.length,
-        page: pageNum,
-        limit: limitNum,
-        pages: Math.ceil(allCategoryReports.length / limitNum),
+        total: totalCategories,
+        page,
+        limit,
+        pages: Math.ceil(totalCategories / limit),
       },
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message, 500);
+  } catch (error: any) {
+    console.error("Category report error:", error);
+    return Response.json(
+      {
+        success: false,
+        error: error.message || "Failed to fetch category report",
+      },
+      { status: 500 }
+    );
   }
 }

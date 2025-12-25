@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  FiChevronDown,
   FiBarChart2,
   FiHome,
   FiClipboard,
@@ -14,12 +13,12 @@ import {
   FiMic,
   FiSend,
   FiLoader,
-  FiVolume2,
+  FiTrendingUp,
+  FiDollarSign,
 } from "react-icons/fi";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import CategoryReport from "./reports/CategoryReport";
 import OfficeReport from "./reports/OfficeReport";
-import DefaultReport from "./reports/DefaultReport";
 import VehicleReservationReport from "./reports/VehicleReservationReport";
 import ReservationReport from "./reports/ReservationReport";
 import CustomerReport from "./reports/CustomerReport";
@@ -30,53 +29,60 @@ interface Report {
   name: string;
   description: string;
   icon: React.ReactNode;
+  color: string;
 }
 
 const reports: Report[] = [
   {
     id: "categories",
-    name: "Categories Report",
-    description: "Most/least used categories with revenue analysis",
-    icon: <FiBarChart2 />,
+    name: "Categories  ",
+    description: "Revenue and usage by vehicle category",
+    icon: <FiBarChart2 className="w-6 h-6" />,
+    color: "from-purple-500 to-pink-500",
   },
   {
     id: "offices",
-    name: "Offices Report",
-    description: "Most/least used offices with revenue analysis",
-    icon: <FiHome />,
+    name: "Offices  ",
+    description: "Performance analysis across all branches",
+    icon: <FiHome className="w-6 h-6" />,
+    color: "from-blue-500 to-cyan-500",
   },
   {
     id: "reservations",
-    name: "Reservations Report",
-    description: "Top price reservations with customer and category details",
-    icon: <FiClipboard />,
+    name: "Reservations  ",
+    description: "Detailed booking history and trends",
+    icon: <FiClipboard className="w-6 h-6" />,
+    color: "from-emerald-500 to-teal-500",
   },
   {
     id: "vehicles",
-    name: "Vehicle Reservations Report",
-    description: "Vehicles with reservation counts and details",
-    icon: <FiTruck />,
+    name: "Vehicle  ",
+    description: "Fleet utilization and revenue per vehicle",
+    icon: <FiTruck className="w-6 h-6" />,
+    color: "from-orange-500 to-red-500",
   },
   {
     id: "customers",
-    name: "Customers Report",
-    description: "Most/least reserved users, revenue, and monthly stats",
-    icon: <FiUsers />,
+    name: "Customers  ",
+    description: "Customer behavior and loyalty insights",
+    icon: <FiUsers className="w-6 h-6" />,
+    color: "from-indigo-500 to-purple-500",
   },
   {
     id: "addons",
-    name: "Add-Ons Report",
-    description:
-      "Most used add-ons, customer preferences, and revenue analysis",
-    icon: <FiGift />,
+    name: "Add-Ons  ",
+    description: "Extra services usage and revenue",
+    icon: <FiGift className="w-6 h-6" />,
+    color: "from-amber-500 to-orange-500",
   },
 ];
 
 export default function ReportsManagement() {
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
-  const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [messages, setMessages] = useState<
+    { role: "user" | "assistant"; content: string }[]
+  >([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationHistory, setConversationHistory] = useState<any[]>([]);
@@ -84,90 +90,67 @@ export default function ReportsManagement() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const handleViewReport = (reportId: string) => {
-    setSelectedReport(reportId);
-    setIsDropdownOpen(false);
-  };
-
   const currentReport = reports.find((r) => r.id === selectedReport);
 
-  // Voice recording hook
   const { isRecording, toggleRecording } = useVoiceRecording({
     onTranscriptionComplete: async (result) => {
-      console.log("🎤 Transcribed:", result.transcript);
       setInputMessage(result.transcript);
-      // Auto-send the transcribed message
       await handleSendMessage(result.transcript);
     },
     autoSubmit: false,
   });
 
-  // Auto-scroll to latest message
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Show initial greeting when modal opens
   useEffect(() => {
     if (showAIModal && messages.length === 0) {
       setMessages([
         {
           role: "assistant",
           content:
-            "👋 Hi! I'm your AI Business Analyst. I can help you understand your business data, analyze trends, and provide insights. What would you like to know?",
+            "👋 Hello! I'm your AI Business Analyst. Ask me anything about sales, customers, vehicles, or trends — I'll analyze your data and give clear insights.",
         },
       ]);
     }
   }, [showAIModal, messages.length]);
 
-  // Cleanup audio on unmount
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, []);
-
   const handleSendMessage = async (messageText?: string) => {
     const text = messageText || inputMessage.trim();
     if (!text || isLoading) return;
 
-    // Add user message
     const newMessages = [...messages, { role: "user" as const, content: text }];
     setMessages(newMessages);
     setInputMessage("");
     setIsLoading(true);
 
     try {
-      // Call the business analyst API
       const response = await fetch("/api/business-analyst", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: text,
-          conversationHistory,
-        }),
+        body: JSON.stringify({ query: text, conversationHistory }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        // Add assistant response
-        setMessages([...newMessages, { role: "assistant", content: data.data.message }]);
+        setMessages([
+          ...newMessages,
+          { role: "assistant", content: data.data.message },
+        ]);
         setConversationHistory(data.data.conversationHistory);
-
-        // Play audio response
         await playAudioResponse(data.data.message);
       } else {
-        throw new Error(data.error || "Failed to get response");
+        throw new Error(data.error);
       }
     } catch (error) {
-      console.error("Error:", error);
       setMessages([
         ...newMessages,
-        { role: "assistant", content: "Sorry, I encountered an error. Please try again." },
+        {
+          role: "assistant",
+          content: "Sorry, something went wrong. Please try again.",
+        },
       ]);
     } finally {
       setIsLoading(false);
@@ -188,18 +171,14 @@ export default function ReportsManagement() {
       const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
 
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+      if (audioRef.current) audioRef.current.pause();
 
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
-
       audio.onended = () => {
         setIsPlaying(false);
         URL.revokeObjectURL(audioUrl);
       };
-
       await audio.play();
     } catch (error) {
       console.error("TTS Error:", error);
@@ -216,33 +195,126 @@ export default function ReportsManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header with AI Button */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-black text-white">Business Reports</h1>
-        <button
-          onClick={() => setShowAIModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#ff8800] text-white rounded-xl font-semibold transition-all"
-        >
-          <FiMessageCircle className="w-5 h-5" />
-          Ask AI Analyst
-        </button>
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-[#0f172b] to-slate-900">
+      <div className="max-w-8xl mx-auto   py-12">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-12">
+          <div>
+            <h1 className="text-4xl font-black text-white mb-2">
+              Business Intelligence Dashboard
+            </h1>
+            <p className="text-gray-400 text-lg">
+              Real-time insights and analytics for smarter decisions
+            </p>
+          </div>
+          <button
+            onClick={() => setShowAIModal(true)}
+            className="flex items-center gap-3 px-6 py-4 bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] text-white rounded-2xl font-bold text-lg shadow-xl shadow-[#fe9a00]/20 transition-all transform hover:scale-105"
+          >
+            <FiMessageCircle className="w-6 h-6" />
+            Talk to AI Analyst
+          </button>
+        </div>
+
+        {/* Report Cards Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-12">
+          {reports.map((report) => (
+            <button
+              key={report.id}
+              onClick={() => setSelectedReport(report.id)}
+              className={`group relative overflow-hidden rounded-3xl p-3 text-left transition-all duration-500 transform hover:scale-105 ${
+                selectedReport === report.id
+                  ? "ring-2 ring-[#fe9a00] ring-offset-4 ring-offset-slate-900 shadow-2xl"
+                  : "hover:shadow-2xl"
+              }`}
+            >
+              <div
+                className={`absolute inset-0 bg-linear-to-br ${report.color} opacity-10 group-hover:opacity-20 transition-opacity`}
+              />
+              <div className="relative z-10">
+                <div
+                  className={`inline-flex p-2 rounded-2xl bg-linear-to-br ${report.color} text-white mb-6 shadow-lg`}
+                >
+                  {report.icon}
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3">
+                  {report.name}
+                </h3>
+                <p className="text-gray-300 text-xs leading-relaxed">
+                  {report.description}
+                </p>
+                {selectedReport === report.id && (
+                  <div className="mt-6 flex items-center gap-2 text-xs text-[#fe9a00] font-semibold">
+                    <FiTrendingUp />
+                    <span>Viewing Report</span>
+                  </div>
+                )}
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-transparent via-[#fe9a00] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          ))}
+        </div>
+
+        {/* Selected Report Content */}
+        {currentReport ? (
+          <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
+            <div className="flex items-center gap-6 mb-8">
+              <div
+                className={`p-5 rounded-3xl bg-linear-to-br ${currentReport.color} text-white shadow-xl`}
+              >
+                {currentReport.icon}
+              </div>
+              <div>
+                <h2 className="text-3xl font-black text-white">
+                  {currentReport.name}
+                </h2>
+                <p className="text-gray-400 mt-1">
+                  {currentReport.description}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/30 rounded-2xl p-2">
+              {selectedReport === "categories" && <CategoryReport />}
+              {selectedReport === "offices" && <OfficeReport />}
+              {selectedReport === "vehicles" && <VehicleReservationReport />}
+              {selectedReport === "reservations" && <ReservationReport />}
+              {selectedReport === "customers" && <CustomerReport />}
+              {selectedReport === "addons" && <AddOnReport />}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-20 text-center">
+            <div className="max-w-md mx-auto">
+              <FiBarChart2 className="w-20 h-20 text-gray-600 mx-auto mb-6" />
+              <h3 className="text-2xl font-bold text-white mb-4">
+                Welcome to Your Analytics Hub
+              </h3>
+              <p className="text-gray-400 text-lg leading-relaxed">
+                Select any report from the cards above to dive deep into your
+                business performance. Use the AI Analyst for natural language
+                questions.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* AI Business Analyst Modal (top-level) */}
+      {/* AI Modal */}
       {showAIModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-[#0f172b] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border border-white/10">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-[#fe9a00] to-[#ff8800] text-white px-6 py-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="bg-linear-to-b from-slate-900 to-[#0f172b] rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-white/20">
+            <div className="bg-linear-to-r from-[#fe9a00] to-[#ff8800] p-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                    <FiBarChart2 className="w-5 h-5" />
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                    <FiDollarSign className="w-7 h-7" />
                   </div>
                   <div>
-                    <h2 className="font-bold text-lg">AI Business Analyst</h2>
-                    <p className="text-orange-100 text-sm">Ask me anything about your business data</p>
+                    <h2 className="text-2xl font-bold">AI Business Analyst</h2>
+                    <p className="text-orange-100">
+                      Ask anything about your data
+                    </p>
                   </div>
                 </div>
                 <button
@@ -250,221 +322,115 @@ export default function ReportsManagement() {
                     setShowAIModal(false);
                     stopAudio();
                   }}
-                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                  className="p-3 hover:bg-white/20 rounded-full transition-colors"
                 >
-                  <FiX className="w-5 h-5" />
+                  <FiX className="w-6 h-6" />
                 </button>
               </div>
             </div>
 
-            {/* Chat Messages */}
-            <div className="max-h-[calc(90vh-250px)] overflow-y-auto p-4 space-y-3">
-              {messages.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                >
+            <div className="flex flex-col h-[70vh]">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {messages.map((msg, i) => (
                   <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
-                      msg.role === "user"
-                        ? "bg-[#fe9a00] text-white rounded-br-none"
-                        : "bg-white/10 text-white rounded-bl-none"
+                    key={i}
+                    className={`flex ${
+                      msg.role === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
-                  </div>
-                </div>
-              ))}
-
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-white/10 rounded-2xl rounded-bl-none px-4 py-2.5">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                    <div
+                      className={`max-w-lg rounded-3xl px-6 py-4 shadow-lg ${
+                        msg.role === "user"
+                          ? "bg-linear-to-r from-[#fe9a00] to-[#ff8800] text-white"
+                          : "bg-white/10 text-white backdrop-blur-sm"
+                      }`}
+                    >
+                      <p className="text-lg leading-relaxed whitespace-pre-wrap">
+                        {msg.content}
+                      </p>
                     </div>
                   </div>
-                </div>
-              )}
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-white/10 rounded-3xl px-6 py-4">
+                      <div className="flex gap-2">
+                        <div className="w-3 h-3 bg-gray-400 rounded-full animate-bounce" />
+                        <div className="w-3 h-3 bg-gray-400 rounded-full animate-bounce delay-100" />
+                        <div className="w-3 h-3 bg-gray-400 rounded-full animate-bounce delay-200" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
 
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Input Area */}
-            <div className="p-4 border-t border-white/10 bg-[#0f172b]">
-              {/* Status Indicator */}
-              <div className="mb-2 text-center text-sm text-gray-400">
-                {isRecording ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                    Recording...
-                  </span>
-                ) : isPlaying ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <FiVolume2 className="w-4 h-4" />
-                    Playing response...
-                    <button onClick={stopAudio} className="text-[#fe9a00] hover:underline">
-                      Stop
+              <div className="p-6 border-t border-white/10">
+                <div className="flex flex-wrap gap-3 mb-4">
+                  {[
+                    "Last month performance?",
+                    "Top customers?",
+                    "Most popular vehicle?",
+                    "Revenue trend?",
+                  ].map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => setInputMessage(q)}
+                      disabled={isLoading || isRecording}
+                      className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl text-sm transition-all"
+                    >
+                      {q}
                     </button>
-                  </span>
-                ) : (
-                  "Type or use voice input"
+                  ))}
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    onClick={toggleRecording}
+                    disabled={isLoading || isPlaying}
+                    className={`p-4 rounded-2xl transition-all ${
+                      isRecording
+                        ? "bg-red-500 animate-pulse"
+                        : "bg-white/10 hover:bg-white/20"
+                    }`}
+                  >
+                    <FiMic className="w-6 h-6" />
+                  </button>
+
+                  <input
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && !e.shiftKey && handleSendMessage()
+                    }
+                    placeholder="Ask about your business..."
+                    className="flex-1 bg-white/10 border border-white/20 rounded-2xl px-6 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-4 focus:ring-[#fe9a00]/20"
+                    disabled={isLoading || isRecording}
+                  />
+
+                  <button
+                    onClick={() => handleSendMessage()}
+                    disabled={!inputMessage.trim() || isLoading || isRecording}
+                    className="px-8 py-4 bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] rounded-2xl font-bold transition-all disabled:opacity-50"
+                  >
+                    {isLoading ? (
+                      <FiLoader className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <FiSend className="w-6 h-6" />
+                    )}
+                  </button>
+                </div>
+
+                {(isRecording || isPlaying) && (
+                  <p className="text-center text-sm text-gray-400 mt-3">
+                    {isRecording && "🔴 Recording voice..."}
+                    {isPlaying && "🔊 Playing response..."}
+                  </p>
                 )}
               </div>
-
-              {/* Quick Actions */}
-              <div className="mb-3 flex flex-wrap gap-2">
-                <button
-                  onClick={() => setInputMessage("What happened last week?")}
-                  disabled={isLoading || isRecording}
-                  className="px-3 py-1 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-lg transition-all disabled:opacity-50"
-                >
-                  Last week
-                </button>
-                <button
-                  onClick={() => setInputMessage("Who are my best customers?")}
-                  disabled={isLoading || isRecording}
-                  className="px-3 py-1 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-lg transition-all disabled:opacity-50"
-                >
-                  Best customers
-                </button>
-                <button
-                  onClick={() => setInputMessage("Which vehicles are most used?")}
-                  disabled={isLoading || isRecording}
-                  className="px-3 py-1 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-lg transition-all disabled:opacity-50"
-                >
-                  Vehicle usage
-                </button>
-                <button
-                  onClick={() => setInputMessage("Compare this month to last month")}
-                  disabled={isLoading || isRecording}
-                  className="px-3 py-1 bg-white/5 hover:bg-white/10 text-gray-300 text-xs rounded-lg transition-all disabled:opacity-50"
-                >
-                  Compare months
-                </button>
-              </div>
-
-              {/* Input */}
-              <div className="flex gap-3">
-                {/* Mic Button */}
-                <button
-                  onClick={toggleRecording}
-                  disabled={isLoading || isPlaying}
-                  className={`px-4 py-3 rounded-xl font-semibold transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isRecording
-                      ? "bg-red-500 animate-pulse"
-                      : "bg-white/10 hover:bg-white/20"
-                  }`}
-                >
-                  <FiMic className="w-5 h-5 text-white" />
-                </button>
-
-                <input
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-                  placeholder="Ask about your business..."
-                  disabled={isLoading || isRecording}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#fe9a00] disabled:opacity-50"
-                />
-                <button
-                  onClick={() => handleSendMessage()}
-                  disabled={isLoading || !inputMessage.trim() || isRecording}
-                  className="px-6 py-3 bg-[#fe9a00] hover:bg-[#ff8800] text-white rounded-xl font-semibold transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? (
-                    <FiLoader className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <FiSend className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Report Selector Dropdown */}
-      <div className="relative w-full md:w-80">
-        <button
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition-colors"
-        >
-          <span className="font-semibold">
-            {currentReport ? currentReport.name : "Select a Report"}
-          </span>
-          <FiChevronDown
-            className={`transition-transform ${
-              isDropdownOpen ? "rotate-180" : ""
-            }`}
-          />
-        </button>
-
-        {isDropdownOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a2847] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
-            {reports.map((report) => (
-              <button
-                key={report.id}
-                onClick={() => handleViewReport(report.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-                  selectedReport === report.id
-                    ? "bg-[#fe9a00]/20 text-[#fe9a00]"
-                    : "text-white hover:bg-white/5"
-                }`}
-              >
-                <span className="text-xl">{report.icon}</span>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm">{report.name}</p>
-                  <p className="text-xs text-gray-400">{report.description}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Report Content */}
-      {currentReport ? (
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <span className="text-4xl">{currentReport.icon}</span>
-              <div>
-                <h2 className="text-2xl font-black text-white">
-                  {currentReport.name}
-                </h2>
-                <p className="text-gray-400 text-sm">
-                  {currentReport.description}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {selectedReport === "categories" ? (
-            <CategoryReport />
-          ) : selectedReport === "offices" ? (
-            <OfficeReport />
-          ) : selectedReport === "vehicles" ? (
-            <VehicleReservationReport />
-          ) : selectedReport === "reservations" ? (
-            <ReservationReport />
-          ) : selectedReport === "customers" ? (
-            <CustomerReport />
-          ) : selectedReport === "addons" ? (
-
-      
-            <AddOnReport />
-          ) : (
-            <DefaultReport reportName={currentReport.name} />
-          )}
-        </div>
-      ) : (
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center">
-          <p className="text-gray-400 text-lg">
-            Select a report from the dropdown to view details
-          </p>
         </div>
       )}
     </div>

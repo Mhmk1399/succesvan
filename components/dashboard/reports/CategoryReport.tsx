@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FiDownload } from "react-icons/fi";
-import { showToast } from "@/lib/toast";
+import { FiDownload, FiFilter, FiX } from "react-icons/fi";
+import CustomSelect from "@/components/ui/CustomSelect";
+import DatePicker from "@/components/dashboard/reports/DatePicker";
 
 interface CategoryReport {
-  _id: string;
+  categoryId: string;
   categoryName: string;
   count: number;
   totalPrice: number;
@@ -20,46 +21,92 @@ interface ReportSummary {
   categoriesCount: number;
 }
 
+interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
 export default function CategoryReportComponent() {
-  const [summary, setSummary] = useState<ReportSummary | null>(null);
   const [data, setData] = useState<CategoryReport[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [summary, setSummary] = useState<ReportSummary | null>(null);
+  const [pagination, setPagination] = useState<Pagination>({
+    total: 0,
+    page: 1,
+    limit: 10,
+    pages: 1,
+  });
+  const [loading, setLoading] = useState(true);
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [status, setStatus] = useState("");
+
+  const statusOptions = [
+    { _id: "pending", name: "Pending" },
+    { _id: "confirmed", name: "Confirmed" },
+    { _id: "completed", name: "Completed" },
+    { _id: "canceled", name: "Canceled" },
+  ];
 
   useEffect(() => {
-    fetchSummary();
-  }, []);
+    fetchData(1);
+  }, [startDate, endDate, status]);
 
-  const fetchSummary = async () => {
-    setIsLoading(true);
-    setError(null);
+  const fetchData = async (page: number = pagination.page) => {
+    setLoading(true);
     try {
-      const response = await fetch("/api/reports/categories");
-      const result = await response.json();
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pagination.limit.toString(),
+      });
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      if (status) params.append("status", status);
+
+      const res = await fetch(`/api/reports/categories?${params}`);
+      const result = await res.json();
 
       if (result.success) {
-        setSummary(result.data.summary || result.summary);
-        setData(result.data.data || []);
+        setData(result.data || []);
+        setSummary(result.summary);
+        setPagination(result.pagination || pagination);
       } else {
-        setError(result.message || "Failed to fetch data");
+        console.error("API error:", result.error);
       }
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Error fetching report";
-      console.error("Error:", message);
-      setError(message);
+      console.error("Fetch error:", err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > pagination.pages) return;
+    setPagination((prev) => ({ ...prev, page: newPage }));
+    fetchData(newPage);
+  };
+
+  const clearFilters = () => {
+    setStartDate("");
+    setEndDate("");
+    setStatus("");
+  };
+
   const exportToCSV = () => {
-    const headers = ["Category", "Reservations", "Total Revenue", "Avg Price"];
-    const rows = data.map((category) => [
-      category.categoryName,
-      category.count,
-      category.totalPrice,
-      category.avgPrice,
+    const headers = [
+      "Category Name",
+      "Reservations Count",
+      "Total Revenue ($)",
+      "Average Price ($)",
+    ];
+
+    const rows = data.map((cat) => [
+      cat.categoryName,
+      cat.count,
+      cat.totalPrice.toFixed(2),
+      cat.avgPrice.toFixed(2),
     ]);
 
     const csv = [
@@ -67,147 +114,158 @@ export default function CategoryReportComponent() {
       ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
     ].join("\n");
 
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `category-report-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
+    URL.revokeObjectURL(url);
   };
 
-  if (error) {
+  if (loading) {
     return (
-      <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-        <p className="text-red-400">Error: {error}</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-gray-400">Loading report data...</p>
+      <div className="flex items-center justify-center py-16">
+        <div className="w-12 h-12 border-4 border-[#fe9a00]/30 border-t-[#fe9a00] rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <p className="text-gray-400 text-sm mb-2">Total Revenue</p>
-            <p className="text-2xl font-bold text-[#fe9a00]">
-              ${summary.totalRevenue.toLocaleString()}
-            </p>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <p className="text-gray-400 text-sm mb-2">Total Reservations</p>
-            <p className="text-2xl font-bold text-white">
-              {summary.totalReservations}
-            </p>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <p className="text-gray-400 text-sm mb-2">Active Categories</p>
-            <p className="text-2xl font-bold text-white">
-              {summary.categoriesCount}
-            </p>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <p className="text-gray-400 text-sm mb-2">Avg per Category</p>
-            <p className="text-2xl font-bold text-white">
-              $
-              {summary.categoriesCount > 0
-                ? (
-                    summary.totalRevenue / summary.categoriesCount
-                  ).toLocaleString(undefined, { maximumFractionDigits: 0 })
-                : 0}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Most/Least Used */}
-      {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {summary.mostUsed && (
-            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
-              <p className="text-green-400 font-semibold mb-3">
-                Most Used Category
-              </p>
-              <p className="text-white text-lg font-bold mb-2">
-                {summary.mostUsed.categoryName}
-              </p>
-              <div className="space-y-1 text-sm text-gray-300">
-                <p>Reservations: {summary.mostUsed.count}</p>
-                <p>
-                  Total Revenue: ${summary.mostUsed.totalPrice.toLocaleString()}
-                </p>
-                <p>Avg Price: ${summary.mostUsed.avgPrice.toLocaleString()}</p>
-              </div>
-            </div>
-          )}
-          {summary.leastUsed && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-              <p className="text-red-400 font-semibold mb-3">
-                Least Used Category
-              </p>
-              <p className="text-white text-lg font-bold mb-2">
-                {summary.leastUsed.categoryName}
-              </p>
-              <div className="space-y-1 text-sm text-gray-300">
-                <p>Reservations: {summary.leastUsed.count}</p>
-                <p>
-                  Total Revenue: $
-                  {summary.leastUsed.totalPrice.toLocaleString()}
-                </p>
-                <p>Avg Price: ${summary.leastUsed.avgPrice.toLocaleString()}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Table with Export */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white">Categories Details</h3>
-          <button
-            onClick={exportToCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors"
-          >
-            <FiDownload /> Export CSV
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-white/70">
-              <tr>
-                <th className="px-4 py-3 text-left text-white font-bold">#</th>
-                <th className="px-4 py-3 text-left text-white font-bold">Category</th>
-                <th className="px-4 py-3 text-left text-white font-bold">Reservations</th>
-                <th className="px-4 py-3 text-left text-white font-bold">Total Revenue</th>
-                <th className="px-4 py-3 text-left text-white font-bold">Avg Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((category, idx) => (
-                <tr
-                  key={category._id}
-                  className="border-b border-white/10 hover:bg-white/10 transition-colors"
-                >
-                  <td className="px-4 py-3 text-gray-300">{idx + 1}</td>
-                  <td className="px-4 py-3 text-white font-semibold">{category.categoryName}</td>
-                  <td className="px-4 py-3 text-gray-300">{category.count}</td>
-                  <td className="px-4 py-3 text-gray-300">${category.totalPrice.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-gray-300">${category.avgPrice.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h2 className="text-2xl font-black text-white">Category Performance Report</h2>
+        <button
+          onClick={exportToCSV}
+          className="flex items-center gap-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold"
+        >
+          <FiDownload /> Export CSV
+        </button>
       </div>
+
+      <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <FiFilter className="text-[#fe9a00]" />
+          <h3 className="text-white font-semibold">Filters</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <DatePicker
+            value={startDate}
+            onChange={setStartDate}
+            label="Start Date"
+            placeholder="Select start date"
+          />
+          <DatePicker
+            value={endDate}
+            onChange={setEndDate}
+            label="End Date"
+            placeholder="Select end date"
+          />
+          <div>
+            <label className="text-gray-300 text-sm font-semibold mb-2 block">Status</label>
+            <CustomSelect
+              options={statusOptions}
+              value={status}
+              onChange={setStatus}
+              placeholder="All Statuses"
+            />
+          </div>
+        </div>
+
+        {(startDate || endDate || status) && (
+          <button
+            onClick={clearFilters}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors"
+          >
+            <FiX className="text-sm" />
+            Clear Filters
+          </button>
+        )}
+      </div>
+
+      {summary && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-5">
+            <p className="text-gray-400 text-sm">Total Revenue</p>
+            <p className="text-3xl font-bold text-[#fe9a00] mt-2">
+              ${summary.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-5">
+            <p className="text-gray-400 text-sm">Total Reservations</p>
+            <p className="text-3xl font-bold text-white mt-2">{summary.totalReservations.toLocaleString()}</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-5">
+            <p className="text-gray-400 text-sm">Active Categories</p>
+            <p className="text-3xl font-bold text-white mt-2">{summary.categoriesCount}</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-5">
+            <p className="text-gray-400 text-sm">Avg Revenue per Category</p>
+            <p className="text-3xl font-bold text-white mt-2">
+              ${summary.categoriesCount > 0 ? (summary.totalRevenue / summary.categoriesCount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0}
+            </p>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-5">
+            <p className="text-gray-400 text-sm">Filtered Results</p>
+            <p className="text-3xl font-bold text-white mt-2">{pagination.total}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-lg border border-white/10">
+        <table className="w-full">
+          <thead className="bg-white/5">
+            <tr>
+              <th className="px-6 py-4 text-left text-white font-bold">#</th>
+              <th className="px-6 py-4 text-left text-white font-bold">Category</th>
+              <th className="px-6 py-4 text-left text-white font-bold">Reservations</th>
+              <th className="px-6 py-4 text-left text-white font-bold">Total Revenue</th>
+              <th className="px-6 py-4 text-left text-white font-bold">Average Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((category, idx) => (
+              <tr key={category.categoryId} className="border-b border-white/10 hover:bg-white/5 transition-colors">
+                <td className="px-6 py-4 text-gray-300">{(pagination.page - 1) * pagination.limit + idx + 1}</td>
+                <td className="px-6 py-4 text-white font-medium">{category.categoryName}</td>
+                <td className="px-6 py-4 text-center">
+                  <span className="px-3 py-1 bg-[#fe9a00]/20 text-[#fe9a00] rounded-full text-sm font-semibold">
+                    {category.count}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-[#fe9a00] font-semibold">${category.totalPrice.toLocaleString()}</td>
+                <td className="px-6 py-4 text-gray-300">${category.avgPrice.toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {pagination.pages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-gray-400">Showing {data.length} of {pagination.total} categories</p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+              className="px-4 py-2 rounded bg-white/5 disabled:opacity-50 hover:bg-white/10 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-white">Page {pagination.page} of {pagination.pages}</span>
+            <button
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page === pagination.pages}
+              className="px-4 py-2 rounded bg-white/5 disabled:opacity-50 hover:bg-white/10 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

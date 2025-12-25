@@ -3,10 +3,17 @@ import { useEffect } from "react";
 import Lenis from "lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { usePathname } from "next/navigation";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function SmoothScrollProvider() {
+  const pathname = usePathname();
+
+  if (pathname === "/dashboard") {
+    return null;
+  }
+
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,

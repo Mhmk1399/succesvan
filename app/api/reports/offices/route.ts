@@ -1,28 +1,48 @@
+// app/api/reports/offices/route.ts
 import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Reservation from "@/model/reservation";
-import { successResponse, errorResponse } from "@/lib/api-response";
+import mongoose from "mongoose";
+import { PipelineStage } from "mongoose"; // برای type-safety
 
 export async function GET(req: NextRequest) {
   try {
     await connect();
+
     const { searchParams } = new URL(req.url);
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    const page = searchParams.get("page");
-    const limit = searchParams.get("limit");
+    const status = searchParams.get("status"); // optional: confirmed, completed, etc.
+    const officeId = searchParams.get("office"); // optional: filter single office
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
 
-    const query: any = { office: { $ne: null } };
+    // Base match
+    const match: any = {
+      office: { $exists: true, $ne: null },
+    };
 
+    // Date filter on createdAt (or you can use reservation dates if needed)
     if (startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
-      query.createdAt = { $gte: start, $lte: end };
+      match.createdAt = { $gte: start, $lte: end };
     }
 
-    const allOfficeReports = await Reservation.aggregate([
-      { $match: query },
+    // Status filter (recommended: only count paid/completed reservations)
+    if (status) {
+      match.status = status;
+    }
+
+    // Single office filter
+    if (officeId) {
+      match.office = new mongoose.Types.ObjectId(officeId);
+    }
+
+    const pipeline: PipelineStage[] = [
+      { $match: match },
+
       {
         $group: {
           _id: "$office",
@@ -31,6 +51,7 @@ export async function GET(req: NextRequest) {
           avgPrice: { $avg: "$totalPrice" },
         },
       },
+
       {
         $lookup: {
           from: "offices",
@@ -40,65 +61,66 @@ export async function GET(req: NextRequest) {
         },
       },
       { $unwind: { path: "$officeData", preserveNullAndEmptyArrays: false } },
+
       {
         $project: {
-          _id: 1,
+          officeId: "$_id",
           officeName: "$officeData.name",
           count: 1,
           totalPrice: { $round: ["$totalPrice", 2] },
           avgPrice: { $round: ["$avgPrice", 2] },
         },
       },
+
       { $sort: { count: -1 } },
-    ]);
 
-    const mostUsed = allOfficeReports[0] || null;
-    const leastUsed = allOfficeReports[allOfficeReports.length - 1] || null;
-    const totalRevenue = allOfficeReports.reduce(
-      (sum, office) => sum + (office.totalPrice || 0),
-      0
-    );
-    const totalReservations = allOfficeReports.reduce(
-      (sum, office) => sum + (office.count || 0),
-      0
-    );
+      // Facet for pagination + summary in one query
+      {
+        $facet: {
+          metadata: [{ $count: "totalOffices" }],
+          data: [{ $skip: (page - 1) * limit }, { $limit: limit }],
 
-    if (!page && !limit) {
-      return successResponse({
-        data: allOfficeReports,
-        summary: {
-          mostUsed,
-          leastUsed,
-          totalRevenue: Math.round(totalRevenue * 100) / 100,
-          totalReservations,
-          officesCount: allOfficeReports.length,
+          // Summary stats
+          totalRevenue: [
+            { $group: { _id: null, sum: { $sum: "$totalPrice" } } },
+          ],
+          totalReservations: [
+            { $group: { _id: null, sum: { $sum: "$count" } } },
+          ],
+          mostUsed: [{ $limit: 1 }], // already sorted by count desc
+          leastUsed: [{ $sort: { count: 1 } }, { $limit: 1 }], // reverse sort for least
         },
-      });
-    }
-
-    const pageNum = parseInt(page || "1");
-    const limitNum = parseInt(limit || "10");
-    const skip = (pageNum - 1) * limitNum;
-    const paginatedData = allOfficeReports.slice(skip, skip + limitNum);
-
-    return successResponse({
-      data: paginatedData,
-      summary: {
-        mostUsed,
-        leastUsed,
-        totalRevenue: Math.round(totalRevenue * 100) / 100,
-        totalReservations,
-        officesCount: allOfficeReports.length,
       },
+    ];
+
+    const result = await Reservation.aggregate(pipeline);
+    const facet = result[0];
+
+    const data = facet.data || [];
+    const totalOffices = facet.metadata[0]?.totalOffices || 0;
+
+    const summary = {
+      mostUsed: facet.mostUsed[0] || null,
+      leastUsed: facet.leastUsed[0] || null,
+      totalRevenue: Math.round((facet.totalRevenue[0]?.sum || 0) * 100) / 100,
+      totalReservations: facet.totalReservations[0]?.sum || 0,
+      officesCount: totalOffices,
+    };
+
+    return Response.json({
+      success: true,
+      data,
+      summary,
       pagination: {
-        total: allOfficeReports.length,
-        page: pageNum,
-        limit: limitNum,
-        pages: Math.ceil(allOfficeReports.length / limitNum),
+        total: totalOffices,
+        page,
+        limit,
+        pages: Math.ceil(totalOffices / limit),
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message, 500);
+    console.error("Office report error:", error);
+    const message = error instanceof Error ? error.message : "Server error";
+    return Response.json({ success: false, error: message }, { status: 500 });
   }
 }

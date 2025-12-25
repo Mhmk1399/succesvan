@@ -86,12 +86,7 @@ const menuItems: MenuItem[] = [
     icon: <FiTag />,
     color: "from-yellow-500 to-yellow-600",
   },
-  {
-    id: "notifications",
-    label: "Notifications",
-    icon: <FiBell />,
-    color: "from-red-500 to-red-600",
-  },
+   
   {
     id: "reserves",
     label: "Reserves",
@@ -165,17 +160,17 @@ export default function Dashboard() {
         }`}
       >
         <div className="p-6 border-b border-white/10">
-          <h1 className="text-2xl font-black text-white">
+          <h1 className="text-xl font-black text-white">
             Success<span className="text-[#fe9a00]">Van</span>
           </h1>
         </div>
 
-        <nav className="px-4 py-2 flex-1 overflow-y-auto">
+        <nav className="px-4 py-1 flex-1 overflow-y-auto">
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => handleTabChange(item.id)}
-              className={`w-full flex items-center gap-3 cursor-pointer px-4 py-2.5 rounded-lg transition-all duration-300 ${
+              className={`w-full flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-lg transition-all duration-300 ${
                 activeTab === item.id
                   ? "bg-[#fe9a00] text-white shadow-lg"
                   : "text-gray-400 hover:text-white hover:bg-white/5"

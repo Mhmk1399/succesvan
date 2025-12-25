@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FiDownload } from "react-icons/fi";
+import { FiDownload, FiFilter, FiX } from "react-icons/fi";
+import CustomSelect from "@/components/ui/CustomSelect";
+import DatePicker from "@/components/dashboard/reports/DatePicker";
 
-interface AddOnData {
+interface AddOn {
   _id: string;
   name: string;
   usageCount: number;
@@ -13,63 +15,105 @@ interface AddOnData {
   topCustomerUsage: number;
 }
 
-interface CustomerAddOnUsage {
-  customerName: string;
-  addOnName: string;
-  usageCount: number;
-  totalSpent: number;
-}
-
-interface ReportSummary {
+interface Summary {
   totalAddOns: number;
   totalAddOnRevenue: number;
-  mostUsedAddOn: AddOnData | null;
-  leastUsedAddOn: AddOnData | null;
+  totalAddOnUsage: number;
   avgAddOnsPerReservation: number;
+  mostUsedAddOn: AddOn | null;
+  leastUsedAddOn: AddOn | null;
+}
+
+interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
 }
 
 export default function AddOnReport() {
-  const [summary, setSummary] = useState<ReportSummary | null>(null);
-  const [addOns, setAddOns] = useState<AddOnData[]>([]);
-  const [customerUsage, setCustomerUsage] = useState<CustomerAddOnUsage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<AddOn[]>([]);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [pagination, setPagination] = useState<Pagination>({
+    total: 0,
+    page: 1,
+    limit: 10,
+    pages: 1,
+  });
+  const [loading, setLoading] = useState(true);
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [status, setStatus] = useState("");
+
+  const statusOptions = [
+    { _id: "pending", name: "Pending" },
+    { _id: "confirmed", name: "Confirmed" },
+    { _id: "completed", name: "Completed" },
+    { _id: "canceled", name: "Canceled" },
+  ];
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    fetchData(1);
+  }, [startDate, endDate, status]);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
+  const fetchData = async (page: number = pagination.page) => {
+    setLoading(true);
     try {
-      const response = await fetch("/api/reports/addons");
-      const result = await response.json();
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pagination.limit.toString(),
+      });
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      if (status) params.append("status", status);
+
+      const res = await fetch(`/api/reports/addons?${params}`);
+      const result = await res.json();
 
       if (result.success) {
-        setSummary(result.data.summary);
-        setAddOns(result.data.addOns || []);
-        setCustomerUsage(result.data.customerUsage || []);
+        setData(result.data || []);
+        setSummary(result.summary);
+        setPagination(result.pagination || pagination);
       } else {
-        setError(result.message || "Failed to fetch data");
+        console.error("API error:", result.error);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Error fetching report";
-      console.error("Error:", message);
-      setError(message);
+      console.error("Fetch error:", err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > pagination.pages) return;
+    setPagination((prev) => ({ ...prev, page: newPage }));
+    fetchData(newPage);
+  };
+
+  const clearFilters = () => {
+    setStartDate("");
+    setEndDate("");
+    setStatus("");
+  };
+
   const exportToCSV = () => {
-    const headers = ["Add-On Name", "Usage Count" , "Avg Usage", "Top Customer"];
-    const rows = addOns.map((addon) => [
+    const headers = [
+      "Add-On Name",
+      "Usage Count",
+      "Total Revenue ($)",
+      "Avg Usage per Reservation",
+      "Top Customer",
+      "Top Customer Usage",
+    ];
+
+    const rows = data.map((addon) => [
       addon.name,
       addon.usageCount,
-      addon.totalRevenue,
+      addon.totalRevenue.toFixed(2),
       addon.avgUsagePerReservation.toFixed(2),
       addon.topCustomer,
+      addon.topCustomerUsage,
     ]);
 
     const csv = [
@@ -77,139 +121,147 @@ export default function AddOnReport() {
       ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
     ].join("\n");
 
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `addon-report-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
+    URL.revokeObjectURL(url);
   };
 
-  if (error) {
+  if (loading) {
     return (
-      <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-        <p className="text-red-400">Error: {error}</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-gray-400">Loading report data...</p>
+      <div className="flex items-center justify-center py-16">
+        <div className="w-12 h-12 border-4 border-[#fe9a00]/30 border-t-[#fe9a00] rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <p className="text-gray-400 text-sm mb-2">Total Add-Ons</p>
-            <p className="text-2xl font-bold text-[#fe9a00]">
-              {summary.totalAddOns}
-            </p>
-          </div>
-         
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <p className="text-gray-400 text-sm mb-2">Avg Add-Ons/Reservation</p>
-            <p className="text-2xl font-bold text-white">
-              {(summary?.avgAddOnsPerReservation || 0).toFixed(2)}
-            </p>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <p className="text-gray-400 text-sm mb-2">Most Used Add-On</p>
-            <p className="text-2xl font-bold text-green-400">
-              {summary?.mostUsedAddOn?.usageCount || 0}x
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Most/Least Used Add-Ons */}
-      {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {summary?.mostUsedAddOn && (
-            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
-              <p className="text-green-400 font-semibold mb-3">Most Used Add-On</p>
-              <p className="text-white text-lg font-bold mb-2">
-                {summary.mostUsedAddOn.name}
-              </p>
-              <div className="space-y-1 text-sm text-gray-300">
-                <p>Usage Count: {summary.mostUsedAddOn.usageCount}</p>
-                 <p>Top Customer: {summary.mostUsedAddOn.topCustomer}</p>
-              </div>
-            </div>
-          )}
-          {summary?.leastUsedAddOn && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-              <p className="text-red-400 font-semibold mb-3">Least Used Add-On</p>
-              <p className="text-white text-lg font-bold mb-2">
-                {summary.leastUsedAddOn.name}
-              </p>
-              <div className="space-y-1 text-sm text-gray-300">
-                <p>Usage Count: {summary.leastUsedAddOn.usageCount}</p>
-                 <p>Top Customer: {summary.leastUsedAddOn.topCustomer}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Add-Ons Table */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white">Add-Ons Performance</h3>
-          <button
-            onClick={exportToCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors"
-          >
-            <FiDownload /> Export CSV
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-white/70">
-              <tr>
-                <th className="px-4 py-3 text-left text-white font-bold">#</th>
-                <th className="px-4 py-3 text-left text-white font-bold">Add-On Name</th>
-                <th className="px-4 py-3 text-left text-white font-bold">Usage Count</th>
-                 <th className="px-4 py-3 text-left text-white font-bold">Top Customer</th>
-              </tr>
-            </thead>
-            <tbody>
-              {addOns.map((addon, idx) => (
-                <tr
-                  key={addon._id}
-                  className="border-b border-white/10 hover:bg-white/10 transition-colors"
-                >
-                  <td className="px-4 py-3 text-gray-300">{idx + 1}</td>
-                  <td className="px-4 py-3 text-white font-semibold">{addon.name}</td>
-                  <td className="px-4 py-3 text-gray-300">{addon.usageCount}</td>
-                   <td className="px-4 py-3 text-gray-300">{addon.topCustomer}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h2 className="text-2xl font-black text-white">Add-Ons Performance Report</h2>
+        <button
+          onClick={exportToCSV}
+          className="flex items-center gap-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold"
+        >
+          <FiDownload /> Export CSV
+        </button>
       </div>
 
-      {/* Customer Add-On Usage */}
-      {customerUsage.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-white">Customer Add-On Usage</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {customerUsage.slice(0, 9).map((usage, idx) => (
-              <div key={idx} className="bg-white/5 border border-white/10 rounded-lg p-4">
-                <p className="text-white font-semibold mb-2">{usage.customerName}</p>
-                <div className="space-y-1 text-sm">
-                  <p className="text-gray-400">Add-On: <span className="text-[#fe9a00]">{usage.addOnName}</span></p>
-                  <p className="text-gray-400">Usage: <span className="text-white font-semibold">{usage.usageCount}x</span></p>
-                 </div>
-              </div>
+      <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <FiFilter className="text-[#fe9a00]" />
+          <h3 className="text-white font-semibold">Filters</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <DatePicker
+            value={startDate}
+            onChange={setStartDate}
+            label="Start Date"
+            placeholder="Select start date"
+          />
+          <DatePicker
+            value={endDate}
+            onChange={setEndDate}
+            label="End Date"
+            placeholder="Select end date"
+          />
+           
+        </div>
+
+        {(startDate || endDate || status) && (
+          <button
+            onClick={clearFilters}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors"
+          >
+            <FiX className="text-sm" />
+            Clear Filters
+          </button>
+        )}
+      </div>
+
+      {summary && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-5">
+            <p className="text-gray-400 text-sm">Total Add-Ons</p>
+            <p className="text-3xl font-bold text-white mt-2">{summary.totalAddOns}</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-5">
+            <p className="text-gray-400 text-sm">Total Revenue</p>
+            <p className="text-3xl font-bold text-[#fe9a00] mt-2">
+              ${summary.totalAddOnRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            </p>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-5">
+            <p className="text-gray-400 text-sm">Total Usage</p>
+            <p className="text-3xl font-bold text-white mt-2">{summary.totalAddOnUsage.toLocaleString()}</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-5">
+            <p className="text-gray-400 text-sm">Avg per Reservation</p>
+            <p className="text-3xl font-bold text-white mt-2">{summary.avgAddOnsPerReservation.toFixed(2)}</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-5">
+            <p className="text-gray-400 text-sm">Filtered Results</p>
+            <p className="text-3xl font-bold text-white mt-2">{pagination.total}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-lg border border-white/10">
+        <table className="w-full">
+          <thead className="bg-white/5">
+            <tr>
+              <th className="px-6 py-4 text-left text-white font-bold">#</th>
+              <th className="px-6 py-4 text-left text-white font-bold">Add-On</th>
+              <th className="px-6 py-4 text-left text-white font-bold">Usage Count</th>
+              <th className="px-6 py-4 text-left text-white font-bold">Total Revenue</th>
+              <th className="px-6 py-4 text-left text-white font-bold">Avg per Reservation</th>
+              <th className="px-6 py-4 text-left text-white font-bold">Top Customer</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((addon, idx) => (
+              <tr key={addon._id} className="border-b border-white/10 hover:bg-white/5 transition-colors">
+                <td className="px-6 py-4 text-gray-300">{(pagination.page - 1) * pagination.limit + idx + 1}</td>
+                <td className="px-6 py-4 text-white font-medium">{addon.name}</td>
+                <td className="px-6 py-4 text-center">
+                  <span className="px-3 py-1 bg-[#fe9a00]/20 text-[#fe9a00] rounded-full text-sm font-semibold">
+                    {addon.usageCount}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-[#fe9a00] font-semibold">${addon.totalRevenue.toLocaleString()}</td>
+                <td className="px-6 py-4 text-gray-300">{addon.avgUsagePerReservation.toFixed(2)}</td>
+                <td className="px-6 py-4 text-gray-300">{addon.topCustomer} ({addon.topCustomerUsage}x)</td>
+              </tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+
+      {pagination.pages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-gray-400">Showing {data.length} of {pagination.total} add-ons</p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+              className="px-4 py-2 rounded bg-white/5 disabled:opacity-50 hover:bg-white/10 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-white">Page {pagination.page} of {pagination.pages}</span>
+            <button
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page === pagination.pages}
+              className="px-4 py-2 rounded bg-white/5 disabled:opacity-50 hover:bg-white/10 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
           </div>
         </div>
       )}
