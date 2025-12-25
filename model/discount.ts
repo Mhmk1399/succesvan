@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 // Import to ensure dynamicServices model is registered before populate
-import "@/models/Category";
-
+ 
 const discountSchema = new mongoose.Schema({
   code: { type: String, required: true, unique: true },
   percentage: { type: Number, required: true },

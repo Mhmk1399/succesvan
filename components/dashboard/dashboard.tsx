@@ -86,7 +86,7 @@ const menuItems: MenuItem[] = [
     icon: <FiTag />,
     color: "from-yellow-500 to-yellow-600",
   },
-   
+
   {
     id: "reserves",
     label: "Reserves",

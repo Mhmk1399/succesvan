@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { showToast } from "@/lib/toast";
+import { Office } from "@/types/type";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -105,11 +106,7 @@ export interface FastAgentState {
   reservationId?: string;
 }
 
-export interface Office {
-  _id: string;
-  name: string;
-  address: string;
-}
+ 
 
 export interface FastAgentResponse {
   message: string;
