@@ -133,6 +133,8 @@ export default function Dashboard() {
       document.body.style.overflow = "unset";
     };
   }, [sidebarOpen]);
+
+  
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);

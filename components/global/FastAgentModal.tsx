@@ -840,7 +840,7 @@ export default function FastAgentModal({
                       className="w-full bg-white/10 border border-white/20 rounded-lg text-white text-left focus:outline-none focus:border-amber-400 transition-colors px-4 py-3 text-sm"
                     >
                       {dateRange[0].startDate && dateRange[0].endDate
-                        ? `${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`
+                        ? `${(dateRange[0].startDate.getMonth() + 1).toString().padStart(2, '0')}/${dateRange[0].startDate.getDate().toString().padStart(2, '0')}/${dateRange[0].startDate.getFullYear()} - ${(dateRange[0].endDate.getMonth() + 1).toString().padStart(2, '0')}/${dateRange[0].endDate.getDate().toString().padStart(2, '0')}/${dateRange[0].endDate.getFullYear()}`
                         : "Select Dates"}
                     </button>
                     {showDateRange && (
