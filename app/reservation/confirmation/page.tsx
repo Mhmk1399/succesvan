@@ -21,14 +21,14 @@ export default function ReservationConfirmation() {
 
   if (!reservation) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-white">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-4">
+    <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Success Header */}
         <div className="text-center mb-8">
@@ -44,9 +44,9 @@ export default function ReservationConfirmation() {
         </div>
 
         {/* Reservation Details */}
-        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-amber-500/30 overflow-hidden">
+        <div className="bg-linear-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl border border-amber-500/30 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-4">
+          <div className="bg-linear-to-r from-amber-500 to-amber-600 px-6 py-4">
             <h2 className="text-xl font-bold text-slate-900">
               Reservation Details
             </h2>
@@ -143,7 +143,7 @@ export default function ReservationConfirmation() {
             </button>
             <button
               onClick={() => router.push("/register")}
-              className="flex-1 px-6 py-3 rounded-lg font-semibold text-slate-900 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg shadow-amber-500/30"
+              className="flex-1 px-6 py-3 rounded-lg font-semibold text-slate-900 bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg shadow-amber-500/30"
             >
               Create Account
             </button>

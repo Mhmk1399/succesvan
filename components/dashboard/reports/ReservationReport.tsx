@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { FiDownload, FiFilter, FiX } from "react-icons/fi";
 import CustomSelect from "@/components/ui/CustomSelect";
 import DatePicker from "@/components/dashboard/reports/DatePicker";
+import { Pagination } from "@/types/type";
 
 interface Office {
   _id: string;
@@ -36,12 +37,7 @@ interface Summary {
   }>;
 }
 
-interface Pagination {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+ 
 
 export default function ReservationReport() {
   const [data, setData] = useState<Reservation[]>([]);
@@ -50,7 +46,7 @@ export default function ReservationReport() {
     total: 0,
     page: 1,
     limit: 15,
-    totalPages: 1,
+    pages: 1,
   });
   const [offices, setOffices] = useState<Office[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,7 +111,7 @@ export default function ReservationReport() {
   };
 
   const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > pagination.totalPages) return;
+    if (newPage < 1 || newPage > pagination.pages) return;
     setPagination((prev) => ({ ...prev, page: newPage }));
     fetchData(newPage);
   };
@@ -371,7 +367,7 @@ export default function ReservationReport() {
         )}
       </div>
 
-      {pagination.totalPages > 1 && (
+      {pagination.pages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-gray-400">
             Showing {data.length} of {pagination.total} reservations
@@ -385,11 +381,11 @@ export default function ReservationReport() {
               Previous
             </button>
             <span className="text-white">
-              Page {pagination.page} of {pagination.totalPages}
+              Page {pagination.page} of {pagination.pages}
             </span>
             <button
               onClick={() => handlePageChange(pagination.page + 1)}
-              disabled={pagination.page === pagination.totalPages}
+              disabled={pagination.page === pagination.pages}
               className="px-4 py-2 rounded bg-white/5 disabled:opacity-50 hover:bg-white/10 transition"
             >
               Next

@@ -143,7 +143,7 @@ export default function BlogDetail({ params }: { params: Promise<{ slug: string 
               Apply the tips from this article to your next move.
             </p>
             <Link
-              href="/vans"
+              href="/reservation"
               className="inline-block px-8 py-3 rounded-xl bg-[#fe9a00] text-white font-bold hover:scale-105 transition-transform duration-300 shadow-lg shadow-[#fe9a00]/50"
             >
               Browse Vans

@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
-import ReservationForm from "../global/ReservationForm";
+import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { FiTruck, FiCheck } from "react-icons/fi";
+import Link from "next/link";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -43,7 +43,6 @@ const vanRanges = [
 
 export default function AboutUs() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const [isReservationOpen, setIsReservationOpen] = useState(false);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -118,7 +117,7 @@ export default function AboutUs() {
     >
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#fe9a00]/20 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#fe9a00]/20 rounded-full blur-3xl animate-pulse-slow"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#fe9a00]/20 rounded-full blur-3xl animate-pulse-slower"></div>
       </div>
 
@@ -230,40 +229,16 @@ export default function AboutUs() {
               Experience the Success Van Hire difference today
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button
-                onClick={() => setIsReservationOpen(true)}
+              <Link
+                href={"/reservation"}
                 className="md:px-10 md:py-5 px-7 py-3 rounded-2xl font-bold text-lg text-white bg-linear-to-r from-[#fe9a00] to-[#d97900] hover:scale-105 transition-all duration-300 shadow-2xl"
               >
                 Book Now
-              </button>
+              </Link>
             </div>
           </div>
         </div>
       </div>
-
-      {isReservationOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="  rounded-3xl max-w-7xl w-full max-h-[90vh] overflow-y-auto border border-white/10 shadow-2xl">
-            <div className="sticky top-0 flex items-center justify-between p-6 border-b border-white/10   backdrop-blur">
-              <h2 className="text-2xl font-black text-white">
-                Reserve Your Van
-              </h2>
-              <button
-                onClick={() => setIsReservationOpen(false)}
-                className="text-gray-400 hover:text-white transition-colors text-2xl"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-6">
-              <ReservationForm
-                isModal={true}
-                onClose={() => setIsReservationOpen(false)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       <style jsx>{`
         @keyframes pulse-slow {

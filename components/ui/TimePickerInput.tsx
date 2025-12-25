@@ -111,7 +111,7 @@ export default function TimePickerInput({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full bg-white/10 border border-white/20 rounded-lg text-white text-left focus:outline-none focus:border-amber-400 transition-colors ${
-          isInline ? "px-2 py-2 text-xs" : "px-4 py-[7px] text-sm"
+          isInline ? "px-2 py-2 text-xs" : "px-4 py-1.75 text-sm"
         } ${className}`}
         aria-label="Time picker"
       >

@@ -239,14 +239,14 @@ export default function Navbar() {
     closeMenu();
   }, [logout, closeMenu]);
 
+
+
+  const navTopPosition =
+    isScrolled || !hasAnnouncement ? "0px" : isMobile ? "32px" : "41px";
   // Hide on dashboard pages
   if (["/dashboard", "/customerDashboard", "/register"].includes(pathname)) {
     return null;
   }
-
-  const navTopPosition =
-    isScrolled || !hasAnnouncement ? "0px" : isMobile ? "32px" : "41px";
-
   return (
     <>
       {/* Main Navbar */}

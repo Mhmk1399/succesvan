@@ -93,6 +93,7 @@ export default function ContactsManagement() {
   return (
     <div className="space-y-6">
       <DynamicTableView
+        hideDelete={true}
         apiEndpoint="/api/users"
         filters={[
           { key: "username", label: "Username", type: "text" },

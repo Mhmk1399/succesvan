@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { FiDownload, FiFilter, FiX } from "react-icons/fi";
-import CustomSelect from "@/components/ui/CustomSelect";
 import DatePicker from "@/components/dashboard/reports/DatePicker";
+import { Pagination } from "@/types/type";
 
 interface AddOn {
   _id: string;
@@ -24,12 +24,7 @@ interface Summary {
   leastUsedAddOn: AddOn | null;
 }
 
-interface Pagination {
-  total: number;
-  page: number;
-  limit: number;
-  pages: number;
-}
+
 
 export default function AddOnReport() {
   const [data, setData] = useState<AddOn[]>([]);
@@ -143,7 +138,9 @@ export default function AddOnReport() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h2 className="text-2xl font-black text-white">Add-Ons Performance Report</h2>
+        <h2 className="text-2xl font-black text-white">
+          Add-Ons Performance Report
+        </h2>
         <button
           onClick={exportToCSV}
           className="flex items-center gap-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold"
@@ -171,7 +168,6 @@ export default function AddOnReport() {
             label="End Date"
             placeholder="Select end date"
           />
-           
         </div>
 
         {(startDate || endDate || status) && (
@@ -189,25 +185,36 @@ export default function AddOnReport() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="bg-white/5 border border-white/10 rounded-lg p-5">
             <p className="text-gray-400 text-sm">Total Add-Ons</p>
-            <p className="text-3xl font-bold text-white mt-2">{summary.totalAddOns}</p>
+            <p className="text-3xl font-bold text-white mt-2">
+              {summary.totalAddOns}
+            </p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-lg p-5">
             <p className="text-gray-400 text-sm">Total Revenue</p>
             <p className="text-3xl font-bold text-[#fe9a00] mt-2">
-              ${summary.totalAddOnRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              $
+              {summary.totalAddOnRevenue.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+              })}
             </p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-lg p-5">
             <p className="text-gray-400 text-sm">Total Usage</p>
-            <p className="text-3xl font-bold text-white mt-2">{summary.totalAddOnUsage.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-white mt-2">
+              {summary.totalAddOnUsage.toLocaleString()}
+            </p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-lg p-5">
             <p className="text-gray-400 text-sm">Avg per Reservation</p>
-            <p className="text-3xl font-bold text-white mt-2">{summary.avgAddOnsPerReservation.toFixed(2)}</p>
+            <p className="text-3xl font-bold text-white mt-2">
+              {summary.avgAddOnsPerReservation.toFixed(2)}
+            </p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-lg p-5">
             <p className="text-gray-400 text-sm">Filtered Results</p>
-            <p className="text-3xl font-bold text-white mt-2">{pagination.total}</p>
+            <p className="text-3xl font-bold text-white mt-2">
+              {pagination.total}
+            </p>
           </div>
         </div>
       )}
@@ -217,26 +224,49 @@ export default function AddOnReport() {
           <thead className="bg-white/5">
             <tr>
               <th className="px-6 py-4 text-left text-white font-bold">#</th>
-              <th className="px-6 py-4 text-left text-white font-bold">Add-On</th>
-              <th className="px-6 py-4 text-left text-white font-bold">Usage Count</th>
-              <th className="px-6 py-4 text-left text-white font-bold">Total Revenue</th>
-              <th className="px-6 py-4 text-left text-white font-bold">Avg per Reservation</th>
-              <th className="px-6 py-4 text-left text-white font-bold">Top Customer</th>
+              <th className="px-6 py-4 text-left text-white font-bold">
+                Add-On
+              </th>
+              <th className="px-6 py-4 text-left text-white font-bold">
+                Usage Count
+              </th>
+              <th className="px-6 py-4 text-left text-white font-bold">
+                Total Revenue
+              </th>
+              <th className="px-6 py-4 text-left text-white font-bold">
+                Avg per Reservation
+              </th>
+              <th className="px-6 py-4 text-left text-white font-bold">
+                Top Customer
+              </th>
             </tr>
           </thead>
           <tbody>
             {data.map((addon, idx) => (
-              <tr key={addon._id} className="border-b border-white/10 hover:bg-white/5 transition-colors">
-                <td className="px-6 py-4 text-gray-300">{(pagination.page - 1) * pagination.limit + idx + 1}</td>
-                <td className="px-6 py-4 text-white font-medium">{addon.name}</td>
+              <tr
+                key={addon._id}
+                className="border-b border-white/10 hover:bg-white/5 transition-colors"
+              >
+                <td className="px-6 py-4 text-gray-300">
+                  {(pagination.page - 1) * pagination.limit + idx + 1}
+                </td>
+                <td className="px-6 py-4 text-white font-medium">
+                  {addon.name}
+                </td>
                 <td className="px-6 py-4 text-center">
                   <span className="px-3 py-1 bg-[#fe9a00]/20 text-[#fe9a00] rounded-full text-sm font-semibold">
                     {addon.usageCount}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-[#fe9a00] font-semibold">${addon.totalRevenue.toLocaleString()}</td>
-                <td className="px-6 py-4 text-gray-300">{addon.avgUsagePerReservation.toFixed(2)}</td>
-                <td className="px-6 py-4 text-gray-300">{addon.topCustomer} ({addon.topCustomerUsage}x)</td>
+                <td className="px-6 py-4 text-[#fe9a00] font-semibold">
+                  ${addon.totalRevenue.toLocaleString()}
+                </td>
+                <td className="px-6 py-4 text-gray-300">
+                  {addon.avgUsagePerReservation.toFixed(2)}
+                </td>
+                <td className="px-6 py-4 text-gray-300">
+                  {addon.topCustomer} ({addon.topCustomerUsage}x)
+                </td>
               </tr>
             ))}
           </tbody>
@@ -245,7 +275,9 @@ export default function AddOnReport() {
 
       {pagination.pages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-gray-400">Showing {data.length} of {pagination.total} add-ons</p>
+          <p className="text-gray-400">
+            Showing {data.length} of {pagination.total} add-ons
+          </p>
           <div className="flex items-center gap-3">
             <button
               onClick={() => handlePageChange(pagination.page - 1)}
@@ -254,7 +286,9 @@ export default function AddOnReport() {
             >
               Previous
             </button>
-            <span className="text-white">Page {pagination.page} of {pagination.pages}</span>
+            <span className="text-white">
+              Page {pagination.page} of {pagination.pages}
+            </span>
             <button
               onClick={() => handlePageChange(pagination.page + 1)}
               disabled={pagination.page === pagination.pages}
