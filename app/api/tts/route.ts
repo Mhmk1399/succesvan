@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { textToSpeech } from "@/lib/openai";
+import { arrayBuffer } from "stream/consumers";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +15,10 @@ export async function POST(request: NextRequest) {
 
     const audioBuffer = await textToSpeech(text);
 
-    return new NextResponse(audioBuffer, {
+    // Convert Buffer to Uint8Array for Response compatibility
+    const uint8Array = new Uint8Array(audioBuffer);
+
+    return new Response(uint8Array, {
       status: 200,
       headers: {
         "Content-Type": "audio/mpeg",

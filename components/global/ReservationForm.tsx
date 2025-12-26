@@ -25,13 +25,20 @@ import ConversationalModal from "@/components/global/ConversationalModal";
 import FastAgentModal from "@/components/global/FastAgentModal";
 import { FiCpu } from "react-icons/fi";
 import { datePickerStyles } from "./DatePickerStyles";
-
-interface ReservationFormProps {
-  isModal?: boolean;
-  isInline?: boolean;
-  onClose?: () => void;
-  onBookNow?: () => void;
-}
+import {
+  ReservationFormProps,
+  FormData,
+  ReservedSlot,
+  VoiceData,
+  ExtractedVoiceData,
+  ConversationData,
+  UserData,
+  RentalDetails,
+  WorkingTime,
+  SpecialDay,
+  TimeSlotInfo,
+  ExtensionTimes,
+} from "@/types/reservation-form";
 
 export default function ReservationForm({
   isModal = false,
@@ -40,41 +47,25 @@ export default function ReservationForm({
   onBookNow,
 }: ReservationFormProps) {
   const router = useRouter();
-  const [showDateRange, setShowDateRange] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDateRange, setShowDateRange] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [offices, setOffices] = useState<Office[]>([]);
-  const [types, setTypes] = useState<any[]>([]);
+  const [types, setTypes] = useState<Category[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
-  const [startDateReservedSlots, setStartDateReservedSlots] = useState<
-    {
-      startDate: string;
-      endDate: string;
-      startTime: string;
-      endTime: string;
-      isSameDay: boolean;
-    }[]
-  >([]);
-  const [endDateReservedSlots, setEndDateReservedSlots] = useState<
-    {
-      startDate: string;
-      endDate: string;
-      startTime: string;
-      endTime: string;
-      isSameDay: boolean;
-    }[]
-  >([]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [startDateReservedSlots, setStartDateReservedSlots] = useState<ReservedSlot[]>([]);
+  const [endDateReservedSlots, setEndDateReservedSlots] = useState<ReservedSlot[]>([]);
 
   // Voice modal state
-  const [showVoiceModal, setShowVoiceModal] = useState(false);
-  const [voiceData, setVoiceData] = useState<any>(null);
+  const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
+  const [voiceData, setVoiceData] = useState<ExtractedVoiceData | null>(null);
 
   // Conversational modal state
-  const [showConversationalModal, setShowConversationalModal] = useState(false);
+  const [showConversationalModal, setShowConversationalModal] = useState<boolean>(false);
 
   // Fast AI Agent modal state (quick 1-minute booking)
-  const [showFastAgentModal, setShowFastAgentModal] = useState(false);
+  const [showFastAgentModal, setShowFastAgentModal] = useState<boolean>(false);
 
   const [dateRange, setDateRange] = useState<Range[]>([
     {
@@ -84,7 +75,7 @@ export default function ReservationForm({
     },
   ]);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     office: "",
     type: "",
     pickupTime: "",
@@ -112,24 +103,24 @@ export default function ReservationForm({
       "thursday",
       "friday",
       "saturday",
-    ][date.getDay()];
+    ][date.getDay()] as WorkingTime['day'];
 
     const specialDay = office.specialDays?.find(
-      (sd: any) => sd.month === month && sd.day === day
+      (sd: SpecialDay) => sd.month === month && sd.day === day
     );
     let start = "00:00",
       end = "23:59";
 
     if (specialDay && specialDay.isOpen) {
-      start = specialDay.startTime;
-      end = specialDay.endTime;
+      start = specialDay.startTime || "00:00";
+      end = specialDay.endTime || "23:59";
     } else {
       const workingDay = office.workingTime?.find(
-        (w: any) => w.day === dayName && w.isOpen
+        (w: WorkingTime) => w.day === dayName && w.isOpen
       );
       if (workingDay) {
-        start = workingDay.startTime;
-        end = workingDay.endTime;
+        start = workingDay.startTime || "00:00";
+        end = workingDay.endTime || "23:59";
 
         if (workingDay.pickupExtension) {
           const [startHour, startMin] = start.split(":").map(Number);
@@ -175,24 +166,24 @@ export default function ReservationForm({
       "thursday",
       "friday",
       "saturday",
-    ][date.getDay()];
+    ][date.getDay()] as WorkingTime['day'];
 
     const specialDay = office.specialDays?.find(
-      (sd: any) => sd.month === month && sd.day === day
+      (sd: SpecialDay) => sd.month === month && sd.day === day
     );
     let start = "00:00",
       end = "23:59";
 
     if (specialDay && specialDay.isOpen) {
-      start = specialDay.startTime;
-      end = specialDay.endTime;
+      start = specialDay.startTime || "00:00";
+      end = specialDay.endTime || "23:59";
     } else {
       const workingDay = office.workingTime?.find(
-        (w: any) => w.day === dayName && w.isOpen
+        (w: WorkingTime) => w.day === dayName && w.isOpen
       );
       if (workingDay) {
-        start = workingDay.startTime;
-        end = workingDay.endTime;
+        start = workingDay.startTime || "00:00";
+        end = workingDay.endTime || "23:59";
 
         if (workingDay.returnExtension) {
           const [startHour, startMin] = start.split(":").map(Number);
@@ -224,7 +215,7 @@ export default function ReservationForm({
 
   // Initialize voice recording hook
   const { isRecording, isProcessing, toggleRecording } = useVoiceRecording({
-    onTranscriptionComplete: (result) => {
+    onTranscriptionComplete: (result: ExtractedVoiceData) => {
       console.log("📥 [Form] Voice result received:", result);
 
       // Store the voice data and show modal for confirmation
@@ -233,7 +224,7 @@ export default function ReservationForm({
 
       console.log("👁️ [Form] Opening confirmation modal");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("❌ [Form] Voice recording error:", error);
       showToast.error("Voice recording failed");
     },
@@ -387,7 +378,7 @@ export default function ReservationForm({
     }
   };
 
-  const handleConversationComplete = (data: any) => {
+  const handleConversationComplete = (data: ConversationData) => {
     console.log("✅ [Form] Conversation completed with data:", data);
     setShowConversationalModal(false);
 
@@ -416,7 +407,7 @@ export default function ReservationForm({
     showToast.success("Reservation details filled via conversation!");
   };
 
-  const handleVoiceConfirm = (data: any) => {
+  const handleVoiceConfirm = (data: VoiceData) => {
     console.log("✅ [Form] User confirmed voice data:", data);
 
     // Update form with confirmed data
@@ -450,22 +441,22 @@ export default function ReservationForm({
     showToast.success("Form filled successfully!");
   };
 
-  const handleAutoSubmit = async (data: any) => {
+  const handleAutoSubmit = async (data: VoiceData) => {
     try {
       // Store rental details in sessionStorage
-      const pickupDateTime = new Date(data.pickupDate);
-      const returnDateTime = new Date(data.returnDate);
+      const pickupDateTime = new Date(data.pickupDate || "");
+      const returnDateTime = new Date(data.returnDate || "");
 
-      const rentalDetails = {
-        office: data.office,
-        type: data.type,
+      const rentalDetails: RentalDetails = {
+        office: data.office || "",
+        type: data.type || "",
         pickupDate: pickupDateTime.toISOString(),
         returnDate: returnDateTime.toISOString(),
-        pickupTime: data.pickupTime,
-        returnTime: data.returnTime,
+        pickupTime: data.pickupTime || "",
+        returnTime: data.returnTime || "",
         pickupLocation: offices.find((o) => o._id === data.office)?.name || "",
-        driverAge: data.driverAge,
-        message: data.message,
+        driverAge: data.driverAge || "",
+        message: data.message || "",
       };
       sessionStorage.setItem("rentalDetails", JSON.stringify(rentalDetails));
 
@@ -496,11 +487,11 @@ export default function ReservationForm({
     }));
   };
 
-  const getSelectedOffice = () => {
+  const getSelectedOffice = (): Office | undefined => {
     return offices?.find((o) => o._id === formData.office);
   };
 
-  const isDateDisabled = (date: Date) => {
+  const isDateDisabled = (date: Date): boolean => {
     const office = getSelectedOffice();
     if (!office) return false;
 
@@ -514,7 +505,7 @@ export default function ReservationForm({
       "thursday",
       "friday",
       "saturday",
-    ][date.getDay()];
+    ][date.getDay()] as WorkingTime['day'];
 
     // Check special days first
     const specialDay = office.specialDays?.find(
@@ -529,7 +520,7 @@ export default function ReservationForm({
     return false;
   };
 
-  const getAvailableTimeSlots = (date: Date) => {
+  const getAvailableTimeSlots = (date: Date): TimeSlotInfo => {
     const office = getSelectedOffice();
     if (!office) return { start: "00:00", end: "23:59", info: "" };
 
@@ -543,7 +534,7 @@ export default function ReservationForm({
       "thursday",
       "friday",
       "saturday",
-    ][date.getDay()];
+    ][date.getDay()] as WorkingTime['day'];
 
     // Check special days first
     const specialDay = office.specialDays?.find(
@@ -551,8 +542,8 @@ export default function ReservationForm({
     );
     if (specialDay && specialDay.isOpen) {
       return {
-        start: specialDay.startTime,
-        end: specialDay.endTime,
+        start: specialDay.startTime || "00:00",
+        end: specialDay.endTime || "23:59",
         info: `Special day: ${specialDay.reason} (${specialDay.startTime} - ${specialDay.endTime})`,
       };
     }
@@ -560,7 +551,7 @@ export default function ReservationForm({
     // Use working hours
     const workingDay = office.workingTime?.find((w) => w.day === dayName);
     if (workingDay && workingDay.isOpen) {
-      let info = `${workingDay.day}: ${workingDay.startTime} - ${workingDay.endTime}`;
+      let info = `${workingDay.day}: ${workingDay.startTime || "00:00"} - ${workingDay.endTime || "23:59"}`;
 
       const hasPickupExt =
         workingDay.pickupExtension &&
@@ -573,17 +564,17 @@ export default function ReservationForm({
 
       if (hasPickupExt || hasReturnExt) {
         info += " ";
-        if (hasPickupExt) {
+        if (hasPickupExt && workingDay.pickupExtension) {
           info += `🟡 Pickup ext: ${workingDay.pickupExtension.hoursBefore}h before, ${workingDay.pickupExtension.hoursAfter}h after (+£${workingDay.pickupExtension.flatPrice}) `;
         }
-        if (hasReturnExt) {
+        if (hasReturnExt && workingDay.returnExtension) {
           info += `🟡 Return ext: ${workingDay.returnExtension.hoursBefore}h before, ${workingDay.returnExtension.hoursAfter}h after (+£${workingDay.returnExtension.flatPrice})`;
         }
       }
 
       return {
-        start: workingDay.startTime,
-        end: workingDay.endTime,
+        start: workingDay.startTime || "00:00",
+        end: workingDay.endTime || "23:59",
         info,
       };
     }
@@ -615,7 +606,7 @@ export default function ReservationForm({
         0
       );
 
-      const rentalDetails = {
+      const rentalDetails: RentalDetails = {
         office: formData.office,
         type: formData.type,
         pickupDate: pickupDateTime.toISOString(),
@@ -791,8 +782,8 @@ export default function ReservationForm({
                 ? {
                     start: pickupTimeSlots[0],
                     end: pickupTimeSlots[pickupTimeSlots.length - 1],
-                    normalStart: workingDay.startTime,
-                    normalEnd: workingDay.endTime,
+                    normalStart: workingDay.startTime || "00:00",
+                    normalEnd: workingDay.endTime || "23:59",
                     price: workingDay.pickupExtension.flatPrice,
                   }
                 : undefined;
@@ -841,8 +832,8 @@ export default function ReservationForm({
                 ? {
                     start: returnTimeSlots[0],
                     end: returnTimeSlots[returnTimeSlots.length - 1],
-                    normalStart: workingDay.startTime,
-                    normalEnd: workingDay.endTime,
+                    normalStart: workingDay.startTime || "00:00",
+                    normalEnd: workingDay.endTime || "23:59",
                     price: workingDay.returnExtension.flatPrice,
                   }
                 : undefined;
@@ -1044,8 +1035,8 @@ export default function ReservationForm({
                   ? {
                       start: pickupTimeSlots[0],
                       end: pickupTimeSlots[pickupTimeSlots.length - 1],
-                      normalStart: workingDay.startTime,
-                      normalEnd: workingDay.endTime,
+                      normalStart: workingDay.startTime || "00:00",
+                      normalEnd: workingDay.endTime || "23:59",
                       price: workingDay.pickupExtension.flatPrice,
                     }
                   : undefined;
@@ -1093,8 +1084,8 @@ export default function ReservationForm({
                   ? {
                       start: returnTimeSlots[0],
                       end: returnTimeSlots[returnTimeSlots.length - 1],
-                      normalStart: workingDay.startTime,
-                      normalEnd: workingDay.endTime,
+                      normalStart: workingDay.startTime || "00:00",
+                      normalEnd: workingDay.endTime || "23:59",
                       price: workingDay.returnExtension.flatPrice,
                     }
                   : undefined;

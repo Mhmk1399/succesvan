@@ -41,6 +41,7 @@ interface Category {
   fuel: string;
   cargo: string;
   expert: string;
+  selloffer?: number;
 }
 
 interface AddOn {

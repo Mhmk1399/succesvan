@@ -110,6 +110,7 @@ export interface Category {
   gear: "automatic" | "manual" | "manual,automatic";
   seats: number;
   doors: number;
+  selloffer?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
