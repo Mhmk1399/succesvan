@@ -34,8 +34,15 @@ interface AddOn {
   name: string;
   description?: string;
   pricingType: "flat" | "tiered";
-  flatPrice?: number;
-  tiers?: { minDays: number; maxDays: number; price: number }[];
+  flatPrice?: {
+    amount: number;
+    isPerDay: boolean;
+  };
+  tieredPrice?: {
+    isPerDay: boolean;
+    tiers: { minDays: number; maxDays: number; price: number }[];
+  };
+  status?: "active" | "inactive";
 }
 import { DateRange, Range } from "react-date-range";
 import "react-date-range/dist/styles.css";
@@ -379,8 +386,8 @@ function ReservationPanel({
       const [pickupHour, pickupMin] = formData.pickupTime
         .split(":")
         .map(Number);
-      const [startHour, startMin] = workingDay.startTime.split(":").map(Number);
-      const [endHour, endMin] = workingDay.endTime.split(":").map(Number);
+      const [startHour, startMin] = (workingDay.startTime || "00:00").split(":").map(Number);
+      const [endHour, endMin] = (workingDay.endTime || "23:59").split(":").map(Number);
       const pickupMinutes = pickupHour * 60 + pickupMin;
       const startMinutes = startHour * 60 + startMin;
       const endMinutes = endHour * 60 + endMin;
@@ -427,8 +434,8 @@ function ReservationPanel({
       const [returnHour, returnMin] = formData.returnTime
         .split(":")
         .map(Number);
-      const [startHour, startMin] = workingDay.startTime.split(":").map(Number);
-      const [endHour, endMin] = workingDay.endTime.split(":").map(Number);
+      const [startHour, startMin] = (workingDay.startTime || "00:00").split(":").map(Number);
+      const [endHour, endMin] = (workingDay.endTime || "23:59").split(":").map(Number);
       const returnMinutes = returnHour * 60 + returnMin;
       const startMinutes = startHour * 60 + startMin;
       const endMinutes = endHour * 60 + endMin;
@@ -506,15 +513,15 @@ function ReservationPanel({
       if (addon.pricingType === "flat") {
         const amount = addon.flatPrice?.amount || 0;
         const isPerDay = addon.flatPrice?.isPerDay || false;
-        const price = isPerDay ? amount * rentalDays : amount;
-        return total + price * item.quantity;
+        const price = (isPerDay ? amount * (basePriceCalc?.totalDays || 1) : amount) * item.quantity;
+        return total + price;
       } else {
         const tierIndex = item.selectedTierIndex ?? 0;
         const tier = addon.tieredPrice?.tiers?.[tierIndex];
         if (tier) {
           const isPerDay = addon.tieredPrice?.isPerDay || false;
-          const price = isPerDay ? tier.price * rentalDays : tier.price;
-          return total + price * item.quantity;
+          const price = (isPerDay ? tier.price * (basePriceCalc?.totalDays || 1) : tier.price) * item.quantity;
+          return total + price;
         }
         return total;
       }
@@ -547,15 +554,15 @@ function ReservationPanel({
       end = "23:59";
 
     if (specialDay && specialDay.isOpen) {
-      start = specialDay.startTime;
-      end = specialDay.endTime;
+      start = specialDay.startTime || "00:00";
+      end = specialDay.endTime || "23:59";
     } else {
       const workingDay = office.workingTime?.find(
         (w: any) => w.day === dayName && w.isOpen
       );
       if (workingDay) {
-        start = workingDay.startTime;
-        end = workingDay.endTime;
+        start = workingDay.startTime || "00:00";
+        end = workingDay.endTime || "23:59";
 
         if (workingDay.pickupExtension) {
           const [startHour, startMin] = start.split(":").map(Number);
@@ -610,15 +617,15 @@ function ReservationPanel({
       end = "23:59";
 
     if (specialDay && specialDay.isOpen) {
-      start = specialDay.startTime;
-      end = specialDay.endTime;
+      start = specialDay.startTime || "00:00";
+      end = specialDay.endTime || "23:59";
     } else {
       const workingDay = office.workingTime?.find(
         (w: any) => w.day === dayName && w.isOpen
       );
       if (workingDay) {
-        start = workingDay.startTime;
-        end = workingDay.endTime;
+        start = workingDay.startTime || "00:00";
+        end = workingDay.endTime || "23:59";
 
         if (workingDay.returnExtension) {
           const [startHour, startMin] = start.split(":").map(Number);
@@ -1485,8 +1492,8 @@ function ReservationPanel({
                           ? {
                               start: pickupTimeSlots[0],
                               end: pickupTimeSlots[pickupTimeSlots.length - 1],
-                              normalStart: workingDay.startTime,
-                              normalEnd: workingDay.endTime,
+                              normalStart: workingDay.startTime || "00:00",
+                              normalEnd: workingDay.endTime || "23:59",
                               price: workingDay.pickupExtension.flatPrice,
                             }
                           : undefined;
@@ -1533,8 +1540,8 @@ function ReservationPanel({
                           ? {
                               start: returnTimeSlots[0],
                               end: returnTimeSlots[returnTimeSlots.length - 1],
-                              normalStart: workingDay.startTime,
-                              normalEnd: workingDay.endTime,
+                              normalStart: workingDay.startTime || "00:00",
+                              normalEnd: workingDay.endTime || "23:59",
                               price: workingDay.returnExtension.flatPrice,
                             }
                           : undefined;
