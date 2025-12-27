@@ -26,11 +26,10 @@ export async function GET(req: NextRequest) {
     if (office) query.office = office;
     if (status) query.status = status;
 
-     // Special: only available vehicles
+    // Special: only available vehicles
     if (available === "true") {
       query.available = true; // ← THIS LINE WAS MISSING! CRITICAL!
 
-     
       query.needsService = false;
       query.status = "active";
     }
