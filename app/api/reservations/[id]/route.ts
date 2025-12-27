@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Reservation from "@/model/reservation";
 import { successResponse, errorResponse } from "@/lib/api-response";
+import { scheduleCancellationNotification } from "@/lib/notification-scheduler";
 
 export async function GET(
   req: NextRequest,
@@ -31,6 +32,9 @@ export async function PATCH(
     await connect();
     const { id } = await params;
     const body = await req.json();
+    
+    const oldReservation = await Reservation.findById(id);
+    
     const reservation = await Reservation.findByIdAndUpdate(id, body, {
       new: true,
       runValidators: true,
@@ -41,6 +45,19 @@ export async function PATCH(
       .populate("vehicle")
       .populate("addOns.addOn");
     if (!reservation) return errorResponse("Reservation not found", 404);
+    
+    // Send cancellation notification if status changed to canceled
+    if (oldReservation?.status !== "canceled" && body.status === "canceled") {
+      try {
+        await scheduleCancellationNotification(id);
+      } catch (error) {
+        console.log(
+          "Cancellation notification error:",
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+    
     return successResponse(reservation);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

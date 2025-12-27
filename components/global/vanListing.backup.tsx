@@ -778,7 +778,7 @@ function ReservationPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "send-code",
-          phoneNumber: formData.phone,
+          phoneNumber: `+44${formData.phone}`,
         }),
       });
       const data = await res.json();
@@ -805,7 +805,7 @@ function ReservationPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "verify",
-          phoneNumber: formData.phone,
+          phoneNumber: `+44${formData.phone}`,
           code: formData.code,
         }),
       });
@@ -851,7 +851,7 @@ function ReservationPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "register",
-          phoneNumber: formData.phone,
+          phoneNumber: `+44${formData.phone}`,
           name: formData.name,
           lastName: formData.lastName,
           emailAddress: formData.email,
@@ -1142,16 +1142,22 @@ function ReservationPanel({
                   <FiPhone className="text-[#fe9a00]" />
                   Phone Number
                 </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className={`w-full bg-white/5 border ${
-                    errors.phone ? "border-red-500" : "border-white/10"
-                  } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
-                  placeholder="+44 123 456 7890"
-                />
+                <div className="relative">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-medium">+44</div>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "");
+                      setFormData((prev) => ({ ...prev, phone: digits }));
+                    }}
+                    className={`w-full bg-white/5 border ${
+                      errors.phone ? "border-red-500" : "border-white/10"
+                    } rounded-xl pl-14 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    placeholder="7400123456"
+                  />
+                </div>
                 {errors.phone && (
                   <p className="text-red-400 text-xs mt-1">{errors.phone}</p>
                 )}

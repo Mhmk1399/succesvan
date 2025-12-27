@@ -45,7 +45,7 @@ export default function AuthForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "send-code",
-          phoneNumber: formData.phoneNumber,
+          phoneNumber: `+44${formData.phoneNumber}`,
         }),
       });
       const data = await res.json();
@@ -74,7 +74,7 @@ export default function AuthForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "verify",
-          phoneNumber: formData.phoneNumber,
+          phoneNumber: `+44${formData.phoneNumber}`,
           code: formData.code,
         }),
       });
@@ -123,7 +123,7 @@ export default function AuthForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "register",
-          phoneNumber: formData.phoneNumber,
+          phoneNumber: `+44${formData.phoneNumber}`,
           name: formData.name,
           lastName: formData.lastName,
           emailAddress: formData.emailAddress,
@@ -149,10 +149,19 @@ export default function AuthForm() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    
+    if (name === "phoneNumber") {
+      const digits = value.replace(/\D/g, "");
+      setFormData((prev) => ({
+        ...prev,
+        [name]: digits,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
 
     if (errors[name]) {
       setErrors((prev) => ({
@@ -195,14 +204,15 @@ export default function AuthForm() {
             {step === "phone" && (
               <div className="relative">
                 <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                <div className="absolute left-12 top-1/2 -translate-y-1/2 text-white/60 font-medium">+44</div>
                 <input
                   type="tel"
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
-                  placeholder="Phone Number"
+                  placeholder="7400123456"
                   required
-                  className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
+                  className={`w-full pl-20 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
                     errors.phoneNumber
                       ? "border-red-500/50 focus:border-red-500"
                       : "border-white/20 focus:border-[#fe9a00]"

@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import office from "@/model/office";
 import { sendSMS } from "@/lib/sms";
+import { scheduleReservationNotifications, scheduleConfirmationNotification } from "@/lib/notification-scheduler";
 
 export async function GET(req: NextRequest) {
   try {
@@ -119,14 +120,13 @@ export async function POST(req: NextRequest) {
       ? ""
       : " Please add your licence in your dashboard to confirm your reservation.";
 
+    // Schedule notifications
     try {
-      await sendSMS(
-        user.phoneData.phoneNumber,
-        `Dear ${user.name} ${user.lastName}, your reservation has been confirmed.${licenceMessage}`
-      );
+      await scheduleConfirmationNotification(reservation._id.toString());
+      await scheduleReservationNotifications(reservation._id.toString());
     } catch (error) {
       console.log(
-        "SMS Error:",
+        "Notification scheduling error:",
         error instanceof Error ? error.message : "Unknown error"
       );
     }

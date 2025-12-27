@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
       try {
         await sendSMS(
-          phoneNumber,
+          phoneNumber.replace("+", ""),
           `Your SuccessVanHire verification code is: ${verificationCode}
           successvanhire.co.uk`
         );

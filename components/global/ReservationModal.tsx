@@ -461,7 +461,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "send-code",
-          phoneNumber: formData.phone,
+          phoneNumber: `+44${formData.phone}`,
         }),
       });
       const data = await res.json();
@@ -487,7 +487,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "verify",
-          phoneNumber: formData.phone,
+          phoneNumber: `+44${formData.phone}`,
           code: formData.code,
         }),
       });
@@ -530,7 +530,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "register",
-          phoneNumber: formData.phone,
+          phoneNumber: `+44${formData.phone}`,
           name: formData.name,
           lastName: formData.lastName,
           emailAddress: formData.email,
@@ -941,18 +941,22 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                       <FiPhone className="text-[#fe9a00]" />
                       Phone Number
                     </label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          phone: e.target.value,
-                        }))
-                      }
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#fe9a00]"
-                      placeholder="+44 123 456 7890"
-                    />
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-medium">+44</div>
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, "");
+                          setFormData((prev) => ({
+                            ...prev,
+                            phone: digits,
+                          }));
+                        }}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-14 pr-4 py-3 text-white focus:outline-none focus:border-[#fe9a00]"
+                        placeholder="7400123456"
+                      />
+                    </div>
                     {errors.phone && (
                       <p className="text-red-400 text-xs mt-1">
                         {errors.phone}
@@ -1204,7 +1208,11 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-                      {addOns.map((addon) => {
+                      {addOns.filter((addon) => {
+                        return addon.pricingType === "flat" || addon.tieredPrice?.tiers?.some(
+                          (tier) => priceCalc.totalDays >= tier.minDays && priceCalc.totalDays <= tier.maxDays
+                        );
+                      }).map((addon) => {
                         const selected = selectedAddOns.find(
                           (s) => s.addOn === addon._id
                         );
@@ -1237,66 +1245,28 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                     )}
                                   </p>
                                 ) : (
-                                  <div className="mt-2 space-y-1">
-                                    {addon.tieredPrice?.tiers?.map(
-                                      (tier, idx) => {
-                                        const isInRange =
-                                          rentalDays >= tier.minDays &&
-                                          rentalDays <= tier.maxDays;
-                                        const totalPrice = addon.tieredPrice
-                                          ?.isPerDay
-                                          ? tier.price * rentalDays
-                                          : tier.price;
-                                        return (
-                                          <button
-                                            key={idx}
-                                            onClick={() => {
-                                              const existing =
-                                                selectedAddOns.find(
-                                                  (s) => s.addOn === addon._id
-                                                );
-                                              if (
-                                                existing?.selectedTierIndex ===
-                                                idx
-                                              )
-                                                return;
-                                              setSelectedAddOns((prev) => {
-                                                const filtered = prev.filter(
-                                                  (s) => s.addOn !== addon._id
-                                                );
-                                                return [
-                                                  ...filtered,
-                                                  {
-                                                    addOn: addon._id,
-                                                    quantity: 1,
-                                                    selectedTierIndex: idx,
-                                                  },
-                                                ];
-                                              });
-                                            }}
-                                            className={`text-xs px-2 py-1 rounded border transition-all ${
-                                              selected?.selectedTierIndex ===
-                                              idx
-                                                ? "bg-[#fe9a00] border-[#fe9a00] text-white"
-                                                : isInRange
-                                                ? "bg-green-500/20 border-green-500/50 text-green-300 hover:border-[#fe9a00]/50"
-                                                : "bg-white/5 border-white/10 text-gray-400 hover:border-[#fe9a00]/50"
-                                            }`}
-                                          >
-                                            {tier.minDays}-{tier.maxDays} days:
-                                            £{tier.price}
-                                            {addon.tieredPrice?.isPerDay && (
-                                              <span className="ml-1">
-                                                /day = £{totalPrice.toFixed(2)}
-                                              </span>
-                                            )}
-                                            {isInRange && (
-                                              <span className="ml-1">✓</span>
-                                            )}
-                                          </button>
-                                        );
-                                      }
-                                    )}
+                                  <div className="mt-2">
+                                    <p className="text-gray-400 text-xs mb-1">
+                                      {addon.tieredPrice?.isPerDay && `(per day × ${rentalDays} days)`}
+                                    </p>
+                                    {addon.tieredPrice?.tiers?.filter(
+                                      (tier) => rentalDays >= tier.minDays && rentalDays <= tier.maxDays
+                                    ).map((tier) => {
+                                      const originalIdx = addon.tieredPrice?.tiers?.indexOf(tier) || 0;
+                                      const totalPrice = addon.tieredPrice?.isPerDay
+                                        ? tier.price * rentalDays
+                                        : tier.price;
+                                      return (
+                                        <p key={originalIdx} className="text-[#fe9a00] text-sm font-bold">
+                                          £{tier.price}
+                                          {addon.tieredPrice?.isPerDay && (
+                                            <span className="text-gray-400 text-xs ml-1">
+                                              /day × {rentalDays} days = £{totalPrice.toFixed(2)}
+                                            </span>
+                                          )}
+                                        </p>
+                                      );
+                                    })}
                                   </div>
                                 )}
                               </div>
@@ -1339,15 +1309,19 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                                             : s
                                         );
                                       }
+                                      let defaultTierIndex = undefined;
+                                      if (addon.pricingType === "tiered" && addon.tieredPrice?.tiers) {
+                                        const matchingTierIndex = addon.tieredPrice.tiers.findIndex(
+                                          (tier) => rentalDays >= tier.minDays && rentalDays <= tier.maxDays
+                                        );
+                                        defaultTierIndex = matchingTierIndex !== -1 ? matchingTierIndex : 0;
+                                      }
                                       return [
                                         ...prev,
                                         {
                                           addOn: addon._id,
                                           quantity: 1,
-                                          selectedTierIndex:
-                                            addon.pricingType === "tiered"
-                                              ? 0
-                                              : undefined,
+                                          selectedTierIndex: defaultTierIndex,
                                         },
                                       ];
                                     });
