@@ -9,12 +9,12 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
     const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "50");
+    const limit = parseInt(searchParams.get("limit") || "50"); // higher limit for dropdown
     const title = searchParams.get("title");
     const number = searchParams.get("number");
     const office = searchParams.get("office");
     const status = searchParams.get("status");
-    const available = searchParams.get("available"); // "true" or undefined
+    const available = searchParams.get("available"); // ← NEW
 
     const skip = (page - 1) * limit;
 
@@ -26,35 +26,12 @@ export async function GET(req: NextRequest) {
     if (office) query.office = office;
     if (status) query.status = status;
 
-    // Important: Always filter by available field if requested
+     // Special: only available vehicles
     if (available === "true") {
-      query.available = true; // ← This was missing!
-    } else if (available === "false") {
-      query.available = false;
-    }
+      query.available = true; // ← THIS LINE WAS MISSING! CRITICAL!
 
-    // Dynamic availability: exclude vehicles currently in use
-    if (available === "true") {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-
-      const inUseVehicleIds = await Reservation.find({
-        status: { $in: ["confirmed", "pending", "delivered"] }, // include "delivered" too!
-        startDate: { $lte: tomorrow },
-        endDate: { $gte: today },
-        vehicle: { $ne: null },
-      })
-        .distinct("vehicle")
-        .lean();
-
-      if (inUseVehicleIds.length > 0) {
-        query._id = { $nin: inUseVehicleIds };
-      }
-
-      // Also exclude maintenance / inactive
-      query.needsService = { $ne: true };
+     
+      query.needsService = false;
       query.status = "active";
     }
 
