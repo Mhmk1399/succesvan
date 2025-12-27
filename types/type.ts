@@ -82,6 +82,7 @@ export interface Vehicle {
   properties: Property[];
   serviceHistory: ServiceHistory;
   needsService: boolean;
+  available: boolean;
   createdAt?: Date;
   updatedAt?: Date;
   number: number;
@@ -165,7 +166,7 @@ export interface Reservation {
   startDate: Date;
   endDate: Date;
   totalPrice: number;
-  status: "pending" | "confirmed" | "canceled" | "completed";
+  status: "pending" | "confirmed" | "canceled" | "completed" | "delivered";
   driverAge: number;
   messege?: string;
   addOns?: Array<{

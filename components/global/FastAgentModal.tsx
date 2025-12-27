@@ -435,6 +435,32 @@ export default function FastAgentModal({
     return false;
   };
 
+  // Body scroll lock
+useEffect(() => {
+  if (!isOpen) return;
+
+  const body = document.body;
+  const scrollY = window.scrollY;
+
+  body.style.position = 'fixed';
+  body.style.top = `-${scrollY}px`;
+  body.style.left = '0';
+  body.style.right = '0';
+  body.style.overflow = 'hidden';
+  body.style.width = '100%';
+
+  return () => {
+    body.style.position = '';
+    body.style.top = '';
+    body.style.left = '';
+    body.style.right = '';
+    body.style.overflow = '';
+    body.style.width = '';
+    window.scrollTo(0, scrollY);
+  };
+}, [isOpen]);
+
+
   if (!isOpen || !mounted) return null;
 
   const handleClose = () => {
@@ -683,7 +709,7 @@ export default function FastAgentModal({
 
   return createPortal(
     <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-[#0f172b] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border border-white/10">
+      <div className="bg-[#0f172b] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden border border-white/10">
         {/* Header */}
         <div className="bg-linear-to-r from-orange-500 to-orange-600 text-white px-6 py-4">
           <div className="flex items-center justify-between mb-3">

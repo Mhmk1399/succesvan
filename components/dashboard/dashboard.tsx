@@ -134,7 +134,6 @@ export default function Dashboard() {
     };
   }, [sidebarOpen]);
 
-  
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
@@ -230,7 +229,9 @@ export default function Dashboard() {
         </div>
 
         <div className="p-4 sm:p-6 lg:p-8">
-          {activeTab === "dashboard" && <DashboardContent />}
+          {activeTab === "dashboard" && (
+            <DashboardContent handleTabChange={handleTabChange} />
+          )}
           {activeTab === "type" && <TypesManagement />}
           {activeTab === "offices" && <OfficesContent />}
           {activeTab === "vehicles" && <VehiclesContent />}
@@ -238,13 +239,11 @@ export default function Dashboard() {
           {activeTab === "categories" && <CategoriesContent />}
           {activeTab === "addons" && <AddOnsContent />}
           {activeTab === "discounts" && <DiscountManagement />}
-          {activeTab === "notifications" && <NotificationsContent />}
           {activeTab === "reserves" && <ReservesContent />}
           {activeTab === "Testimonial" && <TestimonialsManagement />}
           {activeTab === "contacts" && <ContactsManagement />}
           {activeTab === "announcements" && <AnnouncementManagement />}
           {activeTab === "reports" && <ReportsManagement />}
-          {activeTab === "documents" && <DocumentsContent />}
         </div>
       </main>
 
@@ -258,11 +257,24 @@ export default function Dashboard() {
   );
 }
 
-function DashboardContent() {
-  const { stats, isLoading } = useStats();
+interface DashboardContentProps {
+  handleTabChange: (tabId: string) => void;
+}
+
+function DashboardContent({ handleTabChange }: DashboardContentProps) {
+  const { stats, isLoading: statsLoading } = useStats();
   const { reservations, isLoading: reservationsLoading } =
     useRecentReservations();
-  const { fleetStatus, isLoading: fleetLoading } = useFleetStatus();
+  const { todayActivity, isLoading: fleetLoading } = useFleetStatus();
+
+  // Modal state for assigning vehicle
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [selectedReservationId, setSelectedReservationId] = useState<
+    string | null
+  >(null);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
+  const [availableVehicles, setAvailableVehicles] = useState<any[]>([]);
+  const [assigning, setAssigning] = useState(false);
 
   const statCards = [
     {
@@ -290,113 +302,434 @@ function DashboardContent() {
       color: "from-pink-500 to-pink-600",
     },
   ];
+  // Unified function to complete any reservation
+  const handleCompleteReservation = async (
+    reservationId: string,
+    currentVehicleId?: string
+  ) => {
+    if (
+      !confirm(
+        "Mark this reservation as completed and free the vehicle (if assigned)?"
+      )
+    ) {
+      return;
+    }
+
+    try {
+      // Step 1: Update reservation → completed + remove vehicle
+      const patchRes = await fetch(`/api/reservations/${reservationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "completed",
+          vehicle: null, // Always clear vehicle
+        }),
+      });
+
+      if (!patchRes.ok) {
+        const error = await patchRes.json();
+        alert(error.message || "Failed to complete reservation");
+        return;
+      }
+
+      // Step 2: If a vehicle was assigned, mark it as available
+      if (currentVehicleId) {
+        const patchVehicle = await fetch(`/api/vehicles/${currentVehicleId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ available: true }),
+        });
+
+        if (!patchVehicle.ok) {
+          alert(
+            "Reservation completed, but failed to mark vehicle as available."
+          );
+          // Still continue — main goal achieved
+        }
+      }
+
+      alert("Reservation completed successfully!");
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert("Network error. Please try again.");
+    }
+  };
+
+  const openAssignModal = async (reservationId: string) => {
+    setSelectedReservationId(reservationId);
+    setSelectedVehicleId("");
+    setIsAssignModalOpen(true);
+
+    try {
+      const response = await fetch("/api/vehicles?available=true&limit=100");
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        setAvailableVehicles(result.data);
+      } else {
+        alert("No available vehicles found.");
+        setAvailableVehicles([]);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load available vehicles.");
+      setAvailableVehicles([]);
+    }
+  };
+
+  const assignVehicle = async () => {
+    if (!selectedReservationId || !selectedVehicleId) return;
+
+    setAssigning(true);
+    try {
+      const res = await fetch(`/api/reservations/${selectedReservationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vehicle: selectedVehicleId }),
+      });
+
+      if (res.ok) {
+        setIsAssignModalOpen(false);
+        setSelectedReservationId(null);
+        setSelectedVehicleId("");
+        window.location.reload();
+      } else {
+        const errorData = await res.json();
+        alert(errorData.message || "Failed to assign vehicle");
+      }
+    } catch (err) {
+      alert("Network error. Please try again.");
+    } finally {
+      setAssigning(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat, index) => (
           <div
             key={index}
             className={`bg-linear-to-br ${stat.color} p-6 rounded-2xl border border-white/10 text-white`}
           >
-            <div className={`bg-white/20 p-3 rounded-lg w-fit mb-4`}>
+            <div className="bg-white/20 p-3 rounded-lg w-fit mb-4">
               <span className="text-2xl">{stat.icon}</span>
             </div>
             <p className="text-gray-200 text-sm mb-1">{stat.label}</p>
             <p className="text-4xl font-black text-white">
-              {isLoading ? "-" : stat.value}
+              {statsLoading ? "-" : stat.value}
             </p>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Reserves */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-          <h3 className="text-xl font-black text-white mb-4">
-            Recent Reserves
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-black text-white">Recent Reserves</h3>
+            <button
+              onClick={() => handleTabChange("reserves")}
+              className="text-sm font-medium text-[#fe9a00] hover:text-orange-400 transition-colors"
+            >
+              See All →
+            </button>
+          </div>
+
           <div className="space-y-3">
             {reservationsLoading ? (
               <p className="text-gray-400 text-sm">Loading...</p>
             ) : reservations.length > 0 ? (
-              reservations.map((res) => (
-                <div
-                  key={res._id}
-                  className="p-3 bg-white/5 rounded-lg border border-white/5 hover:border-white/10 transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="text-white font-semibold">
-                        Reserve #{res._id?.slice(-4).toUpperCase()}
-                      </p>
-                      <p className="text-gray-400 text-xs">
-                        {new Date(res.createdAt!).toLocaleDateString()}
-                      </p>
+              reservations.map((res) => {
+                const canComplete = [
+                  "pending",
+                  "confirmed",
+                  "delivered",
+                ].includes(res.status);
+
+                return (
+                  <div
+                    key={res._id}
+                    className="p-3 bg-white/5 rounded-lg border border-white/5 hover:border-white/10 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="text-white font-semibold">
+                          Reserve #{res._id?.slice(-4).toUpperCase()}
+                        </p>
+                        <p className="text-gray-400 text-xs">
+                          {new Date(res.createdAt!).toLocaleDateString()}
+                        </p>
+                        {res.vehicle && (
+                          <p className="text-sm text-gray-300 mt-1">
+                            Vehicle: {res.vehicle.title} ({res.vehicle.number})
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            res.status === "confirmed"
+                              ? "bg-green-500/20 text-green-400"
+                              : res.status === "pending"
+                              ? "bg-yellow-500/20 text-yellow-400"
+                              : res.status === "delivered"
+                              ? "bg-purple-500/20 text-purple-400"
+                              : res.status === "completed"
+                              ? "bg-gray-600 text-gray-300"
+                              : "bg-red-500/20 text-red-400"
+                          }`}
+                        >
+                          {res.status.charAt(0).toUpperCase() +
+                            res.status.slice(1)}
+                        </span>
+
+                        {canComplete && (
+                          <button
+                            onClick={() =>
+                              handleCompleteReservation(
+                                res._id,
+                                res.vehicle?._id || res.vehicle
+                              )
+                            }
+                            className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white rounded font-semibold transition"
+                          >
+                            Complete
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        res.status === "confirmed"
-                          ? "bg-green-500/20 text-green-400"
-                          : res.status === "pending"
-                          ? "bg-yellow-500/20 text-yellow-400"
-                          : "bg-red-500/20 text-red-400"
-                      }`}
-                    >
-                      {res.status.charAt(0).toUpperCase() + res.status.slice(1)}
-                    </span>
+
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <p className="text-gray-500">Price</p>
+                        <p className="text-[#07da54] font-bold">
+                          £{res.totalPrice}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Pickup</p>
+                        <p className="text-gray-300 font-medium">
+                          {new Date(res.startDate!).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Return</p>
+                        <p className="text-gray-300 font-medium">
+                          {new Date(res.endDate!).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <p className="text-gray-500">Price</p>
-                      <p className="text-[#07da54] font-bold">
-                        £{res.totalPrice}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Pickup</p>
-                      <p className="text-gray-300 font-medium">
-                        {new Date(res.startDate!).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Return</p>
-                      <p className="text-gray-300 font-medium">
-                        {new Date(res.endDate!).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className="text-gray-400 text-sm">No reservations yet</p>
             )}
           </div>
         </div>
 
+        {/* Fleet Status */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
           <h3 className="text-xl font-black text-white mb-4">Fleet Status</h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-300">Available</span>
-              <span className="text-2xl font-black text-green-400">
-                {fleetLoading ? "-" : fleetStatus.available}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-300">In Use</span>
-              <span className="text-2xl font-black text-orange-400">
-                {fleetLoading ? "-" : fleetStatus.inUse}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-300">Maintenance</span>
-              <span className="text-2xl font-black text-red-400">
-                {fleetLoading ? "-" : fleetStatus.maintenance}
-              </span>
-            </div>
+
+          {/* Today's Pickups */}
+          <div className="mb-6">
+            <h4 className="text-lg font-semibold text-white mb-3">
+              Today's Pickups ({todayActivity.pickups.length})
+            </h4>
+            {fleetLoading ? (
+              <p className="text-gray-400">Loading...</p>
+            ) : todayActivity.pickups.length === 0 ? (
+              <p className="text-gray-500 text-sm">
+                No pickups scheduled today
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {todayActivity.pickups.map((res) => (
+                  <div
+                    key={res._id}
+                    className="bg-white/5 rounded-lg p-3 text-sm"
+                  >
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <p className="font-medium text-white">
+                          {res.vehicle
+                            ? `${res.vehicle.title} (${res.vehicle.number})`
+                            : "Vehicle not assigned yet"}
+                        </p>
+                        <p className="text-gray-400 text-xs mt-1">
+                          {res.category.name} • Pickup:{" "}
+                          {new Date(res.startDate).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            res.status === "confirmed"
+                              ? "bg-green-900 text-green-300"
+                              : "bg-yellow-900 text-yellow-300"
+                          }`}
+                        >
+                          {res.status}
+                        </span>
+
+                        {!res.vehicle && (
+                          <button
+                            onClick={() => openAssignModal(res._id)}
+                            className="px-4 py-1.5 text-xs bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded font-semibold transition"
+                          >
+                            Assign
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Today's Returns */}
+          <div>
+            <h4 className="text-lg font-semibold text-white mb-3">
+              Today's Returns ({todayActivity.returns.length})
+            </h4>
+            {fleetLoading ? (
+              <p className="text-gray-400">Loading...</p>
+            ) : todayActivity.returns.length === 0 ? (
+              <p className="text-gray-500 text-sm">
+                No returns scheduled today
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {todayActivity.returns.map((res) => {
+                  const canComplete =
+                    res.vehicle &&
+                    ["confirmed", "delivered"].includes(res.status);
+
+                  return (
+                    <div
+                      key={res._id}
+                      className="bg-white/5 rounded-lg p-3 text-sm"
+                    >
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1">
+                          <p className="font-medium text-white">
+                            {res.vehicle
+                              ? `${res.vehicle.title} (${res.vehicle.number})`
+                              : "No vehicle assigned"}
+                          </p>
+                          <p className="text-gray-400 text-xs mt-1">
+                            {res.category.name} • Return by:{" "}
+                            {new Date(res.endDate).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2">
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              res.status === "confirmed"
+                                ? "bg-green-900 text-green-300"
+                                : res.status === "delivered"
+                                ? "bg-purple-900 text-purple-300"
+                                : "bg-gray-700 text-gray-300"
+                            }`}
+                          >
+                            {res.status}
+                          </span>
+
+                          {canComplete && (
+                            <button
+                              onClick={() =>
+                                handleCompleteReservation(
+                                  res._id,
+                                  res.vehicle._id
+                                )
+                              }
+                              className="px-4 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white rounded font-semibold transition"
+                            >
+                              Complete
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Assign Vehicle Modal */}
+      {isAssignModalOpen && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a2847] rounded-2xl border border-white/10 p-6 w-full max-w-md">
+            <h3 className="text-xl font-black text-white mb-6">
+              Assign Vehicle
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Available Vehicles Today
+                </label>
+                <select
+                  value={selectedVehicleId}
+                  onChange={(e) => setSelectedVehicleId(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#fe9a00]"
+                  disabled={assigning}
+                >
+                  <option value="">Select a vehicle...</option>
+                  {availableVehicles.length === 0 ? (
+                    <option disabled>No available vehicles today</option>
+                  ) : (
+                    availableVehicles.map((veh) => (
+                      <option key={veh._id} value={veh._id}>
+                        {veh.title} ({veh.number}) —{" "}
+                        {veh.office?.name || "Unknown Office"}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={() => {
+                  setIsAssignModalOpen(false);
+                  setSelectedReservationId(null);
+                  setSelectedVehicleId("");
+                }}
+                disabled={assigning}
+                className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={assignVehicle}
+                disabled={!selectedVehicleId || assigning}
+                className="flex-1 px-4 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg font-bold transition disabled:opacity-50"
+              >
+                {assigning ? "Assigning..." : "Assign Vehicle"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -405,94 +738,6 @@ function HolidaysContent() {
   return <SpecialDaysManagement />;
 }
 
-function NotificationsContent() {
-  return (
-    <div className="space-y-4">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div
-          key={i}
-          className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-start gap-4"
-        >
-          <div className="w-3 h-3 rounded-full bg-[#fe9a00] mt-2 shrink-0"></div>
-          <div className="flex-1">
-            <h3 className="text-white font-semibold">Notification {i}</h3>
-            <p className="text-gray-400 text-sm mt-1">
-              This is a sample notification message
-            </p>
-            <p className="text-gray-500 text-xs mt-2">{i} hours ago</p>
-          </div>
-          <button className="text-gray-400 hover:text-white transition-colors">
-            ✕
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function ReservesContent() {
   return <ReservationsManagement />;
-}
-
-function ContactsContent() {
-  return (
-    <div className="space-y-6">
-      <button className="px-6 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold rounded-lg transition-colors">
-        + Add Contact
-      </button>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6"
-          >
-            <h3 className="text-lg font-black text-white mb-2">Contact {i}</h3>
-            <p className="text-gray-400 text-sm mb-1">contact{i}@example.com</p>
-            <p className="text-gray-400 text-sm mb-4">+44 123 456 {7890 + i}</p>
-            <div className="flex gap-2">
-              <button className="flex-1 px-3 py-2 bg-[#fe9a00]/20 text-[#fe9a00] rounded-lg hover:bg-[#fe9a00]/30 transition-colors text-sm font-semibold">
-                Edit
-              </button>
-              <button className="flex-1 px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-semibold">
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function DocumentsContent() {
-  return (
-    <div className="space-y-6">
-      <button className="px-6 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold rounded-lg transition-colors">
-        + Upload Document
-      </button>
-      <div className="space-y-3">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-[#fe9a00]/20 flex items-center justify-center">
-                <FiFileText className="text-[#fe9a00]" />
-              </div>
-              <div>
-                <p className="text-white font-semibold">Document {i}.pdf</p>
-                <p className="text-gray-400 text-xs">
-                  2.4 MB • Uploaded 3 days ago
-                </p>
-              </div>
-            </div>
-            <button className="text-gray-400 hover:text-white transition-colors">
-              ⋮
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }

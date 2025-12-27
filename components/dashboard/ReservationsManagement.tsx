@@ -44,7 +44,7 @@ export default function ReservationsManagement() {
     const fetchData = async () => {
       try {
         const [vehiclesRes, usersRes, officesRes] = await Promise.all([
-          fetch("/api/vehicles?status=active"),
+          fetch("/api/vehicles?status=active&available=true"),
           fetch("/api/users?limit=100"),
           fetch("/api/offices"),
         ]);
@@ -648,6 +648,8 @@ export default function ReservationsManagement() {
                         ? "bg-green-500/20 text-green-400"
                         : selectedReservation.status === "pending"
                         ? "bg-yellow-500/20 text-yellow-400"
+                        : selectedReservation.status === "delivered"
+                        ? "bg-purple-500/20 text-purple-400"
                         : selectedReservation.status === "canceled"
                         ? "bg-red-500/20 text-red-400"
                         : "bg-blue-500/20 text-blue-400"
@@ -671,6 +673,7 @@ export default function ReservationsManagement() {
                         { _id: "confirmed", name: "Confirmed" },
                         { _id: "completed", name: "Completed" },
                         { _id: "canceled", name: "Canceled" },
+                        { _id: "delivered", name: "Delivered" },
                       ]}
                       value={newStatus}
                       onChange={setNewStatus}

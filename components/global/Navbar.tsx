@@ -134,7 +134,6 @@ export default function Navbar() {
     });
     return () => ctx.revert();
   }, []);
-  
 
   // Mobile detection
   useEffect(() => {
@@ -239,8 +238,6 @@ export default function Navbar() {
     closeMenu();
   }, [logout, closeMenu]);
 
-
-
   const navTopPosition =
     isScrolled || !hasAnnouncement ? "0px" : isMobile ? "32px" : "41px";
   // Hide on dashboard pages
@@ -309,7 +306,7 @@ export default function Navbar() {
                 alt="SuccessVan Logo"
                 width={90}
                 height={55}
-                className="h-10 w-auto group-hover:scale-105 transition-transform duration-300"
+                className="h-8  group-hover:scale-105 transition-transform duration-300"
                 priority
               />
             </Link>
@@ -432,7 +429,6 @@ export default function Navbar() {
                 <span className="relative z-10 hidden md:block">
                   +44 20 3011 1198
                 </span>
-                <span className="relative z-10 md:hidden">Call</span>
               </Link>
             </div>
           </div>

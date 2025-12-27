@@ -54,15 +54,20 @@ export default function ReservationForm({
   const [categories, setCategories] = useState<Category[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [startDateReservedSlots, setStartDateReservedSlots] = useState<ReservedSlot[]>([]);
-  const [endDateReservedSlots, setEndDateReservedSlots] = useState<ReservedSlot[]>([]);
+  const [startDateReservedSlots, setStartDateReservedSlots] = useState<
+    ReservedSlot[]
+  >([]);
+  const [endDateReservedSlots, setEndDateReservedSlots] = useState<
+    ReservedSlot[]
+  >([]);
 
   // Voice modal state
   const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
   const [voiceData, setVoiceData] = useState<ExtractedVoiceData | null>(null);
 
   // Conversational modal state
-  const [showConversationalModal, setShowConversationalModal] = useState<boolean>(false);
+  const [showConversationalModal, setShowConversationalModal] =
+    useState<boolean>(false);
 
   // Fast AI Agent modal state (quick 1-minute booking)
   const [showFastAgentModal, setShowFastAgentModal] = useState<boolean>(false);
@@ -103,7 +108,7 @@ export default function ReservationForm({
       "thursday",
       "friday",
       "saturday",
-    ][date.getDay()] as WorkingTime['day'];
+    ][date.getDay()] as WorkingTime["day"];
 
     const specialDay = office.specialDays?.find(
       (sd: SpecialDay) => sd.month === month && sd.day === day
@@ -166,7 +171,7 @@ export default function ReservationForm({
       "thursday",
       "friday",
       "saturday",
-    ][date.getDay()] as WorkingTime['day'];
+    ][date.getDay()] as WorkingTime["day"];
 
     const specialDay = office.specialDays?.find(
       (sd: SpecialDay) => sd.month === month && sd.day === day
@@ -335,11 +340,6 @@ export default function ReservationForm({
     toggleRecording();
   };
 
-  const handleConversationalMode = () => {
-    console.log("💬 [Form] Starting conversational mode");
-    setShowConversationalModal(true);
-  };
-
   const handleAIAgentMode = () => {
     console.log("🤖 [Form] Starting Fast AI Agent mode");
     setShowFastAgentModal(true);
@@ -441,32 +441,32 @@ export default function ReservationForm({
     showToast.success("Form filled successfully!");
   };
 
-  const handleAutoSubmit = async (data: VoiceData) => {
-    try {
-      // Store rental details in sessionStorage
-      const pickupDateTime = new Date(data.pickupDate || "");
-      const returnDateTime = new Date(data.returnDate || "");
+  // const handleAutoSubmit = async (data: VoiceData) => {
+  //   try {
+  //     // Store rental details in sessionStorage
+  //     const pickupDateTime = new Date(data.pickupDate || "");
+  //     const returnDateTime = new Date(data.returnDate || "");
 
-      const rentalDetails: RentalDetails = {
-        office: data.office || "",
-        type: data.type || "",
-        pickupDate: pickupDateTime.toISOString(),
-        returnDate: returnDateTime.toISOString(),
-        pickupTime: data.pickupTime || "",
-        returnTime: data.returnTime || "",
-        pickupLocation: offices.find((o) => o._id === data.office)?.name || "",
-        driverAge: data.driverAge || "",
-        message: data.message || "",
-      };
-      sessionStorage.setItem("rentalDetails", JSON.stringify(rentalDetails));
+  //     const rentalDetails: RentalDetails = {
+  //       office: data.office || "",
+  //       type: data.type || "",
+  //       pickupDate: pickupDateTime.toISOString(),
+  //       returnDate: returnDateTime.toISOString(),
+  //       pickupTime: data.pickupTime || "",
+  //       returnTime: data.returnTime || "",
+  //       pickupLocation: offices.find((o) => o._id === data.office)?.name || "",
+  //       driverAge: data.driverAge || "",
+  //       message: data.message || "",
+  //     };
+  //     sessionStorage.setItem("rentalDetails", JSON.stringify(rentalDetails));
 
-      // Navigate to reservation page
-      const url = `/reservation?type=${data.type}&office=${data.office}&age=${data.driverAge}`;
-      router.push(url);
-    } catch (error) {
-      showToast.error("Failed to process reservation");
-    }
-  };
+  //     // Navigate to reservation page
+  //     const url = `/reservation?type=${data.type}&office=${data.office}&age=${data.driverAge}`;
+  //     router.push(url);
+  //   } catch (error) {
+  //     showToast.error("Failed to process reservation");
+  //   }
+  // };
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -478,6 +478,12 @@ export default function ReservationForm({
       ...prev,
       [name]: value,
     }));
+  };
+  const formatDate = (date: Date) => {
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const handleTimeChange = (name: string, time: string) => {
@@ -505,7 +511,7 @@ export default function ReservationForm({
       "thursday",
       "friday",
       "saturday",
-    ][date.getDay()] as WorkingTime['day'];
+    ][date.getDay()] as WorkingTime["day"];
 
     // Check special days first
     const specialDay = office.specialDays?.find(
@@ -534,7 +540,7 @@ export default function ReservationForm({
       "thursday",
       "friday",
       "saturday",
-    ][date.getDay()] as WorkingTime['day'];
+    ][date.getDay()] as WorkingTime["day"];
 
     // Check special days first
     const specialDay = office.specialDays?.find(
@@ -551,7 +557,9 @@ export default function ReservationForm({
     // Use working hours
     const workingDay = office.workingTime?.find((w) => w.day === dayName);
     if (workingDay && workingDay.isOpen) {
-      let info = `${workingDay.day}: ${workingDay.startTime || "00:00"} - ${workingDay.endTime || "23:59"}`;
+      let info = `${workingDay.day}: ${workingDay.startTime || "00:00"} - ${
+        workingDay.endTime || "23:59"
+      }`;
 
       const hasPickupExt =
         workingDay.pickupExtension &&
@@ -707,7 +715,9 @@ export default function ReservationForm({
               }`}
             >
               {dateRange[0].startDate && dateRange[0].endDate
-                ? `${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`
+                ? `${formatDate(dateRange[0].startDate)} - ${formatDate(
+                    dateRange[0].endDate
+                  )}`
                 : "Select Dates"}
             </button>
             {showDateRange && (
@@ -978,9 +988,11 @@ export default function ReservationForm({
             onClick={() => setShowDateRange(!showDateRange)}
             className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs text-left focus:outline-none focus:border-amber-400 transition-colors"
           >
-               {dateRange[0].startDate && dateRange[0].endDate
-                ? `${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`
-                : "Select Dates"}
+            {dateRange[0].startDate && dateRange[0].endDate
+              ? `${formatDate(dateRange[0].startDate)} - ${formatDate(
+                  dateRange[0].endDate
+                )}`
+              : "Select Dates"}
           </button>
           {showDateRange && (
             <div className="-mt-46 bg-slate-800 z-99999 backdrop-blur-xl border border-white/20 rounded-lg p-2 overflow-x-auto">

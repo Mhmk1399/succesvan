@@ -39,6 +39,7 @@ export default function VehiclesContent() {
     category: "",
     office: "",
     reservation: "",
+    available: true, // ← New field
     properties: [{ name: "", value: "" }],
     needsService: false,
     serviceHistory: {
@@ -150,6 +151,7 @@ export default function VehiclesContent() {
       category: "",
       office: "",
       reservation: "",
+      available: true,
       properties: [{ name: "", value: "" }],
       needsService: false,
       serviceHistory: {
@@ -186,6 +188,7 @@ export default function VehiclesContent() {
       reservation: reservationId,
       properties: item.properties || [{ name: "", value: "" }],
       needsService: item.needsService,
+      available: item.available ?? true, // ← Handle available field
       serviceHistory: item.serviceHistory || {
         tire: new Date(),
         oil: new Date(),
@@ -217,6 +220,7 @@ export default function VehiclesContent() {
         ...(formData.reservation && { reservation: formData.reservation }),
         properties: formData.properties.filter((p) => p.name && p.value),
         needsService: formData.needsService,
+        available: formData.available, // ← Include available
         serviceHistory: {
           tire: formData.serviceHistory.tire,
           oil: formData.serviceHistory.oil,
@@ -377,6 +381,19 @@ export default function VehiclesContent() {
                 }
                 placeholder="Select Status"
               />
+              {/* New: Available Checkbox */}
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="available"
+                  checked={formData.available}
+                  onChange={handleInputChange}
+                  className="w-5 h-5 text-[#fe9a00] rounded focus:ring-[#fe9a00]"
+                />
+                <span className="text-white font-medium">
+                  Available for Booking
+                </span>
+              </label>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

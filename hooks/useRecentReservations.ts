@@ -9,7 +9,7 @@ const fetcher = async (url: string) => {
 
 export function useRecentReservations() {
   const { data, isLoading } = useSWR<{ data: Reservation[] }>(
-    "/api/reservations?page=1&limit=3",
+    "/api/reservations?page=1&status=delivered",
     fetcher,
     { revalidateOnFocus: false, dedupingInterval: 60000 }
   );

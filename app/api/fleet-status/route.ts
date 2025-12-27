@@ -7,8 +7,9 @@ export async function GET() {
   try {
     await connect();
 
+    // Existing fleet counts
     const totalVehicles = await Vehicle.countDocuments();
- 
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -24,12 +25,53 @@ export async function GET() {
       needsService: true,
     });
 
-    const available = totalVehicles - inUseCount - maintenanceCount;
+    const available = Math.max(
+      0,
+      totalVehicles - inUseCount - maintenanceCount
+    );
+
+    // NEW: Today's pickups (startDate is today)
+    const todaysPickups = await Reservation.find({
+      startDate: { $gte: today, $lt: tomorrow },
+      status: { $in: ["confirmed", "pending"] },
+    })
+      .populate({
+        path: "vehicle",
+        select: "title number", // ← These are your actual fields!
+      })
+      .populate({
+        path: "category",
+        select: "name",
+      })
+      .sort({ startDate: 1 })
+      .lean();
+
+    const todaysReturns = await Reservation.find({
+      endDate: { $gte: today, $lt: tomorrow },
+      status: { $in: ["confirmed", "pending"] },
+    })
+      .populate({
+        path: "vehicle",
+        select: "title number",
+      })
+      .populate({
+        path: "category",
+        select: "name",
+      })
+      .sort({ endDate: 1 })
+      .lean();
 
     return successResponse({
-      available: Math.max(0, available),
-      inUse: inUseCount,
-      maintenance: maintenanceCount,
+      fleet: {
+        available,
+        inUse: inUseCount,
+        maintenance: maintenanceCount,
+        total: totalVehicles,
+      },
+      today: {
+        pickups: todaysPickups,
+        returns: todaysReturns,
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

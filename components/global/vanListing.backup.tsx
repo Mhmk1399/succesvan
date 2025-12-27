@@ -66,6 +66,8 @@ interface VanListingProps {
 export default function VanListingHome({ vans = [] }: VanListingProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const [isLoading, setIsLoading] = useState(vans.length === 0);
+
   const [categories, setCategories] = useState<Category[]>(vans as Category[]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
@@ -79,25 +81,22 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
   }, [vans.length]);
 
   useEffect(() => {
-    if (categories.length === 0 && vans.length === 0) {
-      console.log("Fetching categories for van listing...");
-      fetch("/api/categories?status=active")
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return res.json();
-        })
-        .then((data) => {
-          console.log("Van listing categories response:", data);
-          // Handle double-nested data structure
-          const categories = data?.data?.data || data?.data || [];
-          if (Array.isArray(categories) && categories.length > 0) {
-            console.log("Setting van categories:", categories.length);
-            setCategories(categories);
-          }
-        })
-        .catch((err) => console.log("Failed to fetch categories", err));
-    }
-  }, [categories.length, vans.length]);
+    setIsLoading(true);
+    fetch("/api/categories?status=active")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const categoriesData = data?.data?.data || data?.data || [];
+        if (Array.isArray(categoriesData) && categoriesData.length > 0) {
+          console.log("Setting van categories:", categoriesData.length);
+          setCategories(categoriesData);
+        }
+      })
+      .catch((err) => console.log("Failed to fetch categories", err))
+      .finally(() => setIsLoading(false));
+  }, [vans.length]);
 
   const setCardRef = useCallback((index: number, el: HTMLDivElement | null) => {
     cardsRef.current[index] = el;
@@ -155,7 +154,15 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
           </p>
         </div>
 
-        {categories.length > 0 && (
+        {isLoading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
+            {Array(3)
+              .fill(0)
+              .map((_, index) => (
+                <SkeletonCard key={index} />
+              ))}
+          </div>
+        ) : categories.length > 0 ? (
           <div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
               {categories.map((category, index) => (
@@ -171,6 +178,17 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
                 </div>
               ))}
             </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <FiAlertCircle className="mx-auto h-20 w-20 text-gray-400 mb-6" />
+            <h3 className="text-2xl lg:text-3xl font-black text-white mb-4">
+              No vans available right now
+            </h3>
+            <p className="text-gray-400 text-lg max-w-md mb-8">
+              Our fleet is being updated. Check back soon or contact us for
+              options.
+            </p>
           </div>
         )}
       </div>
@@ -319,10 +337,13 @@ function ReservationPanel({
   const priceCalc = useMemo(() => {
     if (!basePriceCalc) return null;
     if (!appliedDiscount) return basePriceCalc;
-    const discountAmount = (basePriceCalc.totalPrice * appliedDiscount.percentage) / 100;
+    const discountAmount =
+      (basePriceCalc.totalPrice * appliedDiscount.percentage) / 100;
     return {
       ...basePriceCalc,
-      totalPrice: parseFloat((basePriceCalc.totalPrice - discountAmount).toFixed(2)),
+      totalPrice: parseFloat(
+        (basePriceCalc.totalPrice - discountAmount).toFixed(2)
+      ),
       discountAmount,
     };
   }, [basePriceCalc, appliedDiscount]);
@@ -386,8 +407,12 @@ function ReservationPanel({
       const [pickupHour, pickupMin] = formData.pickupTime
         .split(":")
         .map(Number);
-      const [startHour, startMin] = (workingDay.startTime || "00:00").split(":").map(Number);
-      const [endHour, endMin] = (workingDay.endTime || "23:59").split(":").map(Number);
+      const [startHour, startMin] = (workingDay.startTime || "00:00")
+        .split(":")
+        .map(Number);
+      const [endHour, endMin] = (workingDay.endTime || "23:59")
+        .split(":")
+        .map(Number);
       const pickupMinutes = pickupHour * 60 + pickupMin;
       const startMinutes = startHour * 60 + startMin;
       const endMinutes = endHour * 60 + endMin;
@@ -434,8 +459,12 @@ function ReservationPanel({
       const [returnHour, returnMin] = formData.returnTime
         .split(":")
         .map(Number);
-      const [startHour, startMin] = (workingDay.startTime || "00:00").split(":").map(Number);
-      const [endHour, endMin] = (workingDay.endTime || "23:59").split(":").map(Number);
+      const [startHour, startMin] = (workingDay.startTime || "00:00")
+        .split(":")
+        .map(Number);
+      const [endHour, endMin] = (workingDay.endTime || "23:59")
+        .split(":")
+        .map(Number);
       const returnMinutes = returnHour * 60 + returnMin;
       const startMinutes = startHour * 60 + startMin;
       const endMinutes = endHour * 60 + endMin;
@@ -463,7 +492,9 @@ function ReservationPanel({
       setDiscountError("Please enter a discount code");
       return;
     }
-    const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!) : null;
+    const user = localStorage.getItem("user")
+      ? JSON.parse(localStorage.getItem("user")!)
+      : null;
     if (!user) {
       setDiscountError("Please login to apply discount");
       return;
@@ -475,22 +506,29 @@ function ReservationPanel({
       const data = await res.json();
       if (!data.success) throw new Error("Invalid discount code");
       const discounts = data.data.data || data.data;
-      const discount = discounts.find((d: any) => d.code.toUpperCase() === discountCode.toUpperCase());
+      const discount = discounts.find(
+        (d: any) => d.code.toUpperCase() === discountCode.toUpperCase()
+      );
       if (!discount) throw new Error("Invalid discount code");
       const now = new Date();
       const validFrom = new Date(discount.validFrom);
       const validTo = new Date(discount.validTo);
-      if (now < validFrom || now > validTo) throw new Error("Discount code has expired");
-      if (discount.usageLimit && discount.usageCount >= discount.usageLimit) throw new Error("Discount code usage limit reached");
-      if (discount.usedBy?.includes(user._id)) throw new Error("You have already used this discount code");
+      if (now < validFrom || now > validTo)
+        throw new Error("Discount code has expired");
+      if (discount.usageLimit && discount.usageCount >= discount.usageLimit)
+        throw new Error("Discount code usage limit reached");
+      if (discount.usedBy?.includes(user._id))
+        throw new Error("You have already used this discount code");
       if (discount.categories?.length > 0) {
         const categoryIds = discount.categories.map((c: any) => c._id || c);
-        if (!categoryIds.includes(van._id)) throw new Error("Discount not valid for this vehicle");
+        if (!categoryIds.includes(van._id))
+          throw new Error("Discount not valid for this vehicle");
       }
       setAppliedDiscount(discount);
       setDiscountError("");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Invalid discount code";
+      const message =
+        error instanceof Error ? error.message : "Invalid discount code";
       setDiscountError(message);
       setAppliedDiscount(null);
     } finally {
@@ -513,14 +551,19 @@ function ReservationPanel({
       if (addon.pricingType === "flat") {
         const amount = addon.flatPrice?.amount || 0;
         const isPerDay = addon.flatPrice?.isPerDay || false;
-        const price = (isPerDay ? amount * (basePriceCalc?.totalDays || 1) : amount) * item.quantity;
+        const price =
+          (isPerDay ? amount * (basePriceCalc?.totalDays || 1) : amount) *
+          item.quantity;
         return total + price;
       } else {
         const tierIndex = item.selectedTierIndex ?? 0;
         const tier = addon.tieredPrice?.tiers?.[tierIndex];
         if (tier) {
           const isPerDay = addon.tieredPrice?.isPerDay || false;
-          const price = (isPerDay ? tier.price * (basePriceCalc?.totalDays || 1) : tier.price) * item.quantity;
+          const price =
+            (isPerDay
+              ? tier.price * (basePriceCalc?.totalDays || 1)
+              : tier.price) * item.quantity;
           return total + price;
         }
         return total;
@@ -1093,7 +1136,11 @@ function ReservationPanel({
                       £{(van as any).showPrice || 0}
                     </span>
                     <span className="text-[#fe9a00] font-black text-2xl">
-                      £{(((van as any).showPrice || 0) * (1 - (van as any).selloffer / 100)).toFixed(2)}
+                      £
+                      {(
+                        ((van as any).showPrice || 0) *
+                        (1 - (van as any).selloffer / 100)
+                      ).toFixed(2)}
                     </span>
                   </>
                 ) : (
@@ -1755,7 +1802,9 @@ function ReservationPanel({
                 <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-green-400 font-bold">{appliedDiscount.code}</p>
+                      <p className="text-green-400 font-bold">
+                        {appliedDiscount.code}
+                      </p>
                       <p className="text-green-300 text-xs mt-1">
                         {appliedDiscount.percentage}% discount applied
                       </p>
@@ -2094,14 +2143,19 @@ function CategoryCard({
             <div>
               <p className="text-gray-300 text-sm mt-0.5">from</p>
 
-              {(category as any).selloffer && (category as any).selloffer > 0 ? (
+              {(category as any).selloffer &&
+              (category as any).selloffer > 0 ? (
                 <>
                   <div className="flex items-baseline gap-2">
                     <span className="text-lg font-bold text-gray-400 line-through">
                       £{(category as any).showPrice || 0}
                     </span>
                     <span className="text-2xl font-black text-white">
-                      £{((category as any).showPrice * (1 - (category as any).selloffer / 100)).toFixed(2)}
+                      £
+                      {(
+                        (category as any).showPrice *
+                        (1 - (category as any).selloffer / 100)
+                      ).toFixed(2)}
                       <span className="text-gray-300 text-sm m-0.5 font-normal">
                         /day
                       </span>
@@ -2243,3 +2297,56 @@ function CategoryDetailsModal({
     </>
   );
 }
+const SkeletonCard = () => (
+  <div className="group relative h-120 rounded-3xl overflow-hidden bg-gray-800/30 animate-pulse">
+    {/* Image/Gradient fallback + Overlay */}
+    <div className="absolute inset-0">
+      <div className="w-full h-full bg-linear-to-br rounded-3xl from-[#fe9a00]/20 via-[#fe9a00]/10 to-[#fe9a00]/5"></div>
+      <div className="absolute inset-0 rounded-3xl bg-linear-to-b from-black/60 via-transparent/50 to-black/80"></div>
+    </div>
+
+    {/* Content */}
+    <div className="relative h-full flex flex-col p-6 justify-between">
+      <div>
+        {/* Title */}
+        <div className="h-7 bg-linear-to-r from-gray-600/70 to-gray-500/70 rounded-md w-64 mb-2"></div>
+        {/* Expert */}
+        <div className="h-5 bg-gray-600/50 rounded w-32 mb-6"></div>
+        {/* Badges */}
+        <div className="flex gap-1">
+          {Array(3)
+            .fill(0)
+            .map((_, i) => (
+              <div
+                key={i}
+                className="px-2 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center gap-1.5 animate-pulse"
+              >
+                <div className="h-3 w-3 bg-[#fe9a00]/50 rounded-full"></div>
+                <div className="h-3 bg-gray-500/50 rounded-full w-16"></div>
+              </div>
+            ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {/* Dimensions button */}
+        <div className="h-6 bg-gray-600/50 border-b-2 border-white/20 rounded-sm w-32"></div>
+        {/* Price + Book button */}
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            {/* "from" */}
+            {/* Price with strike + discounted + %OFF */}
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-2">
+                <div className="h-10 bg-linear-to-r from-gray-500 to-gray-400 rounded w-20"></div>{" "}
+                {/* Main price */}
+              </div>
+            </div>
+          </div>
+          {/* Book Now button */}
+          <div className="h-11 w-24 bg-gray-600/50 border-2 border-white/20 rounded-md"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
