@@ -1197,7 +1197,9 @@ function ReservationPanel({
                   Phone Number
                 </label>
                 <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-medium">+44</div>
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-medium">
+                    +44
+                  </div>
                   <input
                     type="tel"
                     name="phone"
@@ -2084,111 +2086,145 @@ function CategoryCard({
   onView: () => void;
   onDetails: () => void;
 }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleMouseEnter = () => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0; // Optional: reset to start
+    }
+  };
+
   return (
-    <div className="group relative h-125 rounded-3xl overflow-hidden">
+    <div
+      className="group relative h-125 rounded-3xl overflow-hidden cursor-pointer"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Background Layer: Image + Video */}
       <div className="absolute inset-0">
+        {/* Static Image (visible initially & fallback) */}
         {category.image ? (
           <Image
             src={category.image}
             alt={category.name}
             fill
-            className="object-cover group-hover:scale-110 rounded-3xl group-hover:blur-sm transition-all duration-500"
+            className="object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
             unoptimized
+            priority
           />
         ) : (
-          <div className="w-full h-full bg-linear-to-br rounded-3xl from-[#fe9a00]/20 to-[#fe9a00]/5"></div>
+          <div className="w-full h-full bg-linear-to-br from-[#fe9a00]/20 to-[#fe9a00]/5" />
         )}
-        <div className="absolute rounded-3xl inset-0 bg-linear-to-b from-black/60 via-transparent to-black/90 group-hover:from-black/70 group-hover:via-black/50 group-hover:to-black/95 transition-all duration-500"></div>
+
+        {/* {category.videoUrl && ( // ← Add videoUrl to your VanData type */}
+        <video
+          ref={videoRef}
+          src={"/assets/videos/eeeee.mp4"}
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 scale-110"
+        />
+        {/* )} */}
+
+        {/* Enhanced linear Overlay for Readability */}
+        <div className="absolute inset-0 bg-linear-to-b from-black/30 via-black/10 to-black/50 group-hover:from-black/20 group-hover:via-black/5 group-hover:to-black/20 transition-all duration-700" />
+
+        {/* Subtle Vignette + Glow Effect */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60" />
+        <div className="absolute inset-0 ring-2 ring-[#fe9a00]/0 group-hover:ring-[#fe9a00]/30 transition-all duration-500 rounded-3xl pointer-events-none" />
       </div>
 
-      <div className="relative h-full flex flex-col p-6 justify-between">
+      {/* Content Layer */}
+      <div className="relative h-full flex flex-col p-6 justify-between text-white z-10">
         <div>
-          <h3 className="text-xl font-black text-white line-clamp-1 leading-tight mb-1">
-            {category.name}{" "}
+          <h3 className="text-2xl font-black leading-tight mb-2 drop-shadow-lg">
+            {category.name}
           </h3>
-          <p className="text-gray-300 text-sm line-clamp-1 font-medium mb-4">
+          <p className="text-gray-200 text-sm font-medium mb-5 drop-shadow-md">
             {category.expert}
           </p>
-          {/* <p className="text-gray-300 text-sm font-medium mb-4 line-clamp-2">
-            {category.description}
-          </p> */}
 
-          <div className="flex gap-1 flex-wrap">
-            <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1.5">
-              <FiUsers className="text-[#fe9a00] text-xs" />
-              <span className="text-white text-xs font-semibold">
-                {category.seats} seats
-              </span>
+          {/* Feature Badges */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <div className="px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
+              <FiUsers className="text-[#fe9a00] text-sm" />
+              <span className="text-xs font-bold">{category.seats} seats</span>
             </div>
-            <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1.5">
-              <BsFuelPump className="text-[#fe9a00] text-xs" />
-              <span className="text-white text-xs font-semibold">
-                {category.fuel}
-              </span>
+            <div className="px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
+              <BsFuelPump className="text-[#fe9a00] text-sm" />
+              <span className="text-xs font-bold">{category.fuel}</span>
             </div>
-            <div className="px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-1.5">
-              <FiPackage className="text-[#fe9a00] text-xs" />
-              <span className="text-white text-xs font-semibold">
-                {category.doors} doors
-              </span>
+            <div className="px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
+              <FiPackage className="text-[#fe9a00] text-sm" />
+              <span className="text-xs font-bold">{category.doors} doors</span>
             </div>
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-4">
+          {/* Van Dimensions Link */}
           <button
-            onClick={onDetails}
-            className="group/btn relative cursor-pointer flex items-center gap-1 border-b-2   border-white/50   py-0.5 font-bold text-sm overflow-hidden transition-all duration-300 whitespace-nowrap text-white  shadow-lg"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDetails();
+            }}
+            className="flex items-center gap-2 text-[#fe9a00] font-bold text-sm hover:gap-3 transition-all duration-300"
           >
-            <span className="relative text-[#fe9a00] z-10 text-xs">
-              Van Dimensions
-            </span>
-            <IoIosArrowForward className="group group-hover:translate-x-1  transition-all duration-300" />
+            <span>Van Dimensions</span>
+            <IoIosArrowForward className="text-lg" />
           </button>
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <p className="text-gray-300 text-sm mt-0.5">from</p>
 
-              {(category as any).selloffer &&
-              (category as any).selloffer > 0 ? (
-                <>
+          {/* Price + Book Button */}
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-gray-300 text-sm">from</p>
+              {(category as any).selloffer > 0 ? (
+                <div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-lg font-bold text-gray-400 line-through">
-                      £{(category as any).showPrice || 0}
+                    <span className="text-lg font-medium text-gray-400 line-through">
+                      £{(category as any).showPrice}
                     </span>
-                    <span className="text-2xl font-black text-white">
+                    <span className="text-3xl font-black">
                       £
                       {(
                         (category as any).showPrice *
                         (1 - (category as any).selloffer / 100)
                       ).toFixed(2)}
-                      <span className="text-gray-300 text-sm m-0.5 font-normal">
+                      <span className="text-gray-300 text-sm font-normal ml-1">
                         /day
                       </span>
                     </span>
                   </div>
-                  <p className="text-[#fe9a00] text-xs font-bold mt-1">
+                  <span className="inline-block mt-1 px-3 py-1 bg-[#fe9a00] text-black text-xs font-bold rounded-full">
                     {(category as any).selloffer}% OFF
-                  </p>
-                </>
+                  </span>
+                </div>
               ) : (
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-black text-white">
-                    £{(category as any).showPrice || 0}
-                    <span className="text-gray-300 text-sm m-0.5 font-normal">
-                      /day
-                    </span>
+                <div className="text-3xl font-black">
+                  £{(category as any).showPrice}
+                  <span className="text-gray-300 text-sm font-normal ml-1">
+                    /day
                   </span>
                 </div>
               )}
             </div>
 
             <button
-              onClick={onView}
-              className="group/btn relative cursor-pointer border-2 rounded-md border-white/50 px-6 py-2.5 font-bold text-sm overflow-hidden transition-all duration-300 whitespace-nowrap text-white hover:scale-105 shadow-lg"
+              onClick={(e) => {
+                e.stopPropagation();
+                onView();
+              }}
+              className="px-7 py-3 bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] text-black font-bold rounded-xl shadow-lg hover:shadow-[#fe9a00]/50 transform hover:scale-105 transition-all duration-300"
             >
-              <span className="relative text-[#fe9a00] z-10">Book Now</span>
-              <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000"></div>
+              Book Now
             </button>
           </div>
         </div>
@@ -2305,7 +2341,7 @@ function CategoryDetailsModal({
 }
 const SkeletonCard = () => (
   <div className="group relative h-120 rounded-3xl overflow-hidden bg-gray-800/30 animate-pulse">
-    {/* Image/Gradient fallback + Overlay */}
+    {/* Image/linear fallback + Overlay */}
     <div className="absolute inset-0">
       <div className="w-full h-full bg-linear-to-br rounded-3xl from-[#fe9a00]/20 via-[#fe9a00]/10 to-[#fe9a00]/5"></div>
       <div className="absolute inset-0 rounded-3xl bg-linear-to-b from-black/60 via-transparent/50 to-black/80"></div>

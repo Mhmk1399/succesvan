@@ -8,7 +8,10 @@ import bcrypt from "bcryptjs";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import office from "@/model/office";
 import { sendSMS } from "@/lib/sms";
-import { scheduleReservationNotifications, scheduleConfirmationNotification } from "@/lib/notification-scheduler";
+import {
+  scheduleReservationNotifications,
+  scheduleConfirmationNotification,
+} from "@/lib/notification-scheduler";
 
 export async function GET(req: NextRequest) {
   try {
