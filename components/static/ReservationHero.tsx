@@ -21,74 +21,22 @@ export default function ReservationHero({
 
   return (
     <>
-      {/* Fixed Search Bar */}
-      {/* {isScrolled && (
-        <div className="fixed top-0 left-0 right-0 z-9999 bg-[#0f172b]/20 backdrop-blur-2xl shadow-2xl border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3 flex items-center justify-between">
-            <div className="group cursor-pointer">
-              <Link href="/">
-                <Image
-                  src="/assets/images/logo.png"
-                  alt="SuccessVan Logo"
-                  width={80}
-                  height={50}
-                  className="h-8 sm:h-10 w-20 sm:w-24 group-hover:scale-110 transition-transform duration-300"
-                  priority
-                />
-              </Link>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4">
-              <button
-                onClick={() => onBookNow ? onBookNow() : setIsFormOpen(!isFormOpen)}
-                className="px-4 sm:px-6 py-2 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg text-xs sm:text-sm"
-              >
-                {isFormOpen ? "Close" : "Reserve Now"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )} */}
-
-      {/* Full Screen Form Modal */}
-      {/* {isFormOpen && (
-        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm overflow-y-auto">
-          <div className="min-h-screen flex items-center justify-center p-2 sm:p-4">
-            <div className="w-full max-w-md sm:max-w-2xl lg:max-w-7xl bg-[#0f172b]/20 backdrop-blur-sm border border-white/20 rounded-2xl p-4 sm:p-6 shadow-2xl shadow-gray-900/50">
-              <div className="flex justify-between items-center mb-4 sm:mb-6">
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                  Complete Your Reservation
-                </h2>
-                <button
-                  onClick={() => setIsFormOpen(false)}
-                  className="text-white hover:text-amber-400 transition-colors p-1"
-                >
-                  <FiX size={8} className="sm:size-8" />
-                </button>
-              </div>
-              <ReservationForm
-                isModal={true}
-                onClose={() => setIsFormOpen(false)}
-                onBookNow={onBookNow}
-              />
-            </div>
-          </div>
-        </div>
-      )} */}
-
       <section
         ref={sectionRef}
         className="relative w-full min-h-screen flex items-center justify-center pb-8 sm:pb-12 lg:pb-0 overflow-hidden"
       >
-        <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-0 pointer-events-none">
           <video
             autoPlay
             muted
             loop
-            className="absolute inset-0 w-full h-full object-cover brightness-75 blur-xs"
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 w-full h-full object-cover brightness-50 blur-[1px] pointer-events-none"
           >
             <source src="/assets/videos/video.mp4" type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-black/50"></div>
+          <div className="absolute inset-0 bg-black/40"></div>
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-20 0   lg:mt-0">

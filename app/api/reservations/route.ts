@@ -24,10 +24,12 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
+    const status = searchParams.get("status");
 
     const query: any = {};
     if (userId) query.user = userId;
     if (name) query.user = name;
+    if (status) query.status = status;
     if (totalPrice) {
       query.totalPrice = parseFloat(totalPrice);
     }
@@ -45,8 +47,6 @@ export async function GET(req: NextRequest) {
       end.setHours(23, 59, 59, 999);
       query.endDate = { $gte: start, $lte: end };
     }
-
-    console.log("[Reservations API] query:", query);
 
     const reservations = await Reservation.find(query)
       .populate("user", "-password")

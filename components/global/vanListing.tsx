@@ -148,8 +148,15 @@ interface AddOn {
   name: string;
   description?: string;
   pricingType: "flat" | "tiered";
-  flatPrice?: number;
-  tiers?: { minDays: number; maxDays: number; price: number }[];
+  flatPrice?: {
+    amount: number;
+    isPerDay: boolean;
+  };
+  tieredPrice?: {
+    isPerDay: boolean;
+    tiers: { minDays: number; maxDays: number; price: number }[];
+  };
+  status?: "active" | "inactive";
 }
 
 function ReservationPanel({
@@ -285,10 +292,15 @@ function ReservationPanel({
       if (!addon) return total;
 
       if (addon.pricingType === "flat") {
-        return total + (addon.flatPrice || 0) * item.quantity;
+        const amount = addon.flatPrice?.amount || 0;
+        const isPerDay = addon.flatPrice?.isPerDay || false;
+        return total + (isPerDay ? amount * rentalDays : amount) * item.quantity;
       } else {
         const tierIndex = item.selectedTierIndex ?? 0;
-        const price = addon.tiers?.[tierIndex]?.price || 0;
+        const tier = addon.tieredPrice?.tiers?.[tierIndex];
+        if (!tier) return total;
+        const isPerDay = addon.tieredPrice?.isPerDay || false;
+        const price = isPerDay ? tier.price * rentalDays : tier.price;
         return total + price * item.quantity;
       }
     }, 0);
@@ -954,8 +966,8 @@ function ReservationPanel({
                         </span>
                       </div>
                       <p className="text-gray-400 text-xs mt-1 ml-6">
-                        Total: {priceCalc.totalHours} hours @ £
-                        {priceCalc.pricePerHour}/hour
+                        Total: {priceCalc.totalDays} days @ £{priceCalc.pricePerDay}/day
+                        {priceCalc.extraHours > 0 && ` + ${priceCalc.extraHours} extra hours`}
                       </p>
                     </div>
                   )}
@@ -1084,7 +1096,7 @@ function ReservationPanel({
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Rate</span>
                       <span className="text-white font-semibold">
-                        £{priceCalc.pricePerHour}/hour
+                        £{priceCalc.pricePerDay}/day
                       </span>
                     </div>
                     <div className="border-t border-white/10 pt-2">

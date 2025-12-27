@@ -42,7 +42,10 @@ export async function PATCH(
       .populate("user", "-password")
       .populate("office")
       .populate("category")
-      .populate("vehicle")
+      .populate({
+        path: "vehicle",
+        select: "title number", // ← Correct fields
+      })
       .populate("addOns.addOn");
     if (!reservation) return errorResponse("Reservation not found", 404);
     

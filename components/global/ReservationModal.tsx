@@ -41,6 +41,11 @@ interface Category {
   fuel: string;
   cargo: string;
   expert: string;
+  selloffer?: number;
+  gear: {
+    availableTypes: ("manual" | "automatic")[];
+    automaticExtraCost?: number;
+  };
 }
 
 interface AddOn {
@@ -1437,7 +1442,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
 
                 {/* Gear Type */}
                 {formData.gearType &&
-                  selectedCategory?.gear?.availableTypes?.length > 1 && (
+                  selectedCategory?.gear?.availableTypes?.length || 0 > 1 && (
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                       <h4 className="text-white font-semibold mb-2">
                         Gear Type
@@ -1446,11 +1451,10 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                         {formData.gearType}
                       </p>
                       {formData.gearType === "automatic" &&
-                        (selectedCategory.gear as any)?.automaticExtraCost >
-                          0 && (
+                        (selectedCategory?.gear as Category["gear"])?.automaticExtraCost|| 0 > 0 && (
                           <p className="text-gray-400 text-sm mt-1">
                             +£
-                            {(selectedCategory.gear as any).automaticExtraCost}
+                            {(selectedCategory?.gear as Category["gear"]).automaticExtraCost|| 0}
                             /day
                           </p>
                         )}

@@ -138,7 +138,7 @@ export default function ProfileContent({
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`/api/users/${user?._id}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
