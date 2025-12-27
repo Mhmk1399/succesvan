@@ -309,6 +309,8 @@ export default function ReservationsManagement() {
                     ? "bg-green-500/20 text-green-400"
                     : value === "pending"
                     ? "bg-yellow-500/20 text-yellow-400"
+                    : value === "delivered"
+                    ? "bg-purple-500/20 text-purple-400"
                     : value === "canceled"
                     ? "bg-red-500/20 text-red-400"
                     : "bg-blue-500/20 text-blue-400"

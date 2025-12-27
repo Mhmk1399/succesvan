@@ -35,6 +35,8 @@ import AnnouncementManagement from "./AnnouncementManagement";
 import ReportsManagement from "./ReportsManagement";
 import { MenuItem } from "@/types/type";
 import DiscountManagement from "./DiscountManagement";
+import CustomSelect from "../ui/CustomSelect";
+import { showToast } from "@/lib/toast";
 
 const menuItems: MenuItem[] = [
   {
@@ -235,11 +237,11 @@ export default function Dashboard() {
           {activeTab === "type" && <TypesManagement />}
           {activeTab === "offices" && <OfficesContent />}
           {activeTab === "vehicles" && <VehiclesContent />}
-          {activeTab === "holidays" && <HolidaysContent />}
+          {activeTab === "holidays" && <SpecialDaysManagement />}
           {activeTab === "categories" && <CategoriesContent />}
           {activeTab === "addons" && <AddOnsContent />}
           {activeTab === "discounts" && <DiscountManagement />}
-          {activeTab === "reserves" && <ReservesContent />}
+          {activeTab === "reserves" && <ReservationsManagement />}
           {activeTab === "Testimonial" && <TestimonialsManagement />}
           {activeTab === "contacts" && <ContactsManagement />}
           {activeTab === "announcements" && <AnnouncementManagement />}
@@ -267,7 +269,6 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
     useRecentReservations();
   const { todayActivity, isLoading: fleetLoading } = useFleetStatus();
 
-  // Modal state for assigning vehicle
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedReservationId, setSelectedReservationId] = useState<
     string | null
@@ -302,37 +303,29 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
       color: "from-pink-500 to-pink-600",
     },
   ];
-  // Unified function to complete any reservation
+
   const handleCompleteReservation = async (
     reservationId: string,
     currentVehicleId?: string
   ) => {
-    if (
-      !confirm(
-        "Mark this reservation as completed and free the vehicle (if assigned)?"
-      )
-    ) {
+    if (!reservationId) {
+      showToast.error("Invalid reservation");
       return;
     }
 
     try {
-      // Step 1: Update reservation → completed + remove vehicle
       const patchRes = await fetch(`/api/reservations/${reservationId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "completed",
-          vehicle: null, // Always clear vehicle
-        }),
+        body: JSON.stringify({ status: "completed", vehicle: null }),
       });
 
       if (!patchRes.ok) {
         const error = await patchRes.json();
-        alert(error.message || "Failed to complete reservation");
+        showToast.error(error.message || "Failed to complete reservation");
         return;
       }
 
-      // Step 2: If a vehicle was assigned, mark it as available
       if (currentVehicleId) {
         const patchVehicle = await fetch(`/api/vehicles/${currentVehicleId}`, {
           method: "PATCH",
@@ -341,18 +334,16 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
         });
 
         if (!patchVehicle.ok) {
-          alert(
-            "Reservation completed, but failed to mark vehicle as available."
-          );
-          // Still continue — main goal achieved
+          showToast.error("Reservation completed, but failed to free vehicle.");
+          return;
         }
       }
 
-      alert("Reservation completed successfully!");
+      showToast.success("Reservation completed successfully!");
       window.location.reload();
     } catch (err) {
       console.error(err);
-      alert("Network error. Please try again.");
+      showToast.error("Network error. Please try again.");
     }
   };
 
@@ -365,45 +356,83 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
       const response = await fetch("/api/vehicles?available=true&limit=100");
       const result = await response.json();
 
-      if (result.success && result.data) {
+      if (result.success && result.data?.length > 0) {
         setAvailableVehicles(result.data);
       } else {
-        alert("No available vehicles found.");
+        showToast.error("No available vehicles found today.");
         setAvailableVehicles([]);
       }
     } catch (err) {
       console.error(err);
-      alert("Failed to load available vehicles.");
+      showToast.error("Failed to load available vehicles.");
       setAvailableVehicles([]);
     }
   };
 
   const assignVehicle = async () => {
-    if (!selectedReservationId || !selectedVehicleId) return;
+  if (!selectedReservationId || !selectedVehicleId) {
+    showToast.error("Please select a vehicle");
+    return;
+  }
 
-    setAssigning(true);
-    try {
-      const res = await fetch(`/api/reservations/${selectedReservationId}`, {
+  setAssigning(true);
+
+  try {
+    // Step 1: Update the vehicle — set available = false
+    const vehicleUpdateRes = await fetch(`/api/vehicles/${selectedVehicleId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ available: false }),
+    });
+
+    if (!vehicleUpdateRes.ok) {
+      const errorData = await vehicleUpdateRes.json();
+      showToast.error(errorData.message || "Failed to update vehicle status");
+      setAssigning(false);
+      return;
+    }
+
+    // Step 2: Update the reservation — assign vehicle + set status to delivered
+    const reservationUpdateRes = await fetch(`/api/reservations/${selectedReservationId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        vehicle: selectedVehicleId,
+        status: "delivered",
+      }),
+    });
+
+    if (!reservationUpdateRes.ok) {
+      const errorData = await reservationUpdateRes.json();
+      
+      // If reservation update fails, try to rollback vehicle availability
+      await fetch(`/api/vehicles/${selectedVehicleId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vehicle: selectedVehicleId }),
+        body: JSON.stringify({ available: true }),
       });
 
-      if (res.ok) {
-        setIsAssignModalOpen(false);
-        setSelectedReservationId(null);
-        setSelectedVehicleId("");
-        window.location.reload();
-      } else {
-        const errorData = await res.json();
-        alert(errorData.message || "Failed to assign vehicle");
-      }
-    } catch (err) {
-      alert("Network error. Please try again.");
-    } finally {
+      showToast.error(errorData.message || "Failed to assign vehicle to reservation");
       setAssigning(false);
+      return;
     }
-  };
+
+    // Success!
+    showToast.success("Vehicle successfully assigned and marked as in use!");
+    
+    setIsAssignModalOpen(false);
+    setSelectedReservationId(null);
+    setSelectedVehicleId("");
+    
+    // Refresh page to reflect changes
+    window.location.reload();
+  } catch (err) {
+    console.error("Assignment error:", err);
+    showToast.error("Network error. Please try again.");
+  } finally {
+    setAssigning(false);
+  }
+};
 
   return (
     <div className="space-y-6">
@@ -412,184 +441,71 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
         {statCards.map((stat, index) => (
           <div
             key={index}
-            className={`bg-linear-to-br ${stat.color} p-6 rounded-2xl border border-white/10 text-white`}
+            className={`bg-linear-to-br ${stat.color} p-6 rounded-2xl border border-white/10 text-white shadow-lg`}
           >
             <div className="bg-white/20 p-3 rounded-lg w-fit mb-4">
               <span className="text-2xl">{stat.icon}</span>
             </div>
             <p className="text-gray-200 text-sm mb-1">{stat.label}</p>
-            <p className="text-4xl font-black text-white">
+            <p className="text-4xl font-black">
               {statsLoading ? "-" : stat.value}
             </p>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Reserves */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-black text-white">Recent Reserves</h3>
-            <button
-              onClick={() => handleTabChange("reserves")}
-              className="text-sm font-medium text-[#fe9a00] hover:text-orange-400 transition-colors"
-            >
-              See All →
-            </button>
-          </div>
+      {/* Today's Activity */}
+      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+        <h3 className="text-xl font-black text-white mb-6">Today's Activity</h3>
 
-          <div className="space-y-3">
-            {reservationsLoading ? (
-              <p className="text-gray-400 text-sm">Loading...</p>
-            ) : reservations.length > 0 ? (
-              reservations.map((res) => {
-                const canComplete = [
-                  "pending",
-                  "confirmed",
-                  "delivered",
-                ].includes(res.status);
-
-                return (
-                  <div
-                    key={res._id}
-                    className="p-3 bg-white/5 rounded-lg border border-white/5 hover:border-white/10 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="text-white font-semibold">
-                          Reserve #{res._id?.slice(-4).toUpperCase()}
-                        </p>
-                        <p className="text-gray-400 text-xs">
-                          {new Date(res.createdAt!).toLocaleDateString()}
-                        </p>
-                        {res.vehicle && (
-                          <p className="text-sm text-gray-300 mt-1">
-                            Vehicle: {res.vehicle.title} ({res.vehicle.number})
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            res.status === "confirmed"
-                              ? "bg-green-500/20 text-green-400"
-                              : res.status === "pending"
-                              ? "bg-yellow-500/20 text-yellow-400"
-                              : res.status === "delivered"
-                              ? "bg-purple-500/20 text-purple-400"
-                              : res.status === "completed"
-                              ? "bg-gray-600 text-gray-300"
-                              : "bg-red-500/20 text-red-400"
-                          }`}
-                        >
-                          {res.status.charAt(0).toUpperCase() +
-                            res.status.slice(1)}
-                        </span>
-
-                        {canComplete && (
-                          <button
-                            onClick={() =>
-                              handleCompleteReservation(
-                                res._id,
-                                res.vehicle?._id || res.vehicle
-                              )
-                            }
-                            className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white rounded font-semibold transition"
-                          >
-                            Complete
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      <div>
-                        <p className="text-gray-500">Price</p>
-                        <p className="text-[#07da54] font-bold">
-                          £{res.totalPrice}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Pickup</p>
-                        <p className="text-gray-300 font-medium">
-                          {new Date(res.startDate!).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Return</p>
-                        <p className="text-gray-300 font-medium">
-                          {new Date(res.endDate!).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-gray-400 text-sm">No reservations yet</p>
-            )}
-          </div>
-        </div>
-
-        {/* Fleet Status */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-          <h3 className="text-xl font-black text-white mb-4">Fleet Status</h3>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Today's Pickups */}
-          <div className="mb-6">
-            <h4 className="text-lg font-semibold text-white mb-3">
-              Today's Pickups ({todayActivity.pickups.length})
+          <div>
+            <h4 className="text-lg font-bold text-white mb-4 flex items-center justify-between">
+              <span>Today's Pickups</span>
+              <span className="text-sm font-normal text-gray-400">
+                ({todayActivity.pickups.length})
+              </span>
             </h4>
+
             {fleetLoading ? (
-              <p className="text-gray-400">Loading...</p>
+              <p className="text-gray-500 text-center py-8">Loading...</p>
             ) : todayActivity.pickups.length === 0 ? (
-              <p className="text-gray-500 text-sm">
-                No pickups scheduled today
-              </p>
+              <div className="text-center py-10 text-gray-500">
+                <p className="text-lg">No pickups scheduled today</p>
+              </div>
             ) : (
-              <div className="space-y-2">
-                {todayActivity.pickups.map((res) => (
+              <div className="space-y-3">
+                {todayActivity.pickups.map((res: any) => (
                   <div
                     key={res._id}
-                    className="bg-white/5 rounded-lg p-3 text-sm"
+                    className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-[#fe9a00]/30 transition"
                   >
                     <div className="flex justify-between items-start gap-4">
                       <div className="flex-1">
-                        <p className="font-medium text-white">
+                        <p className="font-bold text-white">
                           {res.vehicle
                             ? `${res.vehicle.title} (${res.vehicle.number})`
-                            : "Vehicle not assigned yet"}
+                            : "No vehicle assigned"}
                         </p>
-                        <p className="text-gray-400 text-xs mt-1">
-                          {res.category.name} • Pickup:{" "}
+                        <p className="text-sm text-gray-400 mt-1">
+                          {res.category.name} • Pickup at{" "}
                           {new Date(res.startDate).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
                         </p>
+                        <p className="text-sm font-medium text-[#fe9a00] mt-2">
+                          Total: £{res.totalPrice}
+                        </p>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            res.status === "confirmed"
-                              ? "bg-green-900 text-green-300"
-                              : "bg-yellow-900 text-yellow-300"
-                          }`}
-                        >
-                          {res.status}
-                        </span>
-
-                        {!res.vehicle && (
-                          <button
-                            onClick={() => openAssignModal(res._id)}
-                            className="px-4 py-1.5 text-xs bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded font-semibold transition"
-                          >
-                            Assign
-                          </button>
-                        )}
-                      </div>
+                      <button
+                        onClick={() => openAssignModal(res._id)}
+                        className="px-5 py-2 text-sm bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold rounded-lg transition shadow-md"
+                      >
+                        Assign Vehicle
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -599,115 +515,168 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
 
           {/* Today's Returns */}
           <div>
-            <h4 className="text-lg font-semibold text-white mb-3">
-              Today's Returns ({todayActivity.returns.length})
+            <h4 className="text-lg font-bold text-white mb-4 flex items-center justify-between">
+              <span>Today's Returns</span>
+              <span className="text-sm font-normal text-gray-400">
+                ({todayActivity.returns.length})
+              </span>
             </h4>
+
             {fleetLoading ? (
-              <p className="text-gray-400">Loading...</p>
+              <p className="text-gray-500 text-center py-8">Loading...</p>
             ) : todayActivity.returns.length === 0 ? (
-              <p className="text-gray-500 text-sm">
-                No returns scheduled today
-              </p>
+              <div className="text-center py-10 text-gray-500">
+                <p className="text-lg">No returns scheduled today</p>
+              </div>
             ) : (
-              <div className="space-y-2">
-                {todayActivity.returns.map((res) => {
-                  const canComplete =
-                    res.vehicle &&
-                    ["confirmed", "delivered"].includes(res.status);
+              <div className="space-y-3">
+                {todayActivity.returns.map((res: any) => (
+                  <div
+                    key={res._id}
+                    className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-green-500/30 transition"
+                  >
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <p className="font-bold text-white">
+                          {res.vehicle.title} ({res.vehicle.number})
+                        </p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          {res.category.name} • Due by{" "}
+                          {new Date(res.endDate).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                        <p className="text-sm font-medium text-[#07da54] mt-2">
+                          Paid: £{res.totalPrice}
+                        </p>
+                      </div>
 
-                  return (
-                    <div
-                      key={res._id}
-                      className="bg-white/5 rounded-lg p-3 text-sm"
-                    >
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1">
-                          <p className="font-medium text-white">
-                            {res.vehicle
-                              ? `${res.vehicle.title} (${res.vehicle.number})`
-                              : "No vehicle assigned"}
-                          </p>
-                          <p className="text-gray-400 text-xs mt-1">
-                            {res.category.name} • Return by:{" "}
-                            {new Date(res.endDate).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                        </div>
-
-                        <div className="flex flex-col items-end gap-2">
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-medium ${
-                              res.status === "confirmed"
-                                ? "bg-green-900 text-green-300"
-                                : res.status === "delivered"
-                                ? "bg-purple-900 text-purple-300"
-                                : "bg-gray-700 text-gray-300"
-                            }`}
-                          >
-                            {res.status}
-                          </span>
-
-                          {canComplete && (
-                            <button
-                              onClick={() =>
-                                handleCompleteReservation(
-                                  res._id,
-                                  res.vehicle._id
-                                )
-                              }
-                              className="px-4 py-1.5 text-xs bg-green-600 hover:bg-green-700 text-white rounded font-semibold transition"
-                            >
-                              Complete
-                            </button>
-                          )}
-                        </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="px-3 py-1 text-xs font-bold bg-purple-500/20 text-purple-300 rounded-full">
+                          Delivered
+                        </span>
+                        <button
+                          onClick={() =>
+                            handleCompleteReservation(res._id, res.vehicle._id)
+                          }
+                          className="px-5 py-2 text-sm bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition shadow-md"
+                        >
+                          Mark Complete
+                        </button>
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
       </div>
 
+      {/* Recent Reserves */}
+
+      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-black text-white">Recent Reserves</h3>
+          <button
+            onClick={() => handleTabChange("reserves")}
+            className="text-sm font-bold text-[#fe9a00] hover:text-orange-400 transition"
+          >
+            See All →
+          </button>
+        </div>
+
+        {reservationsLoading ? (
+          <p className="text-gray-500 text-center py-8">
+            Loading reservations...
+          </p>
+        ) : reservations.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            <p className="text-lg">No reservations yet</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {reservations.map((res: any) => (
+              <div
+                key={res._id}
+                className="bg-white/5 border border-white/10 rounded-xl p-5 hover:border-[#fe9a00]/30 transition-all"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-white font-bold">
+                      Reserve #{res._id?.slice(-6).toUpperCase()}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(res.createdAt!).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold ${
+                      res.status === "confirmed"
+                        ? "bg-green-500/20 text-green-400"
+                        : res.status === "pending"
+                        ? "bg-yellow-500/20 text-yellow-400"
+                        : res.status === "delivered"
+                        ? "bg-purple-500/20 text-purple-400"
+                        : res.status === "completed"
+                        ? "bg-blue-500/20 text-blue-400"
+                        : "bg-gray-500/20 text-gray-400"
+                    }`}
+                  >
+                    {res.status.charAt(0).toUpperCase() + res.status.slice(1)}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-500">Total Price</p>
+                    <p className="text-[#fe9a00] font-bold text-lg">
+                      £{res.totalPrice}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Pickup</p>
+                    <p className="text-white font-medium">
+                      {new Date(res.startDate!).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Return</p>
+                    <p className="text-white font-medium">
+                      {new Date(res.endDate!).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Category</p>
+                    <p className="text-white font-medium">
+                      {res.category.name}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Assign Vehicle Modal */}
       {isAssignModalOpen && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1a2847] rounded-2xl border border-white/10 p-6 w-full max-w-md">
-            <h3 className="text-xl font-black text-white mb-6">
-              Assign Vehicle
-            </h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Available Vehicles Today
-                </label>
-                <select
-                  value={selectedVehicleId}
-                  onChange={(e) => setSelectedVehicleId(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-[#fe9a00]"
-                  disabled={assigning}
-                >
-                  <option value="">Select a vehicle...</option>
-                  {availableVehicles.length === 0 ? (
-                    <option disabled>No available vehicles today</option>
-                  ) : (
-                    availableVehicles.map((veh) => (
-                      <option key={veh._id} value={veh._id}>
-                        {veh.title} ({veh.number}) —{" "}
-                        {veh.office?.name || "Unknown Office"}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-8">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a2847] rounded-2xl border border-white/10 p-8 w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-black text-white">Assign Vehicle</h3>
               <button
                 onClick={() => {
                   setIsAssignModalOpen(false);
@@ -715,16 +684,65 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                   setSelectedVehicleId("");
                 }}
                 disabled={assigning}
-                className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition"
+                className="p-2 hover:bg-white/10 rounded-lg transition"
+              >
+                <FiX className="text-white text-2xl" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-300 mb-3">
+                  Select Available Vehicle
+                </label>
+
+                <CustomSelect
+                  options={availableVehicles.map((veh) => ({
+                    _id: veh._id,
+                    name: `${veh.title}  (${veh.number}) — ${
+                      veh.office?.name || "No Office"
+                    }`,
+                  }))}
+                  value={selectedVehicleId}
+                  onChange={(val) => setSelectedVehicleId(val)}
+                  placeholder={
+                    availableVehicles.length === 0
+                      ? "No vehicles available today"
+                      : "Choose a vehicle..."
+                  }
+                />
+              </div>
+
+              {availableVehicles.length === 0 && (
+                <p className="text-center text-gray-500 py-6">
+                  No vehicles are currently available for assignment.
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-4 mt-10">
+              <button
+                onClick={() => {
+                  setIsAssignModalOpen(false);
+                  setSelectedReservationId(null);
+                  setSelectedVehicleId("");
+                }}
+                disabled={assigning}
+                className="flex-1 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition"
               >
                 Cancel
               </button>
+
               <button
                 onClick={assignVehicle}
-                disabled={!selectedVehicleId || assigning}
-                className="flex-1 px-4 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg font-bold transition disabled:opacity-50"
+                disabled={
+                  !selectedVehicleId ||
+                  assigning ||
+                  availableVehicles.length === 0
+                }
+                className="flex-1 py-3.5 bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] text-black font-bold rounded-xl transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {assigning ? "Assigning..." : "Assign Vehicle"}
+                {assigning ? "Assigning..." : "Assign & Deliver"}
               </button>
             </div>
           </div>
@@ -732,12 +750,4 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
       )}
     </div>
   );
-}
-
-function HolidaysContent() {
-  return <SpecialDaysManagement />;
-}
-
-function ReservesContent() {
-  return <ReservationsManagement />;
 }

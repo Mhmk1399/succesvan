@@ -46,9 +46,11 @@ export async function GET() {
       .sort({ startDate: 1 })
       .lean();
 
+    // In your /api/fleet-status GET handler
     const todaysReturns = await Reservation.find({
       endDate: { $gte: today, $lt: tomorrow },
-      status: { $in: ["confirmed", "pending"] },
+      status: { $in: ["confirmed", "delivered"] },
+      vehicle: { $ne: null }, // ← ADD THIS
     })
       .populate({
         path: "vehicle",
