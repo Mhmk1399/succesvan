@@ -628,11 +628,37 @@ export default function ReservationsManagement() {
                       }
                     />
                     <button
-                      onClick={handleVehicleUpdate}
-                      disabled={isSubmitting}
+                      onClick={async () => {
+                        if (!newVehicle) return;
+                        setIsSubmitting(true);
+                        try {
+                          // Update vehicle and status together
+                          const res = await fetch(`/api/reservations/${selectedReservation._id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ 
+                              vehicle: newVehicle,
+                              status: "delivered" 
+                            }),
+                          });
+                          const data = await res.json();
+                          if (!data.success) throw new Error(data.error || "Update failed");
+                          
+                          showToast.success("Vehicle assigned and delivered!");
+                          setIsEditOpen(false);
+                          if (mutateRef.current) mutateRef.current();
+                          setIsDetailOpen(false);
+                        } catch (error) {
+                          const message = error instanceof Error ? error.message : "Unknown error";
+                          showToast.error(message || "Update failed");
+                        } finally {
+                          setIsSubmitting(false);
+                        }
+                      }}
+                      disabled={isSubmitting || !newVehicle}
                       className="w-full px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold text-sm disabled:opacity-50"
                     >
-                      {isSubmitting ? "Updating..." : "Update Vehicle"}
+                      {isSubmitting ? "Updating..." : "Assign & Deliver"}
                     </button>
                   </div>
                 )}
@@ -673,7 +699,6 @@ export default function ReservationsManagement() {
                         { _id: "confirmed", name: "Confirmed" },
                         { _id: "completed", name: "Completed" },
                         { _id: "canceled", name: "Canceled" },
-                        { _id: "delivered", name: "Delivered" },
                       ]}
                       value={newStatus}
                       onChange={setNewStatus}

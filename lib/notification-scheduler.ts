@@ -58,21 +58,25 @@ export async function sendStatusNotification(
 ) {
   const reservation = await Reservation.findById(reservationId)
     .populate("user")
-    .populate("office");
+    .populate("office")
+    .populate("vehicle");
 
   if (!reservation) return;
 
   const user = reservation.user as any;
   const office = reservation.office as any;
+  const vehicle = reservation.vehicle as any;
   const phoneNumber = user.phoneData?.phoneNumber;
 
   if (!phoneNumber) return;
 
+  const vehicleInfo = vehicle?.number ? ` Vehicle: ${vehicle.number}` : "";
+
   const messages = {
     confirmed: `Reservation confirmed! Pickup: ${new Date(reservation.startDate).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} at ${office.name}. SuccessVanHire.co.uk`,
     canceled: `Reservation canceled. Questions? Contact us. SuccessVanHire.co.uk or call +44 20 3011 1198`,
-    delivered: `Van delivered! Return by ${new Date(reservation.endDate).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}. SuccessVanHire.co.uk`,
-    completed: `Thank you for choosing SuccessVanHire! Hope to serve you again. SuccessVanHire.co.uk`,
+    delivered: `Vehicle delivered!${vehicleInfo} Return by ${new Date(reservation.endDate).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}.  SuccessVanHire.co.uk `,
+    completed: `Thank you for choosing SuccessVanHire.co.uk! rate your experience at uk.trustpilot.com/review/successvanhire.com`,
   };
 
   // Send SMS immediately, don't save to database
