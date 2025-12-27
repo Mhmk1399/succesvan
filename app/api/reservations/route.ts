@@ -8,10 +8,7 @@ import bcrypt from "bcryptjs";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import office from "@/model/office";
 import { sendSMS } from "@/lib/sms";
-import {
-  scheduleReservationNotifications,
-  scheduleConfirmationNotification,
-} from "@/lib/notification-scheduler";
+import { scheduleReservationNotifications, sendStatusNotification } from "@/lib/notification-scheduler";
 
 export async function GET(req: NextRequest) {
   try {
@@ -121,11 +118,23 @@ export async function POST(req: NextRequest) {
       user.licenceAttached?.front && user.licenceAttached?.back;
     const licenceMessage = hasLicence
       ? ""
-      : " Please add your licence in your dashboard to confirm your reservation.";
+      : " Add licence to dashboard.";
 
-    // Schedule notifications
+    // Send creation SMS
     try {
-      await scheduleConfirmationNotification(reservation._id.toString());
+      await sendSMS(
+        user.phoneData.phoneNumber.replace("+", ""),
+        `Dear ${user.name}, reservation created, pending review.${licenceMessage} SuccessVanHire.co.uk/register`
+      );
+    } catch (error) {
+      console.log(
+        "Creation SMS Error:",
+        error instanceof Error ? error.message : "Unknown error"
+      );
+    }
+
+    // Only schedule reminders, don't send confirmation yet
+    try {
       await scheduleReservationNotifications(reservation._id.toString());
     } catch (error) {
       console.log(

@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
       processed: 0,
       sent: 0,
       failed: 0,
+      deleted: 0,
     };
 
     for (const notification of dueNotifications) {
@@ -35,17 +36,23 @@ export async function GET(req: NextRequest) {
           notification.message
         );
 
-        notification.status = "sent";
-        notification.sentAt = new Date();
+        // Delete reminder notifications after sending
+        if (notification.type === "reservation_reminder") {
+          await notification.deleteOne();
+          results.deleted++;
+        } else {
+          notification.status = "sent";
+          notification.sentAt = new Date();
+          await notification.save();
+        }
         results.sent++;
       } catch (error) {
         notification.status = "failed";
         notification.error =
           error instanceof Error ? error.message : "Unknown error";
+        await notification.save();
         results.failed++;
       }
-
-      await notification.save();
     }
 
     return successResponse(results);

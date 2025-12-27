@@ -2,11 +2,19 @@ import Notification from "@/model/notification";
 import Reservation from "@/model/reservation";
 import User from "@/model/user";
 import Office from "@/model/office";
+import { sendSMS } from "@/lib/sms";
 
 export async function scheduleReservationNotifications(reservationId: string) {
   const reservation = await Reservation.findById(reservationId)
-    .populate("user")
-    .populate("office");
+    .populate({
+      path: "user",
+      model: User,
+      select: "phoneData",
+    })
+    .populate({
+      path: "office",
+      model: Office,
+    });
 
   if (!reservation) throw new Error("Reservation not found");
 
@@ -18,21 +26,36 @@ export async function scheduleReservationNotifications(reservationId: string) {
 
   const startDate = new Date(reservation.startDate);
   const reminderTime = new Date(startDate.getTime() - 3 * 60 * 60 * 1000); // 3 hours before
+  const now = new Date();
 
-  // Only schedule if reminder time is in the future
-  if (reminderTime > new Date()) {
-    await Notification.create({
-      type: "reservation_reminder",
-      reservation: reservationId,
-      user: user._id,
-      phoneNumber,
-      message: `Reminder: Your van pickup is in 3 hours at ${office.name}. Pickup time: ${startDate.toLocaleString()}. SuccessVanHire - successvanhire.co.uk`,
-      scheduledFor: reminderTime,
-    });
+  // Schedule reminders for all pickup times within 3 hours (every 15 min)
+  const pickupTimes = [
+    startDate,
+    new Date(startDate.getTime() + 15 * 60 * 1000),
+    new Date(startDate.getTime() + 30 * 60 * 1000),
+    new Date(startDate.getTime() + 45 * 60 * 1000),
+  ];
+
+  for (const pickupTime of pickupTimes) {
+    const reminderFor = new Date(pickupTime.getTime() - 3 * 60 * 60 * 1000);
+    
+    if (reminderFor > now) {
+      await Notification.create({
+        type: "reservation_reminder",
+        reservation: reservationId,
+        user: user._id,
+        phoneNumber,
+        message: `Reminder: Van pickup in 3hrs at ${office.name}. Time: ${pickupTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} ${pickupTime.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}. SuccessVanHire.co.uk`,
+        scheduledFor: reminderFor,
+      });
+    }
   }
 }
 
-export async function scheduleConfirmationNotification(reservationId: string) {
+export async function sendStatusNotification(
+  reservationId: string,
+  status: "confirmed" | "canceled" | "delivered" | "completed"
+) {
   const reservation = await Reservation.findById(reservationId)
     .populate("user")
     .populate("office");
@@ -45,44 +68,29 @@ export async function scheduleConfirmationNotification(reservationId: string) {
 
   if (!phoneNumber) return;
 
-  await Notification.create({
-    type: "reservation_confirmed",
-    reservation: reservationId,
-    user: user._id,
-    phoneNumber,
-    message: `Your reservation is confirmed! Pickup: ${new Date(
-      reservation.startDate
-    ).toLocaleString()} at ${office.name}. SuccessVanHire - successvanhire.co.uk`,
-    scheduledFor: new Date(), // Send immediately
-  });
-}
+  const messages = {
+    confirmed: `Reservation confirmed! Pickup: ${new Date(reservation.startDate).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} at ${office.name}. SuccessVanHire.co.uk`,
+    canceled: `Reservation canceled. Questions? Contact us. SuccessVanHire.co.uk or call +44 20 3011 1198`,
+    delivered: `Van delivered! Return by ${new Date(reservation.endDate).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}. SuccessVanHire.co.uk`,
+    completed: `Thank you for choosing SuccessVanHire! Hope to serve you again. SuccessVanHire.co.uk`,
+  };
 
-export async function scheduleCancellationNotification(reservationId: string) {
-  const reservation = await Reservation.findById(reservationId).populate("user");
+  // Send SMS immediately, don't save to database
+  try {
+    await sendSMS(phoneNumber.replace("+", ""), messages[status]);
+  } catch (error) {
+    console.log(
+      `Status SMS Error (${status}):`,
+      error instanceof Error ? error.message : "Unknown error"
+    );
+  }
 
-  if (!reservation) return;
-
-  const user = reservation.user as any;
-  const phoneNumber = user.phoneData?.phoneNumber;
-
-  if (!phoneNumber) return;
-
-  await Notification.create({
-    type: "reservation_canceled",
-    reservation: reservationId,
-    user: user._id,
-    phoneNumber,
-    message: `Your reservation has been canceled. If you have questions, contact us. SuccessVanHire - successvanhire.co.uk`,
-    scheduledFor: new Date(), // Send immediately
-  });
-
-  // Cancel pending reminders
-  await Notification.updateMany(
-    {
+  // Cancel pending reminders if canceled
+  if (status === "canceled") {
+    await Notification.deleteMany({
       reservation: reservationId,
       status: "pending",
       type: "reservation_reminder",
-    },
-    { status: "failed", error: "Reservation canceled" }
-  );
+    });
+  }
 }
