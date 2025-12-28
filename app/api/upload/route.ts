@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
-  region: process.env.AWS_S3_REGION,
+  region: process.env.this_S3_REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.this_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.this_SECRET_ACCESS_KEY!,
   },
 });
 
@@ -21,14 +21,14 @@ export async function POST(req: NextRequest) {
 
     await s3.send(
       new PutObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET,
+        Bucket: process.env.this_S3_BUCKET,
         Key: key,
         Body: buffer,
         ContentType: file.type,
       })
     );
 
-    const url = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${key}`;
+    const url = `https://${process.env.this_S3_BUCKET}.s3.${process.env.this_S3_REGION}.amazonaws.com/${key}`;
     return NextResponse.json({ url });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

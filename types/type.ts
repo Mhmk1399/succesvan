@@ -178,9 +178,10 @@ export interface AddOn {
 // Reservation ------------------------------------------------------------------------------------------
 export interface Reservation {
   _id?: string;
-
   user?: any;
   office?: any;
+  category?: any;
+  vehicle?: any;
   startDate: Date;
   endDate: Date;
   totalPrice: number;
@@ -190,10 +191,11 @@ export interface Reservation {
   addOns?: Array<{
     addOn?: AddOn;
     quantity: number;
+    selectedTierIndex?: number;
   }>;
+  discountCode?: string;
   createdAt?: Date;
   updatedAt?: Date;
-  vehicle: Vehicle;
 }
 
 // Table ------------------------------------------------------------------------------------
