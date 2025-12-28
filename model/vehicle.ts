@@ -10,7 +10,10 @@ const vehicleSchema = new mongoose.Schema(
       ref: "Category",
       required: true,
     },
-    available: { type: Boolean },
+    available: {
+      type: Boolean,
+      default: true, // ← This ensures new vehicles are available
+    },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
 
     reservation: {

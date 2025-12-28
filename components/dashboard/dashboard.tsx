@@ -127,6 +127,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (sidebarOpen) {
+      
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
