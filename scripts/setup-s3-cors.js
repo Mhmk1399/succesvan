@@ -8,15 +8,15 @@ const env = fs.readFileSync(".env", "utf8").split("\n").reduce((acc, line) => {
 }, {});
 
 const s3 = new S3Client({
-  region: env.AWS_S3_REGION,
+  region: env.this_S3_REGION,
   credentials: {
-    accessKeyId: env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: env.this_ACCESS_KEY_ID,
+    secretAccessKey: env.this_SECRET_ACCESS_KEY,
   },
 });
 
 const corsConfig = {
-  Bucket: env.AWS_S3_BUCKET,
+  Bucket: env.this_S3_BUCKET,
   CORSConfiguration: {
     CORSRules: [
       {
@@ -32,7 +32,7 @@ const corsConfig = {
 async function setupCors() {
   try {
     await s3.send(new PutBucketCorsCommand(corsConfig));
-    console.log("✅ CORS configured successfully for bucket:", env.AWS_S3_BUCKET);
+    console.log("✅ CORS configured successfully for bucket:", env.this_S3_BUCKET);
   } catch (error) {
     console.log("❌ Error:", error.message);
   }
