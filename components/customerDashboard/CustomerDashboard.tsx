@@ -7,24 +7,17 @@ import {
   FiX,
   FiClipboard,
   FiUser,
-  FiGift,
   FiTag,
   FiExternalLink,
   FiLogOut,
   FiAlertCircle,
 } from "react-icons/fi";
-import { MdSmartToy } from "react-icons/md";
 import ProfileContent from "./ProfileContent";
 import DynamicTableView from "../dashboard/DynamicTableView";
 import { Reservation } from "@/types/type";
 import { showToast } from "@/lib/toast";
 
 const menuItems = [
-  {
-    id: "offers",
-    label: "Offers",
-    icon: <FiGift />,
-  },
   {
     id: "reserves",
     label: "My Reservations",
@@ -40,11 +33,6 @@ const menuItems = [
     id: "discounts",
     label: "Discounts",
     icon: <FiTag />,
-  },
-  {
-    id: "Ai",
-    label: "AI assistance",
-    icon: <MdSmartToy />,
   },
 ];
 
@@ -106,7 +94,7 @@ export default function CustomerDashboard() {
             !hasLicenseUploaded
           ) {
             showToast.error(
-              "Your reservation is pending. Please upload your license to confirm your reservation."
+              "Your reservation is pending. Please upload your Licenses to confirm your reservation."
             );
             setActiveTab("profile");
             window.history.replaceState({}, "", window.location.pathname);
@@ -227,17 +215,17 @@ export default function CustomerDashboard() {
               <FiAlertCircle className="text-yellow-500 text-xl mt-0.5 shrink-0" />
               <div>
                 <h3 className="text-yellow-500 font-bold mb-1">
-                  License Required
+                  Licenses Required
                 </h3>
                 <p className="text-gray-300 text-sm">
                   Your reservations are pending. Please upload your driver's
-                  license in the Profile section to confirm your bookings.
+                  Licenses in the Profile section to confirm your bookings.
                 </p>
                 <button
                   onClick={() => handleTabChange("profile", "license")}
                   className="mt-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg transition-colors font-semibold text-sm"
                 >
-                  Upload License Now
+                  Upload Licenses Now
                 </button>
               </div>
             </div>
@@ -270,7 +258,6 @@ export default function CustomerDashboard() {
               scrollToSection={scrollToSection}
             />
           )}
-          {activeTab === "offers" && <OffersContent />}
           {activeTab === "discounts" && <DiscountsContent />}
         </div>
       </main>
@@ -346,7 +333,7 @@ function ReservesContent() {
           key: "office" as keyof Reservation,
           label: "Office",
           render: (value: any) => {
-            if (typeof value === 'object' && value?.name) {
+            if (typeof value === "object" && value?.name) {
               return value.name;
             }
             return value || "-";
@@ -368,10 +355,14 @@ function ReservesContent() {
           key: "totalPrice" as keyof Reservation,
           label: "Total Price",
           render: (value: any) => {
-            if (typeof value === 'object' && value !== null && value?.amount !== undefined) {
+            if (
+              typeof value === "object" &&
+              value !== null &&
+              value?.amount !== undefined
+            ) {
               return <span>£{value.amount}</span>;
             }
-            if (typeof value === 'number') {
+            if (typeof value === "number") {
               return <span>£{value}</span>;
             }
             return <span>£0</span>;
@@ -398,31 +389,6 @@ function ReservesContent() {
         },
       ]}
     />
-  );
-}
-
-function OffersContent() {
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6"
-          >
-            <h3 className="text-lg font-black text-white mb-2">
-              Special Offer {i}
-            </h3>
-            <p className="text-gray-400 text-sm mb-4">
-              Get up to 20% discount on your next reservation
-            </p>
-            <button className="w-full px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold text-sm">
-              View Details
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -477,7 +443,9 @@ function DiscountsContent() {
         <h3 className="text-xl font-black text-white mb-2">
           No Active Discounts
         </h3>
-        <p className="text-gray-400">Check back later for new discount codes!</p>
+        <p className="text-gray-400">
+          Check back later for new discount codes!
+        </p>
       </div>
     );
   }

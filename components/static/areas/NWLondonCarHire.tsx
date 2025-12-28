@@ -37,7 +37,7 @@ const faqData = [
   {
     question: "What do I need to rent a car in NW London?",
     answer:
-      "You need to provide: Your ID, a valid driving license, proof of address, and your bank card. We accept full UK and EU driving licences with quick and easy verification.",
+      "You need to provide: Your ID, a valid driving Licenses, proof of address, and your bank card. We accept full UK and EU driving licences with quick and easy verification.",
     category: "Requirements",
   },
   {

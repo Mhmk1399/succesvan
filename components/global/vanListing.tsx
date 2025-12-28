@@ -544,7 +544,7 @@ function ReservationPanel({
             </h3>
             <p className="text-gray-400">
               {isNewUser
-                ? "Please upload your license in the dashboard to finalize your request."
+                ? "Please upload your Licenses in the dashboard to finalize your request."
                 : "We'll send you a confirmation email shortly."}
             </p>
           </div>

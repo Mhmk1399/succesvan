@@ -27,7 +27,7 @@ export default function HomeContainer() {
       category: "About Us",
     },
     {
-      question: "What driving licenses do you accept?",
+      question: "What driving Licenses do you accept?",
       answer:
         "We accept full UK and EU driving licences with a quick and easy verification process.",
       category: "Requirements",

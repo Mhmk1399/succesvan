@@ -709,7 +709,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
             </h3>
             <p className="text-gray-400">
               {isNewUser
-                ? "Please upload your license in the dashboard."
+                ? "Please upload your Licenses in the dashboard."
                 : "We'll send you a confirmation email shortly."}
             </p>
           </div>
@@ -1137,7 +1137,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                     {selectedCategory?.gear?.availableTypes?.length > 1 && (
                       <div className="mt-3 pt-3 border-t border-white/10">
                         <h5 className="text-white text-sm font-semibold mb-2">
-                          Gear Type
+                          Gearbox
                         </h5>
                         <div className="flex gap-2">
                           {selectedCategory.gear.availableTypes.includes(
@@ -1445,7 +1445,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                   selectedCategory?.gear?.availableTypes?.length || 0 > 1 && (
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                       <h4 className="text-white font-semibold mb-2">
-                        Gear Type
+                        Gearbox
                       </h4>
                       <p className="text-white capitalize">
                         {formData.gearType}

@@ -1,26 +1,61 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FiPlus, FiX } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import DynamicTableView from "./DynamicTableView";
-import { Type } from "@/types/type";
+import { Type, Office } from "@/types/type";
+import CustomSelect from "@/components/ui/CustomSelect";
 type MutateFn = () => Promise<void>;
 
 export default function TypesManagement() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingType, setEditingType] = useState<Type | null>(null);
-  const [formData, setFormData] = useState<Type>({ name: "", description: "" });
+  const [formData, setFormData] = useState<Type>({
+    name: "",
+    description: "",
+    offices: [],
+    status: "active",
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [offices, setOffices] = useState<Office[]>([]);
   const mutateRef = useRef<MutateFn | null>(null);
+
+  useEffect(() => {
+    const fetchOffices = async () => {
+      try {
+        const res = await fetch("/api/offices?limit=100");
+        const data = await res.json();
+        if (data.success) {
+          setOffices(data.data);
+        }
+      } catch (error) {
+        console.log("Failed to fetch offices", error);
+      }
+    };
+    fetchOffices();
+  }, []);
 
   const handleOpenForm = (type?: Type) => {
     if (type) {
       setEditingType(type);
-      setFormData(type);
+      // Extract office IDs from populated office objects
+      const officeIds = type.offices
+        ? type.offices
+            .map((office) =>
+              typeof office === "string" ? office : office._id!
+            )
+            .filter(Boolean)
+        : [];
+
+      setFormData({
+        ...type,
+        offices: officeIds,
+        status: type.status || "active",
+      });
     } else {
       setEditingType(null);
-      setFormData({ name: "", description: "" });
+      setFormData({ name: "", description: "", offices: [], status: "active" });
     }
     setIsFormOpen(true);
   };
@@ -28,7 +63,7 @@ export default function TypesManagement() {
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setEditingType(null);
-    setFormData({ name: "", description: "" });
+    setFormData({ name: "", description: "", offices: [], status: "active" });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,6 +102,56 @@ export default function TypesManagement() {
     }
   };
 
+  const handleStatusToggle = async (item: Type) => {
+    try {
+      if (!item._id) {
+        console.error("No type ID found:", item);
+        throw new Error("Type ID is missing");
+      }
+
+      console.log(
+        "Toggling status for type:",
+        item._id,
+        "Current status:",
+        item.status
+      );
+      const currentStatus = item.status || "active";
+      const newStatus = currentStatus === "active" ? "inactive" : "active";
+      console.log("New status will be:", newStatus);
+
+      const res = await fetch(`/api/types/${item._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      console.log("API response status:", res.status);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("API error response:", errorText);
+        throw new Error(`HTTP ${res.status}: ${errorText}`);
+      }
+
+      const data = await res.json();
+      console.log("API response data:", data);
+
+      if (!data.success) throw new Error(data.error || "Update failed");
+
+      showToast.success(`Type status updated to ${newStatus}`);
+      if (mutateRef.current) {
+        console.log("Refreshing table data...");
+        mutateRef.current();
+      } else {
+        console.warn("mutateRef.current is not available");
+      }
+    } catch (error) {
+      console.error("Status toggle error:", error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Update failed");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -88,14 +173,50 @@ export default function TypesManagement() {
         columns={[
           { key: "name", label: "Name" },
           { key: "description", label: "Description" },
+
+          {
+            key: "offices",
+            label: "Offices",
+            render: (value: any) => {
+              if (!value || value.length === 0) return "-";
+
+              // Handle populated offices (objects with name property)
+              if (value[0] && typeof value[0] === "object" && value[0].name) {
+                return value.map((office: any) => office.name).join(", ");
+              }
+
+              // Handle office IDs (fallback)
+              const officeNames = value.map((officeId: string) => {
+                const office = offices.find((o) => o._id === officeId);
+                return office?.name || officeId;
+              });
+              return officeNames.join(", ");
+            },
+          },
           {
             key: "createdAt",
             label: "Created",
             render: (value) =>
               value ? new Date(value).toLocaleDateString() : "-",
           },
+          {
+            key: "status",
+            label: "Status",
+            render: (value: string) => (
+              <span
+                className={`px-2 py-1 rounded-full  font-semibold ${
+                  value === "active"
+                    ? "bg-green-500/20 text-xs  text-green-400"
+                    : "bg-red-500/20 text-[10px] text-red-400"
+                }`}
+              >
+                {value}
+              </span>
+            ),
+          },
         ]}
         onEdit={handleOpenForm}
+        onStatusToggle={handleStatusToggle}
         onMutate={(mutate) => (mutateRef.current = mutate)}
       />
 
@@ -145,6 +266,58 @@ export default function TypesManagement() {
                   className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
                   disabled={isSubmitting}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  Status
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      status: e.target.value as "active" | "inactive",
+                    })
+                  }
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  disabled={isSubmitting}
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-300 mb-2">
+                  Offices
+                </label>
+                <div className="space-y-2 max-h-40 overflow-y-auto p-3 bg-white/10 border border-white/20 rounded-lg">
+                  {offices.map((office) => (
+                    <label
+                      key={office._id}
+                      className="flex items-center gap-2 text-white cursor-pointer hover:bg-white/5 p-2 rounded"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={(
+                          formData.offices as string[] | undefined
+                        )?.includes(office._id!)}
+                        onChange={(e) => {
+                          const currentOffices = (formData.offices ||
+                            []) as string[];
+                          const selected: string[] = e.target.checked
+                            ? [...currentOffices, office._id!]
+                            : currentOffices.filter((id) => id !== office._id);
+                          setFormData({ ...formData, offices: selected });
+                        }}
+                        className="w-4 h-4 accent-[#fe9a00]"
+                        disabled={isSubmitting}
+                      />
+                      {office.name}
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">

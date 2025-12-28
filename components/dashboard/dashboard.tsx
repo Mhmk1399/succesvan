@@ -554,9 +554,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                       </div>
 
                       <div className="flex flex-col items-end gap-2">
-                        <span className="px-3 py-1 text-xs font-bold bg-purple-500/20 text-purple-300 rounded-full">
-                          Delivered
-                        </span>
+                    
                         <button
                           onClick={() =>
                             handleCompleteReservation(res._id, res.vehicle._id)
@@ -630,7 +628,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                         : "bg-gray-500/20 text-gray-400"
                     }`}
                   >
-                    {res.status.charAt(0).toUpperCase() + res.status.slice(1)}
+                    {res.status === "delivered" ? "collected" : res.status.charAt(0).toUpperCase() + res.status.slice(1)}
                   </span>
                 </div>
 

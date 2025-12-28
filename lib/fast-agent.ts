@@ -27,7 +27,7 @@ export type FastPhase =
   | "ask_needs" // Quick question about needs
   | "show_suggestions" // Display category cards
   | "collect_booking" // Get dates, office, age
-  | "select_gear" // Select gear type
+  | "select_Gearbox" // Select gear type
   | "select_addons" // Optional add-ons selection
   | "show_receipt" // Show price and booking summary
   | "verify_phone" // Phone verification
@@ -203,7 +203,7 @@ export async function processFastAgent(
           isComplete: false,
         };
 
-      case "select_gear":
+      case "select_Gearbox":
         // Gear selection is handled by the client, just provide default response
         return {
           message: "Please select your preferred transmission type.",
@@ -694,7 +694,7 @@ async function handleSubmitBooking(
 
     const newState: FastAgentState = {
       ...currentState,
-      phase: "select_gear",
+      phase: "select_Gearbox",
       availableAddOns,
       booking: {
         ...currentState.booking,

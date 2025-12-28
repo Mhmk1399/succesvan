@@ -138,7 +138,7 @@ export default function ProfileContent({
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`/api/users/${user?._id}`, {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -343,7 +343,7 @@ export default function ProfileContent({
 
       <div id="section-license" className="bg-white/5 border border-white/10 rounded-2xl p-6">
         <h3 className="text-xl font-black text-white mb-6">
-          License Attachments
+          Licenses Attachments
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>

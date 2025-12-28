@@ -12,7 +12,7 @@ export type FastPhase =
   | "ask_needs"
   | "show_suggestions"
   | "collect_booking"
-  | "select_gear"
+  | "select_Gearbox"
   | "select_addons"
   | "show_receipt"
   | "verify_phone"

@@ -18,9 +18,21 @@ export async function GET(req: NextRequest) {
       if (name) query.name = { $regex: name, $options: "i" };
       if (type) query.type = type;
       if (status) query.status = status;
-      const categories = await Category.find(query)
-        .populate("type")
+
+      let categories = await Category.find(query)
         .sort({ showPrice: 1 });
+
+      // Try to populate type field, but don't fail if it doesn't work
+      try {
+        categories = await Category.populate(categories, {
+          path: "type",
+          options: { strictPopulate: false }
+        });
+      } catch (populateError) {
+        console.warn("Failed to populate type field:", populateError);
+        // Continue without populated data
+      }
+
       return successResponse({ data: categories });
     }
 
@@ -32,14 +44,23 @@ export async function GET(req: NextRequest) {
     if (type) query.type = type;
     if (status) query.status = status;
 
-    const [categories, total] = await Promise.all([
-      Category.find(query)
-        .populate("type")
-        .sort({ showPrice: 1 })
-        .skip(skip)
-        .limit(limitNum),
-      Category.countDocuments(query),
-    ]);
+    let categories = await Category.find(query)
+      .sort({ showPrice: 1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    // Try to populate type field, but don't fail if it doesn't work
+    try {
+      categories = await Category.populate(categories, {
+        path: "type",
+        options: { strictPopulate: false }
+      });
+    } catch (populateError) {
+      console.warn("Failed to populate type field:", populateError);
+      // Continue without populated data
+    }
+
+    const total = await Category.countDocuments(query);
 
     return successResponse({
       data: categories,
@@ -51,6 +72,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
+    console.error("Categories API Error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return errorResponse(message, 500);
   }
@@ -61,7 +83,15 @@ export async function POST(req: NextRequest) {
     await connect();
     const body = await req.json();
     const category = await Category.create(body);
-    await category.populate("type");
+
+    // Try to populate type field, but don't fail if it doesn't work
+    try {
+      await category.populate("type");
+    } catch (populateError) {
+      console.warn("Failed to populate type field on create:", populateError);
+      // Continue without populated data
+    }
+
     return successResponse(category, 201);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -77,7 +107,20 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const category = await Category.findByIdAndUpdate(id, body, {
       new: true,
-    }).populate("type");
+    });
+
+    if (!category) {
+      return errorResponse("Category not found", 404);
+    }
+
+    // Try to populate type field, but don't fail if it doesn't work
+    try {
+      await category.populate("type");
+    } catch (populateError) {
+      console.warn("Failed to populate type field on update:", populateError);
+      // Continue without populated data
+    }
+
     return successResponse(category);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

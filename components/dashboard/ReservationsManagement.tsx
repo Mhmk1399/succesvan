@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FiX, FiCalendar, FiClock } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import DynamicTableView from "./DynamicTableView";
@@ -24,7 +24,6 @@ export default function ReservationsManagement() {
   const [newVehicle, setNewVehicle] = useState("");
   const [vehicles, setVehicles] = useState<{ _id: string; name: string }[]>([]);
   const [users, setUsers] = useState<{ _id: string; name: string }[]>([]);
-  const [offices, setOffices] = useState<{ _id: string; name: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingVehicles, setLoadingVehicles] = useState(true);
   const [showDateRange, setShowDateRange] = useState(false);
@@ -43,14 +42,12 @@ export default function ReservationsManagement() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [vehiclesRes, usersRes, officesRes] = await Promise.all([
+        const [vehiclesRes, usersRes] = await Promise.all([
           fetch("/api/vehicles?status=active&available=true"),
           fetch("/api/users?limit=100"),
-          fetch("/api/offices"),
         ]);
         const vehiclesData = await vehiclesRes.json();
         const usersData = await usersRes.json();
-        const officesData = await officesRes.json();
 
         setVehicles(
           (vehiclesData.data || []).map((vehicle: any) => ({
@@ -64,12 +61,7 @@ export default function ReservationsManagement() {
             name: `${user.name} ${user.lastName || ""}`.trim(),
           }))
         );
-        setOffices(
-          (officesData.data || []).map((office: any) => ({
-            _id: office._id,
-            name: office.name,
-          }))
-        );
+
         setVehicles(
           (vehiclesData.data || []).map((vehicle: any) => ({
             _id: vehicle._id,
@@ -110,66 +102,6 @@ export default function ReservationsManagement() {
     setIsDetailOpen(true);
   };
 
-  const calculateExtensionPrices = useMemo(() => {
-    if (
-      !selectedReservation ||
-      !editDateRange[0].startDate ||
-      !editDateRange[0].endDate
-    ) {
-      return { pickupExtension: 0, returnExtension: 0 };
-    }
-
-    const office = offices.find(
-      (o) => o._id === selectedReservation.office?._id
-    );
-    if (!office) return { pickupExtension: 0, returnExtension: 0 };
-
-    let pickupExtension = 0;
-    let returnExtension = 0;
-
-    const startDay = editDateRange[0].startDate
-      .toLocaleDateString("en-US", { weekday: "long" })
-      .toLowerCase();
-    const endDay = editDateRange[0].endDate
-      .toLocaleDateString("en-US", { weekday: "long" })
-      .toLowerCase();
-
-    const startDaySchedule = (
-      selectedReservation.office as any
-    )?.workingTime?.find((wt: any) => wt.day === startDay);
-    const endDaySchedule = (
-      selectedReservation.office as any
-    )?.workingTime?.find((wt: any) => wt.day === endDay);
-
-    if (
-      startDaySchedule?.pickupExtension &&
-      editTimes.startTime < startDaySchedule.startTime
-    ) {
-      pickupExtension = startDaySchedule.pickupExtension.flatPrice || 0;
-    }
-    if (
-      startDaySchedule?.pickupExtension &&
-      editTimes.startTime > startDaySchedule.endTime
-    ) {
-      pickupExtension = startDaySchedule.pickupExtension.flatPrice || 0;
-    }
-
-    if (
-      endDaySchedule?.returnExtension &&
-      editTimes.endTime < endDaySchedule.startTime
-    ) {
-      returnExtension = endDaySchedule.returnExtension.flatPrice || 0;
-    }
-    if (
-      endDaySchedule?.returnExtension &&
-      editTimes.endTime > endDaySchedule.endTime
-    ) {
-      returnExtension = endDaySchedule.returnExtension.flatPrice || 0;
-    }
-
-    return { pickupExtension, returnExtension };
-  }, [selectedReservation, editDateRange, editTimes, offices]);
-
   const handleStatusChange = async () => {
     if (!selectedReservation || !newStatus) return;
     setIsSubmitting(true);
@@ -187,32 +119,6 @@ export default function ReservationsManagement() {
       showToast.success("Status updated successfully!");
       setIsStatusOpen(false);
       setNewStatus("");
-      if (mutateRef.current) mutateRef.current();
-      setIsDetailOpen(false);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      showToast.error(message || "Update failed");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleVehicleUpdate = async () => {
-    if (!selectedReservation) return;
-    setIsSubmitting(true);
-
-    try {
-      const res = await fetch(`/api/reservations/${selectedReservation._id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vehicle: newVehicle || null }),
-      });
-
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Update failed");
-
-      showToast.success("Vehicle updated successfully!");
-      setIsEditOpen(false);
       if (mutateRef.current) mutateRef.current();
       setIsDetailOpen(false);
     } catch (error) {
@@ -316,7 +222,7 @@ export default function ReservationsManagement() {
                     : "bg-blue-500/20 text-blue-400"
                 }`}
               >
-                {value}
+                {value === "delivered" ? "collected" : value}
               </span>
             ),
           },
@@ -635,23 +541,30 @@ export default function ReservationsManagement() {
                         setIsSubmitting(true);
                         try {
                           // Update vehicle and status together
-                          const res = await fetch(`/api/reservations/${selectedReservation._id}`, {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ 
-                              vehicle: newVehicle,
-                              status: "delivered" 
-                            }),
-                          });
+                          const res = await fetch(
+                            `/api/reservations/${selectedReservation._id}`,
+                            {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                vehicle: newVehicle,
+                                status: "delivered",
+                              }),
+                            }
+                          );
                           const data = await res.json();
-                          if (!data.success) throw new Error(data.error || "Update failed");
-                          
-                          showToast.success("Vehicle assigned and delivered!");
+                          if (!data.success)
+                            throw new Error(data.error || "Update failed");
+
+                          showToast.success("Vehicle assigned and collected!");
                           setIsEditOpen(false);
                           if (mutateRef.current) mutateRef.current();
                           setIsDetailOpen(false);
                         } catch (error) {
-                          const message = error instanceof Error ? error.message : "Unknown error";
+                          const message =
+                            error instanceof Error
+                              ? error.message
+                              : "Unknown error";
                           showToast.error(message || "Update failed");
                         } finally {
                           setIsSubmitting(false);
@@ -660,7 +573,7 @@ export default function ReservationsManagement() {
                       disabled={isSubmitting || !newVehicle}
                       className="w-full px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold text-sm disabled:opacity-50"
                     >
-                      {isSubmitting ? "Updating..." : "Assign & Deliver"}
+                      {isSubmitting ? "Updating..." : "Assign & Collected"}
                     </button>
                   </div>
                 )}
@@ -701,6 +614,7 @@ export default function ReservationsManagement() {
                         { _id: "confirmed", name: "Confirmed" },
                         { _id: "completed", name: "Completed" },
                         { _id: "canceled", name: "Canceled" },
+                        { _id: "delivered", name: "Collected" },
                       ]}
                       value={newStatus}
                       onChange={setNewStatus}
