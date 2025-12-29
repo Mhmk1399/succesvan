@@ -18,6 +18,11 @@ import {
   FiLayers,
   FiGift,
   FiCommand,
+  FiChevronLeft,
+  FiChevronRight,
+  FiLogOut,
+  FiUser,
+  FiMessageSquare,
 } from "react-icons/fi";
 import { useStats } from "@/hooks/useStats";
 import { useRecentReservations } from "@/hooks/useRecentReservations";
@@ -37,6 +42,7 @@ import { MenuItem } from "@/types/type";
 import DiscountManagement from "./DiscountManagement";
 import CustomSelect from "../ui/CustomSelect";
 import { showToast } from "@/lib/toast";
+import TicketsManagement from "./TicketsManagement";
 
 const menuItems: MenuItem[] = [
   {
@@ -75,7 +81,6 @@ const menuItems: MenuItem[] = [
     icon: <FiCalendar />,
     color: "from-purple-500 to-purple-600",
   },
-
   {
     id: "addons",
     label: "AddOns",
@@ -88,7 +93,6 @@ const menuItems: MenuItem[] = [
     icon: <FiTag />,
     color: "from-yellow-500 to-yellow-600",
   },
-
   {
     id: "reserves",
     label: "Reserves",
@@ -119,15 +123,42 @@ const menuItems: MenuItem[] = [
     icon: <FiFileText />,
     color: "from-cyan-500 to-cyan-600",
   },
+  {
+    id: "tickets",
+    label: "Tickets",
+    icon: <FiMessageSquare />,
+    color: "from-emerald-500 to-emerald-600",
+  },
 ];
+
+interface User {
+  name: string;
+  lastName: string;
+  role: string;
+  emailData?: {
+    emailAddress: string;
+  };
+}
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (e) {
+        console.error("Failed to parse user data");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (sidebarOpen) {
-      
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -156,82 +187,215 @@ export default function Dashboard() {
     setSidebarOpen(false);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  };
+
   return (
-    <div className="min-h-screen bg-[#0f172b]">
+    <div className="min-h-screen bg-[#0a101f]">
+      {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-54 bg-[#1a2847] border-r border-white/10 z-50 transition-transform duration-300 flex flex-col ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        className={`fixed left-0 top-0 h-screen bg-[#111827] border-r border-white/5 z-50 transition-all duration-300 flex flex-col
+          ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }
+          ${sidebarCollapsed ? "w-18" : "w-56"}`}
       >
-        <div className="p-6 border-b border-white/10">
-          <h1 className="text-xl font-black text-white">
-            Success<span className="text-[#fe9a00]">Van</span>
-          </h1>
+        {/* Logo */}
+        <div
+          className={`h-14 flex items-center border-b border-white/5 ${
+            sidebarCollapsed ? "justify-center px-2" : "px-4"
+          }`}
+        >
+          {sidebarCollapsed ? (
+            <span className="text-xl font-black text-[#fe9a00]">S</span>
+          ) : (
+            <h1 className="text-lg font-black text-white">
+              Success<span className="text-[#fe9a00]">Van</span>
+            </h1>
+          )}
         </div>
 
-        <nav className="px-4 py-1 flex-1 overflow-y-auto">
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-2 px-2">
           {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleTabChange(item.id)}
-              className={`w-full flex items-center gap-2 cursor-pointer px-4 py-2.5 rounded-lg transition-all duration-300 ${
-                activeTab === item.id
-                  ? "bg-[#fe9a00] text-white shadow-lg"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <span
-                className={`text-sm  ${
-                  activeTab === item.id ? "text-white" : "text-[#fe9a00]"
-                } `}
+            <div key={item.id} className="relative group">
+              <button
+                onClick={() => handleTabChange(item.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 mb-0.5
+                  ${
+                    activeTab === item.id
+                      ? "bg-[#fe9a00] text-white"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }
+                  ${sidebarCollapsed ? "justify-center" : ""}`}
               >
-                {item.icon}
-              </span>
-              <span className="font-semibold text-sm">{item.label}</span>
-            </button>
+                <span
+                  className={`text-base  shrink-0 ${
+                    activeTab === item.id ? "text-white" : "text-[#fe9a00]"
+                  }`}
+                >
+                  {item.icon}
+                </span>
+                {!sidebarCollapsed && (
+                  <span className="font-medium text-sm truncate">
+                    {item.label}
+                  </span>
+                )}
+              </button>
+            </div>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-white/10">
-          <Link
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold"
-          >
-            <FiExternalLink className="text-lg" />
-            <span>Visit Site</span>
-          </Link>
+        {/* Collapse Toggle Button */}
+        <button
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className="hidden lg:flex absolute -right-3 top-2 w-6 h-6 bg-[#1f2937] border border-white/10 rounded-full items-center justify-center text-gray-400 hover:text-white hover:bg-[#fe9a00] transition-all duration-200 shadow-lg z-60"
+        >
+          {sidebarCollapsed ? (
+            <FiChevronRight size={12} />
+          ) : (
+            <FiChevronLeft size={12} />
+          )}
+        </button>
+
+        {/* User Section */}
+        <div
+          className={`border-t border-white/5 p-3 ${
+            sidebarCollapsed ? "flex flex-col items-center gap-2" : ""
+          }`}
+        >
+          {sidebarCollapsed ? (
+            <>
+              <div className="relative group">
+                <div className="w-9 h-9 rounded-lg bg-[#fe9a00]/20 flex items-center justify-center">
+                  <FiUser className="text-[#fe9a00] text-sm" />
+                </div>
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1.5 bg-[#1f2937] text-white text-xs font-medium rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg border border-white/10">
+                  {user?.name} {user?.lastName}
+                </div>
+              </div>
+              <div className="relative group">
+                <button
+                  onClick={handleLogout}
+                  className="w-9 h-9 rounded-lg bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors"
+                >
+                  <FiLogOut className="text-red-400 text-sm" />
+                </button>
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1.5 bg-[#1f2937] text-white text-xs font-medium rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg border border-white/10">
+                  Logout
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-[#fe9a00]/20 flex items-center justify-center  shrink-0">
+                <FiUser className="text-[#fe9a00] text-sm" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-semibold truncate">
+                  {user?.name} {user?.lastName}
+                </p>
+                <p className="text-gray-500 text-xs capitalize">{user?.role}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors  shrink-0"
+                title="Logout"
+              >
+                <FiLogOut className="text-red-400 text-sm" />
+              </button>
+            </div>
+          )}
         </div>
-      </aside>
 
-      <main className="lg:ml-54">
-        <div className="sticky top-0 bg-[#1a2847] border-b border-white/10 px-4 sm:px-6 py-4 flex items-center justify-between z-40">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
-          >
-            {sidebarOpen ? <FiX /> : <FiMenu />}
-          </button>
-
-          <h2 className="text-2xl font-black text-white">
-            {menuItems.find((item) => item.id === activeTab)?.label}
-          </h2>
-
-          <div className="flex items-center gap-4">
+        {/* Visit Site Button */}
+        <div
+          className={`p-3 border-t border-white/5 ${
+            sidebarCollapsed ? "flex justify-center" : ""
+          }`}
+        >
+          {sidebarCollapsed ? (
+            <div className="relative group">
+              <Link
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 bg-[#fe9a00] hover:bg-[#e68a00] rounded-lg flex items-center justify-center transition-colors"
+              >
+                <FiExternalLink className="text-white text-sm" />
+              </Link>
+              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1.5 bg-[#1f2937] text-white text-xs font-medium rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg border border-white/10">
+                Visit Site
+              </div>
+            </div>
+          ) : (
             <Link
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-semibold rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold text-sm"
             >
-              Visit Site
-              <FiExternalLink className="text-lg" />
+              <FiExternalLink className="text-sm" />
+              <span>Visit Site</span>
+            </Link>
+          )}
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main
+        className={`transition-all duration-300   ${
+          sidebarCollapsed ? "lg:ml-18" : "lg:ml-56"
+        }`}
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-[#111827]/95 backdrop-blur-md border-b border-white/5 px-4 py-3 flex items-center justify-between z-40">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="lg:hidden w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white transition-colors shrink-0"
+            >
+              {sidebarOpen ? <FiX size={18} /> : <FiMenu size={18} />}
+            </button>
+
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2 flex-wrap">
+                <span className="truncate">
+                  {menuItems.find((item) => item.id === activeTab)?.label}
+                </span>
+                <span className="hidden md:flex items-center gap-1 text-xs text-gray-400 font-medium shrink-0">
+                  <FiCalendar className="text-[#fe9a00] text-sm" />
+                  {new Date().toLocaleDateString("en-GB", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </h2>
+              <p className="text-xs text-gray-500 hidden sm:block truncate">
+                Welcome back, {user?.name || "Admin"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-semibold rounded-lg transition-colors text-sm"
+            >
+              <span>Visit Site</span>
+              <FiExternalLink size={14} />
             </Link>
           </div>
         </div>
 
-        <div className="p-4 sm:p-6 lg:p-8">
+        {/* Page Content */}
+        <div className="p-4 sm:p-5">
           {activeTab === "dashboard" && (
             <DashboardContent handleTabChange={handleTabChange} />
           )}
@@ -247,12 +411,14 @@ export default function Dashboard() {
           {activeTab === "contacts" && <ContactsManagement />}
           {activeTab === "announcements" && <AnnouncementManagement />}
           {activeTab === "reports" && <ReportsManagement />}
+          {activeTab === "tickets" && <TicketsManagement />}
         </div>
       </main>
 
+      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -280,31 +446,31 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
 
   const statCards = [
     {
-      label: "Total Vehicles",
+      label: "Vehicles",
       value: stats.vehicles,
       icon: <FiTruck />,
-      color: "from-orange-500 to-orange-600",
+      color: "bg-orange-500",
       tabId: "vehicles",
     },
     {
-      label: "All Reserves",
+      label: "Reserves",
       value: stats.reservations,
       icon: <FiClipboard />,
-      color: "from-indigo-500 to-indigo-600",
+      color: "bg-indigo-500",
       tabId: "reserves",
     },
     {
       label: "Offices",
       value: stats.offices,
       icon: <FiMapPin />,
-      color: "from-green-500 to-green-600",
+      color: "bg-emerald-500",
       tabId: "offices",
     },
     {
       label: "Categories",
       value: stats.categories,
       icon: <FiTag />,
-      color: "from-pink-500 to-pink-600",
+      color: "bg-pink-500",
       tabId: "categories",
     },
   ];
@@ -375,144 +541,158 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
   };
 
   const assignVehicle = async () => {
-  if (!selectedReservationId || !selectedVehicleId) {
-    showToast.error("Please select a vehicle");
-    return;
-  }
-
-  setAssigning(true);
-
-  try {
-    // Step 1: Update the vehicle — set available = false
-    const vehicleUpdateRes = await fetch(`/api/vehicles/${selectedVehicleId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ available: false }),
-    });
-
-    if (!vehicleUpdateRes.ok) {
-      const errorData = await vehicleUpdateRes.json();
-      showToast.error(errorData.message || "Failed to update vehicle status");
-      setAssigning(false);
+    if (!selectedReservationId || !selectedVehicleId) {
+      showToast.error("Please select a vehicle");
       return;
     }
 
-    // Step 2: Update the reservation — assign vehicle + set status to delivered
-    const reservationUpdateRes = await fetch(`/api/reservations/${selectedReservationId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        vehicle: selectedVehicleId,
-        status: "delivered",
-      }),
-    });
+    setAssigning(true);
 
-    if (!reservationUpdateRes.ok) {
-      const errorData = await reservationUpdateRes.json();
-      
-      // If reservation update fails, try to rollback vehicle availability
-      await fetch(`/api/vehicles/${selectedVehicleId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ available: true }),
-      });
+    try {
+      const vehicleUpdateRes = await fetch(
+        `/api/vehicles/${selectedVehicleId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ available: false }),
+        }
+      );
 
-      showToast.error(errorData.message || "Failed to assign vehicle to reservation");
+      if (!vehicleUpdateRes.ok) {
+        const errorData = await vehicleUpdateRes.json();
+        showToast.error(errorData.message || "Failed to update vehicle status");
+        setAssigning(false);
+        return;
+      }
+
+      const reservationUpdateRes = await fetch(
+        `/api/reservations/${selectedReservationId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            vehicle: selectedVehicleId,
+            status: "delivered",
+          }),
+        }
+      );
+
+      if (!reservationUpdateRes.ok) {
+        const errorData = await reservationUpdateRes.json();
+
+        await fetch(`/api/vehicles/${selectedVehicleId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ available: true }),
+        });
+
+        showToast.error(
+          errorData.message || "Failed to assign vehicle to reservation"
+        );
+        setAssigning(false);
+        return;
+      }
+
+      showToast.success("Vehicle successfully assigned and marked as in use!");
+
+      setIsAssignModalOpen(false);
+      setSelectedReservationId(null);
+      setSelectedVehicleId("");
+
+      window.location.reload();
+    } catch (err) {
+      console.error("Assignment error:", err);
+      showToast.error("Network error. Please try again.");
+    } finally {
       setAssigning(false);
-      return;
     }
-
-    // Success!
-    showToast.success("Vehicle successfully assigned and marked as in use!");
-    
-    setIsAssignModalOpen(false);
-    setSelectedReservationId(null);
-    setSelectedVehicleId("");
-    
-    // Refresh page to reflect changes
-    window.location.reload();
-  } catch (err) {
-    console.error("Assignment error:", err);
-    showToast.error("Network error. Please try again.");
-  } finally {
-    setAssigning(false);
-  }
-};
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-5">
+      {/* Stats Cards - Compact Design */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {statCards.map((stat, index) => (
           <div
             key={index}
             onClick={() => handleTabChange(stat.tabId)}
-            className={`bg-linear-to-br ${stat.color} p-3 rounded-2xl border border-white/10 text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer`}
+            className="bg-[#111827] border border-white/5 rounded-xl p-4 hover:border-[#fe9a00]/30 transition-all duration-200 cursor-pointer group"
           >
-            <div className="flex flex-col items-center text-center space-y-1">
-              <div className="bg-white/20 p-3 rounded-lg">
-                <span className="text-xl">{stat.icon}</span>
+            <div className="flex items-center gap-3">
+              <div className={`${stat.color} p-2.5 rounded-lg`}>
+                <span className="text-white text-base">{stat.icon}</span>
               </div>
-              <p className="text-xl font-black">
-                {statsLoading ? "-" : stat.value}
-              </p>
-              <p className="text-gray-200 text-xs font-medium">{stat.label}</p>
+              <div>
+                <p className="text-2xl font-bold text-white">
+                  {statsLoading ? "-" : stat.value}
+                </p>
+                <p className="text-gray-500 text-xs font-medium">
+                  {stat.label}
+                </p>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       {/* Today's Activity */}
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-        <h3 className="text-xl font-black text-white mb-6">Today's Activity</h3>
+      <div className="bg-[#111827] border border-white/5 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/5">
+          <h3 className="text-base font-bold text-white">Today's Activity</h3>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/5">
           {/* Today's Pickups */}
-          <div>
-            <h4 className="text-lg font-bold text-white mb-4 flex items-center justify-between">
-              <span>Today's Pickups</span>
-              <span className="text-sm font-normal text-gray-400">
-                ({todayActivity.pickups.length})
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                <span className="w-2 h-2 bg-[#fe9a00] rounded-full"></span>
+                Pickups
+              </h4>
+              <span className="text-xs text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">
+                {todayActivity.pickups.length}
               </span>
-            </h4>
+            </div>
 
             {fleetLoading ? (
-              <p className="text-gray-500 text-center py-8">Loading...</p>
+              <div className="flex items-center justify-center py-8">
+                <div className="w-5 h-5 border-2 border-[#fe9a00] border-t-transparent rounded-full animate-spin"></div>
+              </div>
             ) : todayActivity.pickups.length === 0 ? (
-              <div className="text-center py-10 text-gray-500">
-                <p className="text-lg">No pickups scheduled today</p>
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-sm">No pickups today</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5 max-h-64 overflow-y-auto">
                 {todayActivity.pickups.map((res: any) => (
                   <div
                     key={res._id}
-                    className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-[#fe9a00]/30 transition"
+                    className="bg-white/5 rounded-lg p-3 hover:bg-white/[0.07] transition"
                   >
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
-                        <p className="font-bold text-white">
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-white text-sm truncate">
                           {res.vehicle
                             ? `${res.vehicle.title} (${res.vehicle.number})`
                             : "No vehicle assigned"}
                         </p>
-                        <p className="text-sm text-gray-400 mt-1">
-                          {res.category.name} • Pickup at{" "}
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {res.category.name} •{" "}
                           {new Date(res.startDate).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
                         </p>
-                        <p className="text-sm font-medium text-[#fe9a00] mt-2">
-                          Total: £{res.totalPrice}
+                        <p className="text-xs font-medium text-[#fe9a00] mt-1">
+                          £{res.totalPrice}
                         </p>
                       </div>
 
                       <button
                         onClick={() => openAssignModal(res._id)}
-                        className="px-5 py-2 text-sm bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold rounded-lg transition shadow-md"
+                        className="px-3 py-1.5 text-xs bg-[#fe9a00] hover:bg-[#e68a00] text-white font-semibold rounded-lg transition whitespace-nowrap"
                       >
-                        Assign Vehicle
+                        Assign
                       </button>
                     </div>
                   </div>
@@ -522,55 +702,57 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
           </div>
 
           {/* Today's Returns */}
-          <div>
-            <h4 className="text-lg font-bold text-white mb-4 flex items-center justify-between">
-              <span>Today's Returns</span>
-              <span className="text-sm font-normal text-gray-400">
-                ({todayActivity.returns.length})
+          <div className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                Returns
+              </h4>
+              <span className="text-xs text-gray-500 bg-white/5 px-2 py-0.5 rounded-full">
+                {todayActivity.returns.length}
               </span>
-            </h4>
+            </div>
 
             {fleetLoading ? (
-              <p className="text-gray-500 text-center py-8">Loading...</p>
+              <div className="flex items-center justify-center py-8">
+                <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
             ) : todayActivity.returns.length === 0 ? (
-              <div className="text-center py-10 text-gray-500">
-                <p className="text-lg">No returns scheduled today</p>
+              <div className="text-center py-8">
+                <p className="text-gray-500 text-sm">No returns today</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5 max-h-64 overflow-y-auto">
                 {todayActivity.returns.map((res: any) => (
                   <div
                     key={res._id}
-                    className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-green-500/30 transition"
+                    className="bg-white/5 rounded-lg p-3 hover:bg-white/[0.07] transition"
                   >
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="flex-1">
-                        <p className="font-bold text-white">
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-white text-sm truncate">
                           {res.vehicle.title} ({res.vehicle.number})
                         </p>
-                        <p className="text-sm text-gray-400 mt-1">
-                          {res.category.name} • Due by{" "}
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {res.category.name} • Due{" "}
                           {new Date(res.endDate).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
                         </p>
-                        <p className="text-sm font-medium text-[#07da54] mt-2">
-                          Paid: £{res.totalPrice}
+                        <p className="text-xs font-medium text-emerald-400 mt-1">
+                          £{res.totalPrice}
                         </p>
                       </div>
 
-                      <div className="flex flex-col items-end gap-2">
-                    
-                        <button
-                          onClick={() =>
-                            handleCompleteReservation(res._id, res.vehicle._id)
-                          }
-                          className="px-5 py-2 text-sm bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition shadow-md"
-                        >
-                          Mark Complete
-                        </button>
-                      </div>
+                      <button
+                        onClick={() =>
+                          handleCompleteReservation(res._id, res.vehicle._id)
+                        }
+                        className="px-3 py-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition whitespace-nowrap"
+                      >
+                        Complete
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -581,108 +763,108 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
       </div>
 
       {/* Recent Reserves */}
-
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-black text-white">Recent Reserves</h3>
+      <div className="bg-[#111827] border border-white/5 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+          <h3 className="text-base font-bold text-white">Recent Reserves</h3>
           <button
             onClick={() => handleTabChange("reserves")}
-            className="text-sm font-bold text-[#fe9a00] hover:text-orange-400 transition"
+            className="text-xs font-semibold text-[#fe9a00] hover:text-orange-400 transition"
           >
-            See All →
+            View All →
           </button>
         </div>
 
-        {reservationsLoading ? (
-          <p className="text-gray-500 text-center py-8">
-            Loading reservations...
-          </p>
-        ) : reservations.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <p className="text-lg">No reservations yet</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {reservations.map((res: any) => (
-              <div
-                key={res._id}
-                className="bg-white/5 border border-white/10 rounded-xl p-5 hover:border-[#fe9a00]/30 transition-all"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-white font-bold">
-                      Reserve #{res._id?.slice(-6).toUpperCase()}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {new Date(res.createdAt!).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </p>
+        <div className="p-5">
+          {reservationsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-5 h-5 border-2 border-[#fe9a00] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : reservations.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 text-sm">No reservations yet</p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {reservations.map((res: any) => (
+                <div
+                  key={res._id}
+                  className="bg-white/5 rounded-lg p-4 hover:bg-white/[0.07] transition"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-white font-semibold text-sm">
+                        #{res._id?.slice(-6).toUpperCase()}
+                      </span>
+                      <span className="text-gray-500 text-xs">
+                        {new Date(res.createdAt!).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </span>
+                    </div>
+
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${
+                        res.status === "confirmed"
+                          ? "bg-green-500/20 text-green-400"
+                          : res.status === "pending"
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : res.status === "delivered"
+                          ? "bg-purple-500/20 text-purple-400"
+                          : res.status === "completed"
+                          ? "bg-blue-500/20 text-blue-400"
+                          : "bg-gray-500/20 text-gray-400"
+                      }`}
+                    >
+                      {res.status === "delivered" ? "collected" : res.status}
+                    </span>
                   </div>
 
-                  <span
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold ${
-                      res.status === "confirmed"
-                        ? "bg-green-500/20 text-green-400"
-                        : res.status === "pending"
-                        ? "bg-yellow-500/20 text-yellow-400"
-                        : res.status === "delivered"
-                        ? "bg-purple-500/20 text-purple-400"
-                        : res.status === "completed"
-                        ? "bg-blue-500/20 text-blue-400"
-                        : "bg-gray-500/20 text-gray-400"
-                    }`}
-                  >
-                    {res.status === "delivered" ? "collected" : res.status.charAt(0).toUpperCase() + res.status.slice(1)}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-500">Total Price</p>
-                    <p className="text-[#fe9a00] font-bold text-lg">
-                      £{res.totalPrice}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Pickup</p>
-                    <p className="text-white font-medium">
-                      {new Date(res.startDate!).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Return</p>
-                    <p className="text-white font-medium">
-                      {new Date(res.endDate!).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Category</p>
-                    <p className="text-white font-medium">
-                      {res.category.name}
-                    </p>
+                  <div className="grid grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <p className="text-gray-500 mb-0.5">Total</p>
+                      <p className="text-[#fe9a00] font-bold">
+                        £{res.totalPrice}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 mb-0.5">Pickup</p>
+                      <p className="text-white font-medium">
+                        {new Date(res.startDate!).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 mb-0.5">Return</p>
+                      <p className="text-white font-medium">
+                        {new Date(res.endDate!).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 mb-0.5">Category</p>
+                      <p className="text-white font-medium truncate">
+                        {res.category.name}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Assign Vehicle Modal */}
       {isAssignModalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1a2847] rounded-2xl border border-white/10 p-8 w-full max-w-lg shadow-2xl">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-black text-white">Assign Vehicle</h3>
+          <div className="bg-[#111827] rounded-xl border border-white/10 w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
+              <h3 className="text-lg font-bold text-white">Assign Vehicle</h3>
               <button
                 onClick={() => {
                   setIsAssignModalOpen(false);
@@ -690,22 +872,22 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                   setSelectedVehicleId("");
                 }}
                 disabled={assigning}
-                className="p-2 hover:bg-white/10 rounded-lg transition"
+                className="p-1.5 hover:bg-white/10 rounded-lg transition"
               >
-                <FiX className="text-white text-2xl" />
+                <FiX className="text-gray-400 text-lg" />
               </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="p-5">
               <div>
-                <label className="block text-sm font-bold text-gray-300 mb-3">
-                  Select Available Vehicle
+                <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
+                  Available Vehicles
                 </label>
 
                 <CustomSelect
                   options={availableVehicles.map((veh) => ({
                     _id: veh._id,
-                    name: `${veh.title}  (${veh.number}) — ${
+                    name: `${veh.title} (${veh.number}) — ${
                       veh.office?.name || "No Office"
                     }`,
                   }))}
@@ -713,20 +895,20 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                   onChange={(val) => setSelectedVehicleId(val)}
                   placeholder={
                     availableVehicles.length === 0
-                      ? "No vehicles available today"
-                      : "Choose a vehicle..."
+                      ? "No vehicles available"
+                      : "Select a vehicle..."
                   }
                 />
               </div>
 
               {availableVehicles.length === 0 && (
-                <p className="text-center text-gray-500 py-6">
-                  No vehicles are currently available for assignment.
+                <p className="text-center text-gray-500 text-sm py-4">
+                  No vehicles are currently available.
                 </p>
               )}
             </div>
 
-            <div className="flex gap-4 mt-10">
+            <div className="flex gap-3 p-5 pt-0">
               <button
                 onClick={() => {
                   setIsAssignModalOpen(false);
@@ -734,7 +916,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                   setSelectedVehicleId("");
                 }}
                 disabled={assigning}
-                className="flex-1 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition"
+                className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-lg transition text-sm"
               >
                 Cancel
               </button>
@@ -746,9 +928,16 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                   assigning ||
                   availableVehicles.length === 0
                 }
-                className="flex-1 py-3.5 bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] text-black font-bold rounded-xl transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-2.5 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-semibold rounded-lg transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {assigning ? "Assigning..." : "Assign & Deliver"}
+                {assigning ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Assigning...
+                  </span>
+                ) : (
+                  "Assign & Deliver"
+                )}
               </button>
             </div>
           </div>

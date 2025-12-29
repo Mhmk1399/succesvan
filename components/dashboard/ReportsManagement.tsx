@@ -14,7 +14,9 @@ import {
   FiSend,
   FiLoader,
   FiTrendingUp,
-  FiDollarSign,
+  FiChevronRight,
+  FiVolume2,
+  FiVolumeX,
 } from "react-icons/fi";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import CategoryReport from "./reports/CategoryReport";
@@ -30,50 +32,57 @@ interface Report {
   description: string;
   icon: React.ReactNode;
   color: string;
+  bgColor: string;
 }
 
 const reports: Report[] = [
   {
     id: "categories",
-    name: "Categories  ",
-    description: "Revenue and usage by vehicle category",
-    icon: <FiBarChart2 className="w-6 h-6" />,
-    color: "from-purple-500 to-pink-500",
+    name: "Categories",
+    description: "Revenue by category",
+    icon: <FiBarChart2 size={18} />,
+    color: "text-purple-400",
+    bgColor: "bg-purple-500/10",
   },
   {
     id: "offices",
-    name: "Offices  ",
-    description: "Performance analysis across all branches",
-    icon: <FiHome className="w-6 h-6" />,
-    color: "from-blue-500 to-cyan-500",
+    name: "Offices",
+    description: "Branch performance",
+    icon: <FiHome size={18} />,
+    color: "text-blue-400",
+    bgColor: "bg-blue-500/10",
   },
   {
     id: "reservations",
-    name: "Reservations  ",
-    description: "Detailed booking history and trends",
-    icon: <FiClipboard className="w-6 h-6" />,
-    color: "from-emerald-500 to-teal-500",
+    name: "Reservations",
+    description: "Booking trends",
+    icon: <FiClipboard size={18} />,
+    color: "text-emerald-400",
+    bgColor: "bg-emerald-500/10",
   },
   {
     id: "vehicles",
-    name: "Vehicle  ",
-    description: "Fleet utilization and revenue per vehicle",
-    icon: <FiTruck className="w-6 h-6" />,
-    color: "from-orange-500 to-red-500",
+    name: "Vehicles",
+    description: "Fleet utilization",
+    icon: <FiTruck size={18} />,
+    color: "text-orange-400",
+    bgColor: "bg-orange-500/10",
   },
   {
     id: "customers",
-    name: "Customers  ",
-    description: "Customer behavior and loyalty insights",
-    icon: <FiUsers className="w-6 h-6" />,
-    color: "from-indigo-500 to-purple-500",
+    name: "Customers",
+    description: "Customer insights",
+    icon: <FiUsers size={18} />,
+    color: "text-indigo-400",
+    bgColor: "bg-indigo-500/10",
   },
   {
     id: "addons",
-    name: "Add-Ons  ",
-    description: "Extra services usage and revenue",
-    icon: <FiGift className="w-6 h-6" />,
-    color: "from-amber-500 to-orange-500",
+    name: "Add-Ons",
+    description: "Extra services",
+    icon: <FiGift size={18} />,
+    color: "text-amber-400",
+    bgColor: "bg-amber-500/10",
   },
 ];
 
@@ -195,125 +204,150 @@ export default function ReportsManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-900 via-[#0f172b] to-slate-900">
-      <div className="max-w-8xl mx-auto   py-12">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-12">
-          <div>
-            <h1 className="text-4xl font-black text-white mb-2">
-              Business Intelligence Dashboard
-            </h1>
-            <p className="text-gray-400 text-lg">
-              Real-time insights and analytics for smarter decisions
-            </p>
-          </div>
-          <button
-            onClick={() => setShowAIModal(true)}
-            className="flex items-center gap-3 px-6 py-4 bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] text-white rounded-2xl font-bold text-lg shadow-xl shadow-[#fe9a00]/20 transition-all transform hover:scale-105"
-          >
-            <FiMessageCircle className="w-6 h-6" />
-            Talk to AI Analyst
-          </button>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-white">
+            Business Intelligence
+          </h1>
+          <p className="text-gray-500 text-sm mt-0.5">
+            Analytics and insights for smarter decisions
+          </p>
         </div>
+        <button
+          onClick={() => setShowAIModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg font-semibold text-sm transition-all shadow-lg shadow-[#fe9a00]/20"
+        >
+          <FiMessageCircle size={16} />
+          <span>AI Analyst</span>
+        </button>
+      </div>
 
-        {/* Report Cards Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-12">
+      {/* Report Tabs */}
+      <div className="bg-[#111827] border border-white/5 rounded-xl p-1.5">
+        <div className="flex flex-wrap gap-1">
           {reports.map((report) => (
             <button
               key={report.id}
               onClick={() => setSelectedReport(report.id)}
-              className={`group relative overflow-hidden rounded-3xl p-3 text-left transition-all duration-500 transform hover:scale-105 ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 selectedReport === report.id
-                  ? "ring-2 ring-[#fe9a00] ring-offset-4 ring-offset-slate-900 shadow-2xl"
-                  : "hover:shadow-2xl"
+                  ? "bg-[#fe9a00] text-white"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
             >
-              <div
-                className={`absolute inset-0 bg-linear-to-br ${report.color} opacity-10 group-hover:opacity-20 transition-opacity`}
-              />
-              <div className="relative z-10">
-                <div
-                  className={`inline-flex p-2 rounded-2xl bg-linear-to-br ${report.color} text-white mb-6 shadow-lg`}
-                >
-                  {report.icon}
-                </div>
-                <h3 className="text-xl font-bold text-white mb-3">
-                  {report.name}
-                </h3>
-                <p className="text-gray-300 text-xs leading-relaxed">
-                  {report.description}
-                </p>
-                {selectedReport === report.id && (
-                  <div className="mt-6 flex items-center gap-2 text-xs text-[#fe9a00] font-semibold">
-                    <FiTrendingUp />
-                    <span>Viewing Report</span>
-                  </div>
-                )}
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-transparent via-[#fe9a00] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span
+                className={
+                  selectedReport === report.id ? "text-white" : report.color
+                }
+              >
+                {report.icon}
+              </span>
+              <span className="hidden sm:inline">{report.name}</span>
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Selected Report Content */}
-        {currentReport ? (
-          <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
-            <div className="flex items-center gap-6 mb-8">
-              <div
-                className={`p-5 rounded-3xl bg-linear-to-br ${currentReport.color} text-white shadow-xl`}
-              >
-                {currentReport.icon}
+      {/* Report Cards Grid - Alternative View */}
+      {!selectedReport && (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          {reports.map((report) => (
+            <button
+              key={report.id}
+              onClick={() => setSelectedReport(report.id)}
+              className="group bg-[#111827] border border-white/5 rounded-xl p-4 text-left hover:border-[#fe9a00]/30 transition-all"
+            >
+              <div className="flex items-start justify-between">
+                <div className={`p-2.5 rounded-lg ${report.bgColor}`}>
+                  <span className={report.color}>{report.icon}</span>
+                </div>
+                <FiChevronRight
+                  className="text-gray-600 group-hover:text-[#fe9a00] transition-colors"
+                  size={16}
+                />
+              </div>
+              <h3 className="text-white font-semibold mt-3 text-sm">
+                {report.name}
+              </h3>
+              <p className="text-gray-500 text-xs mt-1">{report.description}</p>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Selected Report Content */}
+      {currentReport && (
+        <div className="bg-[#111827] border border-white/5 rounded-xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${currentReport.bgColor}`}>
+                <span className={currentReport.color}>
+                  {currentReport.icon}
+                </span>
               </div>
               <div>
-                <h2 className="text-3xl font-black text-white">
-                  {currentReport.name}
+                <h2 className="text-white font-bold">
+                  {currentReport.name} Report
                 </h2>
-                <p className="text-gray-400 mt-1">
+                <p className="text-gray-500 text-xs">
                   {currentReport.description}
                 </p>
               </div>
             </div>
+            <button
+              onClick={() => setSelectedReport(null)}
+              className="text-xs text-gray-400 hover:text-white transition-colors"
+            >
+              ← Back
+            </button>
+          </div>
 
-            <div className="bg-slate-800/30 rounded-2xl p-2">
-              {selectedReport === "categories" && <CategoryReport />}
-              {selectedReport === "offices" && <OfficeReport />}
-              {selectedReport === "vehicles" && <VehicleReservationReport />}
-              {selectedReport === "reservations" && <ReservationReport />}
-              {selectedReport === "customers" && <CustomerReport />}
-              {selectedReport === "addons" && <AddOnReport />}
-            </div>
+          <div className="p-5">
+            {selectedReport === "categories" && <CategoryReport />}
+            {selectedReport === "offices" && <OfficeReport />}
+            {selectedReport === "vehicles" && <VehicleReservationReport />}
+            {selectedReport === "reservations" && <ReservationReport />}
+            {selectedReport === "customers" && <CustomerReport />}
+            {selectedReport === "addons" && <AddOnReport />}
           </div>
-        ) : (
-          <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl p-20 text-center">
-            <div className="max-w-md mx-auto">
-              <FiBarChart2 className="w-20 h-20 text-gray-600 mx-auto mb-6" />
-              <h3 className="text-2xl font-bold text-white mb-4">
-                Welcome to Your Analytics Hub
-              </h3>
-              <p className="text-gray-400 text-lg leading-relaxed">
-                Select any report from the cards above to dive deep into your
-                business performance. Use the AI Analyst for natural language
-                questions.
-              </p>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!selectedReport && (
+        <div className="bg-[#111827] border border-white/5 rounded-xl p-12 text-center">
+          <div className="max-w-sm mx-auto">
+            <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+              <FiTrendingUp className="text-gray-500" size={24} />
             </div>
+            <h3 className="text-white font-semibold mb-2">Select a Report</h3>
+            <p className="text-gray-500 text-sm">
+              Choose a report from above or use the AI Analyst for custom
+              queries.
+            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* AI Modal */}
       {showAIModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-linear-to-b from-slate-900 to-[#0f172b] rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-white/20">
-            <div className="bg-linear-to-r from-[#fe9a00] to-[#ff8800] p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-[#111827] rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden border border-white/10">
+            {/* Modal Header */}
+            <div className="bg-[#fe9a00] px-5 py-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                    <FiDollarSign className="w-7 h-7" />
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center">
+                    <FiMessageCircle size={18} />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold">AI Business Analyst</h2>
-                    <p className="text-orange-100">
-                      Ask anything about your data
+                    <h2 className="font-bold text-white">
+                      AI Business Analyst
+                    </h2>
+                    <p className="text-orange-100 text-xs">
+                      Ask about your data
                     </p>
                   </div>
                 </div>
@@ -322,15 +356,16 @@ export default function ReportsManagement() {
                     setShowAIModal(false);
                     stopAudio();
                   }}
-                  className="p-3 hover:bg-white/20 rounded-full transition-colors"
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
                 >
-                  <FiX className="w-6 h-6" />
+                  <FiX size={18} />
                 </button>
               </div>
             </div>
 
-            <div className="flex flex-col h-[70vh]">
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {/* Chat Area */}
+            <div className="flex flex-col h-[60vh]">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {messages.map((msg, i) => (
                   <div
                     key={i}
@@ -339,25 +374,26 @@ export default function ReportsManagement() {
                     }`}
                   >
                     <div
-                      className={`max-w-lg rounded-3xl px-6 py-4 shadow-lg ${
+                      className={`max-w-[80%] rounded-xl px-4 py-3 ${
                         msg.role === "user"
-                          ? "bg-linear-to-r from-[#fe9a00] to-[#ff8800] text-white"
-                          : "bg-white/10 text-white backdrop-blur-sm"
+                          ? "bg-[#fe9a00] text-white"
+                          : "bg-white/5 text-white border border-white/5"
                       }`}
                     >
-                      <p className="text-lg leading-relaxed whitespace-pre-wrap">
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
                         {msg.content}
                       </p>
                     </div>
                   </div>
                 ))}
+
                 {isLoading && (
                   <div className="flex justify-start">
-                    <div className="bg-white/10 rounded-3xl px-6 py-4">
-                      <div className="flex gap-2">
-                        <div className="w-3 h-3 bg-gray-400 rounded-full animate-bounce" />
-                        <div className="w-3 h-3 bg-gray-400 rounded-full animate-bounce delay-100" />
-                        <div className="w-3 h-3 bg-gray-400 rounded-full animate-bounce delay-200" />
+                    <div className="bg-white/5 rounded-xl px-4 py-3 border border-white/5">
+                      <div className="flex gap-1.5">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.1s]" />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]" />
                       </div>
                     </div>
                   </div>
@@ -365,36 +401,38 @@ export default function ReportsManagement() {
                 <div ref={chatEndRef} />
               </div>
 
-              <div className="p-6 border-t border-white/10">
-                <div className="flex flex-wrap gap-3 mb-4">
+              {/* Quick Suggestions */}
+              <div className="px-4 py-3 border-t border-white/5">
+                <div className="flex flex-wrap gap-2 mb-3">
                   {[
-                    "Last month performance?",
+                    "Monthly revenue?",
                     "Top customers?",
-                    "Most popular vehicle?",
-                    "Revenue trend?",
+                    "Popular vehicles?",
+                    "Growth trend?",
                   ].map((q) => (
                     <button
                       key={q}
                       onClick={() => setInputMessage(q)}
                       disabled={isLoading || isRecording}
-                      className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl text-sm transition-all"
+                      className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-lg text-xs transition-all disabled:opacity-50"
                     >
                       {q}
                     </button>
                   ))}
                 </div>
 
-                <div className="flex gap-4">
+                {/* Input Area */}
+                <div className="flex gap-2">
                   <button
                     onClick={toggleRecording}
                     disabled={isLoading || isPlaying}
-                    className={`p-4 rounded-2xl transition-all ${
+                    className={`p-3 rounded-lg transition-all  shrink-0 ${
                       isRecording
-                        ? "bg-red-500 animate-pulse"
-                        : "bg-white/10 hover:bg-white/20"
+                        ? "bg-red-500 text-white animate-pulse"
+                        : "bg-white/5 hover:bg-white/10 text-gray-400"
                     }`}
                   >
-                    <FiMic className="w-6 h-6" />
+                    <FiMic size={18} />
                   </button>
 
                   <input
@@ -405,28 +443,50 @@ export default function ReportsManagement() {
                       e.key === "Enter" && !e.shiftKey && handleSendMessage()
                     }
                     placeholder="Ask about your business..."
-                    className="flex-1 bg-white/10 border border-white/20 rounded-2xl px-6 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-4 focus:ring-[#fe9a00]/20"
+                    className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]/50 focus:ring-2 focus:ring-[#fe9a00]/20 transition-all"
                     disabled={isLoading || isRecording}
                   />
 
-                  <button
-                    onClick={() => handleSendMessage()}
-                    disabled={!inputMessage.trim() || isLoading || isRecording}
-                    className="px-8 py-4 bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] rounded-2xl font-bold transition-all disabled:opacity-50"
-                  >
-                    {isLoading ? (
-                      <FiLoader className="w-6 h-6 animate-spin" />
-                    ) : (
-                      <FiSend className="w-6 h-6" />
-                    )}
-                  </button>
+                  {isPlaying ? (
+                    <button
+                      onClick={stopAudio}
+                      className="p-3 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 transition-all  shrink-0"
+                    >
+                      <FiVolumeX size={18} />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleSendMessage()}
+                      disabled={
+                        !inputMessage.trim() || isLoading || isRecording
+                      }
+                      className="px-4 py-3 bg-[#fe9a00] hover:bg-[#e68a00] rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                    >
+                      {isLoading ? (
+                        <FiLoader size={18} className="animate-spin" />
+                      ) : (
+                        <FiSend size={18} />
+                      )}
+                    </button>
+                  )}
                 </div>
 
+                {/* Status Indicators */}
                 {(isRecording || isPlaying) && (
-                  <p className="text-center text-sm text-gray-400 mt-3">
-                    {isRecording && "🔴 Recording voice..."}
-                    {isPlaying && "🔊 Playing response..."}
-                  </p>
+                  <div className="flex items-center justify-center gap-2 mt-3">
+                    {isRecording && (
+                      <span className="flex items-center gap-1.5 text-xs text-red-400">
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+                        Recording...
+                      </span>
+                    )}
+                    {isPlaying && (
+                      <span className="flex items-center gap-1.5 text-xs text-[#fe9a00]">
+                        <FiVolume2 size={12} className="animate-pulse" />
+                        Playing response...
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
