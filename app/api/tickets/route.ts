@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const decoded = jwt.verify(token, process.env.NEXT_PUBLIC_JWT_SECRET!) as any;
     const userId = decoded.userId;
     const userRole = decoded.role;
 
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    const decoded = jwt.verify(token, process.env.NEXT_PUBLIC_JWT_SECRET!) as any;
     const userId = decoded.userId;
 
     const { subject, message, priority } = await request.json();
