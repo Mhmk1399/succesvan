@@ -11,6 +11,11 @@ interface Office {
   name: string;
 }
 
+interface Category {
+  _id: string;
+  name: string;
+}
+
 interface Reservation {
   _id: string;
   customerName: string | null;
@@ -47,12 +52,14 @@ export default function ReservationReport() {
     pages: 1,
   });
   const [offices, setOffices] = useState<Office[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [status, setStatus] = useState("");
   const [officeId, setOfficeId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
 
   const statusOptions = [
     { _id: "pending", name: "Pending" },
@@ -64,11 +71,12 @@ export default function ReservationReport() {
 
   useEffect(() => {
     fetchOffices();
+    fetchCategories();
   }, []);
 
   useEffect(() => {
     fetchData(1);
-  }, [startDate, endDate, status, officeId]);
+  }, [startDate, endDate, status, officeId, categoryId]);
 
   const fetchOffices = async () => {
     try {
@@ -77,6 +85,16 @@ export default function ReservationReport() {
       setOffices(json.data || []);
     } catch (err) {
       console.error("Failed to load offices");
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("/api/categories?limit=100");
+      const json = await res.json();
+      setCategories(json.data?.data || json.data || []);
+    } catch (err) {
+      console.error("Failed to load categories");
     }
   };
 
@@ -91,6 +109,7 @@ export default function ReservationReport() {
       if (endDate) params.append("endDate", endDate);
       if (status) params.append("status", status);
       if (officeId) params.append("office", officeId);
+      if (categoryId) params.append("category", categoryId);
 
       const res = await fetch(`/api/reports/reservations?${params}`);
       const result = await res.json();
@@ -120,6 +139,7 @@ export default function ReservationReport() {
     setEndDate("");
     setStatus("");
     setOfficeId("");
+    setCategoryId("");
   };
 
   const exportToCSV = () => {
@@ -189,7 +209,7 @@ export default function ReservationReport() {
           <h3 className="text-white font-semibold">Filters</h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <DatePicker
             value={startDate}
             onChange={setStartDate}
@@ -224,9 +244,20 @@ export default function ReservationReport() {
               placeholder="All Offices"
             />
           </div>
+          <div>
+            <label className="text-gray-300 text-sm font-semibold mb-2 block">
+              Category
+            </label>
+            <CustomSelect
+              options={categories}
+              value={categoryId}
+              onChange={setCategoryId}
+              placeholder="All Categories"
+            />
+          </div>
         </div>
 
-        {(startDate || endDate || status || officeId) && (
+        {(startDate || endDate || status || officeId || categoryId) && (
           <button
             onClick={clearFilters}
             className="flex items-center gap-2 px-3 py-1.5 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors"

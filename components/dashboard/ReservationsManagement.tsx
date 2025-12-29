@@ -24,6 +24,7 @@ export default function ReservationsManagement() {
   const [newVehicle, setNewVehicle] = useState("");
   const [vehicles, setVehicles] = useState<{ _id: string; name: string }[]>([]);
   const [users, setUsers] = useState<{ _id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ _id: string; name: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingVehicles, setLoadingVehicles] = useState(true);
   const [showDateRange, setShowDateRange] = useState(false);
@@ -42,12 +43,14 @@ export default function ReservationsManagement() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [vehiclesRes, usersRes] = await Promise.all([
+        const [vehiclesRes, usersRes, categoriesRes] = await Promise.all([
           fetch("/api/vehicles?status=active&available=true"),
           fetch("/api/users?limit=100"),
+          fetch("/api/categories?limit=100"),
         ]);
         const vehiclesData = await vehiclesRes.json();
         const usersData = await usersRes.json();
+        const categoriesData = await categoriesRes.json();
 
         setVehicles(
           (vehiclesData.data || []).map((vehicle: any) => ({
@@ -59,6 +62,13 @@ export default function ReservationsManagement() {
           (usersData.data || []).map((user: any) => ({
             _id: user._id,
             name: `${user.name} ${user.lastName || ""}`.trim(),
+          }))
+        );
+
+        setCategories(
+          (categoriesData.data?.data || categoriesData.data || []).map((category: any) => ({
+            _id: category._id,
+            name: category.name,
           }))
         );
 
@@ -178,6 +188,7 @@ export default function ReservationsManagement() {
         apiEndpoint="/api/reservations"
         filters={[
           { key: "name", label: "User", type: "select", options: users },
+          { key: "category", label: "Category", type: "select", options: categories },
           { key: "startDate", label: "Start Date", type: "date" },
           { key: "endDate", label: "End Date", type: "date" },
           { key: "totalPrice", label: "Total Price", type: "text" },
@@ -192,6 +203,11 @@ export default function ReservationsManagement() {
           {
             key: "office",
             label: "Office",
+            render: (value: any) => value?.name || "-",
+          },
+          {
+            key: "category",
+            label: "Category",
             render: (value: any) => value?.name || "-",
           },
           {

@@ -42,7 +42,7 @@ export default function DynamicTableView<
   onDuplicate,
   onStatusToggle,
   onMutate,
-  itemsPerPage = 10,
+  itemsPerPage = 15,
   hideDelete = false,
   hiddenColumns = [],
   filters = [],

@@ -208,9 +208,7 @@ export default function ReportsManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white">
-            Business Intelligence
-          </h1>
+          <h1 className="text-xl font-bold text-white">Business Intelligence</h1>
           <p className="text-gray-500 text-sm mt-0.5">
             Analytics and insights for smarter decisions
           </p>
@@ -237,11 +235,7 @@ export default function ReportsManagement() {
                   : "text-gray-400 hover:text-white hover:bg-white/5"
               }`}
             >
-              <span
-                className={
-                  selectedReport === report.id ? "text-white" : report.color
-                }
-              >
+              <span className={selectedReport === report.id ? "text-white" : report.color}>
                 {report.icon}
               </span>
               <span className="hidden sm:inline">{report.name}</span>
@@ -263,14 +257,9 @@ export default function ReportsManagement() {
                 <div className={`p-2.5 rounded-lg ${report.bgColor}`}>
                   <span className={report.color}>{report.icon}</span>
                 </div>
-                <FiChevronRight
-                  className="text-gray-600 group-hover:text-[#fe9a00] transition-colors"
-                  size={16}
-                />
+                <FiChevronRight className="text-gray-600 group-hover:text-[#fe9a00] transition-colors" size={16} />
               </div>
-              <h3 className="text-white font-semibold mt-3 text-sm">
-                {report.name}
-              </h3>
+              <h3 className="text-white font-semibold mt-3 text-sm">{report.name}</h3>
               <p className="text-gray-500 text-xs mt-1">{report.description}</p>
             </button>
           ))}
@@ -283,17 +272,11 @@ export default function ReportsManagement() {
           <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-lg ${currentReport.bgColor}`}>
-                <span className={currentReport.color}>
-                  {currentReport.icon}
-                </span>
+                <span className={currentReport.color}>{currentReport.icon}</span>
               </div>
               <div>
-                <h2 className="text-white font-bold">
-                  {currentReport.name} Report
-                </h2>
-                <p className="text-gray-500 text-xs">
-                  {currentReport.description}
-                </p>
+                <h2 className="text-white font-bold">{currentReport.name} Report</h2>
+                <p className="text-gray-500 text-xs">{currentReport.description}</p>
               </div>
             </div>
             <button
@@ -324,8 +307,7 @@ export default function ReportsManagement() {
             </div>
             <h3 className="text-white font-semibold mb-2">Select a Report</h3>
             <p className="text-gray-500 text-sm">
-              Choose a report from above or use the AI Analyst for custom
-              queries.
+              Choose a report from above or use the AI Analyst for custom queries.
             </p>
           </div>
         </div>
@@ -343,12 +325,8 @@ export default function ReportsManagement() {
                     <FiMessageCircle size={18} />
                   </div>
                   <div>
-                    <h2 className="font-bold text-white">
-                      AI Business Analyst
-                    </h2>
-                    <p className="text-orange-100 text-xs">
-                      Ask about your data
-                    </p>
+                    <h2 className="font-bold text-white">AI Business Analyst</h2>
+                    <p className="text-orange-100 text-xs">Ask about your data</p>
                   </div>
                 </div>
                 <button
@@ -369,9 +347,7 @@ export default function ReportsManagement() {
                 {messages.map((msg, i) => (
                   <div
                     key={i}
-                    className={`flex ${
-                      msg.role === "user" ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
                       className={`max-w-[80%] rounded-xl px-4 py-3 ${
@@ -386,7 +362,7 @@ export default function ReportsManagement() {
                     </div>
                   </div>
                 ))}
-
+                
                 {isLoading && (
                   <div className="flex justify-start">
                     <div className="bg-white/5 rounded-xl px-4 py-3 border border-white/5">
@@ -457,9 +433,7 @@ export default function ReportsManagement() {
                   ) : (
                     <button
                       onClick={() => handleSendMessage()}
-                      disabled={
-                        !inputMessage.trim() || isLoading || isRecording
-                      }
+                      disabled={!inputMessage.trim() || isLoading || isRecording}
                       className="px-4 py-3 bg-[#fe9a00] hover:bg-[#e68a00] rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                     >
                       {isLoading ? (

@@ -861,7 +861,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
 
       {/* Assign Vehicle Modal */}
       {isAssignModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-999 flex items-center justify-center p-4">
           <div className="bg-[#111827] rounded-xl border border-white/10 w-full max-w-md shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
               <h3 className="text-lg font-bold text-white">Assign Vehicle</h3>
@@ -879,7 +879,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
             </div>
 
             <div className="p-5">
-              <div>
+              <div className="mb-24">
                 <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
                   Available Vehicles
                 </label>
