@@ -44,7 +44,7 @@ export async function PATCH(
       .populate("category")
       .populate({
         path: "vehicle",
-        select: "title number", // ← Correct fields
+        select: "title number",
       })
       .populate("addOns.addOn");
     if (!reservation) return errorResponse("Reservation not found", 404);
