@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
 
     return errorResponse("Invalid action", 400);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
+    const message =  "Invalid Data";
     return errorResponse(message, 500);
   }
 }

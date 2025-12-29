@@ -11,11 +11,13 @@ import {
   FiExternalLink,
   FiLogOut,
   FiAlertCircle,
+  FiMessageSquare,
 } from "react-icons/fi";
 import ProfileContent from "./ProfileContent";
 import DynamicTableView from "../dashboard/DynamicTableView";
 import { Reservation } from "@/types/type";
 import { showToast } from "@/lib/toast";
+import SupportContent from "./SupportContent";
 
 const menuItems = [
   {
@@ -28,7 +30,11 @@ const menuItems = [
     label: "Profile",
     icon: <FiUser />,
   },
-
+  {
+    id: "support",
+    label: "Support",
+    icon: <FiMessageSquare />,
+  },
   {
     id: "discounts",
     label: "Discounts",
@@ -258,6 +264,7 @@ export default function CustomerDashboard() {
               scrollToSection={scrollToSection}
             />
           )}
+          {activeTab === "support" && <SupportContent />}
           {activeTab === "discounts" && <DiscountsContent />}
         </div>
       </main>
