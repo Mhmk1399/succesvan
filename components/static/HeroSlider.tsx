@@ -4,9 +4,10 @@ import { useRef, useLayoutEffect, useState, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { HiArrowRight, HiArrowLeft } from "react-icons/hi";
-import { BsSpeedometer, BsPeople, BsGear } from "react-icons/bs";
+import { BsGear, BsDoorOpen, BsFuelPump } from "react-icons/bs";
 import { MdAirlineSeatReclineExtra } from "react-icons/md";
 import Image from "next/image";
+import Link from "next/link";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -15,51 +16,50 @@ if (typeof window !== "undefined") {
 const vansData = [
   {
     id: 1,
-    name: "Mercedes Sprinter",
-    tagline: "Luxury Redefined",
-    description:
-      "Experience ultimate comfort with our premium Mercedes Sprinter, perfect for executive travel and special events.",
-    image: "/assets/images/van.png",
-    price: "£150",
+    name: "Luton With Tail-Lift",
+    tagline: "Ford Transit High Roof With TAIL-LIFT or Similar",
+    description: `Luton van with tail lift ideal for moving heavy or bulky items. Spacious cargo area, hydraulic lift for easy loading, flexible hire options, well-maintained vehicles, and affordable rates for home moves, deliveries, or business transport in London.`,
+    image: "https://vhsbuckets3.s3.eu-north-1.amazonaws.com/images/1-min.png",
+    price: "£115",
     features: [
-      { icon: BsPeople, label: "12 Passengers" },
-      { icon: MdAirlineSeatReclineExtra, label: "Luxury Seats" },
-      { icon: BsGear, label: "Auto Transmission" },
-      { icon: BsSpeedometer, label: "Climate Control" },
+      { icon: BsGear, label: "Gear : Manual & Automatic" },
+      { icon: MdAirlineSeatReclineExtra, label: "Seat : 2" },
+      { icon: BsDoorOpen, label: "Door : 4" },
+      { icon: BsFuelPump, label: "Fuel : Diesel" },
     ],
     color: "#fe9a00",
     gradient: "from-amber-500 to-[#fe9a00]",
   },
   {
     id: 2,
-    name: "Ford Transit Custom",
-    tagline: "Power & Performance",
-    description:
-      "Reliable and spacious, ideal for group travel, airport transfers, and corporate events with superior comfort.",
-    image: "/assets/images/van.png",
-    price: "£120",
+    name: "14 Seater Minibus",
+    tagline: "Ford Transit or Similar",
+    description: `
+Comfortable 14-seater minibus perfect for group travel, events, tours, or corporate transport. Spacious interior, modern safety features, flexible rental periods, competitive pricing, and reliable performance for both short and long journeys across London.`,
+    image: "https://vhsbuckets3.s3.eu-north-1.amazonaws.com/images/2-min.png",
+    price: "£175",
     features: [
-      { icon: BsPeople, label: "9 Passengers" },
-      { icon: MdAirlineSeatReclineExtra, label: "Comfort Seats" },
-      { icon: BsGear, label: "Manual/Auto" },
-      { icon: BsSpeedometer, label: "GPS Navigation" },
+      { icon: BsGear, label: "Gear : Manual & Automatic" },
+      { icon: MdAirlineSeatReclineExtra, label: "Seat : 14" },
+      { icon: BsDoorOpen, label: "Door : 4" },
+      { icon: BsFuelPump, label: "Fuel : Diesel" },
     ],
     color: "#ff8800",
     gradient: "from-amber-500 to-[#fe9a00]",
   },
   {
     id: 3,
-    name: "VW Transporter",
-    tagline: "Versatile Excellence",
-    description:
-      "Perfect blend of style and functionality, designed for both business and leisure with premium amenities.",
-    image: "/assets/images/van.png",
-    price: "£110",
+    name: "Short Wheel Base",
+    tagline: "Ford Transit Custom or Similar",
+    description: `
+Compact and fuel-efficient short wheelbase van designed for city driving. Easy to maneuver and park, yet spacious enough for deliveries or small moves. Ideal for businesses or individuals needing a reliable, cost-effective transport solution.`,
+    image: "https://vhsbuckets3.s3.eu-north-1.amazonaws.com/images/3-min.png",
+    price: "£60",
     features: [
-      { icon: BsPeople, label: "8 Passengers" },
-      { icon: MdAirlineSeatReclineExtra, label: "Premium Seats" },
-      { icon: BsGear, label: "Auto Transmission" },
-      { icon: BsSpeedometer, label: "Cruise Control" },
+      { icon: BsGear, label: "Gear : Manual & Automatic" },
+      { icon: MdAirlineSeatReclineExtra, label: "Seat : 3" },
+      { icon: BsDoorOpen, label: "Door : 4" },
+      { icon: BsFuelPump, label: "Fuel : Diesel" },
     ],
     color: "#ffa500",
     gradient: "from-amber-500 to-[#fe9a00]",
@@ -410,7 +410,7 @@ export default function HeroSection() {
     >
       {/* Enhanced Background */}
       <div className="hero-background absolute inset-0 opacity-30">
-         <div className="absolute top-1/4 left-1/4 w-125 h-125 bg-amber-500/15 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute top-1/4 left-1/4 w-125 h-125 bg-amber-500/15 rounded-full blur-3xl animate-pulse-slow"></div>
         <div className="absolute bottom-1/4 right-1/4 w-125 h-125 bg-orange-500/15 rounded-full blur-3xl animate-pulse-slower"></div>
 
         {/* Gradient Overlay */}
@@ -476,19 +476,21 @@ export default function HeroSection() {
                   </div>
 
                   <div className="sm:ml-auto w-full sm:w-auto">
-                    <button
-                      className={`group relative w-full sm:w-auto px-6   py-3   bg-linear-to-r ${currentVan.gradient} text-white font-bold text-base lg:text-lg rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 shadow-2xl`}
-                      style={{
-                        boxShadow: `0 10px 40px ${currentVan.color}50`,
-                      }}
-                    >
-                      <span className="relative z-10 flex items-center justify-center gap-2">
-                        Book Now
-                        <HiArrowRight className="text-xl group-hover:translate-x-1 transition-transform duration-300" />
-                      </span>
-                      {/* Shine effect */}
-                      <span className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
-                    </button>
+                    <Link href="/reservation">
+                      <button
+                        className={`group relative w-full sm:w-auto px-6   py-3   bg-linear-to-r ${currentVan.gradient} text-white font-bold text-base lg:text-lg rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 shadow-2xl`}
+                        style={{
+                          boxShadow: `0 10px 40px ${currentVan.color}50`,
+                        }}
+                      >
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          Book Now
+                          <HiArrowRight className="text-xl group-hover:translate-x-1 transition-transform duration-300" />
+                        </span>
+                        {/* Shine effect */}
+                        <span className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
+                      </button>
+                    </Link>
                   </div>
                 </div>
 
@@ -551,19 +553,21 @@ export default function HeroSection() {
                   </div>
 
                   <div className="sm:ml-auto w-full sm:w-auto">
-                    <button
-                      className={`group relative w-full sm:w-auto px-6   py-3   bg-linear-to-r ${currentVan.gradient} text-white font-bold text-base lg:text-lg rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 shadow-2xl`}
-                      style={{
-                        boxShadow: `0 10px 40px ${currentVan.color}50`,
-                      }}
-                    >
-                      <span className="relative z-10 flex items-center justify-center gap-2">
-                        Book Now
-                        <HiArrowRight className="text-xl group-hover:translate-x-1 transition-transform duration-300" />
-                      </span>
-                      {/* Shine effect */}
-                      <span className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
-                    </button>
+                    <Link href="/reservation">
+                      <button
+                        className={`group relative w-full sm:w-auto px-6   py-3   bg-linear-to-r ${currentVan.gradient} text-white font-bold text-base lg:text-lg rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 shadow-2xl`}
+                        style={{
+                          boxShadow: `0 10px 40px ${currentVan.color}50`,
+                        }}
+                      >
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          Book Now
+                          <HiArrowRight className="text-xl group-hover:translate-x-1 transition-transform duration-300" />
+                        </span>
+                        {/* Shine effect */}
+                        <span className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></span>
+                      </button>
+                    </Link>
                   </div>
                 </div>
               </div>

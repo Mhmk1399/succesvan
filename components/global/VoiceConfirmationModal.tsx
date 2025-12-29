@@ -557,11 +557,11 @@ export default function VoiceConfirmationModal({
                                 driverAge: e.target.value,
                               })
                             }
-                            min="25"
-                            max="70"
+                         placeholder="23-80"
+            min="23"
+            max="80"
                             className="flex-1 bg-white/10 border border-red-400/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-amber-400"
-                            placeholder="25-70"
-                          />
+                           />
                         </div>
                       )}
                     </div>

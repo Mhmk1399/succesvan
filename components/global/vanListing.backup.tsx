@@ -1630,9 +1630,9 @@ function ReservationPanel({
                     name="driverAge"
                     value={formData.driverAge}
                     onChange={handleChange}
-                    placeholder="25-70"
-                    min="25"
-                    max="70"
+                    placeholder="23-80"
+                    min="23"
+                    max="80"
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all"
                   />
                 </div>
@@ -2176,7 +2176,7 @@ function CategoryCard({
               e.stopPropagation();
               onDetails();
             }}
-            className="flex items-center gap-2 text-[#fe9a00] font-bold text-sm hover:gap-3 transition-all duration-300"
+            className="flex items-center gap-2 text-[#fe9a00] font-bold text-sm hover:gap-3 hover:border-b-2 hover:border-[#fe9a00] transition-all duration-300"
           >
             <span>Van Dimensions</span>
             <IoIosArrowForward className="text-lg" />

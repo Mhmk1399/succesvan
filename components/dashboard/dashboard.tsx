@@ -284,24 +284,28 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
       value: stats.vehicles,
       icon: <FiTruck />,
       color: "from-orange-500 to-orange-600",
+      tabId: "vehicles",
     },
     {
       label: "All Reserves",
       value: stats.reservations,
       icon: <FiClipboard />,
       color: "from-indigo-500 to-indigo-600",
+      tabId: "reserves",
     },
     {
       label: "Offices",
       value: stats.offices,
       icon: <FiMapPin />,
       color: "from-green-500 to-green-600",
+      tabId: "offices",
     },
     {
       label: "Categories",
       value: stats.categories,
       icon: <FiTag />,
       color: "from-pink-500 to-pink-600",
+      tabId: "categories",
     },
   ];
 
@@ -442,15 +446,18 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
         {statCards.map((stat, index) => (
           <div
             key={index}
-            className={`bg-linear-to-br ${stat.color} p-6 rounded-2xl border border-white/10 text-white shadow-lg`}
+            onClick={() => handleTabChange(stat.tabId)}
+            className={`bg-linear-to-br ${stat.color} p-3 rounded-2xl border border-white/10 text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer`}
           >
-            <div className="bg-white/20 p-3 rounded-lg w-fit mb-4">
-              <span className="text-2xl">{stat.icon}</span>
+            <div className="flex flex-col items-center text-center space-y-1">
+              <div className="bg-white/20 p-3 rounded-lg">
+                <span className="text-xl">{stat.icon}</span>
+              </div>
+              <p className="text-xl font-black">
+                {statsLoading ? "-" : stat.value}
+              </p>
+              <p className="text-gray-200 text-xs font-medium">{stat.label}</p>
             </div>
-            <p className="text-gray-200 text-sm mb-1">{stat.label}</p>
-            <p className="text-4xl font-black">
-              {statsLoading ? "-" : stat.value}
-            </p>
           </div>
         ))}
       </div>
