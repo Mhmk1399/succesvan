@@ -229,6 +229,56 @@ export default function CategoriesContent() {
     }
   };
 
+  const handleStatusToggle = async (item: any) => {
+    try {
+      if (!item._id) {
+        console.error("No category ID found:", item);
+        throw new Error("Category ID is missing");
+      }
+
+      console.log(
+        "Toggling status for category:",
+        item._id,
+        "Current status:",
+        item.status
+      );
+      const currentStatus = item.status || "active";
+      const newStatus = currentStatus === "active" ? "inactive" : "active";
+      console.log("New status will be:", newStatus);
+
+      const res = await fetch(`/api/categories/${item._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      console.log("API response status:", res.status);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("API error response:", errorText);
+        throw new Error(`HTTP ${res.status}: ${errorText}`);
+      }
+
+      const data = await res.json();
+      console.log("API response data:", data);
+
+      if (!data.success) throw new Error(data.error || "Update failed");
+
+      showToast.success(`Category status updated to ${newStatus}`);
+      if (mutateRef.current) {
+        console.log("Refreshing table data...");
+        mutateRef.current();
+      } else {
+        console.warn("mutateRef.current is not available");
+      }
+    } catch (error) {
+      console.error("Status toggle error:", error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Update failed");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -716,12 +766,12 @@ export default function CategoriesContent() {
 
               <div>
                 <label className="text-gray-400 text-sm mb-2 block">
-                  Required License
+                  Required Licenses
                 </label>
                 <input
                   type="text"
                   name="requiredLicense"
-                  placeholder="Required License"
+                  placeholder="Required Licenses"
                   value={formData.requiredLicense}
                   onChange={handleInputChange}
                   required
@@ -766,9 +816,7 @@ export default function CategoriesContent() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-gray-400 text-sm block">
-                  Gear Types
-                </label>
+                <label className="text-gray-400 text-sm block">Gearbox</label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2 text-white cursor-pointer">
                     <input
@@ -871,38 +919,6 @@ export default function CategoriesContent() {
                 </div>
               </div>
 
-              <div>
-                <label className="text-gray-400 text-sm mb-2 block">
-                  Add to Offices (Optional)
-                </label>
-                <div className="space-y-2 max-h-40 overflow-y-auto p-3 bg-white/5 border border-white/10 rounded-lg">
-                  {offices.map((office) => (
-                    <label
-                      key={office._id}
-                      className="flex items-center gap-2 text-white cursor-pointer hover:bg-white/5 p-2 rounded"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.offices.includes(office._id)}
-                        onChange={(e) => {
-                          const selected = e.target.checked
-                            ? [...formData.offices, office._id]
-                            : formData.offices.filter(
-                                (id) => id !== office._id
-                              );
-                          setFormData((prev) => ({
-                            ...prev,
-                            offices: selected,
-                          }));
-                        }}
-                        className="w-4 h-4 accent-[#fe9a00]"
-                      />
-                      {office.name}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
               <div className="space-y-3">
                 <h3 className="text-white font-semibold">
                   Service Period{" "}
@@ -1002,6 +1018,7 @@ export default function CategoriesContent() {
         ]}
         title="Category"
         onDuplicate={handleDuplicate}
+        onStatusToggle={handleStatusToggle}
         columns={[
           { key: "name", label: "Name" },
           { key: "purpose", label: "Best for" },
@@ -1068,7 +1085,7 @@ export default function CategoriesContent() {
           },
           {
             key: "requiredLicense" as keyof Category,
-            label: "License",
+            label: "Licenses",
           },
           { key: "fuel", label: "Fuel" },
           {
@@ -1085,6 +1102,21 @@ export default function CategoriesContent() {
           },
           { key: "seats", label: "Seats" },
           { key: "doors", label: "Doors" },
+          {
+            key: "status",
+            label: "Status",
+            render: (value: string) => (
+              <span
+                className={`px-2 py-1 rounded-full  font-semibold ${
+                  value === "active"
+                    ? "bg-green-500/20 text-xs  text-green-400"
+                    : "bg-red-500/20 text-[10px] text-red-400"
+                }`}
+              >
+                {value}
+              </span>
+            ),
+          },
         ]}
         onEdit={handleEdit}
         onMutate={(mutate) => (mutateRef.current = mutate)}
@@ -1093,9 +1125,11 @@ export default function CategoriesContent() {
             "properties",
             "pricingTiers",
             "expert",
-            "requiredLicense",
+            "requiredLicenses",
             "purpose",
             "fuel",
+            "showPrice",
+            "doors",
           ] as (keyof Category)[]
         }
         hideDelete={true}

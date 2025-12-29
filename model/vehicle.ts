@@ -4,8 +4,7 @@ const vehicleSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
-    images: [{ type: String, required: true }],
-    category: {
+     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: true,

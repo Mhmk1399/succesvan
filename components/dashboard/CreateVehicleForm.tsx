@@ -17,7 +17,7 @@ export default function VehiclesContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [categories, setCategories] = useState<
-    { _id?: string; name: string }[]
+    { _id?: string; name: string }[] 
   >([]);
   const [offices, setOffices] = useState<{ _id?: string; name: string }[]>([]);
   const [reservations, setReservations] = useState<
@@ -34,7 +34,6 @@ export default function VehiclesContent() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    images: "",
     number: "",
     category: "",
     office: "",
@@ -146,7 +145,6 @@ export default function VehiclesContent() {
     setFormData({
       title: "",
       description: "",
-      images: "",
       number: "",
       category: "",
       office: "",
@@ -181,7 +179,6 @@ export default function VehiclesContent() {
     setFormData({
       title: item.title,
       description: item.description,
-      images: Array.isArray(item.images) ? item.images.join(", ") : item.images,
       number: (item as any).number || "",
       category: categoryId,
       office: officeId,
@@ -202,6 +199,43 @@ export default function VehiclesContent() {
     setIsFormOpen(true);
   };
 
+  const handleStatusToggle = async (item: any) => {
+    try {
+      if (!item._id) {
+        throw new Error("Vehicle ID is missing");
+      }
+
+      const currentStatus = item.status || "active";
+      const newStatus = currentStatus === "active" ? "inactive" : "active";
+
+      const res = await fetch(`/api/vehicles/${item._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`HTTP ${res.status}: ${errorText}`);
+      }
+
+      const data = await res.json();
+
+      if (!data.success) throw new Error(data.error || "Update failed");
+
+      showToast.success(`Vehicle status updated to ${newStatus}`);
+      if (mutateRef.current) {
+        console.log("Refreshing table data...");
+        mutateRef.current();
+      } else {
+        console.warn("mutateRef.current is not available");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Update failed");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -213,7 +247,6 @@ export default function VehiclesContent() {
       const payload = {
         title: formData.title,
         description: formData.description,
-        images: formData.images.split(",").map((img) => img.trim()),
         number: formData.number,
         category: formData.category,
         office: formData.office,
@@ -304,18 +337,7 @@ export default function VehiclesContent() {
                 required
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />
-              <label className="text-gray-400 text-sm mb-2 block">
-                Vehicle Image
-              </label>
-              <input
-                type="text"
-                name="images"
-                placeholder="Image URLs (comma-separated)"
-                value={formData.images}
-                onChange={handleInputChange}
-                required
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-              />
+
               <label className="text-gray-400 text-sm mb-2 block">
                 Vehicle number
               </label>
@@ -565,8 +587,24 @@ export default function VehiclesContent() {
             label: "Needs Service",
             render: (value) => (value ? "Yes" : "No"),
           },
+          {
+            key: "status",
+            label: "Status",
+            render: (value: string) => (
+              <span
+                className={`px-2 py-1 rounded-full  font-semibold ${
+                  value === "active"
+                    ? "bg-green-500/20 text-xs  text-green-400"
+                    : "bg-red-500/20 text-[10px] text-red-400"
+                }`}
+              >
+                {value}
+              </span>
+            ),
+          },
         ]}
         onEdit={handleEdit}
+        onStatusToggle={handleStatusToggle}
         onMutate={(mutate) => (mutateRef.current = mutate)}
       />
 

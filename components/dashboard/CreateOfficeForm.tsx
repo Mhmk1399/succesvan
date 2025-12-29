@@ -5,6 +5,9 @@ import { FiX, FiPlus } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import { Office, Category } from "@/types/type";
 import DynamicTableView from "./DynamicTableView";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import "./datepicker.css";
 type MutateFn = () => Promise<void>;
 
 export default function OfficesContent() {
@@ -420,37 +423,45 @@ export default function OfficesContent() {
                               <label className="text-xs text-gray-400 mb-1 block">
                                 Start Time
                               </label>
-                              <input
-                                type="time"
-                                value={day.startTime}
-                                onChange={(e) =>
-                                  handleWorkingTimeChange(
-                                    idx,
-                                    "startTime",
-                                    e.target.value
-                                  )
-                                }
-                                required
-                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-sm"
-                              />
+                              <div className="relative">
+                                <DatePicker
+                                  selected={day.startTime ? new Date(`1970-01-01T${day.startTime}:00`) : null}
+                                  onChange={(date) => {
+                                    const timeString = date ? date.toTimeString().slice(0, 5) : "";
+                                    handleWorkingTimeChange(idx, "startTime", timeString);
+                                  }}
+                                  showTimeSelect
+                                  showTimeSelectOnly
+                                  timeIntervals={15}
+                                  timeCaption="Time"
+                                  dateFormat="HH:mm"
+                                  timeFormat="HH:mm"
+                                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-sm"
+                                  placeholderText="Select time"
+                                />
+                              </div>
                             </div>
                             <div>
                               <label className="text-xs text-gray-400 mb-1 block">
                                 End Time
                               </label>
-                              <input
-                                type="time"
-                                value={day.endTime}
-                                onChange={(e) =>
-                                  handleWorkingTimeChange(
-                                    idx,
-                                    "endTime",
-                                    e.target.value
-                                  )
-                                }
-                                required
-                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-sm"
-                              />
+                              <div className="relative">
+                                <DatePicker
+                                  selected={day.endTime ? new Date(`1970-01-01T${day.endTime}:00`) : null}
+                                  onChange={(date) => {
+                                    const timeString = date ? date.toTimeString().slice(0, 5) : "";
+                                    handleWorkingTimeChange(idx, "endTime", timeString);
+                                  }}
+                                  showTimeSelect
+                                  showTimeSelectOnly
+                                  timeIntervals={15}
+                                  timeCaption="Time"
+                                  dateFormat="HH:mm"
+                                  timeFormat="HH:mm"
+                                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:border-[#fe9a00] text-sm"
+                                  placeholderText="Select time"
+                                />
+                              </div>
                             </div>
                           </div>
                           <div className="space-y-2">

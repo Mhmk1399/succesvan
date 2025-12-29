@@ -72,7 +72,6 @@ export interface Vehicle {
   _id?: string;
   title: string;
   description: string;
-  images: string[];
   category: string;
   pricePerHour: number;
   fuel: "gas" | "diesel" | "electric" | "hybrid";
@@ -83,6 +82,7 @@ export interface Vehicle {
   serviceHistory: ServiceHistory;
   needsService: boolean;
   available: boolean;
+  status: "active" | "inactive";
   createdAt?: Date;
   updatedAt?: Date;
   number: number;
@@ -102,16 +102,32 @@ export interface Category {
   name: string;
   description?: string;
   image?: string;
+  video?: string;
   purpose?: string;
-  expert: String;
+  expert: string;
   type: string | Type;
-  servicesPeriod: ServicesPeriod;
-  pricePerHour: number;
+  showPrice: number;
+  selloffer?: number;
+  status: "active" | "inactive";
+  properties: {
+    key: string;
+    value: string;
+  }[];
+  requiredLicense: string;
+  pricingTiers: {
+    minDays: number;
+    maxDays: number;
+    pricePerDay: number;
+  }[];
+  extrahoursRate: number;
   fuel: "gas" | "diesel" | "electric" | "hybrid";
-  gear: "automatic" | "manual" | "manual,automatic";
+  gear: {
+    availableTypes: string[];
+    automaticExtraCost: number;
+  };
   seats: number;
   doors: number;
-  selloffer?: number;
+  servicesPeriod: ServicesPeriod;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -122,6 +138,8 @@ export interface Type {
   _id?: string;
   name: string;
   description?: string;
+  offices: string[] | Office[];
+  status: "active" | "inactive";
   createdAt?: string;
   updatedAt?: string;
 }
@@ -194,6 +212,7 @@ export interface DynamicTableViewProps<T> {
   itemsPerPage?: number;
   hideDelete?: boolean;
   onDuplicate?: (item: T) => void;
+  onStatusToggle?: (item: T) => void;
   hiddenColumns?: (keyof T)[];
   filters?: Array<{
     key: string;
@@ -289,7 +308,6 @@ export interface VanData {
   mileage?: string;
   priceUnit?: string;
 }
-
 
 export interface Pagination {
   total: number;

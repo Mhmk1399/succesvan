@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const types = await Type.find(query).skip(skip).limit(limit);
+    const types = await Type.find(query).populate('offices').skip(skip).limit(limit);
     const total = await Type.countDocuments(query);
     const pages = Math.ceil(total / limit);
 

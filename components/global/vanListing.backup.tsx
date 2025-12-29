@@ -1078,7 +1078,7 @@ function ReservationPanel({
             </h3>
             <p className="text-gray-400">
               {isNewUser
-                ? "Please upload your license in the dashboard to finalize your request."
+                ? "Please upload your Licenses in the dashboard to finalize your request."
                 : "We'll send you a confirmation email shortly."}
             </p>
           </div>
@@ -1667,7 +1667,7 @@ function ReservationPanel({
                   <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
                     3
                   </div>
-                  Gear Type
+                  Gearbox
                 </h3>
                 <div className="flex gap-2">
                   {(van as any).gear.availableTypes.includes("manual") && (
@@ -2169,7 +2169,7 @@ function CategoryCard({
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex items-end justify-between">
           {/* Van Dimensions Link */}
           <button
             onClick={(e) => {
@@ -2183,8 +2183,8 @@ function CategoryCard({
           </button>
 
           {/* Price + Book Button */}
-          <div className="flex items-end justify-between">
-            <div>
+          <div className="">
+            {/* <div>
               <p className="text-gray-300 text-sm">from</p>
               {(category as any).selloffer > 0 ? (
                 <div>
@@ -2215,7 +2215,7 @@ function CategoryCard({
                   </span>
                 </div>
               )}
-            </div>
+            </div> */}
 
             <button
               onClick={(e) => {

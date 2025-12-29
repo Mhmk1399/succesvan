@@ -10,7 +10,7 @@ export async function GET(
   try {
     await connect();
     const { id } = await params;
-    const type = await Type.findById(id);
+    const type = await Type.findById(id).populate('offices');
     if (!type) return errorResponse("Type not found", 404);
     return successResponse(type);
   } catch (error) {
@@ -30,7 +30,7 @@ export async function PATCH(
     const type = await Type.findByIdAndUpdate(id, body, {
       new: true,
       runValidators: true,
-    });
+    }).populate('offices');
     if (!type) return errorResponse("Type not found", 404);
     return successResponse(type);
   } catch (error) {

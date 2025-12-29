@@ -16,6 +16,7 @@ import {
   FiInbox,
   FiAlertCircle,
   FiFilter,
+  FiPower,
 } from "react-icons/fi";
 import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
@@ -39,12 +40,14 @@ export default function DynamicTableView<
   columns,
   onEdit,
   onDuplicate,
+  onStatusToggle,
   onMutate,
   itemsPerPage = 10,
   hideDelete = false,
   hiddenColumns = [],
   filters = [],
 }: DynamicTableViewProps<T>) {
+  console.log("DynamicTableView props:", { onStatusToggle: !!onStatusToggle });
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<T | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -53,7 +56,9 @@ export default function DynamicTableView<
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-  const [dateRanges, setDateRanges] = useState<Record<string, [Date | null, Date | null]>>({});
+  const [dateRanges, setDateRanges] = useState<
+    Record<string, [Date | null, Date | null]>
+  >({});
   const [appliedFilters, setAppliedFilters] = useState<Record<string, string>>(
     {}
   );
@@ -68,8 +73,9 @@ export default function DynamicTableView<
       if (value) params.append(key, value);
     });
     Object.entries(dateRanges).forEach(([key, [start, end]]) => {
-      if (start) params.append(`${key}Start`, start.toISOString().split('T')[0]);
-      if (end) params.append(`${key}End`, end.toISOString().split('T')[0]);
+      if (start)
+        params.append(`${key}Start`, start.toISOString().split("T")[0]);
+      if (end) params.append(`${key}End`, end.toISOString().split("T")[0]);
     });
     const separator = apiEndpoint.includes("?") ? "&" : "?";
     return `${apiEndpoint}${separator}${params.toString()}`;
@@ -102,7 +108,9 @@ export default function DynamicTableView<
 
   const items = Array.isArray(data?.data) ? data.data : [];
   const totalPages = data?.pagination?.pages || 1;
-  const hasFilters = Object.values(appliedFilters).some((v) => v) || Object.values(dateRanges).some(([start, end]) => start || end);
+  const hasFilters =
+    Object.values(appliedFilters).some((v) => v) ||
+    Object.values(dateRanges).some(([start, end]) => start || end);
   const isEmptyAfterFilter =
     !isLoading && !error && items.length === 0 && hasFilters;
 
@@ -426,7 +434,7 @@ export default function DynamicTableView<
                     className="p-2 hover:bg-green-500/20 cursor-pointer rounded transition-colors tooltip"
                     data-tooltip="View"
                   >
-                    <FiEye className="text-green-400" />
+                    <FiEye className="text-yellow-400" />
                   </button>
                   {onEdit && (
                     <button
@@ -444,6 +452,23 @@ export default function DynamicTableView<
                       data-tooltip="Duplicate"
                     >
                       <FiCopy className="text-purple-400" />
+                    </button>
+                  )}
+                  {onStatusToggle && (
+                    <button
+                      onClick={() => {
+                        onStatusToggle(item);
+                      }}
+                      className="p-2 hover:bg-orange-500/20 rounded cursor-pointer transition-colors tooltip"
+                      data-tooltip="Toggle Status"
+                    >
+                      <FiPower
+                        className={
+                          (item as Record<string, unknown>).status === "active"
+                            ? "text-green-400"
+                            : "text-orange-400"
+                        }
+                      />
                     </button>
                   )}
                   {!hideDelete && (
@@ -758,7 +783,7 @@ export default function DynamicTableView<
                           <p className="text-xs text-gray-400 mb-2">Front</p>
                           <Image
                             src={item.licenceAttached.front}
-                            alt="License Front"
+                            alt="Licenses Front"
                             width={150}
                             height={100}
                             className="rounded-lg object-cover"
@@ -776,7 +801,7 @@ export default function DynamicTableView<
                           <p className="text-xs text-gray-400 mb-2">Back</p>
                           <Image
                             src={item.licenceAttached.back}
-                            alt="License Back"
+                            alt="Licenses Back"
                             width={150}
                             height={100}
                             className="rounded-lg object-cover"

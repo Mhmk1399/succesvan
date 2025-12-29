@@ -37,8 +37,6 @@ interface Summary {
   }>;
 }
 
- 
-
 export default function ReservationReport() {
   const [data, setData] = useState<Reservation[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -61,6 +59,7 @@ export default function ReservationReport() {
     { _id: "confirmed", name: "Confirmed" },
     { _id: "completed", name: "Completed" },
     { _id: "canceled", name: "Canceled" },
+    { _id: "delivered", name: "Collected" },
   ];
 
   useEffect(() => {
@@ -157,7 +156,9 @@ export default function ReservationReport() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `reservations-report-${new Date().toISOString().split("T")[0]}.csv`;
+    a.download = `reservations-report-${
+      new Date().toISOString().split("T")[0]
+    }.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -202,7 +203,9 @@ export default function ReservationReport() {
             placeholder="Select end date"
           />
           <div>
-            <label className="text-gray-300 text-sm font-semibold mb-2 block">Status</label>
+            <label className="text-gray-300 text-sm font-semibold mb-2 block">
+              Status
+            </label>
             <CustomSelect
               options={statusOptions}
               value={status}
@@ -211,7 +214,9 @@ export default function ReservationReport() {
             />
           </div>
           <div>
-            <label className="text-gray-300 text-sm font-semibold mb-2 block">Office</label>
+            <label className="text-gray-300 text-sm font-semibold mb-2 block">
+              Office
+            </label>
             <CustomSelect
               options={offices}
               value={officeId}
@@ -301,13 +306,27 @@ export default function ReservationReport() {
           <thead className="bg-white/5">
             <tr>
               <th className="px-6 py-4 text-left text-white font-bold">#</th>
-              <th className="px-6 py-4 text-left text-white font-bold">Customer</th>
-              <th className="px-6 py-4 text-left text-white font-bold">Vehicle</th>
-              <th className="px-6 py-4 text-left text-white font-bold">Category</th>
-              <th className="px-6 py-4 text-left text-white font-bold">Office</th>
-              <th className="px-6 py-4 text-left text-white font-bold">Price</th>
-              <th className="px-6 py-4 text-left text-white font-bold">Dates</th>
-              <th className="px-6 py-4 text-left text-white font-bold">Status</th>
+              <th className="px-6 py-4 text-left text-white font-bold">
+                Customer
+              </th>
+              <th className="px-6 py-4 text-left text-white font-bold">
+                Vehicle
+              </th>
+              <th className="px-6 py-4 text-left text-white font-bold">
+                Category
+              </th>
+              <th className="px-6 py-4 text-left text-white font-bold">
+                Office
+              </th>
+              <th className="px-6 py-4 text-left text-white font-bold">
+                Price
+              </th>
+              <th className="px-6 py-4 text-left text-white font-bold">
+                Dates
+              </th>
+              <th className="px-6 py-4 text-left text-white font-bold">
+                Status
+              </th>
             </tr>
           </thead>
           <tbody>

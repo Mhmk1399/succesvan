@@ -519,7 +519,7 @@ useEffect(() => {
         return 25;
       case "collect_booking":
         return 40;
-      case "select_gear":
+      case "select_Gearbox":
         return 50;
       case "select_addons":
         return 55;
@@ -1048,7 +1048,7 @@ useEffect(() => {
           )}
 
           {/* Gear Type Selection */}
-          {agentState.phase === "select_gear" &&
+          {agentState.phase === "select_Gearbox" &&
             agentState.selectedCategory &&
             (() => {
               const gear = agentState.selectedCategory.gear;
@@ -1072,7 +1072,7 @@ useEffect(() => {
                     {/* Header */}
                     <div className="text-center border-b border-white/10 pb-3">
                       <h3 className="text-xl font-bold text-white">
-                        ⚙️ Select Gear Type
+                        ⚙️ Select Gearbox
                       </h3>
                       <p className="text-gray-400 text-sm">
                         Choose your preferred transmission
