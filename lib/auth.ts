@@ -5,7 +5,7 @@ export function verifyToken(req: NextRequest) {
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!token) throw new Error("No token provided");
 
-  return jwt.verify(token, process.env.JWT_SECRET!) as {
+  return jwt.verify(token, process.env.NEXT_PUBLIC_JWT_SECRET!) as {
     userId: string;
     role: string;
   };

@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       if (user) {
         const token = jwt.sign(
           { userId: user._id, role: user.role },
-          process.env.JWT_SECRET!,
+          process.env.NEXT_PUBLIC_JWT_SECRET!,
           { expiresIn: "28d" }
         );
         return successResponse({ userExists: true, token, user });
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
 
       const token = jwt.sign(
         { userId: user._id, role: user.role },
-        process.env.JWT_SECRET!,
+        process.env.NEXT_PUBLIC_JWT_SECRET!,
         { expiresIn: "28d" }
       );
       return successResponse({ token, user }, 201);

@@ -30,7 +30,7 @@ npm install openai
 Create a `.env.local` file in the root directory:
 
 ```env
-OPENAI_API_KEY=sk-your-openai-api-key-here
+NEXT_PUBLIC_OPENAI_API_KEY=sk-your-openai-api-key-here
 NEXT_PUBLIC_MONGODB_URI=your-mongodb-connection-string
 ```
 
@@ -200,7 +200,7 @@ curl -X POST http://localhost:3000/api/parse-voice \
 ## 🐛 Troubleshooting
 
 ### Error: "OpenAI API key not found"
-- Ensure `.env.local` has `OPENAI_API_KEY`
+- Ensure `.env.local` has `NEXT_PUBLIC_OPENAI_API_KEY`
 - Restart Next.js dev server after adding env variables
 
 ### Error: "Microphone permission denied"
