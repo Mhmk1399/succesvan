@@ -133,9 +133,9 @@ export default function TicketsManagement() {
       case "resolved":
         return "bg-green-100 text-green-800";
       case "closed":
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100  text-gray-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100  text-gray-800";
     }
   };
 
@@ -167,14 +167,14 @@ export default function TicketsManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-start gap-20  ">
+    <div className="space-y-6 md:mx-30  ">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
           <FiMessageSquare className="text-[#fe9a00]" />
           Ticket Management
         </h2>
-        <div className="flex items-center gap-4">
-           <CustomSelect
+        <div className="flex items-center gap-4 md:min-w-40">
+          <CustomSelect
             value={filterStatus}
             onChange={setFilterStatus}
             options={[
@@ -192,65 +192,81 @@ export default function TicketsManagement() {
         {filteredTickets.map((ticket) => (
           <div
             key={ticket._id}
-            className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors"
+            className="bg-gray-800  rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors"
           >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-lg font-semibold text-white">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center   gap-2 mb-2">
+                  <h3 className="text-lg font-semibold text-white truncate   min-w-0">
                     {ticket.subject}
                   </h3>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      ticket.status
-                    )}`}
-                  >
-                    {ticket.status}
-                  </span>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(
-                      ticket.priority
-                    )}`}
-                  >
-                    {ticket.priority}
-                  </span>
+                  <div className="flex gap-1">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(
+                        ticket.status
+                      )}`}
+                    >
+                      {ticket.status}
+                    </span>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getPriorityColor(
+                        ticket.priority
+                      )}`}
+                    >
+                      {ticket.priority}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-gray-400 text-sm mb-2">
+                <p className="text-gray-400 text-sm mb-2 truncate">
                   {ticket.userId.name} {ticket.userId.lastName} •{" "}
                   {ticket.userId.email}
                 </p>
-                <p className="text-gray-300 text-sm mb-3">
+                <p
+                  className="text-gray-300 text-sm mb-3 overflow-hidden"
+                  style={{
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical" as const,
+                    lineHeight: "1.25rem",
+                    maxHeight: "2.5rem",
+                  }}
+                >
                   {ticket.messages.length > 0
                     ? ticket.messages[ticket.messages.length - 1].content
                     : "No messages yet"}
                 </p>
-                <div className="flex items-center gap-4 text-xs text-gray-500">
-                  <span>
+                <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                  <span className="whitespace-nowrap">
                     Created: {new Date(ticket.createdAt).toLocaleDateString()}
                   </span>
-                  <span>
+                  <span className="whitespace-nowrap">
                     Updated: {new Date(ticket.updatedAt).toLocaleDateString()}
                   </span>
-                  <span>{ticket.messages.length} messages</span>
+                  <span className="whitespace-nowrap">
+                    {ticket.messages.length} messages
+                  </span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 min-w-0">
                 <button
                   onClick={() => handleViewTicket(ticket)}
-                  className="px-3 py-1 bg-[#fe9a00] text-black rounded-md hover:bg-[#e8890b] transition-colors text-sm font-medium"
+                  className="px-3 py-3 bg-[#fe9a00] text-black rounded-md hover:bg-[#e8890b] transition-colors text-sm font-medium whitespace-nowrap"
                 >
                   View
                 </button>
-                <CustomSelect
-                  value={ticket.status}
-                  onChange={(value) => handleStatusChange(ticket._id, value)}
-                  options={[
-                    { _id: "open", name: "Open" },
-                    { _id: "in-progress", name: "In Progress" },
-                    { _id: "resolved", name: "Resolved" },
-                    { _id: "closed", name: "Closed" },
-                  ]}
-                />
+                <div className="flex items-center gap-4 md:min-w-30">
+                  <CustomSelect
+                    value={ticket.status}
+                    onChange={(value) => handleStatusChange(ticket._id, value)}
+                    options={[
+                      { _id: "open", name: "Open" },
+                      { _id: "in-progress", name: "In Progress" },
+                      { _id: "resolved", name: "Resolved" },
+                      { _id: "closed", name: "Closed" },
+                    ]}
+                    placeholder="Select status"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -342,7 +358,7 @@ export default function TicketsManagement() {
                 <button
                   onClick={handleSendReply}
                   disabled={!replyMessage.trim() || isSubmitting}
-                  className="px-6 py-2 bg-[#fe9a00] text-black rounded-lg hover:bg-[#e8890b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="px-2 md:px-6 py-2 bg-[#fe9a00] text-black rounded-lg hover:bg-[#e8890b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   {isSubmitting ? "Sending..." : "Send"}
                 </button>

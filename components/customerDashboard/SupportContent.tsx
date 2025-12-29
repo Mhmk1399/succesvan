@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FiMessageSquare,   FiPlus,   } from "react-icons/fi";
+import { FiMessageSquare, FiPlus } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import CustomSelect from "@/components/ui/CustomSelect";
 
@@ -178,13 +178,13 @@ export default function SupportContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+        <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
           <FiMessageSquare className="text-[#fe9a00]" />
           Support Tickets
         </h2>
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#fe9a00] text-black rounded-lg hover:bg-[#e8890b] transition-colors font-medium"
+          className="flex items-center gap-2 md:px-4 md:py-2 p-1 bg-[#fe9a00] text-black rounded-lg hover:bg-[#e8890b] transition-colors font-medium"
         >
           <FiPlus size={18} />
           New Ticket
@@ -195,9 +195,12 @@ export default function SupportContent() {
         {tickets.map((ticket) => (
           <div
             key={ticket._id}
-            className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors"
+            className="bg-gray-800 rounded-lg md:p-6 p-4 border border-gray-700 hover:border-gray-600 transition-colors"
           >
-            <div className="flex items-start justify-between">
+            <div
+              className="flex items-start justify-between cursor-pointer"
+              onClick={() => handleViewTicket(ticket)}
+            >
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h3 className="text-lg font-semibold text-white">
@@ -233,12 +236,12 @@ export default function SupportContent() {
                   <span>{ticket.messages.length} messages</span>
                 </div>
               </div>
-              <button
+              {/* <button
                 onClick={() => handleViewTicket(ticket)}
                 className="px-3 py-1 bg-[#fe9a00] text-black rounded-md hover:bg-[#e8890b] transition-colors text-sm font-medium"
               >
                 View
-              </button>
+              </button> */}
             </div>
           </div>
         ))}
@@ -413,24 +416,40 @@ export default function SupportContent() {
               </div>
             </div>
 
-            {selectedTicket.status !== "closed" && (
+            {selectedTicket.status !== "closed" &&
+              selectedTicket.status !== "resolved" && (
+                <div className="p-6 border-t border-gray-700">
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      value={replyMessage}
+                      onChange={(e) => setReplyMessage(e.target.value)}
+                      placeholder="Type your reply..."
+                      className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#fe9a00]"
+                      onKeyPress={(e) => e.key === "Enter" && handleSendReply()}
+                    />
+                    <button
+                      onClick={handleSendReply}
+                      disabled={!replyMessage.trim() || isSubmitting}
+                      className="px-6 py-2 bg-[#fe9a00] text-black rounded-lg hover:bg-[#e8890b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                    >
+                      {isSubmitting ? "Sending..." : "Send"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            {(selectedTicket.status === "closed" ||
+              selectedTicket.status === "resolved") && (
               <div className="p-6 border-t border-gray-700">
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    value={replyMessage}
-                    onChange={(e) => setReplyMessage(e.target.value)}
-                    placeholder="Type your reply..."
-                    className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#fe9a00]"
-                    onKeyPress={(e) => e.key === "Enter" && handleSendReply()}
-                  />
-                  <button
-                    onClick={handleSendReply}
-                    disabled={!replyMessage.trim() || isSubmitting}
-                    className="px-6 py-2 bg-[#fe9a00] text-black rounded-lg hover:bg-[#e8890b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-                  >
-                    {isSubmitting ? "Sending..." : "Send"}
-                  </button>
+                <div className="text-center text-gray-400">
+                  <p className="text-sm">
+                    This ticket is {selectedTicket.status}. You cannot send new
+                    messages.
+                  </p>
+                  <p className="text-xs mt-1">
+                    If you need further assistance, please create a new ticket.
+                  </p>
                 </div>
               </div>
             )}

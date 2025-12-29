@@ -199,7 +199,7 @@ export default function CustomerDashboard() {
           >
             {sidebarOpen ? <FiX /> : <FiMenu />}
           </button>
-          <h2 className="text-2xl font-black text-white">
+          <h2 className="text-lg md:text-2xl font-black text-white">
             {menuItems.find((item) => item.id === activeTab)?.label}
           </h2>
           <div>
@@ -207,7 +207,7 @@ export default function CustomerDashboard() {
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold"
+              className="w-full flex items-center justify-center gap-2 p-1.5 md:px-4 md:py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold"
             >
               <FiExternalLink className="text-lg" />
               <span>Back to Site</span>
