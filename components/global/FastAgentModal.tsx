@@ -1019,8 +1019,8 @@ useEffect(() => {
                         driverAge: parseInt(e.target.value) || 25,
                       }))
                     }
-                    min={21}
-                    max={99}
+                    min={22}
+                    max={80}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500"
                     required
                   />
