@@ -31,7 +31,7 @@ Create a `.env.local` file in the root directory:
 
 ```env
 OPENAI_API_KEY=sk-your-openai-api-key-here
-MONGODB_URI=your-mongodb-connection-string
+NEXT_PUBLIC_MONGODB_URI=your-mongodb-connection-string
 ```
 
 ## 📁 File Structure
