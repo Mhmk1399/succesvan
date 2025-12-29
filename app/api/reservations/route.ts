@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
     const name = searchParams.get("name");
+    const category = searchParams.get("category");
     const totalPrice = searchParams.get("totalPrice");
     const startDateRange = searchParams.get("startDateRangeStart");
     const startDateRangeEnd = searchParams.get("startDateRangeEnd");
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
     const query: any = {};
     if (userId) query.user = userId;
     if (name) query.user = name;
+    if (category) query.category = category;
     if (status) query.status = status;
     if (totalPrice) {
       query.totalPrice = parseFloat(totalPrice);

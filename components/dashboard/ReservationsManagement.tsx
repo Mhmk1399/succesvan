@@ -449,6 +449,7 @@ export default function ReservationsManagement() {
         apiEndpoint="/api/reservations"
         filters={[
           { key: "name", label: "User", type: "select", options: users },
+          { key: "category", label: "Category", type: "select", options: categories },
           { key: "startDate", label: "Start Date", type: "date" },
           { key: "endDate", label: "End Date", type: "date" },
           { key: "totalPrice", label: "Total Price", type: "text" },
@@ -463,6 +464,11 @@ export default function ReservationsManagement() {
           {
             key: "office",
             label: "Office",
+            render: (value: any) => value?.name || "-",
+          },
+          {
+            key: "category",
+            label: "Category",
             render: (value: any) => value?.name || "-",
           },
           {

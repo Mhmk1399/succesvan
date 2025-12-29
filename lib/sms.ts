@@ -1,9 +1,9 @@
-const SMS_WORKS_JWT = process.env.SMSWORKS_JWT;
-const SMS_WORKS_SENDER = process.env.SMSWORKS_SENDER || "InfoText";
+const SMS_WORKS_JWT = process.env.NEXT_PUBLIC_SMSWORKS_JWT;
+const SMS_WORKS_SENDER = process.env.NEXT_PUBLIC_SMSWORKS_SENDER || "InfoText";
 
 export async function sendSMS(to: string, message: string) {
   if (!SMS_WORKS_JWT) {
-    throw new Error("Missing SMSWORKS_JWT");
+    throw new Error("Missing NEXT_PUBLIC_SMSWORKS_JWT");
   }
 
   // Remove + and spaces from phone number for E.164 format

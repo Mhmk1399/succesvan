@@ -75,7 +75,9 @@ export interface Vehicle {
   category: string;
   pricePerHour: number;
   fuel: "gas" | "diesel" | "electric" | "hybrid";
-  gear: "automatic" | "manual" | "manual,automatic";
+  gear: {
+    availableTypes: { gearType: "automatic" | "manual" }[];
+  };
   seats: number;
   doors: number;
   properties: Property[];

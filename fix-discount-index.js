@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 async function fixIndex() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'your-mongodb-uri');
+    await mongoose.connect(process.env.NEXT_PUBLIC_MONGODB_URI || 'your-mongodb-uri');
     const db = mongoose.connection.db;
     
     // Drop the unique index on usedBy

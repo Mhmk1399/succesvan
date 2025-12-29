@@ -4,7 +4,7 @@ const vehicleSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
-     category: {
+    category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
       required: true,
@@ -12,6 +12,13 @@ const vehicleSchema = new mongoose.Schema(
     available: {
       type: Boolean,
       default: true, // ← This ensures new vehicles are available
+    },
+    gear: {
+      availableTypes: [
+        {
+          gearType: { type: String, enum: ["automatic", "manual"], required: true },
+        },
+      ],
     },
     status: { type: String, enum: ["active", "inactive"], default: "active" },
 

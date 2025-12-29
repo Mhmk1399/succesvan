@@ -17,7 +17,7 @@ export default function VehiclesContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [categories, setCategories] = useState<
-    { _id?: string; name: string }[] 
+    { _id?: string; name: string }[]
   >([]);
   const [offices, setOffices] = useState<{ _id?: string; name: string }[]>([]);
   const [reservations, setReservations] = useState<
@@ -39,6 +39,7 @@ export default function VehiclesContent() {
     office: "",
     reservation: "",
     available: true, // ← New field
+    gear: { availableTypes: [] as string[] },
     properties: [{ name: "", value: "" }],
     needsService: false,
     serviceHistory: {
@@ -141,6 +142,17 @@ export default function VehiclesContent() {
     setShowServiceDatePicker(null);
   };
 
+  const handleGearChange = (type: string, checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      gear: {
+        availableTypes: checked
+          ? [...prev.gear.availableTypes, type]
+          : prev.gear.availableTypes.filter((t) => t !== type),
+      },
+    }));
+  };
+
   const resetForm = () => {
     setFormData({
       title: "",
@@ -150,6 +162,7 @@ export default function VehiclesContent() {
       office: "",
       reservation: "",
       available: true,
+      gear: { availableTypes: [] },
       properties: [{ name: "", value: "" }],
       needsService: false,
       serviceHistory: {
@@ -186,6 +199,11 @@ export default function VehiclesContent() {
       properties: item.properties || [{ name: "", value: "" }],
       needsService: item.needsService,
       available: item.available ?? true, // ← Handle available field
+      gear: {
+        availableTypes: (item.gear?.availableTypes || [])
+          .map((t: any) => (typeof t === "string" ? t : t.gearType))
+          .filter(Boolean),
+      },
       serviceHistory: item.serviceHistory || {
         tire: new Date(),
         oil: new Date(),
@@ -253,7 +271,12 @@ export default function VehiclesContent() {
         ...(formData.reservation && { reservation: formData.reservation }),
         properties: formData.properties.filter((p) => p.name && p.value),
         needsService: formData.needsService,
-        available: formData.available, // ← Include available
+        available: formData.available,
+        gear: {
+          availableTypes: formData.gear.availableTypes.map((type) => ({
+            gearType: type,
+          })),
+        },
         serviceHistory: {
           tire: formData.serviceHistory.tire,
           oil: formData.serviceHistory.oil,
@@ -376,7 +399,7 @@ export default function VehiclesContent() {
                     : "Select Category"
                 }
               />
-              <label className="text-gray-400 text-sm mb-2 block">
+              {/* <label className="text-gray-400 text-sm mb-2 block">
                 reservation
               </label>
               <CustomSelect
@@ -390,7 +413,7 @@ export default function VehiclesContent() {
                     ? "Loading reservations..."
                     : "Select Reservation (Optional)"
                 }
-              />
+              /> */}
               <label className="text-gray-400 text-sm mb-2 block">status</label>
               <CustomSelect
                 options={[
@@ -403,6 +426,28 @@ export default function VehiclesContent() {
                 }
                 placeholder="Select Status"
               />
+              <label className="text-gray-400 text-sm mb-2 block">
+                Gear Types
+              </label>
+              <div className="space-y-2">
+                {["automatic", "manual"].map((type) => (
+                  <label
+                    key={type}
+                    className="flex items-center gap-3 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      required={formData.gear.availableTypes.length === 0}
+                      checked={formData.gear.availableTypes.includes(type)}
+                      onChange={(e) => handleGearChange(type, e.target.checked)}
+                      className="w-5 h-5 text-[#fe9a00] rounded focus:ring-[#fe9a00]"
+                    />
+                    <span className="text-white font-medium capitalize">
+                      {type}
+                    </span>
+                  </label>
+                ))}
+              </div>
               {/* New: Available Checkbox */}
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -581,6 +626,11 @@ export default function VehiclesContent() {
             key: "office" as any,
             label: "Office",
             render: (value) => value?.name || "-",
+          },
+          {
+            key: "gear" as any,
+            label: "Gear Types",
+            render: (value) => value?.availableTypes?.map((t: any) => t.gearType).join(", ") || "-",
           },
           {
             key: "needsService",

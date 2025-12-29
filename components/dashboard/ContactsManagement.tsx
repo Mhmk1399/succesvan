@@ -117,13 +117,7 @@ export default function ContactsManagement() {
             render: (value: EmailData) => (
               <div className="flex items-center gap-2">
                 <span>{value?.emailAddress || "-"}</span>
-                <span
-                  className={`text-[10px] font-semibold ${
-                    value?.isVerified ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  {value?.isVerified ? "verify" : "unVerify"}
-                </span>
+               
               </div>
             ),
           },
@@ -154,6 +148,7 @@ export default function ContactsManagement() {
               new Date(value).toLocaleDateString("en-GB"),
           },
         ]}
+        hiddenColumns={["address"]}
         onEdit={handleViewDetails}
         onMutate={(mutate) => (mutateRef.current = mutate)}
       />

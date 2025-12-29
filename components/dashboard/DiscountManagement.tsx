@@ -126,7 +126,9 @@ export default function DiscountManagement() {
 
     try {
       const method = editingId ? "PATCH" : "POST";
-      const url = editingId ? `/api/discounts?id=${editingId}` : "/api/discounts";
+      const url = editingId
+        ? `/api/discounts?id=${editingId}`
+        : "/api/discounts";
 
       const payload = {
         code: formData.code,
@@ -169,14 +171,72 @@ export default function DiscountManagement() {
     setFormData((prev) => ({ ...prev, code }));
   };
 
-  const toggleCategory = (categoryId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      categories: prev.categories.includes(categoryId)
-        ? prev.categories.filter((id) => id !== categoryId)
-        : [...prev.categories, categoryId],
-    }));
+  const handleStatusToggle = async (item: any) => {
+    try {
+      if (!item._id) {
+        console.error("No discount ID found:", item);
+        throw new Error("Discount ID is missing");
+      }
+
+      console.log(
+        "Toggling status for discount:",
+        item._id,
+        "Current status:",
+        item.status
+      );
+      const currentStatus = item.status || "inactive";
+      const newStatus = currentStatus === "active" ? "inactive" : "active";
+      console.log("New status will be:", newStatus);
+
+      const res = await fetch(`/api/discounts?id=${item._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      console.log("API response status:", res.status);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("API error response:", errorText);
+        throw new Error(`HTTP ${res.status}: ${errorText}`);
+      }
+
+      const data = await res.json();
+      console.log("API response data:", data);
+
+      if (!data.success) throw new Error(data.error || "Update failed");
+
+      showToast.success(`Discount status updated to ${newStatus}`);
+      if (mutateRef.current) {
+        console.log("Refreshing table data...");
+        mutateRef.current();
+      } else {
+        console.warn("mutateRef.current is not available");
+      }
+    } catch (error) {
+      console.error("Status toggle error:", error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Update failed");
+    }
   };
+
+  function toggleCategory(_id: string): void {
+    setFormData((prev) => {
+      const isSelected = prev.categories.includes(_id);
+      if (isSelected) {
+        return {
+          ...prev,
+          categories: prev.categories.filter((id) => id !== _id),
+        };
+      } else {
+        return {
+          ...prev,
+          categories: [...prev.categories, _id],
+        };
+      }
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -292,10 +352,14 @@ export default function DiscountManagement() {
                           setFormData((prev) => ({
                             ...prev,
                             validFrom: item.selection.startDate
-                              ? item.selection.startDate.toISOString().split("T")[0]
+                              ? item.selection.startDate
+                                  .toISOString()
+                                  .split("T")[0]
                               : "",
                             validTo: item.selection.endDate
-                              ? item.selection.endDate.toISOString().split("T")[0]
+                              ? item.selection.endDate
+                                  .toISOString()
+                                  .split("T")[0]
                               : "",
                           }));
                         }}
@@ -330,7 +394,9 @@ export default function DiscountManagement() {
               </div>
 
               <div>
-                <label className="text-gray-400 text-sm mb-2 block">Status</label>
+                <label className="text-gray-400 text-sm mb-2 block">
+                  Status
+                </label>
                 <CustomSelect
                   options={[
                     { _id: "active", name: "Active" },
@@ -377,9 +443,15 @@ export default function DiscountManagement() {
           { key: "createdAt", label: "Created Date", type: "date" },
         ]}
         title="Discount"
+        hideDelete={true}
+        onStatusToggle={handleStatusToggle}
         columns={[
           { key: "code", label: "Code" },
-          { key: "percentage", label: "Percentage", render: (val) => `${val}%` },
+          {
+            key: "percentage",
+            label: "Percentage",
+            render: (val) => `${val}%`,
+          },
           {
             key: "categories" as keyof Discount,
             label: "Categories",
@@ -406,10 +478,27 @@ export default function DiscountManagement() {
                 item?.usageLimit ? `/${item.usageLimit}` : ""
               }`,
           },
-          { key: "status", label: "Status" },
+          {
+            key: "status",
+            label: "Status",
+            render: (value: string) => (
+              <span
+                className={`px-2 py-1 rounded-full font-semibold ${
+                  value === "active"
+                    ? "bg-green-500/20 text-xs text-green-400"
+                    : value === "inactive"
+                    ? "bg-red-500/20 text-[10px] text-red-400"
+                    : "bg-yellow-500/20 text-[10px] text-yellow-400"
+                }`}
+              >
+                {value}
+              </span>
+            ),
+          },
         ]}
         onEdit={handleEdit}
         onMutate={(mutate) => (mutateRef.current = mutate)}
+        hiddenColumns={["categories"]}
       />
     </div>
   );

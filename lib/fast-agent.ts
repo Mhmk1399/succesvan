@@ -16,7 +16,7 @@ import Reservation from "@/model/reservation";
 import jwt from "jsonwebtoken";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
 });
 
 // ============================================================================
@@ -1116,7 +1116,7 @@ async function handleVerifyCode(
       userId = user._id.toString();
       userToken = jwt.sign(
         { userId, phoneNumber },
-        process.env.JWT_SECRET || "your-secret-key",
+        process.env.NEXT_PUBLIC_JWT_SECRET || "your-secret-key",
         { expiresIn: "7d" }
       );
       isNewUser = true;
