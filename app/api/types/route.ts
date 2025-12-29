@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Type from "@/model/type";
 import { successResponse, errorResponse } from "@/lib/api-response";
+import Office from "@/model/office";
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,7 +27,10 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const types = await Type.find(query).populate('offices').skip(skip).limit(limit);
+    const types = await Type.find(query).populate({
+      path: "offices",
+      model: Office
+    }).skip(skip).limit(limit);
     const total = await Type.countDocuments(query);
     const pages = Math.ceil(total / limit);
 

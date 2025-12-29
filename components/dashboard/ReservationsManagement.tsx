@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { FiX, FiCalendar, FiClock } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import DynamicTableView from "./DynamicTableView";
 import { Reservation } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
 import { DateRange, Range } from "react-date-range";
+import { usePriceCalculation } from "@/hooks/usePriceCalculation";
+import TimeSelect from "@/components/ui/TimeSelect";
+import { generateTimeSlots } from "@/utils/timeSlots";
+import AddOnsModal from "@/components/global/AddOnsModal";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 
@@ -24,6 +28,8 @@ export default function ReservationsManagement() {
   const [newVehicle, setNewVehicle] = useState("");
   const [vehicles, setVehicles] = useState<{ _id: string; name: string }[]>([]);
   const [users, setUsers] = useState<{ _id: string; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ _id: string; name: string; pricingTiers?: any[]; extrahoursRate?: number; selloffer?: number }[]>([]);
+  const [offices, setOffices] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingVehicles, setLoadingVehicles] = useState(true);
   const [showDateRange, setShowDateRange] = useState(false);
@@ -38,16 +44,161 @@ export default function ReservationsManagement() {
     startTime: "10:00",
     endTime: "10:00",
   });
+  const [editCategory, setEditCategory] = useState("");
+  const [pickupExtensionPrice, setPickupExtensionPrice] = useState(0);
+  const [returnExtensionPrice, setReturnExtensionPrice] = useState(0);
+  const [addOnsCost, setAddOnsCost] = useState(0);
+  const [startDateReservedSlots, setStartDateReservedSlots] = useState<any[]>([]);
+  const [endDateReservedSlots, setEndDateReservedSlots] = useState<any[]>([]);
+  const [showAddOnsModal, setShowAddOnsModal] = useState(false);
+  const [addOns, setAddOns] = useState<any[]>([]);
+  const [selectedAddOns, setSelectedAddOns] = useState<{ addOn: string; quantity: number; selectedTierIndex?: number }[]>([]);
+
+  const selectedCategory = useMemo(() => {
+    return categories.find(c => c._id === editCategory);
+  }, [editCategory, categories]);
+
+  const pickupTimeSlots = useMemo(() => {
+    if (!selectedReservation?.office || !editDateRange[0].startDate) return [];
+    const office = offices.find((o) => o._id === (selectedReservation.office as any)?._id);
+    if (!office) return [];
+
+    const date = editDateRange[0].startDate;
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+
+    const specialDay = office.specialDays?.find((sd: any) => sd.month === month && sd.day === day);
+    let start = "00:00", end = "23:59";
+
+    if (specialDay && specialDay.isOpen) {
+      start = specialDay.startTime || "00:00";
+      end = specialDay.endTime || "23:59";
+    } else {
+      const workingDay = office.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+      if (workingDay) {
+        start = workingDay.startTime || "00:00";
+        end = workingDay.endTime || "23:59";
+
+        // If start and end are the same, check if there's an extension
+        if (start === end) {
+          if (!workingDay.pickupExtension || (workingDay.pickupExtension.hoursBefore === 0 && workingDay.pickupExtension.hoursAfter === 0)) {
+            return []; // No extension, return empty array
+          }
+          // Has extension, show only extension times
+          const [startHour, startMin] = start.split(":").map(Number);
+          const extendedStartMinutes = Math.max(0, startHour * 60 + startMin - workingDay.pickupExtension.hoursBefore * 60);
+          const extendedEndMinutes = Math.min(1439, startHour * 60 + startMin + workingDay.pickupExtension.hoursAfter * 60);
+          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(2, "0")}:${String(extendedStartMinutes % 60).padStart(2, "0")}`;
+          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(2, "0")}:${String(extendedEndMinutes % 60).padStart(2, "0")}`;
+        } else if (workingDay.pickupExtension) {
+          const [startHour, startMin] = start.split(":").map(Number);
+          const [endHour, endMin] = end.split(":").map(Number);
+          const extendedStartMinutes = Math.max(0, startHour * 60 + startMin - workingDay.pickupExtension.hoursBefore * 60);
+          const extendedEndMinutes = Math.min(1439, endHour * 60 + endMin + workingDay.pickupExtension.hoursAfter * 60);
+          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(2, "0")}:${String(extendedStartMinutes % 60).padStart(2, "0")}`;
+          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(2, "0")}:${String(extendedEndMinutes % 60).padStart(2, "0")}`;
+        }
+      }
+    }
+
+    return generateTimeSlots(start, end, 15);
+  }, [selectedReservation, editDateRange, offices]);
+
+  const returnTimeSlots = useMemo(() => {
+    if (!selectedReservation?.office || !editDateRange[0].endDate) return [];
+    const office = offices.find((o) => o._id === (selectedReservation.office as any)?._id);
+    if (!office) return [];
+
+    const date = editDateRange[0].endDate;
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+
+    const specialDay = office.specialDays?.find((sd: any) => sd.month === month && sd.day === day);
+    let start = "00:00", end = "23:59";
+
+    if (specialDay && specialDay.isOpen) {
+      start = specialDay.startTime || "00:00";
+      end = specialDay.endTime || "23:59";
+    } else {
+      const workingDay = office.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+      if (workingDay) {
+        start = workingDay.startTime || "00:00";
+        end = workingDay.endTime || "23:59";
+
+        // If start and end are the same, check if there's an extension
+        if (start === end) {
+          if (!workingDay.returnExtension || (workingDay.returnExtension.hoursBefore === 0 && workingDay.returnExtension.hoursAfter === 0)) {
+            return []; // No extension, return empty array
+          }
+          // Has extension, show only extension times
+          const [startHour, startMin] = start.split(":").map(Number);
+          const extendedStartMinutes = Math.max(0, startHour * 60 + startMin - workingDay.returnExtension.hoursBefore * 60);
+          const extendedEndMinutes = Math.min(1439, startHour * 60 + startMin + workingDay.returnExtension.hoursAfter * 60);
+          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(2, "0")}:${String(extendedStartMinutes % 60).padStart(2, "0")}`;
+          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(2, "0")}:${String(extendedEndMinutes % 60).padStart(2, "0")}`;
+        } else if (workingDay.returnExtension) {
+          const [startHour, startMin] = start.split(":").map(Number);
+          const [endHour, endMin] = end.split(":").map(Number);
+          const extendedStartMinutes = Math.max(0, startHour * 60 + startMin - workingDay.returnExtension.hoursBefore * 60);
+          const extendedEndMinutes = Math.min(1439, endHour * 60 + endMin + workingDay.returnExtension.hoursAfter * 60);
+          start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(2, "0")}:${String(extendedStartMinutes % 60).padStart(2, "0")}`;
+          end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(2, "0")}:${String(extendedEndMinutes % 60).padStart(2, "0")}`;
+        }
+      }
+    }
+
+    return generateTimeSlots(start, end, 15);
+  }, [selectedReservation, editDateRange, offices]);
+
+  const isDateDisabled = useMemo(() => {
+    return (date: Date): boolean => {
+      if (!selectedReservation?.office) return false;
+      const office = offices.find((o) => o._id === (selectedReservation.office as any)?._id);
+      if (!office) return false;
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+      const specialDay = office.specialDays?.find((sd: any) => sd.month === month && sd.day === day);
+      if (specialDay && !specialDay.isOpen) return true;
+      const workingDay = office.workingTime?.find((w: any) => w.day === dayName);
+      if (workingDay && !workingDay.isOpen) return true;
+      return false;
+    };
+  }, [selectedReservation, offices]);
+
+  const priceCalc = usePriceCalculation(
+    editDateRange[0].startDate && editTimes.startTime
+      ? `${editDateRange[0].startDate.toISOString().split('T')[0]}T${editTimes.startTime}:00`
+      : "",
+    editDateRange[0].endDate && editTimes.endTime
+      ? `${editDateRange[0].endDate.toISOString().split('T')[0]}T${editTimes.endTime}:00`
+      : "",
+    selectedCategory?.pricingTiers || [],
+    selectedCategory?.extrahoursRate || 0,
+    pickupExtensionPrice,
+    returnExtensionPrice,
+    0,
+    addOnsCost,
+    selectedCategory?.selloffer || 0
+  );
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [vehiclesRes, usersRes] = await Promise.all([
+        const [vehiclesRes, usersRes, categoriesRes, officesRes, addOnsRes] = await Promise.all([
           fetch("/api/vehicles?status=active&available=true"),
           fetch("/api/users?limit=100"),
+          fetch("/api/categories?status=active"),
+          fetch("/api/offices"),
+          fetch("/api/addons?status=active"),
         ]);
         const vehiclesData = await vehiclesRes.json();
         const usersData = await usersRes.json();
+        const categoriesData = await categoriesRes.json();
+        const officesData = await officesRes.json();
+        const addOnsData = await addOnsRes.json();
 
         setVehicles(
           (vehiclesData.data || []).map((vehicle: any) => ({
@@ -61,13 +212,17 @@ export default function ReservationsManagement() {
             name: `${user.name} ${user.lastName || ""}`.trim(),
           }))
         );
-
-        setVehicles(
-          (vehiclesData.data || []).map((vehicle: any) => ({
-            _id: vehicle._id,
-            name: vehicle.title || vehicle.number || "Unknown",
+        setCategories(
+          (categoriesData.data?.data || categoriesData.data || []).map((cat: any) => ({
+            _id: cat._id,
+            name: cat.name,
+            pricingTiers: cat.pricingTiers,
+            extrahoursRate: cat.extrahoursRate,
+            selloffer: cat.selloffer,
           }))
         );
+        setOffices(officesData.data?.data || officesData.data || []);
+        setAddOns(addOnsData.data?.data || addOnsData.data || []);
       } catch (error) {
         console.log("Failed to fetch data:", error);
       } finally {
@@ -82,6 +237,7 @@ export default function ReservationsManagement() {
     setNewVehicle(
       typeof item.vehicle === "string" ? item.vehicle : item.vehicle?._id || ""
     );
+    setEditCategory((item as any).category?._id || "");
     setEditDateRange([
       {
         startDate: new Date(item.startDate),
@@ -99,8 +255,119 @@ export default function ReservationsManagement() {
         endDate.getMinutes()
       ).padStart(2, "0")}`,
     });
+    // Load existing add-ons
+    if (item.addOns && item.addOns.length > 0) {
+      setSelectedAddOns(
+        item.addOns.map((addon: any) => ({
+          addOn: typeof addon.addOn === "string" ? addon.addOn : addon.addOn?._id,
+          quantity: addon.quantity,
+          selectedTierIndex: addon.selectedTierIndex,
+        }))
+      );
+    } else {
+      setSelectedAddOns([]);
+    }
     setIsDetailOpen(true);
   };
+
+  // Calculate add-ons cost
+  useEffect(() => {
+    const cost = selectedAddOns.reduce((total: number, item: any) => {
+      const addon = addOns.find((a) => a._id === item.addOn);
+      if (!addon) return total;
+      if (addon.pricingType === "flat") {
+        const amount = addon.flatPrice?.amount || 0;
+        const isPerDay = addon.flatPrice?.isPerDay || false;
+        return total + (isPerDay ? amount * (priceCalc?.totalDays || 1) : amount) * item.quantity;
+      } else {
+        const tier = addon.tieredPrice?.tiers?.[item.selectedTierIndex ?? 0];
+        if (tier) {
+          const isPerDay = addon.tieredPrice?.isPerDay || false;
+          return total + (isPerDay ? tier.price * (priceCalc?.totalDays || 1) : tier.price) * item.quantity;
+        }
+      }
+      return total;
+    }, 0);
+    setAddOnsCost(cost);
+  }, [selectedAddOns, priceCalc, addOns]);
+
+  // Calculate extension prices
+  useEffect(() => {
+    if (!selectedReservation?.office || !editDateRange[0].startDate || !editTimes.startTime) {
+      setPickupExtensionPrice(0);
+      return;
+    }
+    const office = offices.find((o) => o._id === (selectedReservation.office as any)?._id);
+    if (!office) return;
+    const date = editDateRange[0].startDate;
+    const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+    const workingDay = office.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+    if (workingDay?.pickupExtension) {
+      const [pickupHour, pickupMin] = editTimes.startTime.split(":").map(Number);
+      const [startHour, startMin] = (workingDay.startTime || "00:00").split(":").map(Number);
+      const [endHour, endMin] = (workingDay.endTime || "23:59").split(":").map(Number);
+      const pickupMinutes = pickupHour * 60 + pickupMin;
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+      if (pickupMinutes < startMinutes || pickupMinutes > endMinutes) {
+        setPickupExtensionPrice(workingDay.pickupExtension.flatPrice || 0);
+      } else {
+        setPickupExtensionPrice(0);
+      }
+    } else {
+      setPickupExtensionPrice(0);
+    }
+  }, [selectedReservation, editTimes.startTime, editDateRange, offices]);
+
+  useEffect(() => {
+    if (!selectedReservation?.office || !editDateRange[0].endDate || !editTimes.endTime) {
+      setReturnExtensionPrice(0);
+      return;
+    }
+    const office = offices.find((o) => o._id === (selectedReservation.office as any)?._id);
+    if (!office) return;
+    const date = editDateRange[0].endDate;
+    const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+    const workingDay = office.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+    if (workingDay?.returnExtension) {
+      const [returnHour, returnMin] = editTimes.endTime.split(":").map(Number);
+      const [startHour, startMin] = (workingDay.startTime || "00:00").split(":").map(Number);
+      const [endHour, endMin] = (workingDay.endTime || "23:59").split(":").map(Number);
+      const returnMinutes = returnHour * 60 + returnMin;
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+      if (returnMinutes < startMinutes || returnMinutes > endMinutes) {
+        setReturnExtensionPrice(workingDay.returnExtension.flatPrice || 0);
+      } else {
+        setReturnExtensionPrice(0);
+      }
+    } else {
+      setReturnExtensionPrice(0);
+    }
+  }, [selectedReservation, editTimes.endTime, editDateRange, offices]);
+
+  // Fetch reserved slots
+  useEffect(() => {
+    if (selectedReservation?.office && editDateRange[0].startDate) {
+      const date = editDateRange[0].startDate;
+      const startDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      fetch(`/api/reservations/by-office?office=${(selectedReservation.office as any)._id}&startDate=${startDate}&type=start`)
+        .then((res) => res.json())
+        .then((data) => setStartDateReservedSlots(data.data?.reservedSlots || []))
+        .catch((err) => console.error(err));
+    }
+  }, [selectedReservation, editDateRange]);
+
+  useEffect(() => {
+    if (selectedReservation?.office && editDateRange[0].endDate) {
+      const date = editDateRange[0].endDate;
+      const endDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      fetch(`/api/reservations/by-office?office=${(selectedReservation.office as any)._id}&endDate=${endDate}&type=end`)
+        .then((res) => res.json())
+        .then((data) => setEndDateReservedSlots(data.data?.reservedSlots || []))
+        .catch((err) => console.error(err));
+    }
+  }, [selectedReservation, editDateRange]);
 
   const handleStatusChange = async () => {
     if (!selectedReservation || !newStatus) return;
@@ -133,7 +400,8 @@ export default function ReservationsManagement() {
     if (
       !selectedReservation ||
       !editDateRange[0].startDate ||
-      !editDateRange[0].endDate
+      !editDateRange[0].endDate ||
+      !editCategory
     )
       return;
     setIsSubmitting(true);
@@ -153,13 +421,16 @@ export default function ReservationsManagement() {
         body: JSON.stringify({
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
+          category: editCategory,
+          totalPrice: priceCalc?.totalPrice || selectedReservation.totalPrice,
+          addOns: selectedAddOns,
         }),
       });
 
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Update failed");
 
-      showToast.success("Dates updated successfully!");
+      showToast.success("Reservation updated successfully!");
       setIsEditDatesOpen(false);
       if (mutateRef.current) mutateRef.current();
       setIsDetailOpen(false);
@@ -342,11 +613,19 @@ export default function ReservationsManagement() {
               {selectedReservation.addOns &&
                 selectedReservation.addOns.length > 0 && (
                   <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                    <h3 className="text-white font-semibold mb-3">Add-ons</h3>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-white font-semibold">Add-ons</h3>
+                      <button
+                        onClick={() => setShowAddOnsModal(true)}
+                        className="text-[#fe9a00] text-xs hover:underline"
+                      >
+                        Edit Add-ons
+                      </button>
+                    </div>
                     <div className="space-y-2">
-                      {selectedReservation.addOns.map(
+                      {selectedAddOns.map(
                         (item: any, idx: number) => {
-                          const addon = item.addOn;
+                          const addon = addOns.find((a) => a._id === item.addOn) || item.addOn;
                           let price = 0;
                           let tierInfo = "";
 
@@ -413,17 +692,29 @@ export default function ReservationsManagement() {
               {/* Edit Dates */}
               <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                 <h3 className="text-white font-semibold mb-3">
-                  Edit Dates & Times
+                  Edit Reservation
                 </h3>
                 <button
                   onClick={() => setIsEditDatesOpen(!isEditDatesOpen)}
                   className="w-full px-4 py-2 bg-[#fe9a00]/20 text-[#fe9a00] rounded-lg hover:bg-[#fe9a00]/30 transition-colors font-semibold text-sm"
                 >
-                  Edit Dates & Times
+                  Edit Category, Dates & Times
                 </button>
 
                 {isEditDatesOpen && (
                   <div className="mt-4 space-y-3">
+                    <div>
+                      <label className="text-white text-sm font-semibold mb-2 block">
+                        Category
+                      </label>
+                      <CustomSelect
+                        options={categories}
+                        value={editCategory}
+                        onChange={setEditCategory}
+                        placeholder="Select Category"
+                      />
+                    </div>
+
                     <div>
                       <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
                         <FiCalendar className="text-[#fe9a00]" /> Dates
@@ -438,29 +729,40 @@ export default function ReservationsManagement() {
                           : "Select Dates"}
                       </button>
                       {showDateRange && (
-                        <div className="absolute mt-2 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4">
-                          <DateRange
-                            ranges={editDateRange}
-                            onChange={(item) => {
-                              const { startDate, endDate } = item.selection;
-                              setEditDateRange([
-                                {
-                                  startDate: startDate || new Date(),
-                                  endDate: endDate || new Date(),
-                                  key: "selection",
-                                },
-                              ]);
-                            }}
-                            minDate={new Date()}
-                            rangeColors={["#fbbf24"]}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowDateRange(false)}
-                            className="w-full mt-3 px-4 py-2 bg-[#fe9a00] text-slate-900 font-semibold rounded-lg hover:bg-[#e68a00] transition-colors text-sm"
-                          >
-                            Done
-                          </button>
+                        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center" onClick={() => setShowDateRange(false)}>
+                          <div className="bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4" onClick={(e) => e.stopPropagation()}>
+                            <DateRange
+                              ranges={editDateRange}
+                              onChange={(item) => {
+                                const { startDate, endDate } = item.selection;
+                                setEditDateRange([
+                                  {
+                                    startDate: startDate || new Date(),
+                                    endDate: endDate || new Date(),
+                                    key: "selection",
+                                  },
+                                ]);
+                              }}
+                              minDate={new Date()}
+                              rangeColors={["#fbbf24"]}
+                              disabledDates={
+                                selectedReservation?.office
+                                  ? (Array.from({ length: 365 }, (_, i) => {
+                                      const date = new Date();
+                                      date.setDate(date.getDate() + i);
+                                      return isDateDisabled(date) ? date : null;
+                                    }).filter(Boolean) as Date[])
+                                  : []
+                              }
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowDateRange(false)}
+                              className="w-full mt-3 px-4 py-2 bg-[#fe9a00] text-slate-900 font-semibold rounded-lg hover:bg-[#e68a00] transition-colors text-sm"
+                            >
+                              Done
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -470,46 +772,91 @@ export default function ReservationsManagement() {
                         <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
                           <FiClock className="text-[#fe9a00]" /> Start Time
                         </label>
-                        <input
-                          type="time"
-                          value={editTimes.startTime}
-                          onChange={(e) =>
-                            setEditTimes((prev) => ({
-                              ...prev,
-                              startTime: e.target.value,
-                            }))
-                          }
-                          className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-[#fe9a00]"
-                        />
+                        {editDateRange[0].startDate && (() => {
+                          const office = offices.find((o) => o._id === (selectedReservation.office as any)?._id);
+                          const date = editDateRange[0].startDate;
+                          const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+                          const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+                          const extensionTimes = workingDay?.pickupExtension ? {
+                            start: pickupTimeSlots[0],
+                            end: pickupTimeSlots[pickupTimeSlots.length - 1],
+                            normalStart: workingDay.startTime || "00:00",
+                            normalEnd: workingDay.endTime || "23:59",
+                            price: workingDay.pickupExtension.flatPrice,
+                          } : undefined;
+                          return (
+                            <TimeSelect
+                              value={editTimes.startTime}
+                              onChange={(time) => setEditTimes((prev) => ({ ...prev, startTime: time }))}
+                              slots={pickupTimeSlots}
+                              reservedSlots={startDateReservedSlots}
+                              selectedDate={editDateRange[0].startDate}
+                              isStartTime={true}
+                              extensionTimes={extensionTimes}
+                            />
+                          );
+                        })()}
                       </div>
                       <div>
                         <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
                           <FiClock className="text-[#fe9a00]" /> End Time
                         </label>
-                        <input
-                          type="time"
-                          value={editTimes.endTime}
-                          onChange={(e) =>
-                            setEditTimes((prev) => ({
-                              ...prev,
-                              endTime: e.target.value,
-                            }))
-                          }
-                          className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-[#fe9a00]"
-                        />
+                        {editDateRange[0].endDate && (() => {
+                          const office = offices.find((o) => o._id === (selectedReservation.office as any)?._id);
+                          const date = editDateRange[0].endDate;
+                          const dayName = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+                          const workingDay = office?.workingTime?.find((w: any) => w.day === dayName && w.isOpen);
+                          const extensionTimes = workingDay?.returnExtension ? {
+                            start: returnTimeSlots[0],
+                            end: returnTimeSlots[returnTimeSlots.length - 1],
+                            normalStart: workingDay.startTime || "00:00",
+                            normalEnd: workingDay.endTime || "23:59",
+                            price: workingDay.returnExtension.flatPrice,
+                          } : undefined;
+                          return (
+                            <TimeSelect
+                              value={editTimes.endTime}
+                              onChange={(time) => setEditTimes((prev) => ({ ...prev, endTime: time }))}
+                              slots={returnTimeSlots}
+                              reservedSlots={endDateReservedSlots}
+                              selectedDate={editDateRange[0].endDate}
+                              isStartTime={false}
+                              extensionTimes={extensionTimes}
+                            />
+                          );
+                        })()}
                       </div>
                     </div>
 
+                    {priceCalc && (
+                      <div className="bg-[#fe9a00]/10 border border-[#fe9a00]/30 rounded-lg p-3">
+                        <p className="text-white text-sm font-semibold mb-1">New Total Price</p>
+                        <p className="text-[#fe9a00] text-2xl font-black">£{priceCalc.totalPrice}</p>
+                        <p className="text-gray-400 text-xs mt-1">{priceCalc.breakdown}</p>
+                      </div>
+                    )}
+
                     <button
                       onClick={handleDatesUpdate}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || !editCategory}
                       className="w-full px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold text-sm disabled:opacity-50"
                     >
-                      {isSubmitting ? "Updating..." : "Update Dates & Times"}
+                      {isSubmitting ? "Updating..." : "Update Reservation"}
                     </button>
                   </div>
                 )}
               </div>
+
+              {/* Add-ons Modal */}
+              {showAddOnsModal && (
+                <AddOnsModal
+                  addOns={addOns}
+                  selectedAddOns={selectedAddOns}
+                  onUpdate={setSelectedAddOns}
+                  onClose={() => setShowAddOnsModal(false)}
+                  rentalDays={priceCalc?.totalDays || 1}
+                />
+              )}
 
               {/* Vehicle Assignment */}
               <div className="bg-white/5 border border-white/10 rounded-xl p-4">

@@ -129,8 +129,8 @@ export default function TimeSelect({
               );
             })
           ) : (
-            <div className="px-3 py-4 text-center text-gray-400 text-xs">
-              No available times
+            <div className="px-3 py-4 text-center text-red-400 text-xs">
+              {isStartTime ? "Can't pickup on this date" : "Can't deliver on this date"}
             </div>
           )}
         </div>

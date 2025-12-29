@@ -70,8 +70,14 @@ export function usePriceCalculation(
     }
 
     // Calculate full days and extra hours
-    const totalDays = Math.floor(billableHours / 24);
-    const extraHours = billableHours % 24;
+    // If extra hours > 6, count as 1 additional day
+    let totalDays = Math.floor(billableHours / 24);
+    let extraHours = billableHours % 24;
+    
+    if (extraHours > 6) {
+      totalDays += 1;
+      extraHours = 0;
+    }
 
     // Find the appropriate pricing tier based on days
     const tier = pricingTiers.find(

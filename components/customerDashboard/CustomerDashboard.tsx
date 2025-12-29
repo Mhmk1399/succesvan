@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   FiMenu,
   FiX,
@@ -11,11 +11,20 @@ import {
   FiExternalLink,
   FiLogOut,
   FiAlertCircle,
+  FiCalendar,
+  FiClock,
 } from "react-icons/fi";
 import ProfileContent from "./ProfileContent";
 import DynamicTableView from "../dashboard/DynamicTableView";
 import { Reservation } from "@/types/type";
 import { showToast } from "@/lib/toast";
+import { DateRange, Range } from "react-date-range";
+import { usePriceCalculation } from "@/hooks/usePriceCalculation";
+import TimeSelect from "@/components/ui/TimeSelect";
+import { generateTimeSlots } from "@/utils/timeSlots";
+import AddOnsModal from "@/components/global/AddOnsModal";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 
 const menuItems = [
   {
@@ -300,6 +309,9 @@ export default function CustomerDashboard() {
 function ReservesContent() {
   const [userId, setUserId] = useState<string | null>(null);
   const [hasLicense, setHasLicense] = useState(true);
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const user = localStorage.getItem("user");
@@ -318,77 +330,262 @@ function ReservesContent() {
     }
   }, []);
 
+  const handleViewDetails = (item: Reservation) => {
+    setSelectedReservation(item);
+    setIsDetailOpen(true);
+  };
+
+  const handleCancelReservation = async () => {
+    if (!selectedReservation) return;
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(`/api/reservations/${selectedReservation._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "canceled" }),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Cancel failed");
+
+      showToast.success("Reservation canceled successfully!");
+      setIsDetailOpen(false);
+      window.location.reload();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Cancel failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (!userId) {
     return <div className="text-gray-400">Loading reservations...</div>;
   }
 
   return (
-    <DynamicTableView<Reservation>
-      apiEndpoint={`/api/reservations?userId=${userId}`}
-      title="Reservation"
-      hideDelete
-      hiddenColumns={[]}
-      columns={[
-        {
-          key: "office" as keyof Reservation,
-          label: "Office",
-          render: (value: any) => {
-            if (typeof value === "object" && value?.name) {
-              return value.name;
-            }
-            return value || "-";
+    <>
+      <DynamicTableView<Reservation>
+        apiEndpoint={`/api/reservations?userId=${userId}`}
+        title="Reservation"
+        hideDelete
+        hiddenColumns={[]}
+        onEdit={handleViewDetails}
+        columns={[
+          {
+            key: "office" as keyof Reservation,
+            label: "Office",
+            render: (value: any) => {
+              if (typeof value === "object" && value?.name) {
+                return value.name;
+              }
+              return value || "-";
+            },
           },
-        },
-        {
-          key: "startDate" as keyof Reservation,
-          label: "Start Date",
-          render: (value: string) =>
-            new Date(value).toLocaleDateString() || "-",
-        },
-        {
-          key: "endDate" as keyof Reservation,
-          label: "End Date",
-          render: (value: string) =>
-            new Date(value).toLocaleDateString() || "-",
-        },
-        {
-          key: "totalPrice" as keyof Reservation,
-          label: "Total Price",
-          render: (value: any) => {
-            if (
-              typeof value === "object" &&
-              value !== null &&
-              value?.amount !== undefined
-            ) {
-              return <span>£{value.amount}</span>;
-            }
-            if (typeof value === "number") {
-              return <span>£{value}</span>;
-            }
-            return <span>£0</span>;
+          {
+            key: "startDate" as keyof Reservation,
+            label: "Start Date",
+            render: (value: string) =>
+              new Date(value).toLocaleDateString() || "-",
           },
-        },
-        {
-          key: "status" as keyof Reservation,
-          label: "Status",
-          render: (value: string) => (
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                value === "confirmed"
-                  ? "bg-green-500/20 text-green-400"
-                  : value === "pending"
-                  ? "bg-yellow-500/20 text-yellow-400"
-                  : value === "canceled"
-                  ? "bg-red-500/20 text-red-400"
-                  : "bg-blue-500/20 text-blue-400"
-              }`}
-            >
-              {value}
-            </span>
-          ),
-        },
-      ]}
-    />
+          {
+            key: "endDate" as keyof Reservation,
+            label: "End Date",
+            render: (value: string) =>
+              new Date(value).toLocaleDateString() || "-",
+          },
+          {
+            key: "totalPrice" as keyof Reservation,
+            label: "Total Price",
+            render: (value: any) => {
+              if (
+                typeof value === "object" &&
+                value !== null &&
+                value?.amount !== undefined
+              ) {
+                return <span>£{value.amount}</span>;
+              }
+              if (typeof value === "number") {
+                return <span>£{value}</span>;
+              }
+              return <span>£0</span>;
+            },
+          },
+          {
+            key: "status" as keyof Reservation,
+            label: "Status",
+            render: (value: string) => (
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  value === "confirmed"
+                    ? "bg-green-500/20 text-green-400"
+                    : value === "pending"
+                    ? "bg-yellow-500/20 text-yellow-400"
+                    : value === "canceled"
+                    ? "bg-red-500/20 text-red-400"
+                    : "bg-blue-500/20 text-blue-400"
+                }`}
+              >
+                {value}
+              </span>
+            ),
+          },
+        ]}
+      />
+
+      {isDetailOpen && selectedReservation && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a2847] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/10">
+            <div className="sticky top-0 flex items-center justify-between p-6 border-b border-white/10 bg-[#1a2847]">
+              <h2 className="text-2xl font-black text-white">
+                Reservation Details
+              </h2>
+              <button
+                onClick={() => setIsDetailOpen(false)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <FiX className="text-white text-xl" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Reservation Details */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <h3 className="text-white font-semibold mb-3">
+                  Reservation Details
+                </h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-400">Office</p>
+                    <p className="text-white font-semibold">
+                      {(selectedReservation.office as any)?.name || "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400">Category</p>
+                    <p className="text-white font-semibold">
+                      {(selectedReservation as any).category?.name || "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400">Start Date & Time</p>
+                    <p className="text-white font-semibold">
+                      {new Date(selectedReservation.startDate).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400">End Date & Time</p>
+                    <p className="text-white font-semibold">
+                      {new Date(selectedReservation.endDate).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400">Total Price</p>
+                    <p className="text-white font-semibold">
+                      £{selectedReservation.totalPrice}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-400">Status</p>
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                        selectedReservation.status === "confirmed"
+                          ? "bg-green-500/20 text-green-400"
+                          : selectedReservation.status === "pending"
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : selectedReservation.status === "canceled"
+                          ? "bg-red-500/20 text-red-400"
+                          : "bg-blue-500/20 text-blue-400"
+                      }`}
+                    >
+                      {selectedReservation.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Add-ons */}
+              {selectedReservation.addOns &&
+                selectedReservation.addOns.length > 0 && (
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <h3 className="text-white font-semibold mb-3">Add-ons</h3>
+                    <div className="space-y-2">
+                      {selectedReservation.addOns.map(
+                        (item: any, idx: number) => {
+                          const addon = item.addOn;
+                          let price = 0;
+
+                          if (addon?.pricingType === "flat") {
+                            price =
+                              typeof addon.flatPrice === "object"
+                                ? addon.flatPrice?.amount || 0
+                                : addon.flatPrice || 0;
+                          } else if (addon?.pricingType === "tiered") {
+                            const tierIndex = item.selectedTierIndex ?? 0;
+                            const tier = addon.tieredPrice?.tiers?.[tierIndex];
+                            if (tier) {
+                              price = tier.price;
+                            }
+                          }
+
+                          return (
+                            <div
+                              key={idx}
+                              className="flex justify-between items-center text-sm"
+                            >
+                              <span className="text-white font-semibold">
+                                {addon?.name || "Unknown"}
+                              </span>
+                              <div className="flex items-center gap-3">
+                                <span className="text-gray-400">
+                                  Qty: {item.quantity}
+                                </span>
+                                <span className="text-white font-semibold">
+                                  £{price}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        }
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              {/* Message */}
+              {selectedReservation.messege && (
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                  <h3 className="text-white font-semibold mb-2">Message</h3>
+                  <p className="text-gray-300 text-sm">
+                    {selectedReservation.messege}
+                  </p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setIsDetailOpen(false)}
+                  className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors font-semibold"
+                >
+                  Close
+                </button>
+                {selectedReservation.status === "pending" && (
+                  <button
+                    onClick={handleCancelReservation}
+                    disabled={isSubmitting}
+                    className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-semibold disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Canceling..." : "Cancel Reservation"}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
