@@ -218,6 +218,7 @@ export default function TypesManagement() {
         onEdit={handleOpenForm}
         onStatusToggle={handleStatusToggle}
         onMutate={(mutate) => (mutateRef.current = mutate)}
+        hideDelete={true}
       />
 
       {isFormOpen && (

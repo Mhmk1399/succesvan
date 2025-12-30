@@ -7,12 +7,25 @@ interface TimeSelectProps {
   value: string;
   onChange: (time: string) => void;
   slots: string[];
-  reservedSlots: { startDate: string; endDate: string; startTime: string; endTime: string; isSameDay: boolean }[];
+  reservedSlots: {
+    startDate: string;
+    endDate: string;
+    startTime: string;
+    endTime: string;
+    isSameDay: boolean;
+  }[];
   isInline?: boolean;
   tooltip?: string;
   selectedDate?: Date;
   isStartTime?: boolean;
-  extensionTimes?: { start: string; end: string; normalStart: string; normalEnd: string; price: number };
+  extensionTimes?: {
+    start: string;
+    end: string;
+    normalStart: string;
+    normalEnd: string;
+    price: number;
+  };
+  disabled?: boolean;
 }
 
 export default function TimeSelect({
@@ -25,6 +38,7 @@ export default function TimeSelect({
   selectedDate,
   isStartTime = true,
   extensionTimes,
+  disabled = false,
 }: TimeSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -44,22 +58,22 @@ export default function TimeSelect({
 
   const isDisabled = (slot: string) => {
     if (!selectedDate) return false;
-    
-    const currentDateStr = selectedDate.toISOString().split('T')[0];
-    
+
+    const currentDateStr = selectedDate.toISOString().split("T")[0];
+
     return reservedSlots.some((r) => {
       if (r.isSameDay && r.startDate === currentDateStr) {
         return slot >= r.startTime && slot <= r.endTime;
       }
-      
+
       if (isStartTime) {
         return slot === r.startTime;
       }
-      
+
       if (!isStartTime) {
         return slot === r.endTime;
       }
-      
+
       return false;
     });
   };
@@ -68,10 +82,11 @@ export default function TimeSelect({
     <div ref={dropdownRef} className="relative w-full group">
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
         className={`w-full bg-white/10 border border-white/20 rounded-lg text-white flex items-center justify-between focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all ${
           isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
-        }`}
+        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         <span className="flex items-center gap-2">
           <FiClock className="text-amber-400" />
@@ -87,7 +102,7 @@ export default function TimeSelect({
         </div>
       )}
 
-      {isOpen && (
+      {isOpen && !disabled && (
         <div className="absolute top-full left-0 right-0 z-50 mt-2 w-full   bg-slate-800 border border-white/20 rounded-lg shadow-2xl max-h-40 overflow-y-auto">
           {slots.length > 0 ? (
             slots.map((slot) => {
@@ -113,15 +128,25 @@ export default function TimeSelect({
                   }`}
                 >
                   <span className="flex-1">{slot}</span>
-                  {!disabled && extensionTimes && (extensionTimes.normalStart === extensionTimes.normalEnd || slot < extensionTimes.normalStart || slot > extensionTimes.normalEnd) && (
-                    <>
-                      <div className="w-1.5 h-1.5 absolute left-1 rounded-full bg-yellow-400"></div>
-                      <span className="text-[9px] text-yellow-400">+£{extensionTimes.price}</span>
-                    </>
-                  )}
-                  {!disabled && extensionTimes && extensionTimes.normalStart !== extensionTimes.normalEnd && slot >= extensionTimes.normalStart && slot <= extensionTimes.normalEnd && (
-                    <div className="w-1 h-1 absolute left-1 rounded-full bg-green-500"></div>
-                  )}
+                  {!disabled &&
+                    extensionTimes &&
+                    (extensionTimes.normalStart === extensionTimes.normalEnd ||
+                      slot < extensionTimes.normalStart ||
+                      slot > extensionTimes.normalEnd) && (
+                      <>
+                        <div className="w-1.5 h-1.5 absolute left-1 rounded-full bg-yellow-400"></div>
+                        <span className="text-[9px] text-yellow-400">
+                          +£{extensionTimes.price}
+                        </span>
+                      </>
+                    )}
+                  {!disabled &&
+                    extensionTimes &&
+                    extensionTimes.normalStart !== extensionTimes.normalEnd &&
+                    slot >= extensionTimes.normalStart &&
+                    slot <= extensionTimes.normalEnd && (
+                      <div className="w-1 h-1 absolute left-1 rounded-full bg-green-500"></div>
+                    )}
                   {disabled && (
                     <div className="w-1 h-1 absolute left-1 rounded-full bg-red-500"></div>
                   )}
@@ -130,7 +155,9 @@ export default function TimeSelect({
             })
           ) : (
             <div className="px-3 py-4 text-center text-red-400 text-xs">
-              {isStartTime ? "Can't pickup on this date" : "Can't deliver on this date"}
+              {isStartTime
+                ? "Can't pickup on this date"
+                : "Can't deliver on this date"}
             </div>
           )}
         </div>

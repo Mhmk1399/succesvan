@@ -11,6 +11,7 @@ export default function CustomSelect({
   placeholder = "Select option",
   icon,
   isInline = false,
+  disabled = false,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -41,10 +42,11 @@ export default function CustomSelect({
     <div ref={dropdownRef} className="relative w-full">
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
         className={`w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors flex items-center justify-between ${
           isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
-        }`}
+        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
       >
         <span className="flex items-center gap-2 min-w-0">
           {icon}
@@ -55,7 +57,7 @@ export default function CustomSelect({
         />
       </button>
 
-      {isOpen && (
+      {isOpen && !disabled && (
           <div
             className="absolute top-full left-0 right-0 mt-2 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg shadow-lg z-50"
           >

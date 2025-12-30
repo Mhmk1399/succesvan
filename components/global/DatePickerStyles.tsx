@@ -23,12 +23,12 @@ export const datePickerStyles = `
   }
   .rdrMonthAndYearPickers {
     color: white !important;
-    margin-bottom: 12px !important;
+    margin-bottom: 2px !important;
   }
   .rdrMonthAndYearPickers select {
     color: white !important;
     background-color: rgba(30, 41, 59, 0.9) !important;
-    border: 1px solid rgba(251, 191, 36, 0.3) !important;
+    border: 1px solid white !important;
     padding: 6px 8px !important;
     border-radius: 4px !important;
   }

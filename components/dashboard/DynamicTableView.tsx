@@ -70,7 +70,18 @@ export default function DynamicTableView<
     params.append("page", currentPage.toString());
     params.append("limit", itemsPerPage.toString());
     Object.entries(appliedFilters).forEach(([key, value]) => {
-      if (value) params.append(key, value);
+      if (value) {
+        // Handle range filters (Min/Max)
+        if (key.endsWith("Min")) {
+          const baseKey = key.slice(0, -3); // Remove 'Min'
+          params.append(`${baseKey}Min`, value);
+        } else if (key.endsWith("Max")) {
+          const baseKey = key.slice(0, -3); // Remove 'Max'
+          params.append(`${baseKey}Max`, value);
+        } else {
+          params.append(key, value);
+        }
+      }
     });
     Object.entries(dateRanges).forEach(([key, [start, end]]) => {
       if (start)
@@ -192,9 +203,46 @@ export default function DynamicTableView<
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {filters.map(
-              (filter) =>
-                appliedFilters[filter.key] && (
+            {filters.map((filter) => {
+              // Handle range filters
+              if (filter.type === "range") {
+                const minValue = appliedFilters[`${filter.key}Min`];
+                const maxValue = appliedFilters[`${filter.key}Max`];
+                if (minValue || maxValue) {
+                  return (
+                    <div
+                      key={filter.key}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 text-blue-300 rounded-full text-sm"
+                    >
+                      <span>
+                        {filter.label}: {minValue || "0"} - {maxValue || "∞"}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setAppliedFilters((prev) => ({
+                            ...prev,
+                            [`${filter.key}Min`]: "",
+                            [`${filter.key}Max`]: "",
+                          }));
+                          setFilterValues((prev) => ({
+                            ...prev,
+                            [`${filter.key}Min`]: "",
+                            [`${filter.key}Max`]: "",
+                          }));
+                        }}
+                        className="hover:text-blue-200"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                }
+                return null;
+              }
+
+              // Handle regular filters
+              if (appliedFilters[filter.key]) {
+                return (
                   <div
                     key={filter.key}
                     className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 text-blue-300 rounded-full text-sm"
@@ -218,8 +266,10 @@ export default function DynamicTableView<
                       ✕
                     </button>
                   </div>
-                )
-            )}
+                );
+              }
+              return null;
+            })}
           </div>
         </div>
         <div className="flex flex-col items-center justify-center py-16">
@@ -351,6 +401,44 @@ export default function DynamicTableView<
                     }
                     placeholder={`Select ${f.label}`}
                   />
+                )}
+                {f.type === "range" && (
+                  <div className="flex  gap-2">
+                    <input
+                      type={f.rangeType === "number" ? "number" : "text"}
+                      placeholder={`Min ${f.label.toLowerCase()}`}
+                      value={filterValues[`${f.key}Min`] || ""}
+                      onChange={(e) =>
+                        setFilterValues((p) => ({
+                          ...p,
+                          [`${f.key}Min`]: e.target.value,
+                        }))
+                      }
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleFilterApply()
+                      }
+                      className="md:w-49 w-35 px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:bg-white/15 transition-all"
+                      min={f.rangeType === "number" ? "0" : undefined}
+                      step={f.rangeType === "number" ? "0.01" : undefined}
+                    />
+                    <input
+                      type={f.rangeType === "number" ? "number" : "text"}
+                      placeholder={`Max ${f.label.toLowerCase()}`}
+                      value={filterValues[`${f.key}Max`] || ""}
+                      onChange={(e) =>
+                        setFilterValues((p) => ({
+                          ...p,
+                          [`${f.key}Max`]: e.target.value,
+                        }))
+                      }
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleFilterApply()
+                      }
+                      className="md:w-49 w-37 px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:bg-white/15 transition-all"
+                      min={f.rangeType === "number" ? "0" : undefined}
+                      step={f.rangeType === "number" ? "0.01" : undefined}
+                    />
+                  </div>
                 )}
               </div>
             ))}

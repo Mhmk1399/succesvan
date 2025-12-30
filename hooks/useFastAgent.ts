@@ -151,18 +151,20 @@ export function useFastAgent() {
   const stateRef = useRef<FastAgentState>(agentState);
 
   const pushHistory = useCallback((snapshot: FastAgentState) => {
+    console.log("📚 [pushHistory] Saving state to history:", snapshot.phase);
     setHistory((prev) => {
       const cloned =
         typeof structuredClone === "function"
           ? structuredClone(snapshot)
           : (JSON.parse(JSON.stringify(snapshot)) as FastAgentState);
+      console.log("📚 [pushHistory] History length before:", prev.length, "-> after:", prev.length + 1);
       return [...prev, cloned];
     });
   }, []);
 
   const goBack = useCallback(() => {
+    console.log("⬅️ [goBack] Going back from phase:", stateRef.current.phase);
     stopAudio();
-    let target: FastAgentState | null = null;
 
     const isNonInteractiveGearStep = (state: FastAgentState) => {
       if (state.phase !== "select_Gearbox") return false;
@@ -172,28 +174,46 @@ export function useFastAgent() {
       return !(gear.availableTypes?.length > 1);
     };
 
+    // Calculate target BEFORE updating history
+    let targetState: FastAgentState | null = null;
+    
     setHistory((prev) => {
-      if (prev.length === 0) return prev;
+      console.log("⬅️ [goBack] History length:", prev.length);
+      if (prev.length === 0) {
+        console.log("⬅️ [goBack] No history available!");
+        return prev;
+      }
 
       const last = prev[prev.length - 1];
+      console.log("⬅️ [goBack] Last history item phase:", last.phase);
+      
       if (isNonInteractiveGearStep(last) && prev.length >= 2) {
-        target = prev[prev.length - 2];
+        targetState = prev[prev.length - 2];
+        console.log("⬅️ [goBack] Skipping non-interactive gear step, going to:", targetState.phase);
         return prev.slice(0, -2);
       }
 
-      target = last;
+      targetState = last;
+      console.log("⬅️ [goBack] Restoring to phase:", targetState.phase);
       return prev.slice(0, -1);
     });
 
-    if (target) {
-      setAgentState(target);
-    }
+    // Use setTimeout to ensure state update happens after history update completes
+    setTimeout(() => {
+      if (targetState) {
+        console.log("⬅️ [goBack] Setting agent state to:", targetState.phase);
+        setAgentState(targetState);
+      } else {
+        console.log("⬅️ [goBack] No target state to restore!");
+      }
+    }, 0);
   }, [stopAudio]);
 
   const canGoBack = history.length > 0;
 
   // Keep ref in sync
   useEffect(() => {
+    console.log("🔄 [stateRef] Syncing ref to phase:", agentState.phase);
     stateRef.current = agentState;
   }, [agentState]);
 
@@ -275,6 +295,7 @@ export function useFastAgent() {
         const response: FastAgentResponse = data.data;
 
         // Save current state so we can return to it later
+        console.log("💾 [sendMessage] Saving current phase before transition:", stateRef.current.phase, "-> new phase:", response.state.phase);
         pushHistory(stateRef.current);
 
         // Update state
@@ -359,6 +380,7 @@ export function useFastAgent() {
 
   // Select gear type - transition from select_gear to select_addons
   const selectGear = useCallback((gearType: "manual" | "automatic", gearExtraCost: number) => {
+    console.log("⚙️ [selectGear] Transitioning from", stateRef.current.phase, "to select_addons with gear:", gearType);
     pushHistory(stateRef.current);
     setAgentState(prev => ({
       ...prev,

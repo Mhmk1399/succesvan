@@ -19,7 +19,7 @@ export default function FloatingActionMenu() {
     {
       role: "assistant",
       content:
-        "Hi! I'm your Success Van Hire assistant. How can I help you today? I can answer questions about our vehicles, pricing, locations, or booking process!",
+        "Hi! I'm johny your Success Van Hire assistant. How can I help you today? I can answer questions about our vehicles, pricing, locations, or booking process!",
     },
   ]);
   const [inputMessage, setInputMessage] = useState("");
