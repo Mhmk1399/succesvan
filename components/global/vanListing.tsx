@@ -1162,8 +1162,7 @@ function ReservationPanel({
                 <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
                   I agree to the{" "}
                   <a
-                    href="#"
-                    className="text-[#fe9a00] hover:underline font-semibold"
+href="/terms-and-conditions"                    className="text-[#fe9a00] hover:underline font-semibold"
                   >
                     Terms & Conditions
                   </a>{" "}

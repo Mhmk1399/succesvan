@@ -41,7 +41,7 @@ import TestimonialsManagement from "./TestimonialsManagement";
 import ContactsManagement from "./ContactsManagement";
 import AnnouncementManagement from "./AnnouncementManagement";
 import ReportsManagement from "./ReportsManagement";
-import { MenuItem } from "@/types/type";
+import { Category, MenuItem } from "@/types/type";
 import DiscountManagement from "./DiscountManagement";
 import CustomSelect from "../ui/CustomSelect";
 import { showToast } from "@/lib/toast";
@@ -438,13 +438,32 @@ export default function Dashboard() {
 interface DashboardContentProps {
   handleTabChange: (tabId: string) => void;
 }
+interface Reservation {
+  _id: string;
+  category: Category;
+  selectedGear?: "manual" | "automatic"; // اختیاری، چون ممکنه نباشه
+  startDate: string;
+  totalPrice: number;
+  vehicle?: {
+    _id: string;
+    title: string;
+    number: string;
+  };
+  status: string;
+}
+interface TodayActivity {
+  pickups: Reservation[];
+  returns: Reservation[];
+}
 
 function DashboardContent({ handleTabChange }: DashboardContentProps) {
   const { stats, isLoading: statsLoading } = useStats();
   const { reservations, isLoading: reservationsLoading } =
     useRecentReservations();
-  const { todayActivity, isLoading: fleetLoading } = useFleetStatus();
-
+  const { todayActivity, isLoading: fleetLoading } = useFleetStatus() as unknown as {
+    todayActivity: TodayActivity;
+    isLoading: boolean;
+  };
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedReservationId, setSelectedReservationId] = useState<
     string | null
@@ -626,7 +645,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
         <h3 className="text-lg font-bold text-white">Quick Actions</h3>
         <button
           onClick={() => setShowCreateReservation(true)}
-          className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#e68a00] hover:to-[#e67700] text-white font-bold rounded-lg transition-all text-sm shadow-lg hover:shadow-2xl hover:scale-105"
+          className="flex items-center gap-2 px-5 py-3 bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#e68a00] hover:to-[#e67700] text-white font-bold rounded-lg transition-all text-sm shadow-lg hover:shadow-2xl hover:scale-105"
         >
           <FiPlus className="text-lg" />
           Create Reservation
@@ -1033,7 +1052,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                         categoryVehicles.length > 0 &&
                         !categoryVehicles.some((v) =>
                           v.gear?.availableTypes?.some(
-                            (g) => g.gearType === requestedGear
+                            (g:any) => g.gearType === requestedGear
                           )
                         ) && (
                           <p className="text-center text-red-400 text-sm mt-4 font-medium">
@@ -1094,7 +1113,9 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
           <div className="fixed inset-0 z-10000 flex items-center justify-center p-4 overflow-y-auto">
             <div className="relative bg-[#0f172b] rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto border border-white/10">
               <div className="sticky top-0 bg-[#0f172b] border-b border-white/10 px-6 py-4 flex items-center justify-between z-10">
-                <h2 className="text-xl font-bold text-white">Create New Reservation</h2>
+                <h2 className="text-xl font-bold text-white">
+                  Create New Reservation
+                </h2>
                 <button
                   onClick={() => setShowCreateReservation(false)}
                   className="p-2 hover:bg-white/10 rounded-lg transition-colors"

@@ -4,8 +4,7 @@ import Navbar from "@/components/global/Navbar";
 import Footer from "@/components/global/footer";
 import FloatingActionMenu from "@/components/ui/FloatingActionMenu";
 import SmoothScrollProvider from "@/components/ui/smoothScrollProvider.tsx";
-// import Breadcrumbs from "@/components/global/breadcrumbs";
-import AnnouncementBar from "@/components/global/AnnouncementBar";
+ import AnnouncementBar from "@/components/global/AnnouncementBar";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/context/AuthContext";
 
@@ -34,8 +33,7 @@ export default function RootLayout({
           <Navbar />
           <Toaster position="bottom-center" />
 
-          {/* <Breadcrumbs /> */}
-          <SmoothScrollProvider />
+           <SmoothScrollProvider />
           {children}
           <Footer />
           <FloatingActionMenu />

@@ -22,7 +22,22 @@ body {
   color: var(--foreground);
   font-family: var(--font-inter), system-ui, sans-serif;
 }
+@media (max-width: 768px) {
+  /* برای مرورگرهای موبایل */
+  .scrollable-dropdown::-webkit-scrollbar {
+    width: 8px; /* عرض اسکرول بار */
+  }
 
+  .scrollable-dropdown::-webkit-scrollbar-thumb {
+    background-color: #fff; /* رنگ اسکرول بار */
+    border-radius: 10px; /* لبه‌های گرد */
+  }
+
+  .scrollable-dropdown::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1); /* پس‌زمینه برای مسیر اسکرول بار */
+    border-radius: 10px;
+  }
+}
 @layer base {
   * {
     @apply antialiased;

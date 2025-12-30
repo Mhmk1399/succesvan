@@ -7,14 +7,7 @@ import {
   FiExternalLink,
   FiChevronRight,
 } from "react-icons/fi";
-import {
-  useState,
-  useEffect,
-  createContext,
-  useContext,
-  useRef,
-  useCallback,
-} from "react";
+import { useState, useEffect, createContext, useContext, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 interface Announcement {
@@ -114,6 +107,19 @@ export default function AnnouncementBar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+  function LoadingState() {
+    return (
+      <div className="w-full relative bg-[#fe9a00] overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-r from-gray-600/20 via-gray-500/20 to-gray-600/20" />
+        <div className="relative py-1 px-4 md:px-6 flex items-center justify-center gap-3 border-b border-gray-500/30 backdrop-blur-sm">
+          <div className="flex items-center gap-2 px-3 py-1   rounded-full">
+            <div className="w-4 h-4 border-2 border-gray-100 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-white text-sm font-medium">Loading...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const announcements = data?.data || [];
   const activeAnnouncements = announcements.filter(
@@ -124,20 +130,20 @@ export default function AnnouncementBar() {
   );
 
   if (!mounted || isLoading) {
-    return null;
+    return <LoadingState />;
   }
 
   if (activeAnnouncements.length > 1) {
     return <ErrorState />;
   }
 
-  if (active.length === 0) {
-    return (
-      <AnnouncementContext.Provider value={{ hasAnnouncement: false }}>
-        {null}
-      </AnnouncementContext.Provider>
-    );
-  }
+if (active.length === 0) {
+  return (
+    <AnnouncementContext.Provider value={{ hasAnnouncement: false }}>
+      {null}
+    </AnnouncementContext.Provider>
+  );
+}
 
   const announcement = active[0];
 

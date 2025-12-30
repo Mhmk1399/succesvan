@@ -731,6 +731,8 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
           status: "pending",
           addOns: selectedAddOns,
           discountCode: appliedDiscount?.code || null,
+              selectedGear: formData.gearType,
+
         },
       };
 
@@ -738,7 +740,7 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
         await fetch(`/api/discounts?id=${appliedDiscount._id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ addUserToUsedBy: user._id }),
+          body: JSON.stringify({ addUserToUsedBy: user?._id }),
         });
       }
 

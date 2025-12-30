@@ -19,6 +19,8 @@ import {
   FiMessageSquare,
   FiClock,
   FiAlertCircle,
+  FiFileText,
+  FiShield,
 } from "react-icons/fi";
 import { BsFuelPump } from "react-icons/bs";
 import Image from "next/image";
@@ -48,6 +50,7 @@ import { DateRange, Range } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format } from "date-fns";
+import Link from "next/link";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -1351,7 +1354,9 @@ function ReservationPanel({
                     placeholder="123 Main Street, London"
                   />
                   {errors.address && (
-                    <p className="text-red-400 text-xs mt-1">{errors.address}</p>
+                    <p className="text-red-400 text-xs mt-1">
+                      {errors.address}
+                    </p>
                   )}
                 </div>
                 <button
@@ -2016,21 +2021,23 @@ function ReservationPanel({
                   onChange={handleChange}
                   className="mt-1 w-5 h-5 rounded border-2 border-white/20 bg-white/5 checked:bg-[#fe9a00] checked:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all cursor-pointer"
                 />
-                <span className="text-gray-300 text-sm group-hover:text-white transition-colors">
+                <span className="text-gray-300 text-sm group-hover:text-white transition-colors leading-relaxed">
                   I agree to the{" "}
-                  <a
-                    href="#"
-                    className="text-[#fe9a00] hover:underline font-semibold"
+                  <Link
+                    href="/terms-and-conditions"
+                    className="text-[#fe9a00] hover:underline font-semibold inline-flex items-center gap-1 transition-all hover:text-orange-300"
                   >
+                    <FiFileText className="text-xs" />
                     Terms & Conditions
-                  </a>{" "}
+                  </Link>{" "}
                   and{" "}
-                  <a
+                  <Link
                     href="#"
-                    className="text-[#fe9a00] hover:underline font-semibold"
+                    className="text-[#fe9a00] hover:underline font-semibold inline-flex items-center gap-1 transition-all hover:text-orange-300"
                   >
+                    <FiShield className="text-xs" />
                     Privacy Policy
-                  </a>
+                  </Link>
                 </span>
               </label>
               {errors.acceptTerms && (
