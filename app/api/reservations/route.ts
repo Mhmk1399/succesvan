@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
     if (phone) {
       // Use aggregation for phone filtering since user data is in separate collection
       const normalizedPhone = phone.replace(/\D/g, "");
-      const aggregationPipeline = [
+      const aggregationPipeline: any[] = [
         {
           $lookup: {
             from: "users",

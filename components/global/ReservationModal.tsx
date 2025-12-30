@@ -18,6 +18,7 @@ import AddOnsModal from "./AddOnsModal";
 import VanCard from "./VanCard";
 import { usePriceCalculation } from "@/hooks/usePriceCalculation";
 import { useAuth } from "@/context/AuthContext";
+import { showToast } from "@/lib/toast";
 import Image from "next/image";
 import { BsFuelPump } from "react-icons/bs";
 import { WorkingTime } from "@/types/type";
@@ -63,8 +64,14 @@ interface AddOn {
   };
 }
 
-export default function ReservationModal({ onClose }: { onClose: () => void }) {
-  const { user } = useAuth();
+interface ReservationModalProps {
+  onClose: () => void;
+  isAdminMode?: boolean;
+}
+
+export default function ReservationModal({ onClose, isAdminMode = false }: ReservationModalProps) {
+  const { user: authUser } = useAuth();
+  const user = isAdminMode ? null : authUser; // Ignore logged-in user in admin mode
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [offices, setOffices] = useState<Office[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -112,6 +119,11 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   const [discountError, setDiscountError] = useState("");
   const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
+  const [customerUserId, setCustomerUserId] = useState<string>("");
+  const [licenseFront, setLicenseFront] = useState<string>("");
+  const [licenseBack, setLicenseBack] = useState<string>("");
+  const [address, setAddress] = useState<string>("");
+  const [uploadingLicense, setUploadingLicense] = useState({ front: false, back: false });
 
   const selectedCategory = categories.find((c) => c._id === formData.category);
 
@@ -429,31 +441,38 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       );
     }
 
-    if (user) {
-      setFormData((prev) => ({
-        ...prev,
-        name: user.name || "",
-        lastName: user.lastName || "",
-        email: user.email || "",
-        phone: user.phoneNumber || "",
-      }));
-
-      // If user is logged in and has rental data, go to step 3
+    // In admin mode, always start at step 2 (authentication) for customer
+    // In normal mode, check if user is logged in
+    if (isAdminMode) {
       if (hasRentalData) {
-        setStep(3);
+        setStep(2); // Go to auth to get customer info
       } else {
-        // If user is logged in but no rental data, stay on step 1
-        setStep(1);
+        setStep(1); // Start from category selection
       }
     } else {
-      // If no user, check if rental data exists
-      if (hasRentalData) {
-        setStep(2); // Go to auth step
+      // Normal customer flow
+      if (user) {
+        setFormData((prev) => ({
+          ...prev,
+          name: user.name || "",
+          lastName: user.lastName || "",
+          email: user.email || "",
+          phone: user.phoneNumber || "",
+        }));
+        if (hasRentalData) {
+          setStep(3);
+        } else {
+          setStep(1);
+        }
       } else {
-        setStep(1); // Start from beginning
+        if (hasRentalData) {
+          setStep(2);
+        } else {
+          setStep(1);
+        }
       }
     }
-  }, [user, types]);
+  }, [types, isAdminMode, user]);
 
   const handleSendCode = async () => {
     if (!formData.phone.trim()) {
@@ -500,8 +519,11 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
       if (data.data.userExists) {
-        localStorage.setItem("token", data.data.token);
-        localStorage.setItem("user", JSON.stringify(data.data.user));
+        if (!isAdminMode) {
+          localStorage.setItem("token", data.data.token);
+          localStorage.setItem("user", JSON.stringify(data.data.user));
+        }
+        setCustomerUserId(data.data.user._id);
         setFormData((prev) => ({
           ...prev,
           name: data.data.user.name,
@@ -520,11 +542,43 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const handleLicenseUpload = async (file: File, side: "front" | "back") => {
+    setUploadingLicense({ ...uploadingLicense, [side]: true });
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+      if (uploadData.error) throw new Error(uploadData.error);
+      
+      if (side === "front") {
+        setLicenseFront(uploadData.url);
+      } else {
+        setLicenseBack(uploadData.url);
+      }
+      showToast.success(`License ${side} uploaded!`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Upload failed");
+    } finally {
+      setUploadingLicense({ ...uploadingLicense, [side]: false });
+    }
+  };
+
   const handleRegister = async () => {
     const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) newErrors.name = "Name required";
     if (!formData.lastName.trim()) newErrors.lastName = "Last name required";
     if (!formData.email.trim()) newErrors.email = "Email required";
+    if (!address.trim()) newErrors.address = "Address required";
+    if (isAdminMode) {
+      if (!licenseFront) newErrors.licenseFront = "License front required";
+      if (!licenseBack) newErrors.licenseBack = "License back required";
+    }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -540,12 +594,19 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
           name: formData.name,
           lastName: formData.lastName,
           emailAddress: formData.email,
+          address: address,
+          ...(isAdminMode && {
+            licenceAttached: { front: licenseFront, back: licenseBack },
+          }),
         }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
-      localStorage.setItem("token", data.data.token);
-      localStorage.setItem("user", JSON.stringify(data.data.user));
+      if (!isAdminMode) {
+        localStorage.setItem("token", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+      }
+      setCustomerUserId(data.data.user._id);
       setIsNewUser(true);
       setStep(3);
     } catch (error) {
@@ -610,13 +671,24 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem("token");
-      const user = localStorage.getItem("user")
-        ? JSON.parse(localStorage.getItem("user")!)
-        : null;
-      if (!token || !user) {
-        setErrors({ submit: "Please login first" });
-        setStep(2);
-        return;
+      let userId = customerUserId;
+      
+      if (!isAdminMode) {
+        const user = localStorage.getItem("user")
+          ? JSON.parse(localStorage.getItem("user")!)
+          : null;
+        if (!token || !user) {
+          setErrors({ submit: "Please login first" });
+          setStep(2);
+          return;
+        }
+        userId = user._id;
+      } else {
+        if (!customerUserId) {
+          setErrors({ submit: "Customer verification required" });
+          setStep(2);
+          return;
+        }
       }
 
       const addOnsCost = selectedAddOns.reduce((total, item) => {
@@ -639,7 +711,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
 
       const payload = {
         userData: {
-          userId: user._id,
+          userId: userId,
           name: formData.name,
           lastName: formData.lastName,
           email: formData.email,
@@ -682,7 +754,9 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Reservation failed");
       setIsSuccess(true);
-      if (isNewUser) {
+      if (isAdminMode) {
+        setTimeout(() => onClose(), 2000);
+      } else if (isNewUser) {
         setTimeout(() => {
           window.location.href = "/customerDashboard#profile";
         }, 2000);
@@ -1095,6 +1169,146 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                         </p>
                       )}
                     </div>
+                    <div>
+                      <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                        <FiMapPin className="text-[#fe9a00]" />
+                        Address
+                      </label>
+                      <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => {
+                          setAddress(e.target.value);
+                          setErrors({ ...errors, address: "" });
+                        }}
+                        className={`w-full bg-white/5 border ${
+                          errors.address ? "border-red-500" : "border-white/10"
+                        } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]`}
+                        placeholder="123 Main Street, London"
+                      />
+                      {errors.address && (
+                        <p className="text-red-400 text-xs mt-1">
+                          {errors.address}
+                        </p>
+                      )}
+                    </div>
+                    {isAdminMode && (
+                      <>
+                        <div>
+                          <label className="text-white text-sm font-semibold mb-2 block">
+                            License Front
+                          </label>
+                          {licenseFront ? (
+                            <div className="relative">
+                              <img
+                                src={licenseFront}
+                                alt="License Front"
+                                className="w-full h-32 object-cover rounded-lg"
+                              />
+                              <label className="absolute bottom-2 right-2 px-3 py-1.5 bg-[#fe9a00] hover:bg-orange-600 text-white rounded-lg cursor-pointer text-xs font-semibold">
+                                {uploadingLicense.front ? "Uploading..." : "Change"}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) =>
+                                    e.target.files?.[0] &&
+                                    handleLicenseUpload(e.target.files[0], "front")
+                                  }
+                                  disabled={uploadingLicense.front}
+                                />
+                              </label>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#fe9a00] transition-colors">
+                              <span className="text-gray-400 text-sm">
+                                {uploadingLicense.front ? "Uploading..." : "+ Upload Front"}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) =>
+                                  e.target.files?.[0] &&
+                                  handleLicenseUpload(e.target.files[0], "front")
+                                }
+                                disabled={uploadingLicense.front}
+                              />
+                            </label>
+                          )}
+                          {errors.licenseFront && (
+                            <p className="text-red-400 text-xs mt-1">
+                              {errors.licenseFront}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="text-white text-sm font-semibold mb-2 block">
+                            License Back
+                          </label>
+                          {licenseBack ? (
+                            <div className="relative">
+                              <img
+                                src={licenseBack}
+                                alt="License Back"
+                                className="w-full h-32 object-cover rounded-lg"
+                              />
+                              <label className="absolute bottom-2 right-2 px-3 py-1.5 bg-[#fe9a00] hover:bg-orange-600 text-white rounded-lg cursor-pointer text-xs font-semibold">
+                                {uploadingLicense.back ? "Uploading..." : "Change"}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) =>
+                                    e.target.files?.[0] &&
+                                    handleLicenseUpload(e.target.files[0], "back")
+                                  }
+                                  disabled={uploadingLicense.back}
+                                />
+                              </label>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#fe9a00] transition-colors">
+                              <span className="text-gray-400 text-sm">
+                                {uploadingLicense.back ? "Uploading..." : "+ Upload Back"}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) =>
+                                  e.target.files?.[0] &&
+                                  handleLicenseUpload(e.target.files[0], "back")
+                                }
+                                disabled={uploadingLicense.back}
+                              />
+                            </label>
+                          )}
+                          {errors.licenseBack && (
+                            <p className="text-red-400 text-xs mt-1">
+                              {errors.licenseBack}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="text-white text-sm font-semibold mb-2 block">
+                            Address
+                          </label>
+                          <textarea
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            rows={3}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#fe9a00] resize-none"
+                            placeholder="Full address"
+                          />
+                          {errors.address && (
+                            <p className="text-red-400 text-xs mt-1">
+                              {errors.address}
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )}
                     <button
                       onClick={handleRegister}
                       disabled={isSubmitting}

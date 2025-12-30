@@ -46,6 +46,9 @@ import DiscountManagement from "./DiscountManagement";
 import CustomSelect from "../ui/CustomSelect";
 import { showToast } from "@/lib/toast";
 import TicketsManagement from "./TicketsManagement";
+import ReservationForm from "@/components/global/ReservationForm";
+import ReservationModal from "@/components/global/ReservationModal";
+import { FiPlus } from "react-icons/fi";
 
 const menuItems: MenuItem[] = [
   {
@@ -449,6 +452,8 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [availableVehicles, setAvailableVehicles] = useState<any[]>([]);
   const [assigning, setAssigning] = useState(false);
+  const [showCreateReservation, setShowCreateReservation] = useState(false);
+  const [showReservationModal, setShowReservationModal] = useState(false);
 
   const statCards = [
     {
@@ -616,6 +621,18 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
 
   return (
     <div className="space-y-5">
+      {/* Create Reservation Button */}
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-bold text-white">Quick Actions</h3>
+        <button
+          onClick={() => setShowCreateReservation(true)}
+          className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#e68a00] hover:to-[#e67700] text-white font-bold rounded-lg transition-all text-sm shadow-lg hover:shadow-2xl hover:scale-105"
+        >
+          <FiPlus className="text-lg" />
+          Create Reservation
+        </button>
+      </div>
+
       {/* Stats Cards - Compact Design */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {statCards.map((stat, index) => (
@@ -1065,6 +1082,51 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Create Reservation Form Modal */}
+      {showCreateReservation && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999"
+            onClick={() => setShowCreateReservation(false)}
+          />
+          <div className="fixed inset-0 z-10000 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="relative bg-[#0f172b] rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto border border-white/10">
+              <div className="sticky top-0 bg-[#0f172b] border-b border-white/10 px-6 py-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-bold text-white">Create New Reservation</h2>
+                <button
+                  onClick={() => setShowCreateReservation(false)}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <FiX className="text-white text-xl" />
+                </button>
+              </div>
+              <div className="p-6">
+                <ReservationForm
+                  isModal={true}
+                  onClose={() => setShowCreateReservation(false)}
+                  onBookNow={() => {
+                    setShowCreateReservation(false);
+                    setTimeout(() => setShowReservationModal(true), 100);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Reservation Modal (Steps 2-4) */}
+      {showReservationModal && (
+        <ReservationModal
+          isAdminMode={true}
+          onClose={() => {
+            setShowReservationModal(false);
+            sessionStorage.removeItem("rentalDetails");
+            window.location.reload();
+          }}
+        />
       )}
     </div>
   );

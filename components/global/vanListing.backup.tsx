@@ -262,6 +262,7 @@ function ReservationPanel({
     category: van._id,
     driverAge: 25,
     gearType: "manual" as "manual" | "automatic",
+    address: "",
   });
 
   const [dateRange, setDateRange] = useState<Range[]>([
@@ -888,6 +889,7 @@ function ReservationPanel({
     if (!formData.name.trim()) newErrors.name = "Name required";
     if (!formData.lastName.trim()) newErrors.lastName = "Last name required";
     if (!formData.email.trim()) newErrors.email = "Email required";
+    if (!formData.address.trim()) newErrors.address = "Address required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -905,6 +907,7 @@ function ReservationPanel({
           name: formData.name,
           lastName: formData.lastName,
           emailAddress: formData.email,
+          address: formData.address,
         }),
       });
       const data = await res.json();
@@ -1330,6 +1333,25 @@ function ReservationPanel({
                   />
                   {errors.email && (
                     <p className="text-red-400 text-xs mt-1">{errors.email}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FiMapPin className="text-[#fe9a00]" />
+                    Address
+                  </label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    className={`w-full bg-white/5 border ${
+                      errors.address ? "border-red-500" : "border-white/10"
+                    } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                    placeholder="123 Main Street, London"
+                  />
+                  {errors.address && (
+                    <p className="text-red-400 text-xs mt-1">{errors.address}</p>
                   )}
                 </div>
                 <button

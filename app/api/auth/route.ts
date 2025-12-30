@@ -10,8 +10,8 @@ import jwt from "jsonwebtoken";
 export async function POST(req: NextRequest) {
   try {
     await connect();
-    const { action, phoneNumber, code, name, lastName, emailAddress } =
-      await req.json();
+    const body = await req.json();
+    const { action, phoneNumber, code, name, lastName, emailAddress, licenceAttached, address } = body;
 
     if (action === "send-code") {
       if (!phoneNumber) return errorResponse("Phone number required", 400);
@@ -87,12 +87,22 @@ export async function POST(req: NextRequest) {
       });
       if (existingUser) return errorResponse("User already exists", 400);
 
-      const user = await User.create({
+      const userData: any = {
         name,
         lastName,
         emaildata: { emailAddress, isVerified: false },
         phoneData: { phoneNumber, isVerified: true },
-      });
+      };
+
+      // Add optional fields if provided
+      if (licenceAttached) {
+        userData.licenceAttached = licenceAttached;
+      }
+      if (address) {
+        userData.address = address;
+      }
+
+      const user = await User.create(userData);
 
       const token = jwt.sign(
         { userId: user._id, role: user.role },
