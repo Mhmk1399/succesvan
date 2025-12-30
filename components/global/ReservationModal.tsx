@@ -94,6 +94,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
     name: "",
     lastName: "",
     email: "",
+    acceptTerms: false,
   });
 
   const [authStep, setAuthStep] = useState<"phone" | "code" | "register">(
@@ -602,6 +603,10 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
   };
 
   const handleSubmit = async () => {
+    if (!formData.acceptTerms) {
+      setErrors({ acceptTerms: "You must accept the terms and conditions" });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem("token");
@@ -1624,6 +1629,39 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                   </div>
                 )}
 
+                {/* Terms & Conditions */}
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4 items-center">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.acceptTerms}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          acceptTerms: e.target.checked,
+                        }))
+                      }
+                      className="mt-1 w-5 h-5 rounded border-white/20 bg-white/5 text-[#fe9a00] focus:ring-[#fe9a00] focus:ring-offset-0 cursor-pointer"
+                    />
+                    <span className="text-gray-300 text-sm">
+                      I agree to the{" "}
+                      <a
+                        href="/terms-and-conditions"
+                        target="_blank"
+                        className="text-[#fe9a00] hover:underline font-semibold"
+                      >
+                        Terms & Conditions
+                      </a>{" "}
+                      
+                    </span>
+                  </label>
+                  {errors.acceptTerms && (
+                    <p className="text-red-400 text-xs mt-2">
+                      {errors.acceptTerms}
+                    </p>
+                  )}
+                </div>
+
                 <div className="flex gap-3">
                   <button
                     onClick={() => setStep(3)}
@@ -1633,7 +1671,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
                   </button>
                   <button
                     onClick={handleSubmit}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !formData.acceptTerms}
                     className="flex-1 bg-[#fe9a00] hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50"
                   >
                     {isSubmitting ? "Processing..." : "Confirm Reservation"}
