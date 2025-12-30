@@ -7,7 +7,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format } from "date-fns";
 import { showToast } from "@/lib/toast";
-import { Category, Office, Reservation, Vehicle } from "@/types/type";
+import { Category, Office, Vehicle } from "@/types/type";
 import DynamicTableView from "./DynamicTableView";
 import CustomSelect from "@/components/ui/CustomSelect";
 type MutateFn = () => Promise<void>;
@@ -20,12 +20,9 @@ export default function VehiclesContent() {
     { _id?: string; name: string }[]
   >([]);
   const [offices, setOffices] = useState<{ _id?: string; name: string }[]>([]);
-  const [reservations, setReservations] = useState<
-    { _id: string; name: string }[]
-  >([]);
+
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [loadingOffices, setLoadingOffices] = useState(true);
-  const [loadingReservations, setLoadingReservations] = useState(true);
   const [showServiceDatePicker, setShowServiceDatePicker] = useState<
     string | null
   >(null);
@@ -55,14 +52,12 @@ export default function VehiclesContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [catRes, offRes, resRes] = await Promise.all([
+        const [catRes, offRes] = await Promise.all([
           fetch("/api/categories?limit=100&status=active"),
           fetch("/api/offices?limit=100&status=active"),
-          fetch("/api/reservations?limit=100"),
         ]);
         const catData = await catRes.json();
         const offData = await offRes.json();
-        const resData = await resRes.json();
 
         const categoriesData = (catData.data || []).map((cat: Category) => ({
           _id: cat._id,
@@ -75,18 +70,12 @@ export default function VehiclesContent() {
 
         setCategories(categoriesData);
         setOffices(officesData);
-        setReservations(
-          (resData.data || []).map((res: Reservation) => ({
-            _id: res._id,
-            name: `Res #${res._id?.slice(-6)} - ${res.user?.name || "Unknown"}`,
-          }))
-        );
       } catch (error) {
         console.log("Failed to fetch data:", error);
       } finally {
         setLoadingCategories(false);
         setLoadingOffices(false);
-        setLoadingReservations(false);
+        // setLoadingReservations(false);
       }
     };
     fetchData();
@@ -630,7 +619,9 @@ export default function VehiclesContent() {
           {
             key: "gear" as any,
             label: "Gear Types",
-            render: (value) => value?.availableTypes?.map((t: any) => t.gearType).join(", ") || "-",
+            render: (value) =>
+              value?.availableTypes?.map((t: any) => t.gearType).join(", ") ||
+              "-",
           },
           {
             key: "needsService",

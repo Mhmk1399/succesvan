@@ -46,6 +46,7 @@ export async function PUT(
     if (body.email) updateData["emaildata.emailAddress"] = body.email;
     if (body.phone) updateData["phoneData.phoneNumber"] = body.phone;
     if (body.password) updateData.password = body.password;
+    if (body.licenceAttached) updateData.licenceAttached = body.licenceAttached;
 
     const user = await User.findByIdAndUpdate(
       id,

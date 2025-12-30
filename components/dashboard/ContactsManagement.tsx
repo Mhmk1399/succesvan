@@ -256,11 +256,7 @@ export default function ContactsManagement() {
                         <p className="text-white font-semibold">
                           {selectedUser.emaildata.emailAddress}
                         </p>
-                        <p className="text-gray-400 text-xs mt-1">
-                          {selectedUser.emaildata.isVerified
-                            ? "✓ Verified"
-                            : "✗ Not Verified"}
-                        </p>
+                      
                       </div>
                       <div>
                         <label className="text-gray-400 text-sm">Phone</label>
