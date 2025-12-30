@@ -164,6 +164,8 @@ export interface Stats {
 // AddOn ------------------------------------------------------------------------------------------
 export interface AddOn {
   _id?: string;
+  status: "active" | "inactive";
+
   name: string;
   description?: string;
   pricingType: "flat" | "tiered";

@@ -570,14 +570,40 @@ export default function ReservationsManagement() {
     setIsSubmitting(true);
 
     try {
+      const updateData: any = { status: newStatus };
+
+      // If status is completed or canceled, unassign the vehicle
+      if (newStatus === "completed" || newStatus === "canceled") {
+        updateData.vehicle = null;
+      }
+
       const res = await fetch(`/api/reservations/${selectedReservation._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify(updateData),
       });
 
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Update failed");
+
+      // If unassigning vehicle, set it to available
+      if (
+        (newStatus === "completed" || newStatus === "canceled") &&
+        selectedReservation.vehicle
+      ) {
+        const vehicleId =
+          typeof selectedReservation.vehicle === "string"
+            ? selectedReservation.vehicle
+            : selectedReservation.vehicle._id;
+        const vehicleRes = await fetch(`/api/vehicles/${vehicleId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ available: true }),
+        });
+        const vehicleData = await vehicleRes.json();
+        if (!vehicleData.success)
+          throw new Error(vehicleData.error || "Vehicle update failed");
+      }
 
       showToast.success("Status updated successfully!");
       setIsStatusOpen(false);
@@ -705,7 +731,7 @@ export default function ReservationsManagement() {
             render: (value: any) => {
               const hasFront = value?.licenceAttached?.front;
               const hasBack = value?.licenceAttached?.back;
-              
+
               if (hasFront && hasBack) {
                 return (
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
@@ -714,7 +740,7 @@ export default function ReservationsManagement() {
                   </span>
                 );
               }
-              
+
               if (hasFront || hasBack) {
                 return (
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
@@ -723,7 +749,7 @@ export default function ReservationsManagement() {
                   </span>
                 );
               }
-              
+
               return (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
                   <span className="w-1.5 h-1.5 bg-red-400 rounded-full mr-1.5"></span>
@@ -780,25 +806,39 @@ export default function ReservationsManagement() {
           {
             key: "status",
             label: "Status",
-            render: (value: string) => (
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                  value === "pending"
-                    ? "bg-yellow-500/20 text-yellow-400"
-                    : value === "confirmed"
-                    ? "bg-blue-500/20 text-blue-400"
-                    : value === "delivered"
-                    ? "bg-green-500/20 text-green-400"
-                    : value === "completed"
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : value === "canceled"
-                    ? "bg-red-500/20 text-red-400"
-                    : "bg-gray-500/20 text-gray-400"
-                }`}
-              >
-                {value}
-              </span>
-            ),
+            render: (value: string) => {
+              const statusText =
+                value === "delivered"
+                  ? "collected"
+                  : value === "pending"
+                  ? "pending"
+                  : value === "confirmed"
+                  ? "confirmed"
+                  : value === "completed"
+                  ? "completed"
+                  : value === "canceled"
+                  ? "canceled"
+                  : value;
+              return (
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                    value === "pending"
+                      ? "bg-yellow-500/20 text-yellow-400"
+                      : value === "confirmed"
+                      ? "bg-blue-500/20 text-blue-400"
+                      : value === "delivered"
+                      ? "bg-purple-500/20 text-purple-400"
+                      : value === "completed"
+                      ? "bg-emerald-500/20 text-emerald-400"
+                      : value === "canceled"
+                      ? "bg-red-500/20 text-red-400"
+                      : "bg-gray-500/20 text-gray-400"
+                  }`}
+                >
+                  {statusText}
+                </span>
+              );
+            },
           },
         ]}
         onEdit={handleViewDetails}
@@ -922,7 +962,8 @@ export default function ReservationsManagement() {
               </div>
 
               {/* License Information */}
-              {(selectedReservation.user?.licenceAttached?.front || selectedReservation.user?.licenceAttached?.back) && (
+              {(selectedReservation.user?.licenceAttached?.front ||
+                selectedReservation.user?.licenceAttached?.back) && (
                 <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                   <h3 className="text-white font-semibold mb-3">
                     Driver License
@@ -933,18 +974,24 @@ export default function ReservationsManagement() {
                         <p className="text-gray-400 text-sm mb-2">Front Side</p>
                         <div className="relative">
                           <a
-                            href={selectedReservation.user.licenceAttached.front}
+                            href={
+                              selectedReservation.user.licenceAttached.front
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="block"
                           >
                             <img
-                              src={selectedReservation.user.licenceAttached.front}
+                              src={
+                                selectedReservation.user.licenceAttached.front
+                              }
                               alt="License Front"
                               className="w-full h-32 object-cover rounded-lg border border-white/10 cursor-pointer hover:border-[#fe9a00]/50 transition-colors"
                             />
                             <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center opacity-0 hover:opacity-100">
-                              <span className="text-white text-sm font-medium">Click to view full size</span>
+                              <span className="text-white text-sm font-medium">
+                                Click to view full size
+                              </span>
                             </div>
                           </a>
                         </div>
@@ -961,12 +1008,16 @@ export default function ReservationsManagement() {
                             className="block"
                           >
                             <img
-                              src={selectedReservation.user.licenceAttached.back}
+                              src={
+                                selectedReservation.user.licenceAttached.back
+                              }
                               alt="License Back"
                               className="w-full h-32 object-cover rounded-lg border border-white/10 cursor-pointer hover:border-[#fe9a00]/50 transition-colors"
                             />
                             <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center opacity-0 hover:opacity-100">
-                              <span className="text-white text-sm font-medium">Click to view full size</span>
+                              <span className="text-white text-sm font-medium">
+                                Click to view full size
+                              </span>
                             </div>
                           </a>
                         </div>
@@ -974,20 +1025,26 @@ export default function ReservationsManagement() {
                     )}
                   </div>
                   <div className="mt-3 flex items-center gap-2">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      selectedReservation.user?.licenceAttached?.front && selectedReservation.user?.licenceAttached?.back
-                        ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                        : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                        selectedReservation.user?.licenceAttached?.front && selectedReservation.user?.licenceAttached?.back
-                          ? "bg-green-400"
-                          : "bg-yellow-400"
-                      }`}></span>
-                      {selectedReservation.user?.licenceAttached?.front && selectedReservation.user?.licenceAttached?.back
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        selectedReservation.user?.licenceAttached?.front &&
+                        selectedReservation.user?.licenceAttached?.back
+                          ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                          : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                      }`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                          selectedReservation.user?.licenceAttached?.front &&
+                          selectedReservation.user?.licenceAttached?.back
+                            ? "bg-green-400"
+                            : "bg-yellow-400"
+                        }`}
+                      ></span>
+                      {selectedReservation.user?.licenceAttached?.front &&
+                      selectedReservation.user?.licenceAttached?.back
                         ? "Complete License"
-                        : "Partial License"
-                      }
+                        : "Partial License"}
                     </span>
                   </div>
                 </div>
@@ -1403,6 +1460,21 @@ export default function ReservationsManagement() {
                           if (!data.success)
                             throw new Error(data.error || "Update failed");
 
+                          // Set the assigned vehicle to unavailable
+                          const vehicleRes = await fetch(
+                            `/api/vehicles/${newVehicle}`,
+                            {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ available: false }),
+                            }
+                          );
+                          const vehicleData = await vehicleRes.json();
+                          if (!vehicleData.success)
+                            throw new Error(
+                              vehicleData.error || "Vehicle update failed"
+                            );
+
                           showToast.success("Vehicle assigned and collected!");
                           setIsEditOpen(false);
                           if (mutateRef.current) mutateRef.current();
@@ -1443,7 +1515,9 @@ export default function ReservationsManagement() {
                         : "bg-blue-500/20 text-blue-400"
                     }`}
                   >
-                    {selectedReservation.status}
+                    {selectedReservation.status === "delivered"
+                      ? "collected"
+                      : selectedReservation.status}
                   </span>
                 </div>
                 <button

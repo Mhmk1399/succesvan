@@ -987,6 +987,7 @@ function ReservationPanel({
           status: "pending",
           addOns: selectedAddOns,
           discountCode: appliedDiscount?.code || null,
+          selectedGear: formData.gearType,
         },
       };
 

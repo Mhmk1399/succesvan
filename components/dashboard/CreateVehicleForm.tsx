@@ -617,6 +617,11 @@ export default function VehiclesContent() {
             render: (value) => value?.name || "-",
           },
           {
+            key: "category" as any,
+            label: "category",
+            render: (value) => value?.name || "-",
+          },
+          {
             key: "gear" as any,
             label: "Gear Types",
             render: (value) =>
@@ -627,6 +632,21 @@ export default function VehiclesContent() {
             key: "needsService",
             label: "Needs Service",
             render: (value) => (value ? "Yes" : "No"),
+          },
+          {
+            key: "available",
+            label: "Available",
+            render: (value: boolean) => (
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                  value
+                    ? "bg-green-500/20 text-green-400"
+                    : "bg-red-500/20 text-red-400"
+                }`}
+              >
+                {value ? "Yes" : "No"}
+              </span>
+            ),
           },
           {
             key: "status",
@@ -644,6 +664,7 @@ export default function VehiclesContent() {
             ),
           },
         ]}
+        hiddenColumns={["needsService"]}
         onEdit={handleEdit}
         onStatusToggle={handleStatusToggle}
         onMutate={(mutate) => (mutateRef.current = mutate)}

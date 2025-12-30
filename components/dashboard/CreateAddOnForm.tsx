@@ -80,6 +80,25 @@ export default function AddOnsContent() {
     });
     setEditingId(null);
   };
+  const handleStatusToggle = async (item: AddOn) => {
+    const id = item._id;
+    const currentStatus = item.status;
+    try {
+      const newStatus = currentStatus === "active" ? "inactive" : "active";
+      const res = await fetch(`/api/addons/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const data = await res.json();
+      if (!data.success)
+        throw new Error(data.error || "Failed to update status");
+      showToast.success(`AddOn status updated to ${newStatus}!`);
+      if (mutateRef.current) mutateRef.current();
+    } catch (error) {
+      showToast.error("Failed to update status");
+    }
+  };
 
   const handleEdit = (item: AddOn) => {
     setFormData({
@@ -414,8 +433,24 @@ export default function AddOnsContent() {
               );
             },
           },
+          {
+            key: "status",
+            label: "Status",
+            render: (value: string) => (
+              <span
+                className={`px-2 py-1 rounded-full  font-semibold ${
+                  value === "active"
+                    ? "bg-green-500/20 text-xs  text-green-400"
+                    : "bg-red-500/20 text-[10px] text-red-400"
+                }`}
+              >
+                {value}
+              </span>
+            ),
+          },
         ]}
         onEdit={handleEdit}
+        onStatusToggle={handleStatusToggle}
         onMutate={(mutate) => (mutateRef.current = mutate)}
         hiddenColumns={["pricingType", "description"]}
       />

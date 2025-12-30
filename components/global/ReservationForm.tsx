@@ -15,7 +15,7 @@ import {
   FiMessageSquare,
 } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
-import { Office, Category } from "@/types/type";
+import { Office, Category, Type } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
 import { generateTimeSlots } from "@/utils/timeSlots";
 import TimeSelect from "@/components/ui/TimeSelect";
@@ -50,11 +50,11 @@ export default function ReservationForm({
   const [showDateRange, setShowDateRange] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [offices, setOffices] = useState<Office[]>([]);
-  const [types, setTypes] = useState<Category[]>([]);
+  const [types, setTypes] = useState<Type[]>([]);
+  const [filteredTypes, setFilteredTypes] = useState<Type[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [startDateReservedSlots, setStartDateReservedSlots] = useState<
+   const [startDateReservedSlots, setStartDateReservedSlots] = useState<
     ReservedSlot[]
   >([]);
   const [endDateReservedSlots, setEndDateReservedSlots] = useState<
@@ -74,8 +74,8 @@ export default function ReservationForm({
 
   const [dateRange, setDateRange] = useState<Range[]>([
     {
-      startDate: new Date(),
-      endDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+      startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+      endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
       key: "selection",
     },
   ]);
@@ -244,7 +244,7 @@ export default function ReservationForm({
       try {
         const parsedUser = JSON.parse(user);
         setIsAuthenticated(true);
-        setUserData(parsedUser);
+        // setUserData(parsedUser);
         setFormData((prev) => ({
           ...prev,
           name: parsedUser.name || "",
@@ -298,6 +298,21 @@ export default function ReservationForm({
       setCategories([]);
     }
   }, [formData.office, formData.type]);
+
+  // Filter types based on selected office
+  useEffect(() => {
+    if (formData.office) {
+      const filtered = types.filter((type: Type) => {
+        return type.offices && type.offices.some((office) => {
+          const officeId = typeof office === "string" ? office : office._id;
+          return officeId === formData.office;
+        });
+      });
+      setFilteredTypes(filtered);
+    } else {
+      setFilteredTypes(types);
+    }
+  }, [formData.office, types]);
 
   useEffect(() => {
     if (formData.office && dateRange[0].startDate) {
@@ -689,7 +704,7 @@ export default function ReservationForm({
             <FiTruck className="text-amber-400 text-lg relative" /> Type
           </label>
           <CustomSelect
-            options={types}
+            options={filteredTypes}
             value={formData.type}
             onChange={(val) => setFormData((prev) => ({ ...prev, type: val }))}
             placeholder="Select Type"
@@ -740,7 +755,7 @@ export default function ReservationForm({
                       },
                     ]);
                   }}
-                  minDate={new Date()}
+                  minDate={new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)}
                   rangeColors={["#fbbf24"]}
                   disabledDates={
                     formData.office
@@ -976,7 +991,7 @@ export default function ReservationForm({
             <FiTruck className="text-amber-400" /> Type
           </label>
           <CustomSelect
-            options={types}
+            options={filteredTypes}
             value={formData.type}
             onChange={(val) => setFormData((prev) => ({ ...prev, type: val }))}
             placeholder="Select Type"
@@ -1021,7 +1036,7 @@ export default function ReservationForm({
                     },
                   ]);
                 }}
-                minDate={new Date()}
+                minDate={new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)}
                 rangeColors={["#fbbf24"]}
                 disabledDates={
                   formData.office

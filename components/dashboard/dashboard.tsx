@@ -8,21 +8,24 @@ import {
   FiTruck,
   FiCalendar,
   FiTag,
-  FiBell,
   FiClipboard,
-  FiUsers,
-  FiFileText,
   FiMenu,
   FiX,
   FiExternalLink,
-  FiLayers,
-  FiGift,
-  FiCommand,
   FiChevronLeft,
   FiChevronRight,
   FiLogOut,
   FiUser,
   FiMessageSquare,
+  FiBarChart2,
+  FiGrid,
+  FiMail,
+  FiMessageCircle,
+  FiPackage,
+  FiPercent,
+  FiPlusCircle,
+  FiSun,
+  FiVolume2,
 } from "react-icons/fi";
 import { useStats } from "@/hooks/useStats";
 import { useRecentReservations } from "@/hooks/useRecentReservations";
@@ -54,7 +57,7 @@ const menuItems: MenuItem[] = [
   {
     id: "type",
     label: "Types",
-    icon: <FiLayers />,
+    icon: <FiPackage />, // Better than Layers — represents vehicle types/models
     color: "from-purple-500 to-blue-600",
   },
   {
@@ -66,7 +69,7 @@ const menuItems: MenuItem[] = [
   {
     id: "categories",
     label: "Categories",
-    icon: <FiTag />,
+    icon: <FiGrid />, // Better than Tag — categories are like a grid of groups
     color: "from-pink-500 to-pink-600",
   },
   {
@@ -78,19 +81,19 @@ const menuItems: MenuItem[] = [
   {
     id: "holidays",
     label: "Holidays",
-    icon: <FiCalendar />,
+    icon: <FiSun />, // Much better than Calendar — clearly represents holidays/special days
     color: "from-purple-500 to-purple-600",
   },
   {
     id: "addons",
     label: "AddOns",
-    icon: <FiGift />,
+    icon: <FiPlusCircle />, // Perfect — represents extra add-ons
     color: "from-teal-500 to-teal-600",
   },
   {
     id: "discounts",
     label: "Discounts",
-    icon: <FiTag />,
+    icon: <FiPercent />, // Perfect and instantly recognizable
     color: "from-yellow-500 to-yellow-600",
   },
   {
@@ -102,25 +105,25 @@ const menuItems: MenuItem[] = [
   {
     id: "Testimonial",
     label: "Testimonials",
-    icon: <FiCommand />,
+    icon: <FiMessageCircle />, // Better than Command — represents customer reviews
     color: "from-cyan-500 to-cyan-600",
   },
   {
     id: "contacts",
     label: "Contacts",
-    icon: <FiUsers />,
+    icon: <FiMail />, // Better than Users — contacts are inquiries/messages
     color: "from-cyan-500 to-cyan-600",
   },
   {
     id: "announcements",
     label: "Announcements",
-    icon: <FiBell />,
+    icon: <FiVolume2 />, // Perfect — like broadcasting news
     color: "from-rose-500 to-rose-600",
   },
   {
     id: "reports",
     label: "Reports",
-    icon: <FiFileText />,
+    icon: <FiBarChart2 />, // Much better than FileText — reports = analytics
     color: "from-cyan-500 to-cyan-600",
   },
   {
@@ -223,7 +226,10 @@ export default function Dashboard() {
           {menuItems.map((item) => (
             <div key={item.id} className="relative group">
               <button
-                onClick={() => handleTabChange(item.id)}
+                onClick={() => {
+                  handleTabChange(item.id);
+                  setSidebarCollapsed(!sidebarCollapsed);
+                }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 mb-0.5
                   ${
                     activeTab === item.id
@@ -475,6 +481,22 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
     },
   ];
 
+  useEffect(() => {
+    const loadAvailableVehicles = async () => {
+      try {
+        const response = await fetch("/api/vehicles?available=true&limit=500");
+        const result = await response.json();
+        if (result.success && result.data) {
+          setAvailableVehicles(result.data);
+        }
+      } catch (err) {
+        console.error("Failed to load available vehicles for matching", err);
+      }
+    };
+
+    loadAvailableVehicles();
+  }, []);
+
   const handleCompleteReservation = async (
     reservationId: string,
     currentVehicleId?: string
@@ -522,22 +544,6 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
     setSelectedReservationId(reservationId);
     setSelectedVehicleId("");
     setIsAssignModalOpen(true);
-
-    try {
-      const response = await fetch("/api/vehicles?available=true&limit=100");
-      const result = await response.json();
-
-      if (result.success && result.data?.length > 0) {
-        setAvailableVehicles(result.data);
-      } else {
-        showToast.error("No available vehicles found today.");
-        setAvailableVehicles([]);
-      }
-    } catch (err) {
-      console.error(err);
-      showToast.error("Failed to load available vehicles.");
-      setAvailableVehicles([]);
-    }
   };
 
   const assignVehicle = async () => {
@@ -643,6 +649,8 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/5">
           {/* Today's Pickups */}
+
+          {/* Today's Pickups */}
           <div className="p-5">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -663,40 +671,99 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                 <p className="text-gray-500 text-sm">No pickups today</p>
               </div>
             ) : (
-              <div className="space-y-2.5 max-h-64 overflow-y-auto">
-                {todayActivity.pickups.map((res: any) => (
-                  <div
-                    key={res._id}
-                    className="bg-white/5 rounded-lg p-3 hover:bg-white/[0.07] transition"
-                  >
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-white text-sm truncate">
-                          {res.vehicle
-                            ? `${res.vehicle.title} (${res.vehicle.number})`
-                            : "No vehicle assigned"}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {res.category.name} •{" "}
-                          {new Date(res.startDate).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                        <p className="text-xs font-medium text-[#fe9a00] mt-1">
-                          £{res.totalPrice}
-                        </p>
-                      </div>
+              <div className="space-y-2.5 max-h-64 overflow-y-auto custom-scrollbar">
+                {todayActivity.pickups.map((res: any) => {
+                  // آیا حداقل یک خودرو با دسته‌بندی + گیربکس مطابق موجود است؟
+                  const hasExactMatch = availableVehicles.some((veh: any) => {
+                    return (
+                      veh.available &&
+                      veh.category?._id === res.category._id &&
+                      res.selectedGear &&
+                      veh.gear?.availableTypes?.some(
+                        (g: any) => g.gearType === res.selectedGear
+                      )
+                    );
+                  });
 
-                      <button
-                        onClick={() => openAssignModal(res._id)}
-                        className="px-3 py-1.5 text-xs bg-[#fe9a00] hover:bg-[#e68a00] text-white font-semibold rounded-lg transition whitespace-nowrap"
-                      >
-                        Assign
-                      </button>
+                  // آیا حداقل یک خودرو در این دسته‌بندی موجود است (حتی با گیربکس متفاوت)؟
+                  const hasAnyVehicleInCategory = availableVehicles.some(
+                    (veh: any) => {
+                      return (
+                        veh.available && veh.category?._id === res.category._id
+                      );
+                    }
+                  );
+
+                  return (
+                    <div
+                      key={res._id}
+                      className="bg-white/5 rounded-lg p-3 hover:bg-white/[0.07] transition"
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-white text-sm truncate">
+                            {res.vehicle
+                              ? `${res.vehicle.title} (${res.vehicle.number})`
+                              : "No vehicle assigned"}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {res.category.name} •{" "}
+                            {new Date(res.startDate).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                            {res.selectedGear && (
+                              <span className="ml-2 text-[#fe9a00] font-medium uppercase">
+                                ({res.selectedGear})
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs font-medium text-[#fe9a00] mt-1">
+                            £{res.totalPrice}
+                          </p>
+                        </div>
+
+                        {/* فقط اگر دقیقاً گیربکس مطابق بود، دکمه Assign فعال باشه */}
+                        {!res.vehicle && hasExactMatch && (
+                          <button
+                            onClick={() => openAssignModal(res._id)}
+                            className="px-3 py-1.5 text-xs bg-[#fe9a00] hover:bg-[#e68a00] text-white font-semibold rounded-lg transition whitespace-nowrap"
+                          >
+                            Assign
+                          </button>
+                        )}
+
+                        {/* اگر خودرو در دسته‌بندی هست ولی گیربکس مطابق نیست */}
+                        {!res.vehicle &&
+                          !hasExactMatch &&
+                          hasAnyVehicleInCategory && (
+                            <div className="text-right space-y-0.5">
+                              <div className="flex items-center justify-end gap-1">
+                                <span className="text-xs text-orange-400 font-medium">
+                                  Gearbox not matching
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-gray-500">
+                                Requested:{" "}
+                                <span className="text-[#fe9a00] font-medium uppercase">
+                                  {res.selectedGear}
+                                </span>
+                                <br />
+                                Available vehicles have different gearbox
+                              </p>
+                            </div>
+                          )}
+
+                        {/* اگر اصلاً خودروی موجودی در دسته‌بندی نیست */}
+                        {!res.vehicle && !hasAnyVehicleInCategory && (
+                          <span className="text-xs text-red-400 font-medium">
+                            No vehicle available
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -722,7 +789,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                 <p className="text-gray-500 text-sm">No returns today</p>
               </div>
             ) : (
-              <div className="space-y-2.5 max-h-64 overflow-y-auto">
+              <div className="space-y-2.5 max-h-64 overflow-y-auto custom-scrollbar">
                 {todayActivity.returns.map((res: any) => (
                   <div
                     key={res._id}
@@ -879,33 +946,93 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
             </div>
 
             <div className="p-5">
-              <div className="mb-24">
+              <div className="mb-6">
                 <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">
-                  Available Vehicles
+                  Available Vehicles in Category
                 </label>
 
-                <CustomSelect
-                  options={availableVehicles.map((veh) => ({
-                    _id: veh._id,
-                    name: `${veh.title} (${veh.number}) — ${
-                      veh.office?.name || "No Office"
-                    }`,
-                  }))}
-                  value={selectedVehicleId}
-                  onChange={(val) => setSelectedVehicleId(val)}
-                  placeholder={
-                    availableVehicles.length === 0
-                      ? "No vehicles available"
-                      : "Select a vehicle..."
-                  }
-                />
-              </div>
+                {(() => {
+                  const currentRes = todayActivity.pickups.find(
+                    (r: any) => r._id === selectedReservationId
+                  );
 
-              {availableVehicles.length === 0 && (
-                <p className="text-center text-gray-500 text-sm py-4">
-                  No vehicles are currently available.
-                </p>
-              )}
+                  if (!currentRes) return null;
+
+                  const categoryVehicles = availableVehicles.filter(
+                    (veh: any) =>
+                      veh.available &&
+                      veh.category?._id === currentRes.category._id
+                  );
+
+                  const requestedGear = currentRes.selectedGear;
+
+                  return (
+                    <>
+                      {requestedGear && (
+                        <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                          <p className="text-sm text-white">
+                            Customer requested:{" "}
+                            <span className="font-bold text-[#fe9a00] uppercase">
+                              {requestedGear}
+                            </span>{" "}
+                            gearbox
+                          </p>
+                        </div>
+                      )}
+
+                      <CustomSelect
+                        options={categoryVehicles.map((veh: any) => {
+                          const vehicleGears = veh.gear?.availableTypes || [];
+                          const hasMatchingGear = requestedGear
+                            ? vehicleGears.some(
+                                (g: any) => g.gearType === requestedGear
+                              )
+                            : true;
+
+                          return {
+                            _id: veh._id,
+                            name: `${veh.title} (${veh.number}) — ${
+                              veh.office?.name || "No Office"
+                            }`,
+                            suffix:
+                              vehicleGears.length > 0
+                                ? ` [${vehicleGears
+                                    .map((g: any) => g.gearType.toUpperCase())
+                                    .join("/")}]`
+                                : " [No Gear Info]",
+                            disabled: !hasMatchingGear, // مهم: غیرفعال کن اگر گیربکس مطابقت نداره
+                          };
+                        })}
+                        value={selectedVehicleId}
+                        onChange={(val) => setSelectedVehicleId(val)}
+                        placeholder={
+                          categoryVehicles.length === 0
+                            ? "No vehicles available in this category"
+                            : "Select a vehicle..."
+                        }
+                      />
+
+                      {requestedGear &&
+                        categoryVehicles.length > 0 &&
+                        !categoryVehicles.some((v) =>
+                          v.gear?.availableTypes?.some(
+                            (g) => g.gearType === requestedGear
+                          )
+                        ) && (
+                          <p className="text-center text-red-400 text-sm mt-4 font-medium">
+                            ⚠️ No vehicle with requested {requestedGear} gearbox
+                            available.
+                            <br />
+                            <span className="text-xs text-gray-400">
+                              You can still assign a different gearbox if
+                              necessary.
+                            </span>
+                          </p>
+                        )}
+                    </>
+                  );
+                })()}
+              </div>
             </div>
 
             <div className="flex gap-3 p-5 pt-0">
@@ -923,11 +1050,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
 
               <button
                 onClick={assignVehicle}
-                disabled={
-                  !selectedVehicleId ||
-                  assigning ||
-                  availableVehicles.length === 0
-                }
+                disabled={!selectedVehicleId || assigning}
                 className="flex-1 py-2.5 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-semibold rounded-lg transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {assigning ? (

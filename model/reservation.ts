@@ -26,6 +26,7 @@ const reservationSchema = new mongoose.Schema(
       default: "pending",
     },
     driverAge: { type: Number, required: true },
+    selectedGear: { type: String, enum: ["manual", "automatic"] },
     messege: { type: String },
     addOns: [
       {
