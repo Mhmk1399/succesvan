@@ -694,6 +694,7 @@ export default function ReservationForm({
             onChange={(val) => setFormData((prev) => ({ ...prev, type: val }))}
             placeholder="Select Type"
             isInline={isInline}
+            disabled={!formData.office}
           />
         </div>
 
@@ -710,9 +711,10 @@ export default function ReservationForm({
             <button
               type="button"
               onClick={() => setShowDateRange(!showDateRange)}
+              disabled={!formData.office || !formData.type}
               className={`w-full bg-white/10 border border-white/20 rounded-lg text-white text-left focus:outline-none focus:border-amber-400 transition-colors ${
                 isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
-              }`}
+              } ${!formData.office || !formData.type ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {dateRange[0].startDate && dateRange[0].endDate
                 ? `${formatDate(dateRange[0].startDate)} - ${formatDate(
@@ -808,6 +810,7 @@ export default function ReservationForm({
                   selectedDate={dateRange[0].startDate}
                   isStartTime={true}
                   extensionTimes={extensionTimes}
+                  disabled={!formData.office || !formData.type || !dateRange[0].startDate}
                 />
               );
             })()}
@@ -858,6 +861,7 @@ export default function ReservationForm({
                   selectedDate={dateRange[0].endDate}
                   isStartTime={false}
                   extensionTimes={extensionTimes}
+                  disabled={!formData.office || !formData.type || !dateRange[0].endDate || !formData.pickupTime}
                 />
               );
             })()}
@@ -878,9 +882,10 @@ export default function ReservationForm({
             value={formData.driverAge}
             onChange={handleInputChange}
             required
+            disabled={!formData.office || !formData.type || !dateRange[0].endDate || !formData.pickupTime || !formData.returnTime}
             className={`w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors ${
               isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
-            }`}
+            } ${!formData.office || !formData.type || !dateRange[0].endDate || !formData.pickupTime || !formData.returnTime ? "opacity-50 cursor-not-allowed" : ""}`}
             placeholder="23-80"
             min="23"
             max="80"
@@ -976,6 +981,7 @@ export default function ReservationForm({
             onChange={(val) => setFormData((prev) => ({ ...prev, type: val }))}
             placeholder="Select Type"
             isInline={true}
+            disabled={!formData.office}
           />
         </div>
 
@@ -986,7 +992,10 @@ export default function ReservationForm({
           <button
             type="button"
             onClick={() => setShowDateRange(!showDateRange)}
-            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs text-left focus:outline-none focus:border-amber-400 transition-colors"
+            disabled={!formData.office || !formData.type}
+            className={`w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs text-left focus:outline-none focus:border-amber-400 transition-colors ${
+              !formData.office || !formData.type ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
             {dateRange[0].startDate && dateRange[0].endDate
               ? `${formatDate(dateRange[0].startDate)} - ${formatDate(
@@ -1076,6 +1085,7 @@ export default function ReservationForm({
                     selectedDate={dateRange[0].startDate}
                     isStartTime={true}
                     extensionTimes={extensionTimes}
+                    disabled={!formData.office || !formData.type || !dateRange[0].startDate}
                   />
                 );
               })()}
@@ -1125,6 +1135,7 @@ export default function ReservationForm({
                     selectedDate={dateRange[0].endDate}
                     isStartTime={false}
                     extensionTimes={extensionTimes}
+                    disabled={!formData.office || !formData.type || !dateRange[0].endDate || !formData.pickupTime}
                   />
                 );
               })()}
@@ -1147,7 +1158,8 @@ export default function ReservationForm({
               value={formData.driverAge}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white text-base md:text-xs placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors"
+              disabled={!formData.office || !formData.type || !dateRange[0].endDate || !formData.pickupTime || !formData.returnTime}
+              className="w-full px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white text-base md:text-xs placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="23-80"
               min="23"
               max="80"
