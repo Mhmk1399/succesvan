@@ -581,7 +581,7 @@ function ReservesContent() {
     if (selectedReservation?.office && editDateRange[0].startDate) {
       const date = editDateRange[0].startDate;
       const startDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      fetch(`/api/reservations/by-office?office=${(selectedReservation.office as any)._id}&startDate=${startDate}&type=start`)
+      fetch(`/api/reservations/by-office?office=${(selectedReservation.office as any)._id}&startDate=${startDate}&type=start&excludeReservation=${selectedReservation._id}`)
         .then((res) => res.json())
         .then((data) => setStartDateReservedSlots(data.data?.reservedSlots || []))
         .catch((err) => console.error(err));
@@ -592,7 +592,7 @@ function ReservesContent() {
     if (selectedReservation?.office && editDateRange[0].endDate) {
       const date = editDateRange[0].endDate;
       const endDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      fetch(`/api/reservations/by-office?office=${(selectedReservation.office as any)._id}&endDate=${endDate}&type=end`)
+      fetch(`/api/reservations/by-office?office=${(selectedReservation.office as any)._id}&endDate=${endDate}&type=end&excludeReservation=${selectedReservation._id}`)
         .then((res) => res.json())
         .then((data) => setEndDateReservedSlots(data.data?.reservedSlots || []))
         .catch((err) => console.error(err));
