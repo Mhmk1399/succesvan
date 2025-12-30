@@ -994,7 +994,7 @@ function ReservesContent() {
                                 value={editTimes.startTime}
                                 onChange={(time) => setEditTimes((prev) => ({ ...prev, startTime: time }))}
                                 slots={pickupTimeSlots}
-                                reservedSlots={startDateReservedSlots}
+                                reservedSlots={startDateReservedSlots.filter((slot: any) => slot.startTime)}
                                 selectedDate={editDateRange[0].startDate}
                                 isStartTime={true}
                                 extensionTimes={extensionTimes}
@@ -1023,7 +1023,7 @@ function ReservesContent() {
                                 value={editTimes.endTime}
                                 onChange={(time) => setEditTimes((prev) => ({ ...prev, endTime: time }))}
                                 slots={returnTimeSlots}
-                                reservedSlots={endDateReservedSlots}
+                                reservedSlots={endDateReservedSlots.filter((slot: any) => slot.endTime)}
                                 selectedDate={editDateRange[0].endDate}
                                 isStartTime={false}
                                 extensionTimes={extensionTimes}
