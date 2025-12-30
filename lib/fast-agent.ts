@@ -331,7 +331,7 @@ async function handleAskNeeds(
   if (userMessage === "start" || !userMessage.trim()) {
     return {
       message:
-        "Hi! 👋 What do you need to move or transport? Tell me about your job - furniture, boxes, equipment, or something else?",
+        "Hi! Im john youre AI frien  What do you need to move or transport? Tell me about your job - furniture, boxes, equipment, or something else?",
       state: { ...currentState, phase: "ask_needs" },
       showSuggestions: false,
       needsPhoneInput: false,
@@ -349,7 +349,7 @@ async function handleAskNeeds(
 
   // Use GPT to understand needs and match categories
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: [
       {
         role: "system",
@@ -401,7 +401,6 @@ EXAMPLES:
       { role: "user", content: userMessage },
     ],
     response_format: { type: "json_object" },
-    temperature: 0.3,
   });
 
   const result = JSON.parse(completion.choices[0].message.content || "{}");
@@ -750,7 +749,7 @@ async function handleVoiceBooking(
 
   // Use GPT to parse the voice input for booking details
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: [
       {
         role: "system",
@@ -790,7 +789,6 @@ Examples of date parsing:
       { role: "user", content: voiceInput },
     ],
     response_format: { type: "json_object" },
-    temperature: 0.2,
   });
 
   const result = JSON.parse(completion.choices[0].message.content || "{}");
@@ -922,7 +920,7 @@ async function handleVoicePhone(
 
   // Use GPT to extract phone number from natural language
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: [
       {
         role: "system",
@@ -950,7 +948,6 @@ Examples:
       { role: "user", content: voiceInput },
     ],
     response_format: { type: "json_object" },
-    temperature: 0.2,
   });
 
   const result = JSON.parse(completion.choices[0].message.content || "{}");
