@@ -351,6 +351,12 @@ export async function analyzeBusinessQuery(
   console.log("🔍 [Business Analyst] Fetching report data...");
   const reportContext = await getReportRAGContext(startDate, endDate, { sections });
   console.log("✅ [Business Analyst] Report data fetched (", sections.length, "sections)");
+  console.log("📄 [Business Analyst] Report context length:", reportContext.length, "characters");
+  console.log("📄 [Business Analyst] Report context preview (first 500 chars):", reportContext.substring(0, 500));
+  
+  if (!reportContext || reportContext.length < 100) {
+    console.error("⚠️ [Business Analyst] WARNING: Report context is empty or too short!");
+  }
   
   // Build system prompt
   const systemPrompt = `You are an expert BUSINESS ANALYST and CONSULTANT for Success Van Hire, a vehicle rental company.
@@ -589,19 +595,27 @@ Remember: Be the trusted advisor who helps the admin make SMART DECISIONS backed
     { role: "user", content: query },
   ];
   
-  console.log("🤖 [Business Analyst] Sending to GPT-4...");
+  console.log("🤖 [Business Analyst] Sending to OpenAI...");
+  console.log("📤 [Business Analyst] Request details:", {
+    model: "gpt-5-mini",
+    messageCount: messages.length,
+    maxTokens: 2000,
+    lastUserMessage: query.substring(0, 100),
+  });
   
   // Call OpenAI with JSON response format
   const completion = await openai.chat.completions.create({
     model: "gpt-5-mini",
     messages: messages as any,
-    max_tokens: 2000,
+    max_completion_tokens: 2000,
     response_format: { type: "json_object" },
   });
   
   const rawResponse = completion.choices[0].message.content || "{}";
   
   console.log("✅ [Business Analyst] Analysis complete");
+  console.log("📥 [Business Analyst] Raw response length:", rawResponse.length, "characters");
+  console.log("📥 [Business Analyst] Raw response preview:", rawResponse.substring(0, 300));
   
   // Parse JSON response
   let parsedResponse: {
@@ -614,9 +628,21 @@ Remember: Be the trusted advisor who helps the admin make SMART DECISIONS backed
   };
   
   try {
+    console.log("🔄 [Business Analyst] Parsing JSON response...");
     parsedResponse = JSON.parse(rawResponse);
+    console.log("✅ [Business Analyst] JSON parsed successfully");
+    console.log("📊 [Business Analyst] Response structure:", {
+      hasMessage: !!parsedResponse.message,
+      messageLength: parsedResponse.message?.length || 0,
+      metricsCount: parsedResponse.metrics?.length || 0,
+      insightsCount: parsedResponse.insights?.length || 0,
+      risksCount: parsedResponse.risks?.length || 0,
+      recommendationsCount: parsedResponse.recommendations?.length || 0,
+      proposedActionsCount: parsedResponse.proposedActions?.length || 0,
+    });
   } catch (e) {
     console.error("❌ [Business Analyst] Failed to parse JSON response:", e);
+    console.error("❌ [Business Analyst] Raw response that failed:", rawResponse);
     // Fallback: treat as plain message
     parsedResponse = {
       message: rawResponse,
@@ -634,6 +660,18 @@ Remember: Be the trusted advisor who helps the admin make SMART DECISIONS backed
   const insights = parsedResponse.insights || [];
   const risks = parsedResponse.risks || [];
   const recommendations = parsedResponse.recommendations || [];
+  
+  console.log("📝 [Business Analyst] Final response:", {
+    responsePreview: response.substring(0, 100),
+    totalMetrics: metrics.length,
+    totalInsights: insights.length,
+    totalRisks: risks.length,
+    totalRecommendations: recommendations.length,
+  });
+  
+  if (response === "I couldn't analyze that data. Please try again.") {
+    console.error("⚠️ [Business Analyst] WARNING: Using fallback response - AI may have returned empty message!");
+  }
   
   // Validate and filter proposed actions
   const proposedActions = (parsedResponse.proposedActions || []).filter((action): action is ProposedAction => {
@@ -701,7 +739,7 @@ Keep it concise and actionable.`;
   const completion = await openai.chat.completions.create({
     model: "gpt-5-mini",
     messages: [{ role: "system", content: systemPrompt }],
-    max_tokens: 200,
+    max_completion_tokens: 200,
   });
   
   return completion.choices[0].message.content || "Unable to generate summary.";
@@ -745,7 +783,7 @@ Format with clear sections and use % changes prominently.`;
   const completion = await openai.chat.completions.create({
     model: "gpt-5-mini",
     messages: [{ role: "system", content: systemPrompt }],
-    max_tokens: 1000,
+    max_completion_tokens: 1000,
   });
   
   return completion.choices[0].message.content || "Unable to compare periods.";
