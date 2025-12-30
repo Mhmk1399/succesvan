@@ -91,16 +91,15 @@ Rules:
 - Default pickup time: "10:00", return time: "10:00"
 - Only include fields that are mentioned. Use null for missing fields.`;
 
-    console.log("🤖 [API] Sending to GPT-4o-mini for extraction...");
+    console.log("🤖 [API] Sending to gpt-5-mini for extraction...");
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // Use "gpt-4o" for better accuracy
+      model: "gpt-5-mini", // Use "gpt-4o" for better accuracy
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: transcript },
       ],
       response_format: { type: "json_object" },
-      temperature: 0.3,
     });
 
     const result = completion.choices[0].message.content;

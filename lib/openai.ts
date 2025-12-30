@@ -28,7 +28,6 @@ export async function transcribeAudio(audioBlob: Blob): Promise<string> {
 // Strategy: Extract ALL information from a single user utterance
 // Use case: User says everything at once, wants fast form-fill
 // Behavior: Aggressive extraction, tries to get as much data as possible
-// Temperature: 0.3 (balanced extraction)
 
 /**
  * Extract structured reservation data from text using GPT-4
@@ -85,13 +84,12 @@ Input: "Medium van from Mill Hill"
 Output: {"office": "millhill_id", "category": "medium_id"}`;
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: transcript },
     ],
     response_format: { type: "json_object" },
-    temperature: 0.3, // Balanced for accurate extraction
   });
 
   const result = completion.choices[0].message.content;
@@ -128,7 +126,7 @@ export async function processVoiceReservation(
   // Step 3: If autoSubmit is enabled, use function calling to create reservation
   if (autoSubmit) {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         {
           role: "system",
@@ -209,7 +207,6 @@ export async function textToSpeech(text: string): Promise<Buffer> {
 // Strategy: Ask ONE question at a time, guide user through booking process
 // Use case: User wants to talk naturally, needs help with booking
 // Behavior: Patient, conversational, asks follow-up questions
-// Temperature: 0.2 (very predictable, focused responses)
 
 /**
  * Have a conversational interaction about the reservation
@@ -432,10 +429,9 @@ Guidelines:
   console.log("🤖 [Conversational Agent] Sending to GPT with", messages.length, "messages");
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: messages as any,
     response_format: { type: "json_object" },
-    temperature: 0.4, // Balanced temperature for natural conversation
   });
 
   const result = completion.choices[0].message.content;

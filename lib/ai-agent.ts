@@ -132,10 +132,9 @@ export async function processAgentTurn(
   
   // Call OpenAI
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: messages as any,
     response_format: { type: "json_object" },
-    temperature: 0.3,
   });
   
   const result = completion.choices[0].message.content;

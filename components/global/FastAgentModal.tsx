@@ -123,14 +123,17 @@ export default function FastAgentModal({
     voiceBooking,
     voicePhone,
     confirmAddOns,
-    skipAddOns,
     selectGear,
     confirmReceipt,
     sendCode,
     verifyCode,
+    goBack,
+    canGoBack,
     reset,
     stopAudio,
   } = useFastAgent();
+
+  const canReturn = agentState.phase !== "ask_needs" && canGoBack;
 
   // Use ref to track current phase for voice callback (avoids stale closure)
   const phaseRef = useRef(agentState.phase);
@@ -195,6 +198,23 @@ export default function FastAgentModal({
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Auto-advance from non-interactive gear selection
+  useEffect(() => {
+    if (agentState.phase === "select_Gearbox" && agentState.selectedCategory) {
+      const gear = agentState.selectedCategory.gear;
+      const hasGearOptions =
+        typeof gear !== "string" && gear.availableTypes?.length > 1;
+
+      if (!hasGearOptions) {
+        const defaultGear =
+          typeof gear === "string"
+            ? "manual"
+            : (gear.availableTypes?.[0] as "manual" | "automatic") || "manual";
+        selectGear(defaultGear, 0);
+      }
+    }
+  }, [agentState.phase, agentState.selectedCategory, selectGear]);
 
   // Sync booking form with agent state (for voice-filled values)
   useEffect(() => {
@@ -340,7 +360,9 @@ export default function FastAgentModal({
     return generateTimeSlots(start, end, 15);
   }, [bookingForm.officeId, bookingForm.startDate, offices]);
 
-  // Generate return time slots based on office working hours
+  const getSelectedOffice = () => {
+    return offices?.find((o) => o._id === bookingForm.officeId);
+  }; // Generate return time slots based on office working hours
   const returnTimeSlots = useMemo(() => {
     if (!bookingForm.officeId || !bookingForm.endDate) return [];
     const office = offices?.find((o) => o._id === bookingForm.officeId) as any;
@@ -402,10 +424,6 @@ export default function FastAgentModal({
     return generateTimeSlots(start, end, 15);
   }, [bookingForm.officeId, bookingForm.endDate, offices]);
 
-  const getSelectedOffice = () => {
-    return offices?.find((o) => o._id === bookingForm.officeId);
-  };
-
   const isDateDisabled = (date: Date) => {
     const office = getSelectedOffice();
     if (!office) return false;
@@ -436,30 +454,29 @@ export default function FastAgentModal({
   };
 
   // Body scroll lock
-useEffect(() => {
-  if (!isOpen) return;
+  useEffect(() => {
+    if (!isOpen) return;
 
-  const body = document.body;
-  const scrollY = window.scrollY;
+    const body = document.body;
+    const scrollY = window.scrollY;
 
-  body.style.position = 'fixed';
-  body.style.top = `-${scrollY}px`;
-  body.style.left = '0';
-  body.style.right = '0';
-  body.style.overflow = 'hidden';
-  body.style.width = '100%';
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.overflow = "hidden";
+    body.style.width = "100%";
 
-  return () => {
-    body.style.position = '';
-    body.style.top = '';
-    body.style.left = '';
-    body.style.right = '';
-    body.style.overflow = '';
-    body.style.width = '';
-    window.scrollTo(0, scrollY);
-  };
-}, [isOpen]);
-
+    return () => {
+      body.style.position = "";
+      body.style.top = "";
+      body.style.left = "";
+      body.style.right = "";
+      body.style.overflow = "";
+      body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen]);
 
   if (!isOpen || !mounted) return null;
 
@@ -794,9 +811,11 @@ useEffect(() => {
           {agentState.phase === "show_suggestions" &&
             agentState.suggestions && (
               <div className="px-4 pb-4">
-                <p className="text-gray-400 text-sm mb-3">
-                  Select your preferred van:
-                </p>
+                <div className="mb-3">
+                  <p className="text-gray-400 text-sm">
+                    Select your preferred van:
+                  </p>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {agentState.suggestions.map((category) => (
                     <SuggestionCard
@@ -866,7 +885,7 @@ useEffect(() => {
                       className="w-full bg-white/10 border border-white/20 rounded-lg text-white text-left focus:outline-none focus:border-amber-400 transition-colors px-4 py-3 text-sm"
                     >
                       {dateRange[0].startDate && dateRange[0].endDate
-                        ? `${(dateRange[0].startDate.getMonth() + 1).toString().padStart(2, '0')}/${dateRange[0].startDate.getDate().toString().padStart(2, '0')}/${dateRange[0].startDate.getFullYear()} - ${(dateRange[0].endDate.getMonth() + 1).toString().padStart(2, '0')}/${dateRange[0].endDate.getDate().toString().padStart(2, '0')}/${dateRange[0].endDate.getFullYear()}`
+                        ? `${(dateRange[0].startDate.getMonth() + 1).toString().padStart(2, "0")}/${dateRange[0].startDate.getDate().toString().padStart(2, "0")}/${dateRange[0].startDate.getFullYear()} - ${(dateRange[0].endDate.getMonth() + 1).toString().padStart(2, "0")}/${dateRange[0].endDate.getDate().toString().padStart(2, "0")}/${dateRange[0].endDate.getFullYear()}`
                         : "Select Dates"}
                     </button>
                     {showDateRange && (
@@ -1055,14 +1074,8 @@ useEffect(() => {
               const hasGearOptions =
                 typeof gear !== "string" && gear.availableTypes?.length > 1;
 
-              // If no gear options, auto-advance to add-ons with default gear
+              // If no gear options, don't render (useEffect will auto-advance)
               if (!hasGearOptions) {
-                const defaultGear =
-                  typeof gear === "string"
-                    ? "manual"
-                    : (gear.availableTypes?.[0] as "manual" | "automatic") ||
-                      "manual";
-                selectGear(defaultGear, 0);
                 return null;
               }
 
@@ -1252,27 +1265,18 @@ useEffect(() => {
                   )}
 
                   {/* Buttons */}
-                  <div className="flex gap-3">
-                    <button
-                      onClick={skipAddOns}
-                      disabled={isLoading}
-                      className="flex-1 bg-white/10 hover:bg-white/20 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors"
-                    >
-                      Skip
-                    </button>
-                    <button
-                      onClick={handleConfirmAddOns}
-                      disabled={isLoading}
-                      className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
-                    >
-                      {isLoading ? (
-                        <FiLoader className="animate-spin" />
-                      ) : (
-                        <FiCheck />
-                      )}
-                      Continue
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleConfirmAddOns}
+                    disabled={isLoading}
+                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? (
+                      <FiLoader className="animate-spin" />
+                    ) : (
+                      <FiCheck />
+                    )}
+                    Continue
+                  </button>
                 </div>
               </div>
             )}
@@ -1586,46 +1590,65 @@ useEffect(() => {
           )}
         </div>
 
-        {/* Bottom Controls - show for voice input phases */}
+        {/* Bottom Controls */}
         {(agentState.phase === "ask_needs" ||
           agentState.phase === "collect_booking" ||
-          agentState.phase === "verify_phone") && (
+          agentState.phase === "verify_phone" ||
+          canReturn) && (
           <div className="p-4 border-t border-white/10 bg-[#0f172b]">
-            <div className="flex items-center justify-center gap-4">
-              <div className="text-sm text-gray-400">
-                {isRecording ? (
-                  <span className="text-red-500 flex items-center gap-1">
-                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    Recording...
-                  </span>
-                ) : isPlaying ? (
-                  <span className="flex items-center gap-1">
-                    <FiVolume2 className="animate-pulse" />
-                    Speaking...
-                  </span>
-                ) : agentState.phase === "collect_booking" ? (
-                  <span>
-                    Or speak: &quot;Tomorrow at 10am, return Friday 5pm&quot;
-                  </span>
-                ) : agentState.phase === "verify_phone" &&
-                  !agentState.verificationSent ? (
-                  <span>Or speak: &quot;My number is 07123456789&quot;</span>
-                ) : (
-                  <span>Tap to speak</span>
-                )}
-              </div>
+            <div className="flex items-center justify-between gap-4">
+              {/* Return Button - only when can go back */}
+              {canReturn && (
+                <button
+                  onClick={goBack}
+                  disabled={!canReturn || isLoading}
+                  className="flex-1 bg-white/10 hover:bg-white/20 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors"
+                >
+                  Return
+                </button>
+              )}
 
-              <button
-                onClick={toggleRecording}
-                disabled={isPlaying || isLoading || agentState.verificationSent}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all transform hover:scale-105 ${
-                  isRecording
-                    ? "bg-red-500 animate-pulse"
-                    : "bg-orange-500 hover:bg-orange-600"
-                } text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <FiMic className="w-6 h-6" />
-              </button>
+              {/* Voice Button - only for voice-enabled phases */}
+              {(agentState.phase === "ask_needs" ||
+                agentState.phase === "collect_booking" ||
+                agentState.phase === "verify_phone") && (
+                <>
+                  <div className="text-sm text-gray-400 text-center flex-1">
+                    {isRecording ? (
+                      <span className="text-red-500 flex items-center gap-1">
+                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        Recording...
+                      </span>
+                    ) : isPlaying ? (
+                      <span className="flex items-center gap-1">
+                        <FiVolume2 className="animate-pulse" />
+                        Speaking...
+                      </span>
+                    ) : agentState.phase === "collect_booking" ? (
+                      <span>
+                        Or speak: &quot;Tomorrow at 10am, return Friday 5pm&quot;
+                      </span>
+                    ) : agentState.phase === "verify_phone" &&
+                      !agentState.verificationSent ? (
+                      <span>Or speak: &quot;My number is 07123456789&quot;</span>
+                    ) : (
+                      <span>Tap to speak</span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={toggleRecording}
+                    disabled={isPlaying || isLoading || agentState.verificationSent}
+                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all transform hover:scale-105 ${
+                      isRecording
+                        ? "bg-red-500 animate-pulse"
+                        : "bg-orange-500 hover:bg-orange-600"
+                    } text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <FiMic className="w-6 h-6" />
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}
