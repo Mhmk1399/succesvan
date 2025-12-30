@@ -27,6 +27,7 @@ import {
   SelectedAddOn,
 } from "@/hooks/useFastAgent";
 import TimeSelect from "@/components/ui/TimeSelect";
+import CustomSelect from "@/components/ui/CustomSelect";
 import { generateTimeSlots } from "@/utils/timeSlots";
 import { showToast } from "@/lib/toast";
 import { DateRange, Range } from "react-date-range";
@@ -70,6 +71,16 @@ export default function FastAgentModal({
   // Phone verification state
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
+
+  // Discount code state
+  const [discountCode, setDiscountCode] = useState("");
+  const [appliedDiscount, setAppliedDiscount] = useState<{
+    code: string;
+    percentage: number;
+    discountAmount: number;
+  } | null>(null);
+  const [discountLoading, setDiscountLoading] = useState(false);
+  const [discountError, setDiscountError] = useState("");
 
   // Add-ons selection state
   const [addOnQuantities, setAddOnQuantities] = useState<
@@ -123,14 +134,19 @@ export default function FastAgentModal({
     voiceBooking,
     voicePhone,
     confirmAddOns,
-    skipAddOns,
     selectGear,
     confirmReceipt,
     sendCode,
     verifyCode,
+    goBack,
+    canGoBack,
     reset,
     stopAudio,
   } = useFastAgent();
+
+  const canReturn = agentState.phase !== "ask_needs" && canGoBack;
+  
+  console.log("🔍 [FastAgentModal] Current phase:", agentState.phase, "| canGoBack:", canGoBack, "| canReturn:", canReturn);
 
   // Use ref to track current phase for voice callback (avoids stale closure)
   const phaseRef = useRef(agentState.phase);
@@ -195,6 +211,23 @@ export default function FastAgentModal({
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Auto-advance from non-interactive gear selection
+  useEffect(() => {
+    if (agentState.phase === "select_Gearbox" && agentState.selectedCategory) {
+      const gear = agentState.selectedCategory.gear;
+      const hasGearOptions =
+        typeof gear !== "string" && gear.availableTypes?.length > 1;
+
+      if (!hasGearOptions) {
+        const defaultGear =
+          typeof gear === "string"
+            ? "manual"
+            : (gear.availableTypes?.[0] as "manual" | "automatic") || "manual";
+        selectGear(defaultGear, 0);
+      }
+    }
+  }, [agentState.phase, agentState.selectedCategory, selectGear]);
 
   // Sync booking form with agent state (for voice-filled values)
   useEffect(() => {
@@ -340,7 +373,9 @@ export default function FastAgentModal({
     return generateTimeSlots(start, end, 15);
   }, [bookingForm.officeId, bookingForm.startDate, offices]);
 
-  // Generate return time slots based on office working hours
+  const getSelectedOffice = () => {
+    return offices?.find((o) => o._id === bookingForm.officeId);
+  }; // Generate return time slots based on office working hours
   const returnTimeSlots = useMemo(() => {
     if (!bookingForm.officeId || !bookingForm.endDate) return [];
     const office = offices?.find((o) => o._id === bookingForm.officeId) as any;
@@ -402,10 +437,6 @@ export default function FastAgentModal({
     return generateTimeSlots(start, end, 15);
   }, [bookingForm.officeId, bookingForm.endDate, offices]);
 
-  const getSelectedOffice = () => {
-    return offices?.find((o) => o._id === bookingForm.officeId);
-  };
-
   const isDateDisabled = (date: Date) => {
     const office = getSelectedOffice();
     if (!office) return false;
@@ -436,30 +467,29 @@ export default function FastAgentModal({
   };
 
   // Body scroll lock
-useEffect(() => {
-  if (!isOpen) return;
+  useEffect(() => {
+    if (!isOpen) return;
 
-  const body = document.body;
-  const scrollY = window.scrollY;
+    const body = document.body;
+    const scrollY = window.scrollY;
 
-  body.style.position = 'fixed';
-  body.style.top = `-${scrollY}px`;
-  body.style.left = '0';
-  body.style.right = '0';
-  body.style.overflow = 'hidden';
-  body.style.width = '100%';
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.overflow = "hidden";
+    body.style.width = "100%";
 
-  return () => {
-    body.style.position = '';
-    body.style.top = '';
-    body.style.left = '';
-    body.style.right = '';
-    body.style.overflow = '';
-    body.style.width = '';
-    window.scrollTo(0, scrollY);
-  };
-}, [isOpen]);
-
+    return () => {
+      body.style.position = "";
+      body.style.top = "";
+      body.style.left = "";
+      body.style.right = "";
+      body.style.overflow = "";
+      body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [isOpen]);
 
   if (!isOpen || !mounted) return null;
 
@@ -586,6 +616,94 @@ useEffect(() => {
       return (gear.automaticExtraCost || 0) * totalDays;
     }
     return 0;
+  };
+
+  // Validate and apply discount code
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) {
+      setDiscountError("Please enter a discount code");
+      return;
+    }
+
+    setDiscountLoading(true);
+    setDiscountError("");
+
+    try {
+      const response = await fetch(`/api/discounts?code=${encodeURIComponent(discountCode)}&status=active`);
+      const data = await response.json();
+
+      console.log("Discount API response:", data);
+
+      if (!data.success || !data.data || data.data.length === 0) {
+        setDiscountError("Invalid discount code");
+        setAppliedDiscount(null);
+        return;
+      }
+
+      const discount = data.data[0];
+      console.log("Discount object:", discount);
+
+      // Check if discount has required fields
+      if (!discount || !discount.percentage || !discount.validFrom || !discount.validTo) {
+        console.error("Discount missing required fields:", discount);
+        setDiscountError("Invalid discount data");
+        setAppliedDiscount(null);
+        return;
+      }
+
+      // Check if discount is valid
+      const now = new Date();
+      const validFrom = new Date(discount.validFrom);
+      const validTo = new Date(discount.validTo);
+
+      if (now < validFrom || now > validTo) {
+        setDiscountError("This discount code has expired");
+        setAppliedDiscount(null);
+        return;
+      }
+
+      // Check usage limit
+      if (discount.usageLimit && discount.usageCount >= discount.usageLimit) {
+        setDiscountError("This discount code has reached its usage limit");
+        setAppliedDiscount(null);
+        return;
+      }
+
+      // Check if discount applies to selected category
+      if (discount.categories && discount.categories.length > 0) {
+        const categoryIds = discount.categories.map((cat: any) => cat._id || cat);
+        if (!categoryIds.includes(agentState.booking.categoryId)) {
+          setDiscountError("This discount code is not valid for the selected vehicle");
+          setAppliedDiscount(null);
+          return;
+        }
+      }
+
+      // Calculate discount amount
+      const totalPrice = agentState.booking.totalPrice || 0;
+      const discountAmount = (totalPrice * discount.percentage) / 100;
+
+      setAppliedDiscount({
+        code: discount.code,
+        percentage: discount.percentage,
+        discountAmount,
+      });
+      setDiscountError("");
+      showToast.success(`Discount applied! ${discount.percentage}% off`);
+    } catch (error) {
+      console.error("Error applying discount:", error);
+      setDiscountError("Failed to apply discount. Please try again.");
+      setAppliedDiscount(null);
+    } finally {
+      setDiscountLoading(false);
+    }
+  };
+
+  // Remove discount
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCode("");
+    setDiscountError("");
   };
 
   // Handle confirm add-ons
@@ -794,9 +912,11 @@ useEffect(() => {
           {agentState.phase === "show_suggestions" &&
             agentState.suggestions && (
               <div className="px-4 pb-4">
-                <p className="text-gray-400 text-sm mb-3">
-                  Select your preferred van:
-                </p>
+                <div className="mb-3">
+                  <p className="text-gray-400 text-sm">
+                    Select your preferred van:
+                  </p>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {agentState.suggestions.map((category) => (
                     <SuggestionCard
@@ -834,24 +954,18 @@ useEffect(() => {
                   <label className="block text-gray-300 text-sm mb-1.5">
                     Pickup Location *
                   </label>
-                  <select
+                  <CustomSelect
+                    options={offices}
                     value={bookingForm.officeId}
-                    onChange={(e) =>
+                    onChange={(officeId) =>
                       setBookingForm((p) => ({
                         ...p,
-                        officeId: e.target.value,
+                        officeId,
                       }))
                     }
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500"
-                    required
-                  >
-                    <option value="">Select office</option>
-                    {offices.map((office) => (
-                      <option key={office._id} value={office._id}>
-                        {office.name}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Select office"
+                    icon={<FiTruck className="text-orange-500" />}
+                  />
                 </div>
 
                 {/* Dates */}
@@ -866,7 +980,7 @@ useEffect(() => {
                       className="w-full bg-white/10 border border-white/20 rounded-lg text-white text-left focus:outline-none focus:border-amber-400 transition-colors px-4 py-3 text-sm"
                     >
                       {dateRange[0].startDate && dateRange[0].endDate
-                        ? `${(dateRange[0].startDate.getMonth() + 1).toString().padStart(2, '0')}/${dateRange[0].startDate.getDate().toString().padStart(2, '0')}/${dateRange[0].startDate.getFullYear()} - ${(dateRange[0].endDate.getMonth() + 1).toString().padStart(2, '0')}/${dateRange[0].endDate.getDate().toString().padStart(2, '0')}/${dateRange[0].endDate.getFullYear()}`
+                        ? `${(dateRange[0].startDate.getMonth() + 1).toString().padStart(2, "0")}/${dateRange[0].startDate.getDate().toString().padStart(2, "0")}/${dateRange[0].startDate.getFullYear()} - ${(dateRange[0].endDate.getMonth() + 1).toString().padStart(2, "0")}/${dateRange[0].endDate.getDate().toString().padStart(2, "0")}/${dateRange[0].endDate.getFullYear()}`
                         : "Select Dates"}
                     </button>
                     {showDateRange && (
@@ -1055,14 +1169,8 @@ useEffect(() => {
               const hasGearOptions =
                 typeof gear !== "string" && gear.availableTypes?.length > 1;
 
-              // If no gear options, auto-advance to add-ons with default gear
+              // If no gear options, don't render (useEffect will auto-advance)
               if (!hasGearOptions) {
-                const defaultGear =
-                  typeof gear === "string"
-                    ? "manual"
-                    : (gear.availableTypes?.[0] as "manual" | "automatic") ||
-                      "manual";
-                selectGear(defaultGear, 0);
                 return null;
               }
 
@@ -1252,27 +1360,18 @@ useEffect(() => {
                   )}
 
                   {/* Buttons */}
-                  <div className="flex gap-3">
-                    <button
-                      onClick={skipAddOns}
-                      disabled={isLoading}
-                      className="flex-1 bg-white/10 hover:bg-white/20 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors"
-                    >
-                      Skip
-                    </button>
-                    <button
-                      onClick={handleConfirmAddOns}
-                      disabled={isLoading}
-                      className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
-                    >
-                      {isLoading ? (
-                        <FiLoader className="animate-spin" />
-                      ) : (
-                        <FiCheck />
-                      )}
-                      Continue
-                    </button>
-                  </div>
+                  <button
+                    onClick={handleConfirmAddOns}
+                    disabled={isLoading}
+                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? (
+                      <FiLoader className="animate-spin" />
+                    ) : (
+                      <FiCheck />
+                    )}
+                    Continue
+                  </button>
                 </div>
               </div>
             )}
@@ -1468,6 +1567,85 @@ useEffect(() => {
                       £{(agentState.booking.totalPrice || 0).toFixed(2)}
                     </span>
                   </div>
+
+                  {/* Discount Section */}
+                  {appliedDiscount && (
+                    <div className="flex justify-between items-center text-sm pt-2 border-t border-white/10">
+                      <span className="text-orange-400 font-medium">
+                        Discount ({appliedDiscount.percentage}%)
+                      </span>
+                      <span className="text-orange-400 font-medium">
+                        -£{appliedDiscount.discountAmount.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Final Total */}
+                  {appliedDiscount && (
+                    <div className="flex justify-between items-center pt-2 border-t border-white/10">
+                      <span className="text-white font-bold text-lg">Final Total</span>
+                      <span className="text-2xl font-bold text-green-400">
+                        £{((agentState.booking.totalPrice || 0) - appliedDiscount.discountAmount).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Discount Code Input */}
+                <div className="border-t border-white/10 pt-3">
+                  <label className="block text-gray-300 text-sm mb-2">
+                    Have a discount code?
+                  </label>
+                  {!appliedDiscount ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={discountCode}
+                        onChange={(e) => {
+                          setDiscountCode(e.target.value.toUpperCase());
+                          setDiscountError("");
+                        }}
+                        placeholder="Enter code"
+                        className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500"
+                        disabled={discountLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyDiscount}
+                        disabled={discountLoading || !discountCode.trim()}
+                        className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-medium rounded-lg transition-colors text-sm flex items-center gap-2"
+                      >
+                        {discountLoading ? (
+                          <FiLoader className="animate-spin" />
+                        ) : (
+                          <FiCheck />
+                        )}
+                        Apply
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between bg-orange-500/10 border border-orange-500/30 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <FiCheck className="text-orange-500" />
+                        <span className="text-white font-medium text-sm">
+                          {appliedDiscount.code}
+                        </span>
+                        <span className="text-orange-400 text-sm">
+                          ({appliedDiscount.percentage}% off)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveDiscount}
+                        className="text-gray-400 hover:text-white transition-colors"
+                      >
+                        <FiX />
+                      </button>
+                    </div>
+                  )}
+                  {discountError && (
+                    <p className="text-red-400 text-xs mt-1">{discountError}</p>
+                  )}
                 </div>
 
                 {/* Confirm Button */}
@@ -1586,46 +1764,65 @@ useEffect(() => {
           )}
         </div>
 
-        {/* Bottom Controls - show for voice input phases */}
+        {/* Bottom Controls */}
         {(agentState.phase === "ask_needs" ||
           agentState.phase === "collect_booking" ||
-          agentState.phase === "verify_phone") && (
+          agentState.phase === "verify_phone" ||
+          canReturn) && (
           <div className="p-4 border-t border-white/10 bg-[#0f172b]">
-            <div className="flex items-center justify-center gap-4">
-              <div className="text-sm text-gray-400">
-                {isRecording ? (
-                  <span className="text-red-500 flex items-center gap-1">
-                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    Recording...
-                  </span>
-                ) : isPlaying ? (
-                  <span className="flex items-center gap-1">
-                    <FiVolume2 className="animate-pulse" />
-                    Speaking...
-                  </span>
-                ) : agentState.phase === "collect_booking" ? (
-                  <span>
-                    Or speak: &quot;Tomorrow at 10am, return Friday 5pm&quot;
-                  </span>
-                ) : agentState.phase === "verify_phone" &&
-                  !agentState.verificationSent ? (
-                  <span>Or speak: &quot;My number is 07123456789&quot;</span>
-                ) : (
-                  <span>Tap to speak</span>
-                )}
-              </div>
+            <div className="flex items-center justify-between gap-4">
+              {/* Return Button - only when can go back */}
+              {canReturn && (
+                <button
+                  onClick={goBack}
+                  disabled={!canReturn || isLoading}
+                  className="flex-1 bg-white/10 hover:bg-white/20 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors"
+                >
+                  Return
+                </button>
+              )}
 
-              <button
-                onClick={toggleRecording}
-                disabled={isPlaying || isLoading || agentState.verificationSent}
-                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all transform hover:scale-105 ${
-                  isRecording
-                    ? "bg-red-500 animate-pulse"
-                    : "bg-orange-500 hover:bg-orange-600"
-                } text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <FiMic className="w-6 h-6" />
-              </button>
+              {/* Voice Button - only for voice-enabled phases */}
+              {(agentState.phase === "ask_needs" ||
+                agentState.phase === "collect_booking" ||
+                agentState.phase === "verify_phone") && (
+                <>
+                  <div className="text-sm text-gray-400 text-center flex-1">
+                    {isRecording ? (
+                      <span className="text-red-500 flex items-center gap-1">
+                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        Recording...
+                      </span>
+                    ) : isPlaying ? (
+                      <span className="flex items-center gap-1">
+                        <FiVolume2 className="animate-pulse" />
+                        Speaking...
+                      </span>
+                    ) : agentState.phase === "collect_booking" ? (
+                      <span>
+                        Or speak: &quot;Tomorrow at 10am, return Friday 5pm&quot;
+                      </span>
+                    ) : agentState.phase === "verify_phone" &&
+                      !agentState.verificationSent ? (
+                      <span>Or speak: &quot;My number is 07123456789&quot;</span>
+                    ) : (
+                      <span>Tap to speak</span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={toggleRecording}
+                    disabled={isPlaying || isLoading || agentState.verificationSent}
+                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all transform hover:scale-105 ${
+                      isRecording
+                        ? "bg-red-500 animate-pulse"
+                        : "bg-orange-500 hover:bg-orange-600"
+                    } text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <FiMic className="w-6 h-6" />
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}

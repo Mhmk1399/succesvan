@@ -137,14 +137,83 @@ export function useFastAgent() {
     phase: "ask_needs",
     booking: { startTime: "10:00", endTime: "10:00" },
   });
+  const [history, setHistory] = useState<FastAgentState[]>([]);
   const [offices, setOffices] = useState<Office[]>([]);
-
+  const stopAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setIsPlaying(false);
+    }
+  }, []);
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const stateRef = useRef<FastAgentState>(agentState);
 
+  const pushHistory = useCallback((snapshot: FastAgentState) => {
+    console.log("📚 [pushHistory] Saving state to history:", snapshot.phase);
+    setHistory((prev) => {
+      const cloned =
+        typeof structuredClone === "function"
+          ? structuredClone(snapshot)
+          : (JSON.parse(JSON.stringify(snapshot)) as FastAgentState);
+      console.log("📚 [pushHistory] History length before:", prev.length, "-> after:", prev.length + 1);
+      return [...prev, cloned];
+    });
+  }, []);
+
+  const goBack = useCallback(() => {
+    console.log("⬅️ [goBack] Going back from phase:", stateRef.current.phase);
+    stopAudio();
+
+    const isNonInteractiveGearStep = (state: FastAgentState) => {
+      if (state.phase !== "select_Gearbox") return false;
+      const gear = state.selectedCategory?.gear;
+      if (!gear) return true;
+      if (typeof gear === "string") return true;
+      return !(gear.availableTypes?.length > 1);
+    };
+
+    // Calculate target BEFORE updating history
+    let targetState: FastAgentState | null = null;
+    
+    setHistory((prev) => {
+      console.log("⬅️ [goBack] History length:", prev.length);
+      if (prev.length === 0) {
+        console.log("⬅️ [goBack] No history available!");
+        return prev;
+      }
+
+      const last = prev[prev.length - 1];
+      console.log("⬅️ [goBack] Last history item phase:", last.phase);
+      
+      if (isNonInteractiveGearStep(last) && prev.length >= 2) {
+        targetState = prev[prev.length - 2];
+        console.log("⬅️ [goBack] Skipping non-interactive gear step, going to:", targetState.phase);
+        return prev.slice(0, -2);
+      }
+
+      targetState = last;
+      console.log("⬅️ [goBack] Restoring to phase:", targetState.phase);
+      return prev.slice(0, -1);
+    });
+
+    // Use setTimeout to ensure state update happens after history update completes
+    setTimeout(() => {
+      if (targetState) {
+        console.log("⬅️ [goBack] Setting agent state to:", targetState.phase);
+        setAgentState(targetState);
+      } else {
+        console.log("⬅️ [goBack] No target state to restore!");
+      }
+    }, 0);
+  }, [stopAudio]);
+
+  const canGoBack = history.length > 0;
+
   // Keep ref in sync
   useEffect(() => {
+    console.log("🔄 [stateRef] Syncing ref to phase:", agentState.phase);
     stateRef.current = agentState;
   }, [agentState]);
 
@@ -183,19 +252,13 @@ export function useFastAgent() {
       };
 
       audio.play().catch(() => setIsPlaying(false));
-    } catch (error) {
+    } catch {
       setIsPlaying(false);
     }
   }, []);
 
   // Stop audio
-  const stopAudio = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-      setIsPlaying(false);
-    }
-  }, []);
+
 
   // Send message to agent
   const sendMessage = useCallback(
@@ -231,6 +294,10 @@ export function useFastAgent() {
 
         const response: FastAgentResponse = data.data;
 
+        // Save current state so we can return to it later
+        console.log("💾 [sendMessage] Saving current phase before transition:", stateRef.current.phase, "-> new phase:", response.state.phase);
+        pushHistory(stateRef.current);
+
         // Update state
         setAgentState(response.state);
 
@@ -258,7 +325,7 @@ export function useFastAgent() {
         setIsLoading(false);
       }
     },
-    [playAudio, stopAudio]
+    [playAudio, stopAudio, pushHistory]
   );
 
   // Select a category
@@ -306,11 +373,6 @@ export function useFastAgent() {
     [sendMessage]
   );
 
-  // Skip add-ons - proceed to receipt without add-ons
-  const skipAddOns = useCallback(async () => {
-    return sendMessage("skip", "skip_addons");
-  }, [sendMessage]);
-
   // Confirm receipt - proceed to phone verification
   const confirmReceipt = useCallback(async () => {
     return sendMessage("confirm", "confirm_receipt");
@@ -318,6 +380,8 @@ export function useFastAgent() {
 
   // Select gear type - transition from select_gear to select_addons
   const selectGear = useCallback((gearType: "manual" | "automatic", gearExtraCost: number) => {
+    console.log("⚙️ [selectGear] Transitioning from", stateRef.current.phase, "to select_addons with gear:", gearType);
+    pushHistory(stateRef.current);
     setAgentState(prev => ({
       ...prev,
       phase: "select_addons",
@@ -327,7 +391,7 @@ export function useFastAgent() {
         totalPrice: (prev.booking.totalPrice || 0) + gearExtraCost,
       },
     }));
-  }, []);
+  }, [pushHistory]);
 
   // Send phone verification code
   const sendCode = useCallback(
@@ -349,6 +413,7 @@ export function useFastAgent() {
   const reset = useCallback(() => {
     stopAudio();
     setMessages([]);
+    setHistory([]);
     setAgentState({
       phase: "ask_needs",
       booking: { startTime: "10:00", endTime: "10:00" },
@@ -370,11 +435,12 @@ export function useFastAgent() {
     voiceBooking,
     voicePhone,
     confirmAddOns,
-    skipAddOns,
     selectGear,
     confirmReceipt,
     sendCode,
     verifyCode,
+    goBack,
+    canGoBack,
     reset,
     stopAudio,
   };

@@ -593,9 +593,8 @@ Remember: Be the trusted advisor who helps the admin make SMART DECISIONS backed
   
   // Call OpenAI with JSON response format
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: messages as any,
-    temperature: 0.4, // Balanced for analytical yet natural responses
     max_tokens: 2000,
     response_format: { type: "json_object" },
   });
@@ -700,9 +699,8 @@ ${reportContext}
 Keep it concise and actionable.`;
   
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: [{ role: "system", content: systemPrompt }],
-    temperature: 0.3,
     max_tokens: 200,
   });
   
@@ -745,9 +743,8 @@ Provide a comparative analysis covering:
 Format with clear sections and use % changes prominently.`;
   
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: [{ role: "system", content: systemPrompt }],
-    temperature: 0.4,
     max_tokens: 1000,
   });
   
@@ -778,9 +775,8 @@ Example:
 ["Promote GPS add-ons at Mill Hill (only 12% attachment vs 35% at Hendon) with bundle discounts", "Contact 15 customers who haven't booked in 6+ months with a 15% return offer"]`;
   
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "gpt-5-mini",
     messages: [{ role: "system", content: systemPrompt }],
-    temperature: 0.4,
     response_format: { type: "json_object" },
   });
   
