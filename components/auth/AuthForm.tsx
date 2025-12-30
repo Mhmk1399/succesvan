@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { FiMail, FiUser, FiPhone } from "react-icons/fi";
+import { FiMail, FiUser, FiPhone, FiMapPin } from "react-icons/fi";
 import gsap from "gsap";
 import { showToast } from "@/lib/toast";
 import { useAuth } from "@/context/AuthContext";
@@ -15,6 +15,7 @@ export default function AuthForm() {
     emailAddress: "",
     phoneNumber: "",
     code: "",
+    address: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -110,6 +111,7 @@ export default function AuthForm() {
     } else if (!/\S+@\S+\.\S+/.test(formData.emailAddress)) {
       newErrors.emailAddress = "Email is invalid";
     }
+    if (!formData.address.trim()) newErrors.address = "Address is required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -127,6 +129,7 @@ export default function AuthForm() {
           name: formData.name,
           lastName: formData.lastName,
           emailAddress: formData.emailAddress,
+          address: formData.address,
         }),
       });
       const data = await res.json();
@@ -319,6 +322,27 @@ export default function AuthForm() {
                   {errors.emailAddress && (
                     <p className="mt-1 text-red-400 text-sm">
                       {errors.emailAddress}
+                    </p>
+                  )}
+                </div>
+                <div className="relative">
+                  <FiMapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    placeholder="Address"
+                    required
+                    className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
+                      errors.address
+                        ? "border-red-500/50 focus:border-red-500"
+                        : "border-white/20 focus:border-[#fe9a00]"
+                    }`}
+                  />
+                  {errors.address && (
+                    <p className="mt-1 text-red-400 text-sm">
+                      {errors.address}
                     </p>
                   )}
                 </div>
