@@ -2,13 +2,11 @@ import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Reservation from "@/model/reservation";
 import User from "@/model/user";
-import Category from "@/model/category";
 import AddOn from "@/model/addOn";
 import bcrypt from "bcryptjs";
 import { successResponse, errorResponse } from "@/lib/api-response";
-import office from "@/model/office";
 import { sendSMS } from "@/lib/sms";
-import { scheduleReservationNotifications, sendStatusNotification } from "@/lib/notification-scheduler";
+import { scheduleReservationNotifications } from "@/lib/notification-scheduler";
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,12 +14,16 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
     const name = searchParams.get("name");
+    const user = searchParams.get("user");
+    const phone = searchParams.get("phone");
     const category = searchParams.get("category");
-    const totalPrice = searchParams.get("totalPrice");
-    const startDateRange = searchParams.get("startDateRangeStart");
-    const startDateRangeEnd = searchParams.get("startDateRangeEnd");
-    const endDateRange = searchParams.get("endDateRangeStart");
-    const endDateRangeEnd = searchParams.get("endDateRangeEnd");
+    const office = searchParams.get("office");
+    const totalPriceMin = searchParams.get("totalPriceMin");
+    const totalPriceMax = searchParams.get("totalPriceMax");
+    const startDateRange = searchParams.get("startDateStart");
+    const startDateRangeEnd = searchParams.get("startDateEnd");
+    const endDateRange = searchParams.get("endDateStart");
+    const endDateRangeEnd = searchParams.get("endDateEnd");
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
@@ -30,10 +32,15 @@ export async function GET(req: NextRequest) {
     const query: any = {};
     if (userId) query.user = userId;
     if (name) query.user = name;
+    if (user) query.user = user;
+    // Phone filtering is handled separately with aggregation
     if (category) query.category = category;
+    if (office) query.office = office;
     if (status) query.status = status;
-    if (totalPrice) {
-      query.totalPrice = parseFloat(totalPrice);
+    if (totalPriceMin || totalPriceMax) {
+      query.totalPrice = {};
+      if (totalPriceMin) query.totalPrice.$gte = parseFloat(totalPriceMin);
+      if (totalPriceMax) query.totalPrice.$lte = parseFloat(totalPriceMax);
     }
     if (startDateRange) {
       const start = new Date(startDateRange);
@@ -50,16 +57,119 @@ export async function GET(req: NextRequest) {
       query.endDate = { $gte: start, $lte: end };
     }
 
-    const reservations = await Reservation.find(query)
-      .populate("user", "-password")
-      .populate({ path: "office", model: office })
-      .populate({ path: "category", model: Category })
-      .populate({ path: "addOns.addOn", model: AddOn })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    let reservations;
+    let total;
 
-    const total = await Reservation.countDocuments(query);
+    if (phone) {
+      // Use aggregation for phone filtering since user data is in separate collection
+      const normalizedPhone = phone.replace(/\D/g, "");
+      const aggregationPipeline = [
+        {
+          $lookup: {
+            from: "users",
+            localField: "user",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        {
+          $unwind: "$user",
+        },
+        {
+          $match: {
+            ...query,
+            "user.phoneData.phoneNumber": {
+              $regex: normalizedPhone,
+              $options: "i",
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "offices",
+            localField: "office",
+            foreignField: "_id",
+            as: "office",
+          },
+        },
+        {
+          $unwind: { path: "$office", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "category",
+            foreignField: "_id",
+            as: "category",
+          },
+        },
+        {
+          $unwind: { path: "$category", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: "addons",
+            localField: "addOns.addOn",
+            foreignField: "_id",
+            as: "addOns.addOn",
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
+      ];
+
+      reservations = await Reservation.aggregate(aggregationPipeline);
+
+      // Get total count for phone filtering
+      const countPipeline = [
+        {
+          $lookup: {
+            from: "users",
+            localField: "user",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        {
+          $unwind: "$user",
+        },
+        {
+          $match: {
+            ...query,
+            "user.phoneData.phoneNumber": {
+              $regex: normalizedPhone,
+              $options: "i",
+            },
+          },
+        },
+        {
+          $count: "total",
+        },
+      ];
+
+      const countResult = await Reservation.aggregate(countPipeline);
+      total = countResult[0]?.total || 0;
+    } else {
+      // Use regular query for non-phone filters
+      reservations = await Reservation.find(query)
+        .populate("user", "-password")
+        .populate("office")
+        .populate("category")
+        .populate({ path: "addOns.addOn", model: AddOn })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+      total = await Reservation.countDocuments(query);
+    }
+
     const pages = Math.ceil(total / limit);
 
     return successResponse({
@@ -118,9 +228,7 @@ export async function POST(req: NextRequest) {
 
     const hasLicence =
       user.licenceAttached?.front && user.licenceAttached?.back;
-    const licenceMessage = hasLicence
-      ? ""
-      : " Add licence to dashboard.";
+    const licenceMessage = hasLicence ? "" : " Add licence to dashboard.";
 
     // Send creation SMS
     try {

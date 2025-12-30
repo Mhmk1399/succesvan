@@ -995,7 +995,11 @@ export default function ReservationForm({
               : "Select Dates"}
           </button>
           {showDateRange && (
-            <div className="-mt-46 bg-slate-800 z-99999 backdrop-blur-xl border border-white/20 rounded-lg p-2 overflow-x-auto">
+            <div
+              className={`absolute left-0 -mt-20 md:mt-20 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 ${
+                isInline ? "-top-72" : "-top-10"
+              }`}
+            >
               <DateRange
                 ranges={dateRange}
                 onChange={(item) => {
@@ -1010,11 +1014,20 @@ export default function ReservationForm({
                 }}
                 minDate={new Date()}
                 rangeColors={["#fbbf24"]}
+                disabledDates={
+                  formData.office
+                    ? (Array.from({ length: 365 }, (_, i) => {
+                        const date = new Date();
+                        date.setDate(date.getDate() + i);
+                        return isDateDisabled(date) ? date : null;
+                      }).filter(Boolean) as Date[])
+                    : []
+                }
               />
               <button
                 type="button"
                 onClick={() => setShowDateRange(false)}
-                className="w-full mt-2 px-3 py-1.5 bg-amber-500 text-slate-900 font-semibold rounded-lg hover:bg-amber-400 transition-colors text-xs"
+                className="w-full mt-3 px-4 py-2 bg-amber-500 text-slate-900 font-semibold rounded-lg hover:bg-amber-400 transition-colors text-sm"
               >
                 Done
               </button>
@@ -1123,7 +1136,7 @@ export default function ReservationForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2">
           <div>
             <label className="text-white text-xs font-semibold mb-1 flex items-center gap-1">
               <FiUser className="text-amber-400" /> Age
@@ -1134,9 +1147,10 @@ export default function ReservationForm({
               value={formData.driverAge}
               onChange={handleInputChange}
               required
-              className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors"
-              placeholder="18+"
-              min="18"
+              className="w-full px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white text-base md:text-xs placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors"
+              placeholder="23-80"
+              min="23"
+              max="80"
             />
           </div>
         </div>

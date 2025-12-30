@@ -219,7 +219,8 @@ export interface DynamicTableViewProps<T> {
   filters?: Array<{
     key: string;
     label: string;
-    type: "text" | "date" | "select";
+    type: "text" | "date" | "select" | "range";
+    rangeType?: "number" | "text";
     options?: Array<{ _id: string; name: string }>;
   }>;
 }

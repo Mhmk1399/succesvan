@@ -105,7 +105,7 @@ export default function ProfileContent({
 
       const token = localStorage.getItem("token");
       const res = await fetch(`/api/users/${user?._id}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -138,7 +138,7 @@ export default function ProfileContent({
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`/api/users/${user?._id}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -180,7 +180,9 @@ export default function ProfileContent({
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h2 className="text-2xl sm:text-3xl font-black text-white">Profile Settings</h2>
+        <h2 className="text-2xl sm:text-3xl font-black text-white">
+          Profile Settings
+        </h2>
         <div className="flex gap-2 w-full sm:w-auto">
           {isEditing ? (
             <>
@@ -209,7 +211,10 @@ export default function ProfileContent({
         </div>
       </div>
 
-      <div id="section-address" className="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <div
+        id="section-address"
+        className="bg-white/5 border border-white/10 rounded-2xl p-6"
+      >
         <h3 className="text-xl font-black text-white mb-6">
           Profile Information
         </h3>
@@ -277,15 +282,6 @@ export default function ProfileContent({
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-gray-400 text-sm">Email</label>
-              <span
-                className={`text-xs font-semibold px-2 py-1 rounded ${
-                  user?.emaildata?.isVerified
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-red-500/20 text-red-400"
-                }`}
-              >
-                {user?.emaildata?.isVerified ? "✓ Verified" : "✗ Not Verified"}
-              </span>
             </div>
             {isEditing ? (
               <input
@@ -341,7 +337,10 @@ export default function ProfileContent({
         </div>
       </div>
 
-      <div id="section-license" className="bg-white/5 border border-white/10 rounded-2xl p-6">
+      <div
+        id="section-license"
+        className="bg-white/5 border border-white/10 rounded-2xl p-6"
+      >
         <h3 className="text-xl font-black text-white mb-6">
           Licenses Attachments
         </h3>
@@ -434,8 +433,6 @@ export default function ProfileContent({
           </div>
         </div>
       </div>
-
-
     </div>
   );
 }
