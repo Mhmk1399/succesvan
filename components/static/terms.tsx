@@ -49,7 +49,7 @@ const termsData: TermSection[] = [
       {
         id: "1.3",
         content:
-          "The hirer must be at least 25 years old and hold a valid full driving licence for a minimum of 2 years.",
+          "The hirer must be at least 25 years old and hold a valid full driving license for a minimum of 2 years.",
       },
     ],
   },

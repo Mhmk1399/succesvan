@@ -646,6 +646,7 @@ export default function ReservationsManagement() {
           category: editCategory,
           totalPrice: priceCalc?.totalPrice || selectedReservation.totalPrice,
           addOns: selectedAddOns,
+          adminEdited: true,
         }),
       });
 

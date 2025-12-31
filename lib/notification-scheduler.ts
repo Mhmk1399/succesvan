@@ -98,3 +98,28 @@ export async function sendStatusNotification(
     });
   }
 }
+
+export async function sendReservationEditedNotification(reservationId: string) {
+  const reservation = await Reservation.findById(reservationId)
+    .populate("user")
+    .populate("office");
+
+  if (!reservation) return;
+
+  const user = reservation.user as any;
+  const phoneNumber = user.phoneData?.phoneNumber;
+
+  if (!phoneNumber) return;
+
+  try {
+    await sendSMS(
+      phoneNumber.replace("+", ""),
+      `Your reservation updated by admin. Check details in dashboard. SuccessVanHire.co.uk`
+    );
+  } catch (error) {
+    console.log(
+      "Reservation edited SMS Error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+  }
+}

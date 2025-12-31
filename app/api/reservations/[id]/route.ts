@@ -49,6 +49,48 @@ export async function PATCH(
       .populate("addOns.addOn");
     if (!reservation) return errorResponse("Reservation not found", 404);
     
+    // Send admin edited notification if flagged
+    if (body.adminEdited) {
+      try {
+        const { sendReservationEditedNotification } = await import("@/lib/notification-scheduler");
+        await sendReservationEditedNotification(id);
+      } catch (error) {
+        console.log(
+          "Admin edit notification error:",
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+    
+    // Send SMS to admin if user edited
+    if (body.userEdited) {
+      try {
+        const User = (await import("@/model/user")).default;
+        const admins = await User.find({ role: "admin" });
+        const { sendSMS } = await import("@/lib/sms");
+        
+        const customerPhone = (reservation.user as any)?.phoneData?.phoneNumber || "Unknown";
+        
+        for (const admin of admins) {
+          if (admin.phoneData?.phoneNumber) {
+            try {
+              await sendSMS(
+                admin.phoneData.phoneNumber.replace("+", ""),
+                `Customer ${customerPhone} edited reservation. Check dashboard. SuccessVanHire.co.uk`
+              );
+            } catch (smsError) {
+              console.log(`Admin SMS Error (${admin.phoneData.phoneNumber}):`, smsError);
+            }
+          }
+        }
+      } catch (error) {
+        console.log(
+          "User edit admin notification error:",
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      }
+    }
+    
     // Send status notification if status changed
     if (oldReservation?.status !== body.status && body.status) {
       const validStatuses = ["confirmed", "canceled", "delivered", "completed"];
