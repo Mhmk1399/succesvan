@@ -62,7 +62,7 @@ const whyUsData = [
     title: "UK/EU Licenses",
     shortDesc: "Easy verification",
     description:
-      "We accept full UK and EU driving licences with quick verification process.",
+      "We accept full UK and EU driving licenses with quick verification process.",
     color: "#fe9a00",
   },
   {

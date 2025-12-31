@@ -684,6 +684,7 @@ function ReservesContent() {
           category: (selectedReservation as any).category?._id,
           totalPrice: priceCalc?.totalPrice || selectedReservation.totalPrice,
           addOns: selectedAddOns,
+          userEdited: true,
         }),
       });
 
