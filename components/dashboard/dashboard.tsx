@@ -196,8 +196,7 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-    window.location.href = "/login";
-  };
+   };
 
   return (
     <div className="min-h-screen bg-[#0a101f]">

@@ -30,8 +30,7 @@ export async function GET(request: NextRequest) {
 
     // Check total tickets in database
     const totalTickets = await Ticket.countDocuments();
-    console.log("Total tickets in database:", totalTickets);
-
+ 
     let tickets;
     if (userRole === "admin") {
       tickets = await Ticket.find()

@@ -188,7 +188,7 @@ export default function WhyUs() {
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 lg:gap-8">
           {whyUsData.map((item, index) => (
             <div
               key={item.id}
@@ -328,11 +328,11 @@ function WhyUsCard({ item, isActive }: { item: any; isActive: boolean }) {
         <div className="absolute inset-0 bg-linear-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700"></div>
 
         {/* Content */}
-        <div className="relative p-8 lg:p-10">
+        <div className="relative p-3 lg:p-10">
           {/* Icon Container */}
-          <div className="mb-8 relative">
+          <div className="md:mb-8 mb-4 relative">
             <div
-              className={`w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-linear-to-br from-[#fe9a00] to-[#d97900] flex items-center justify-center shadow-2xl transition-all duration-500 ${
+              className={`w-12 h-12 lg:w-20 lg:h-20 rounded-2xl bg-linear-to-br from-[#fe9a00] to-[#d97900] flex items-center justify-center shadow-2xl transition-all duration-500 ${
                 isActive ? "scale-110 rotate-6" : "group-hover/card:scale-105"
               }`}
               style={{
@@ -346,7 +346,7 @@ function WhyUsCard({ item, isActive }: { item: any; isActive: boolean }) {
 
             {/* Floating Dot */}
             <div
-              className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[#fe9a00] flex items-center justify-center"
+              className="absolute hidden  -top-2 -right-2 w-6 h-6 rounded-full bg-[#fe9a00] md:flex items-center justify-center"
               style={{
                 boxShadow: "0 0 20px rgba(254, 154, 0, 0.8)",
               }}
@@ -356,12 +356,12 @@ function WhyUsCard({ item, isActive }: { item: any; isActive: boolean }) {
           </div>
 
           {/* Title */}
-          <h3 className="text-lg lg:text-2xl font-black text-white mb-3 leading-tight">
+          <h3 className="text-base lg:text-2xl font-black text-white mb-3 leading-tight">
             {item.title}
           </h3>
 
           {/* Short Description */}
-          <p className="text-[#fe9a00] text-sm font-bold mb-4">
+          <p className="text-[#fe9a00] text-xs md:text-sm font-bold mb-4">
             {item.shortDesc}
           </p>
 
@@ -376,7 +376,7 @@ function WhyUsCard({ item, isActive }: { item: any; isActive: boolean }) {
           ></div>
 
           {/* Description */}
-          <p className="text-gray-300 text-sm  leading-relaxed mb-6">
+          <p className="text-gray-300 text-xs md:text-sm  leading-relaxed mb-6">
             {item.description}
           </p>
         </div>

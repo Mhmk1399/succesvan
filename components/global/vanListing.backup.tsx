@@ -1474,7 +1474,7 @@ function ReservationPanel({
                 <div>
                   <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
                     <FiMapPin className="text-[#fe9a00]" />
-                    Office Location
+                    Office
                   </label>
                   <CustomSelect
                     options={offices}
@@ -1525,7 +1525,9 @@ function ReservationPanel({
                               ),
                             }));
                           }}
-                          minDate={new Date()}
+                          minDate={
+                            new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+                          }
                           rangeColors={["#fe9a00"]}
                           disabledDates={
                             formData.office
@@ -2280,10 +2282,7 @@ function CategoryDetailsModal({
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 transition-opacity duration-300"
         onClick={onClose}
       />
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999 transition-opacity duration-300"
-        onClick={onClose}
-      />
+
       <div className="fixed inset-0 flex items-center justify-center p-4 z-9999">
         <div className="bg-linear-to-br from-[#0f172b] to-[#1e293b] rounded-2xl border border-white/10 max-w-3xl w-full max-h-[80vh] overflow-y-auto shadow-2xl animate-in z-9999 zoom-in duration-300">
           {/* Content */}
