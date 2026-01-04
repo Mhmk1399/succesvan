@@ -2,13 +2,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { FiMail, FiUser, FiPhone, FiMapPin } from "react-icons/fi";
+import { useRouter } from "next/navigation";
+import { FiMail, FiUser, FiPhone, FiMapPin, FiHome } from "react-icons/fi";
 import gsap from "gsap";
 import { showToast } from "@/lib/toast";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AuthForm() {
   const { setUser } = useAuth();
+  const router = useRouter();
   const [step, setStep] = useState<"phone" | "code" | "register">("phone");
   const [formData, setFormData] = useState({
     name: "",
@@ -187,6 +189,16 @@ export default function AuthForm() {
   return (
     <>
       <div className="w-full max-w-md mx-auto mt-20">
+        <div className="my-4 flex flex-row-reverse gap-1 justify-center items-center">
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="text-sm text-[#fe9a00] hover:underline"
+          >
+            Home
+          </button>
+          <FiHome className="text-[#fe9a00]" />
+        </div>
         <div
           ref={formRef}
           className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 shadow-2xl"

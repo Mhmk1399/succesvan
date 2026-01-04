@@ -351,7 +351,7 @@ export default function Navbar() {
                                 {user.name} {user.lastName || ""}
                               </p>
                               <p className="text-white/50 text-xs">
-                                {user.email}
+                                {user?.emailData?.emailAddress}
                               </p>
                             </div>
                           </div>

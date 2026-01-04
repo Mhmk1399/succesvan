@@ -31,6 +31,7 @@ import TimeSelect from "@/components/ui/TimeSelect";
 import { generateTimeSlots } from "@/utils/timeSlots";
 import { usePriceCalculation } from "@/hooks/usePriceCalculation";
 import AddOnsModal from "./AddOnsModal";
+import useCategories from "@/hooks/useCategories";
 
 interface AddOn {
   _id: string;
@@ -52,7 +53,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format } from "date-fns";
 import Link from "next/link";
-import { HiIdentification } from "react-icons/hi2";
+import { FaArrowRight } from "react-icons/fa";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -86,23 +87,22 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
     }
   }, [vans.length]);
 
+  const { categories: fetchedCategories, isLoading: categoriesLoading } =
+    useCategories("active");
+
   useEffect(() => {
     setIsLoading(true);
-    fetch("/api/categories?status=active")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        const categoriesData = data?.data?.data || data?.data || [];
-        if (Array.isArray(categoriesData) && categoriesData.length > 0) {
-          console.log("Setting van categories:", categoriesData.length);
-          setCategories(categoriesData);
-        }
-      })
-      .catch((err) => console.log("Failed to fetch categories", err))
-      .finally(() => setIsLoading(false));
-  }, [vans.length]);
+    if (vans.length > 0) {
+      setCategories(vans as Category[]);
+      setIsLoading(false);
+      return;
+    }
+    if (Array.isArray(fetchedCategories) && fetchedCategories.length > 0) {
+      console.log("Setting van categories:", fetchedCategories.length);
+      setCategories(fetchedCategories);
+    }
+    setIsLoading(!!categoriesLoading);
+  }, [vans.length, fetchedCategories, categoriesLoading]);
 
   const setCardRef = useCallback((index: number, el: HTMLDivElement | null) => {
     cardsRef.current[index] = el;
@@ -550,7 +550,6 @@ function ReservationPanel({
 
   // Calculate add-ons cost
   useEffect(() => {
-    const rentalDays = basePriceCalc?.totalDays || 1;
     const cost = selectedAddOns.reduce((total, item) => {
       const addon = addOns.find((a) => a._id === item.addOn);
       if (!addon) return total;
@@ -2279,7 +2278,7 @@ function CategoryCard({
         <div className="space-y-4 flex items-end justify-between">
           <div className="space-y-2">
             {/* License Badge */}
-            <div className="inline-flex items-center gap-2 px-2 py-1.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-500 text-[10px] font-semibold shadow-sm">
+            <div className="inline-flex items-center gap-2 px-2 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-500 text-[10px] font-semibold shadow-sm">
               <span>{category.requiredLicense}</span>
             </div>
 
@@ -2304,13 +2303,14 @@ function CategoryCard({
               e.stopPropagation();
               onView();
             }}
-            className="px-7 py-3 bg-linear-to-r from-[#fe9a00] to-[#ff8800]
+            className="px-5 py-3 bg-linear-to-r flex gap-1 items-center  from-[#fe9a00] to-[#ff8800]
                hover:from-[#ff8800] hover:to-[#fe9a00]
-               text-black font-bold rounded-xl shadow-lg
+               text-black font-semibold rounded-xl shadow-lg
                hover:shadow-[#fe9a00]/50 transform hover:scale-105
                transition-all duration-300"
           >
             Book Now
+            <IoIosArrowForward className="text-base text-black" />
           </button>
         </div>
       </div>
