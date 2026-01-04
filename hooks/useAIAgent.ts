@@ -136,7 +136,7 @@ export function useAIAgent() {
         };
 
         audio.onerror = (error) => {
-          console.error("❌ [AI Agent Hook] Audio error:", error);
+          console.log("❌ [AI Agent Hook] Audio error:", error);
           setIsPlaying(false);
           URL.revokeObjectURL(url);
           reject(error);
@@ -144,7 +144,7 @@ export function useAIAgent() {
 
         audio.play().catch(reject);
       } catch (error) {
-        console.error("❌ [AI Agent Hook] Audio setup error:", error);
+        console.log("❌ [AI Agent Hook] Audio setup error:", error);
         setIsPlaying(false);
         reject(error);
       }
@@ -230,7 +230,7 @@ export function useAIAgent() {
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unknown error";
-        console.error("❌ [AI Agent Hook] Error:", error);
+        console.log("❌ [AI Agent Hook] Error:", error);
         showToast.error(message || "Failed to process message");
         setIsLoading(false);
         return null;

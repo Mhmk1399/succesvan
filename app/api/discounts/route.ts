@@ -99,7 +99,7 @@ export async function PATCH(req: NextRequest) {
     return successResponse(discount);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("PATCH discount error:", error);
+    console.log("PATCH discount error:", error);
     return errorResponse(message, 400);
   }
 }

@@ -159,7 +159,7 @@ export default function VoiceConfirmationModal({
         data = await response.json();
         console.log("📥 [Modal] Response data:", JSON.stringify(data, null, 2));
       } catch (parseError) {
-        console.error("❌ [Modal] Failed to parse response JSON:", parseError);
+        console.log("❌ [Modal] Failed to parse response JSON:", parseError);
         throw new Error("Server returned invalid response");
       }
 
@@ -188,14 +188,14 @@ export default function VoiceConfirmationModal({
 
         onClose();
       } else {
-        console.error("❌ [Modal] Server returned error:", data);
+        console.log("❌ [Modal] Server returned error:", data);
         throw new Error(
           data.error || data.message || "Failed to create reservation"
         );
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      console.error("❌ [Modal] Error creating reservation:", error);
+      console.log("❌ [Modal] Error creating reservation:", error);
       showToast.error(message || "Failed to create reservation");
     } finally {
       setIsSubmitting(false);
@@ -237,7 +237,7 @@ export default function VoiceConfirmationModal({
       await createReservation(userData.user || userData.data);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      console.error("❌ [Modal] Signup error:", error);
+      console.log("❌ [Modal] Signup error:", error);
       showToast.error(message || "Failed to create account");
       setIsSubmitting(false);
     }
@@ -254,7 +254,7 @@ export default function VoiceConfirmationModal({
       // Redirect to Google OAuth
       window.location.href = "/api/auth/google?redirect=/reservation/complete";
     } catch (error) {
-      console.error("❌ [Modal] Google login error:", error);
+      console.log("❌ [Modal] Google login error:", error);
       showToast.error("Failed to initiate Google login");
       setIsSubmitting(false);
     }
@@ -271,7 +271,7 @@ export default function VoiceConfirmationModal({
       // Redirect to Apple OAuth
       window.location.href = "/api/auth/apple?redirect=/reservation/complete";
     } catch (error) {
-      console.error("❌ [Modal] Apple login error:", error);
+      console.log("❌ [Modal] Apple login error:", error);
       showToast.error("Failed to initiate Apple login");
       setIsSubmitting(false);
     }

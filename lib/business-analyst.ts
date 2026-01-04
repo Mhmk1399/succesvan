@@ -355,7 +355,7 @@ export async function analyzeBusinessQuery(
   console.log("📄 [Business Analyst] Report context preview (first 500 chars):", reportContext.substring(0, 500));
   
   if (!reportContext || reportContext.length < 100) {
-    console.error("⚠️ [Business Analyst] WARNING: Report context is empty or too short!");
+    console.log("⚠️ [Business Analyst] WARNING: Report context is empty or too short!");
   }
   
   // Build system prompt
@@ -641,8 +641,8 @@ Remember: Be the trusted advisor who helps the admin make SMART DECISIONS backed
       proposedActionsCount: parsedResponse.proposedActions?.length || 0,
     });
   } catch (e) {
-    console.error("❌ [Business Analyst] Failed to parse JSON response:", e);
-    console.error("❌ [Business Analyst] Raw response that failed:", rawResponse);
+    console.log("❌ [Business Analyst] Failed to parse JSON response:", e);
+    console.log("❌ [Business Analyst] Raw response that failed:", rawResponse);
     // Fallback: treat as plain message
     parsedResponse = {
       message: rawResponse,
@@ -670,7 +670,7 @@ Remember: Be the trusted advisor who helps the admin make SMART DECISIONS backed
   });
   
   if (response === "I couldn't analyze that data. Please try again.") {
-    console.error("⚠️ [Business Analyst] WARNING: Using fallback response - AI may have returned empty message!");
+    console.log("⚠️ [Business Analyst] WARNING: Using fallback response - AI may have returned empty message!");
   }
   
   // Validate and filter proposed actions

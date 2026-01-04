@@ -119,7 +119,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Office report error:", error);
+    console.log("Office report error:", error);
     const message = error instanceof Error ? error.message : "Server error";
     return Response.json({ success: false, error: message }, { status: 500 });
   }

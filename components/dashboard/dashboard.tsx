@@ -158,7 +158,7 @@ export default function Dashboard() {
       try {
         setUser(JSON.parse(userData));
       } catch (e) {
-        console.error("Failed to parse user data");
+        console.log("Failed to parse user data");
       }
     }
   }, []);
@@ -196,8 +196,7 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-    window.location.href = "/login";
-  };
+   };
 
   return (
     <div className="min-h-screen bg-[#0a101f]">
@@ -514,7 +513,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
           setAvailableVehicles(result.data);
         }
       } catch (err) {
-        console.error("Failed to load available vehicles for matching", err);
+        console.log("Failed to load available vehicles for matching", err);
       }
     };
 
@@ -559,7 +558,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
       showToast.success("Reservation completed successfully!");
       window.location.reload();
     } catch (err) {
-      console.error(err);
+      console.log(err);
       showToast.error("Network error. Please try again.");
     }
   };
@@ -631,7 +630,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
 
       window.location.reload();
     } catch (err) {
-      console.error("Assignment error:", err);
+      console.log("Assignment error:", err);
       showToast.error("Network error. Please try again.");
     } finally {
       setAssigning(false);

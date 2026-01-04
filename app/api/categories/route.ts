@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Categories API Error:", error);
+    console.log("Categories API Error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return errorResponse(message, 500);
   }

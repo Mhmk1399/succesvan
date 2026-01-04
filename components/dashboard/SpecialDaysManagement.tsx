@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { FiX, FiPlus, FiTrash2, FiEdit2 } from "react-icons/fi";
+import {
+  FiX,
+  FiPlus,
+  FiTrash2,
+  FiEdit2,
+  FiCalendar,
+  FiAlertTriangle,
+} from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import useSWR from "swr";
 import { Office, SpecialDay } from "@/types/type";
@@ -14,7 +21,13 @@ export default function SpecialDaysManagement() {
   const [selectedOffice, setSelectedOffice] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    index: number | null;
+  }>({
+    open: false,
+    index: null,
+  });
   const [formData, setFormData] = useState({
     month: 1,
     day: 1,
@@ -81,11 +94,14 @@ export default function SpecialDaysManagement() {
     }
   };
 
-  const handleDelete = async (index: number) => {
-    if (!selectedOffice) return;
+  const handleDeleteConfirm = async () => {
+    if (!selectedOffice || deleteConfirm.index === null) return;
+
     try {
       const specialDays = currentOffice?.specialDays || [];
-      const updatedSpecialDays = specialDays.filter((_, i) => i !== index);
+      const updatedSpecialDays = specialDays.filter(
+        (_, i) => i !== deleteConfirm.index
+      );
 
       const res = await fetch(`/api/offices/${selectedOffice}`, {
         method: "PATCH",
@@ -98,6 +114,7 @@ export default function SpecialDaysManagement() {
 
       showToast.success("Special day deleted!");
       mutateOffices();
+      setDeleteConfirm({ open: false, index: null });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       showToast.error(message || "Delete failed");
@@ -169,51 +186,94 @@ export default function SpecialDaysManagement() {
         </button>
       </div>
 
-      {selectedOffice && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {currentOffice?.specialDays?.map((day, index) => (
-            <div
-              key={index}
-              className="bg-white/5 border border-white/10 rounded-2xl p-4"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <p className="text-white font-semibold">
-                    {monthNames[day.month - 1]} {day.day}
-                  </p>
-                  <p className="text-gray-400 text-sm">{day.reason || "N/A"}</p>
+      {/* Special Days Grid or Empty State */}
+
+      {selectedOffice ? (
+        currentOffice?.specialDays && currentOffice.specialDays.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {currentOffice.specialDays.map((day, index) => (
+              <div
+                key={index}
+                className="group bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-[#fe9a00]/30 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                <div className="flex items-start justify-between mb-5">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <FiCalendar className="text-[#fe9a00] text-xl" />
+                      <p className="text-xl font-bold text-white">
+                        {monthNames[day.month - 1]} {day.day}
+                      </p>
+                    </div>
+                    {day.reason && (
+                      <p className="text-gray-300 text-sm mt-1 italic">
+                        {day.reason}
+                      </p>
+                    )}
+                  </div>
+
+                  <span
+                    className={`px-4 py-2 rounded-full text-sm font-bold tracking-wide ${
+                      day.isOpen
+                        ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                        : "bg-red-500/20 text-red-400 border border-red-500/30"
+                    }`}
+                  >
+                    {day.isOpen ? "OPEN" : "CLOSED"}
+                  </span>
                 </div>
-                <span
-                  className={`px-2 py-1 rounded text-xs font-semibold ${
-                    day.isOpen
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-red-500/20 text-red-400"
-                  }`}
-                >
-                  {day.isOpen ? "Open" : "Closed"}
-                </span>
+
+                {day.isOpen && (
+                  <p className="text-gray-200 text-sm bg-white/5 rounded-lg px-4 py-2 mb-6">
+                    ⏰ {day.startTime} - {day.endTime}
+                  </p>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleEdit(day, index)}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-xl font-semibold transition-all"
+                  >
+                    <FiEdit2 />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setDeleteConfirm({ open: true, index })}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl font-semibold transition-all"
+                  >
+                    <FiTrash2 />
+                    Delete
+                  </button>
+                </div>
               </div>
-              {day.isOpen && (
-                <p className="text-gray-300 text-sm mb-3">
-                  {day.startTime} - {day.endTime}
-                </p>
-              )}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(day, index)}
-                  className="flex-1 px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-sm font-semibold flex items-center justify-center gap-1"
-                >
-                  <FiEdit2 className="text-sm" /> Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(index)}
-                  className="flex-1 px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-semibold flex items-center justify-center gap-1"
-                >
-                  <FiTrash2 className="text-sm" /> Delete
-                </button>
-              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <div className="bg-white/5 rounded-2xl p-10 max-w-md mx-auto">
+              <FiCalendar className="text-6xl text-gray-500 mx-auto mb-6" />
+              <p className="text-xl font-semibold text-gray-300 mb-2">
+                No special days yet
+              </p>
+              <p className="text-gray-500">
+                Add holidays, closures, or custom opening hours for this office.
+              </p>
             </div>
-          ))}
+          </div>
+        )
+      ) : (
+        <div className="text-center py-16">
+          <div className="bg-white/5 rounded-2xl p-10 max-w-md mx-auto">
+            <div className="w-24 h-24 bg-[#fe9a00]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FiCalendar className="text-5xl text-[#fe9a00]" />
+            </div>
+            <p className="text-2xl font-bold text-white mb-3">
+              Manage Special Days
+            </p>
+            <p className="text-gray-400 text-lg">
+              Select an office above to view and manage special opening/closing
+              days.
+            </p>
+          </div>
         </div>
       )}
 
@@ -360,6 +420,40 @@ export default function SpecialDaysManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* NEW: Delete Confirmation Modal */}
+      {deleteConfirm.open && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a2847] rounded-2xl max-w-sm w-full border border-red-500/30 shadow-2xl">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiAlertTriangle className="text-red-400 text-3xl" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                Delete Special Day?
+              </h3>
+              <p className="text-gray-300 text-sm">
+                This action cannot be undone. The special day will be
+                permanently removed.
+              </p>
+            </div>
+
+            <div className="flex gap-3 p-6 pt-0">
+              <button
+                onClick={() => setDeleteConfirm({ open: false, index: null })}
+                className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-lg"
+              >
+                Yes, Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

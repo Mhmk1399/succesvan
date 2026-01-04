@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to synthesize audio";
-    console.error("❌ [TTS API]", message);
+    console.log("❌ [TTS API]", message);
 
     return NextResponse.json(
       { success: false, error: message },

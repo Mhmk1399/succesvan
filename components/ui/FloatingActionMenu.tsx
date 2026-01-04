@@ -104,7 +104,7 @@ export default function FloatingActionMenu() {
         throw new Error(data.error || "Failed to get response");
       }
     } catch (error) {
-      console.error("Chat error:", error);
+      console.log("Chat error:", error);
       setMessages((prev) => [
         ...prev,
         {

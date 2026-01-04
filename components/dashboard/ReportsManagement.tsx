@@ -190,7 +190,7 @@ export default function ReportsManagement() {
       };
       await audio.play();
     } catch (error) {
-      console.error("TTS Error:", error);
+      console.log("TTS Error:", error);
       setIsPlaying(false);
     }
   };
@@ -281,7 +281,7 @@ export default function ReportsManagement() {
             </div>
             <button
               onClick={() => setSelectedReport(null)}
-              className="text-xs text-gray-400 hover:text-white transition-colors"
+              className="text-xs text-[#fe9a00] bg-white font-bold p-2 rounded-xl hover:text-[#fe9a00]/70 transition-colors"
             >
               ← Back
             </button>

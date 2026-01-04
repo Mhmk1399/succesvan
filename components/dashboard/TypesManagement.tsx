@@ -105,7 +105,7 @@ export default function TypesManagement() {
   const handleStatusToggle = async (item: Type) => {
     try {
       if (!item._id) {
-        console.error("No type ID found:", item);
+        console.log("No type ID found:", item);
         throw new Error("Type ID is missing");
       }
 
@@ -129,7 +129,7 @@ export default function TypesManagement() {
 
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("API error response:", errorText);
+        console.log("API error response:", errorText);
         throw new Error(`HTTP ${res.status}: ${errorText}`);
       }
 
@@ -146,7 +146,7 @@ export default function TypesManagement() {
         console.warn("mutateRef.current is not available");
       }
     } catch (error) {
-      console.error("Status toggle error:", error);
+      console.log("Status toggle error:", error);
       const message = error instanceof Error ? error.message : "Unknown error";
       showToast.error(message || "Update failed");
     }
@@ -273,20 +273,21 @@ export default function TypesManagement() {
                 <label className="block text-sm font-semibold text-gray-300 mb-2">
                   Status
                 </label>
-                <select
+                <CustomSelect
+                  options={[
+                    { _id: "active", name: "Active" },
+                    { _id: "inactive", name: "Inactive" },
+                  ]}
                   value={formData.status}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      status: e.target.value as "active" | "inactive",
-                    })
+                  onChange={(val) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      status: val as "active" | "inactive",
+                    }))
                   }
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  placeholder="Select Status"
                   disabled={isSubmitting}
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                />
               </div>
 
               <div>

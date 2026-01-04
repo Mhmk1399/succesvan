@@ -84,7 +84,7 @@ export default function ReservationReport() {
       const json = await res.json();
       setOffices(json.data || []);
     } catch (err) {
-      console.error("Failed to load offices");
+      console.log("Failed to load offices");
     }
   };
 
@@ -94,7 +94,7 @@ export default function ReservationReport() {
       const json = await res.json();
       setCategories(json.data?.data || json.data || []);
     } catch (err) {
-      console.error("Failed to load categories");
+      console.log("Failed to load categories");
     }
   };
 
@@ -119,10 +119,10 @@ export default function ReservationReport() {
         setSummary(result.summary);
         setPagination(result.pagination);
       } else {
-        console.error("API error:", result.error);
+        console.log("API error:", result.error);
       }
     } catch (err) {
-      console.error("Fetch error:", err);
+      console.log("Fetch error:", err);
     } finally {
       setLoading(false);
     }

@@ -33,7 +33,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, data: ticket });
   } catch (error) {
-    console.error("Error fetching ticket:", error);
+    console.log("Error fetching ticket:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -87,7 +87,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: updatedTicket });
   } catch (error) {
-    console.error("Error updating ticket:", error);
+    console.log("Error updating ticket:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

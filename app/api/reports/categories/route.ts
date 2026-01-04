@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Category report error:", error);
+    console.log("Category report error:", error);
     return Response.json(
       {
         success: false,

@@ -203,7 +203,7 @@ export async function buildRAGContext(
         context += `No conflicting reservations found for ${startDate} to ${endDate}.\n`;
       }
     } catch (error) {
-      console.error("❌ [RAG] Error fetching availability:", error);
+      console.log("❌ [RAG] Error fetching availability:", error);
       context += "Availability information not available at this time.\n";
     }
     

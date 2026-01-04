@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ [AI Agent API] Stack:", message);
+    console.log("❌ [AI Agent API] Stack:", message);
 
     return NextResponse.json(
       {

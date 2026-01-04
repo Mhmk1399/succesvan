@@ -5,17 +5,12 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "arziplus.s3.eu-north-1.amazonaws.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "arziplus.storage.c2.liara.space",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
         hostname: "vhsbuckets3.s3.eu-north-1.amazonaws.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "svh-bucket-s3.s3.eu-west-2.amazonaws.com",
         pathname: "/**",
       },
     ],

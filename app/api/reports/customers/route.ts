@@ -202,7 +202,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Customer report error:", error);
+    console.log("Customer report error:", error);
     return NextResponse.json(
       {
         success: false,

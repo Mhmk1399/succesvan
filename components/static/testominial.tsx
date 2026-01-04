@@ -185,7 +185,6 @@ export default function Testimonials({
     >
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-         
         <div
           className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20"
           style={{ backgroundColor: accentColor }}
@@ -240,13 +239,13 @@ export default function Testimonials({
         )}
 
         {/* Bottom CTA */}
-        <div className="mt-20 text-center">
+        <div className="md:mt-20 mt-8 text-center">
           <p className="text-gray-400 text-lg mb-6">
             Want to share your experience with us?
           </p>
           <Link
             href="/contact-us"
-            className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-lg text-white transition-all duration-300 hover:scale-105 shadow-2xl"
+            className="inline-flex items-center gap-3 md:px-8 md:py-4 p-3 rounded-2xl font-bold text-lg text-white transition-all duration-300 hover:scale-105 shadow-2xl"
             style={{
               background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`,
               boxShadow: `0 20px 60px ${accentColor}40`,

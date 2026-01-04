@@ -230,7 +230,7 @@ export default function ReservationForm({
       console.log("👁️ [Form] Opening confirmation modal");
     },
     onError: (error: Error) => {
-      console.error("❌ [Form] Voice recording error:", error);
+      console.log("❌ [Form] Voice recording error:", error);
       showToast.error("Voice recording failed");
     },
     autoSubmit: false, // Set to true if you want automatic submission
@@ -293,7 +293,7 @@ export default function ReservationForm({
             setCategories([]);
           }
         })
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     } else {
       setCategories([]);
     }
@@ -328,7 +328,7 @@ export default function ReservationForm({
         .then((data) => {
           setStartDateReservedSlots(data.data?.reservedSlots || []);
         })
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     }
   }, [formData.office, dateRange[0].startDate]);
 
@@ -346,7 +346,7 @@ export default function ReservationForm({
         .then((data) => {
           setEndDateReservedSlots(data.data?.reservedSlots || []);
         })
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     }
   }, [formData.office, dateRange[0].endDate]);
 
