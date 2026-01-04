@@ -542,13 +542,9 @@ export default function TermsAndConditions() {
   };
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative w-full bg-[#0f172b] py-20    overflow-hidden"
-    >
+    <section ref={sectionRef} className="relative w-full bg-[#0f172b] py-20  ">
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-         
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
       </div>
@@ -572,7 +568,7 @@ export default function TermsAndConditions() {
               isTocOpen ? "block" : "hidden"
             } lg:block`}
           >
-            <div className="fixed   top-30 w-[calc(20%-1rem)] h-fit max-w-xs lg:max-w-none">
+            <div className="w-full lg:sticky lg:top-24 lg:h-fit lg:max-w-xs">
               <div className="p-6 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10">
                 <h3 className="text-white text-lg font-black mb-6 flex items-center gap-2">
                   <FiFileText className="text-[#fe9a00]" />

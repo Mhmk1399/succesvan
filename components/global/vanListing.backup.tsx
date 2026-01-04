@@ -2120,12 +2120,14 @@ function CategoryCard({
   onDetails: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const [isHovered, setIsHovered] = useState(false);
+  const [isTouching, setIsTouching] = useState(false);
 
+  // Desktop hover handlers
   const handleMouseEnter = () => {
     setIsHovered(true);
-    // Video will auto-load and play once src is set (due to loading="lazy")
   };
 
   const handleMouseLeave = () => {
@@ -2136,11 +2138,39 @@ function CategoryCard({
     }
   };
 
+  // Mobile touch handlers
+  const handleTouchStart = () => {
+    setIsTouching(true);
+  };
+
+  const handleTouchMove = () => {
+    if (!isTouching) {
+      setIsTouching(true);
+    }
+    // Video will autoplay when rendered due to autoPlay prop
+  };
+
+  const handleTouchEnd = () => {
+    setIsTouching(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
+  // Determine if video should show
+  const showVideo = isHovered || isTouching;
+
   return (
     <div
+      ref={cardRef}
       className="group relative h-125 rounded-3xl overflow-hidden cursor-pointer"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
     >
       {/* Background Layer: Image + Lazy Video */}
       <div className="absolute inset-0">
@@ -2150,7 +2180,9 @@ function CategoryCard({
             src={category.image}
             alt={category.name}
             fill
-            className="object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
+            className={`object-cover transition-opacity duration-300 ${
+              showVideo ? "opacity-0" : "opacity-100"
+            }`}
             unoptimized
             priority={false}
           />
@@ -2158,8 +2190,8 @@ function CategoryCard({
           <div className="w-full h-full bg-linear-to-br from-[#fe9a00]/20 to-[#fe9a00]/5" />
         )}
 
-        {/* Video - only loads when hovered */}
-        {category.video && isHovered && (
+        {/* Video - only loads when hovered/touched */}
+        {category.video && showVideo && (
           <video
             ref={videoRef}
             src={category.video}
@@ -2167,39 +2199,78 @@ function CategoryCard({
             loop
             playsInline
             autoPlay
-            className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 scale-110"
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-100"
           />
         )}
 
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-linear-to-b from-black/30 via-black/10 to-black/50 group-hover:from-black/20 group-hover:via-black/5 group-hover:to-black/20 transition-all duration-700" />
-        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60" />
-        <div className="absolute inset-0 ring-2 ring-[#fe9a00]/0 group-hover:ring-[#fe9a00]/30 transition-all duration-500 rounded-3xl pointer-events-none" />
+        {/* Overlay gradient for better text visibility */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
       </div>
+
+      {/* Touch hint for mobile */}
+      {category.video && (
+        <div className="absolute top-4 right-4 z-20 md:hidden">
+          <div
+            className={`bg-black/50 backdrop-blur-sm rounded-full p-2 transition-all duration-300 ${
+              isTouching ? "bg-[#fe9a00] scale-110" : "animate-pulse"
+            }`}
+          >
+            {isTouching ? (
+              <svg
+                className="w-5 h-5 text-black"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            ) : (
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"
+                />
+              </svg>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Content Layer */}
       <div className="relative h-full flex flex-col p-6 justify-between text-white z-10">
         <div>
-          <h3 className="text-2xl font-black leading-tight mb-2 drop-shadow-lg">
+          <h3 className="text-xl md:text-2xl font-black leading-tight mb-2 drop-shadow-lg">
             {category.name}
           </h3>
-          <p className="text-gray-200 text-sm font-medium mb-5 drop-shadow-md">
+          <p className="text-gray-200 text-xs md:text-sm font-medium mb-5 drop-shadow-md">
             {category.expert}
           </p>
 
           {/* Feature Badges */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            <div className="px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
-              <FiUsers className="text-[#fe9a00] text-sm" />
-              <span className="text-xs font-bold">{category.seats} seats</span>
+          <div className="flex flex-wrap gap-1 md:gap-2 mb-6">
+            <div className="md:px-3 md:py-1.5 px-2 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
+              <FiUsers className="text-[#fe9a00] text-xs md:text-sm" />
+              <span className="text-[10px] md:text-xs font-bold">
+                {category.seats} seats
+              </span>
+            </div>
+            <div className="md:px-3 md:py-1.5 px-2 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
+              <BsFuelPump className="text-[#fe9a00] text-xs md:text-sm" />
+              <span className="text-[10px] md:text-xs font-bold">
+                {category.fuel}
+              </span>
             </div>
             <div className="px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
-              <BsFuelPump className="text-[#fe9a00] text-sm" />
-              <span className="text-xs font-bold">{category.fuel}</span>
-            </div>
-            <div className="px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
-              <FiPackage className="text-[#fe9a00] text-sm" />
-              <span className="text-xs font-bold">{category.doors} doors</span>
+              <FiPackage className="text-[#fe9a00] text-xs md:text-sm" />
+              <span className="text-[10px] md:text-xs font-bold">
+                {category.doors} doors
+              </span>
             </div>
           </div>
         </div>
@@ -2210,7 +2281,7 @@ function CategoryCard({
               e.stopPropagation();
               onDetails();
             }}
-            className="flex items-center gap-2 text-[#fe9a00] font-bold text-sm hover:gap-3 hover:border-b-2 hover:border-[#fe9a00] transition-all duration-300"
+            className="flex items-center gap-2 text-[#fe9a00] font-bold text-xs md:text-sm hover:gap-3 hover:border-b-2 hover:border-[#fe9a00] transition-all duration-300"
           >
             <span>Van Dimensions</span>
             <IoIosArrowForward className="text-lg" />

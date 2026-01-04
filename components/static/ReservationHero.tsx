@@ -8,16 +8,6 @@ export default function ReservationHero({
   onBookNow?: () => void;
 }) {
   const sectionRef = useRef<HTMLDivElement>(null);
-  // const [isFormOpen, setIsFormOpen] = useState(false);
-  // const [isScrolled, setIsScrolled] = useState(false);
-
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     setIsScrolled(window.scrollY > 300);
-  //   };
-  //   window.addEventListener("scroll", handleScroll);
-  //   return () => window.removeEventListener("scroll", handleScroll);
-  // }, []);
 
   return (
     <>
