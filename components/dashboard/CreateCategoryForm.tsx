@@ -232,7 +232,7 @@ export default function CategoriesContent() {
   const handleStatusToggle = async (item: any) => {
     try {
       if (!item._id) {
-        console.error("No category ID found:", item);
+        console.log("No category ID found:", item);
         throw new Error("Category ID is missing");
       }
 
@@ -256,7 +256,7 @@ export default function CategoriesContent() {
 
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("API error response:", errorText);
+        console.log("API error response:", errorText);
         throw new Error(`HTTP ${res.status}: ${errorText}`);
       }
 
@@ -273,7 +273,7 @@ export default function CategoriesContent() {
         console.warn("mutateRef.current is not available");
       }
     } catch (error) {
-      console.error("Status toggle error:", error);
+      console.log("Status toggle error:", error);
       const message = error instanceof Error ? error.message : "Unknown error";
       showToast.error(message || "Update failed");
     }

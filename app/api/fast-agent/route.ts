@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ [Fast Agent API] Error:", error);
+    console.log("❌ [Fast Agent API] Error:", error);
     return NextResponse.json(
       { success: false, error: message },
       { status: 500 }
@@ -70,7 +70,7 @@ export async function GET() {
     return NextResponse.json({ success: true, data: { offices } });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ [Fast Agent API] GET Error:", error);
+    console.log("❌ [Fast Agent API] GET Error:", error);
     return NextResponse.json(
       { success: false, error: message },
       { status: 500 }

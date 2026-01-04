@@ -319,7 +319,7 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
         setOffices(officeData.data || []);
         setTypes(typeData.data || []);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.log(err));
   }, []);
 
   // Fetch and filter categories when office and type selected
@@ -343,7 +343,7 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
             setCategories([]);
           }
         })
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     } else {
       setCategories([]);
     }
@@ -358,7 +358,7 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
         const addonsData = data.data?.data || data.data || [];
         setAddOns(Array.isArray(addonsData) ? addonsData : []);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.log(err));
   }, []);
 
   console.log(priceCalc, "priceCalc");
@@ -391,7 +391,7 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
           }
           setReservedSlots(reservationData.data?.reservedSlots || []);
         })
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     }
   }, [formData.office, formData.startDate]);
 

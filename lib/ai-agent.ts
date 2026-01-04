@@ -572,7 +572,7 @@ async function checkAndUpdateAvailability(
       };
     }
   } catch (error) {
-    console.error("❌ [AI Agent] Availability check failed:", error);
+    console.log("❌ [AI Agent] Availability check failed:", error);
     return {
       availabilityChecked: true,
       isAvailable: true, // Assume available on error
@@ -593,7 +593,7 @@ async function createReservation(state: ConversationState): Promise<string | und
   // Validate required fields
   if (!bookingData.office || !bookingData.category || 
       !bookingData.startDate || !bookingData.endDate || !bookingData.driverAge) {
-    console.error("❌ [AI Agent] Missing required fields for reservation");
+    console.log("❌ [AI Agent] Missing required fields for reservation");
     return undefined;
   }
   
@@ -626,7 +626,7 @@ async function createReservation(state: ConversationState): Promise<string | und
     return reservation._id.toString();
     
   } catch (error) {
-    console.error("❌ [AI Agent] Failed to create reservation:", error);
+    console.log("❌ [AI Agent] Failed to create reservation:", error);
     return undefined;
   }
 }

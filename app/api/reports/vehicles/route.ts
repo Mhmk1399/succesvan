@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Vehicle report error:", error);
+    console.log("Vehicle report error:", error);
     return NextResponse.json(
       { success: false, error: error.message || "خطای سرور" },
       { status: 500 }

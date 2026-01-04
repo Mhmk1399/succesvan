@@ -64,7 +64,7 @@ export default function DiscountManagement() {
         setCategories(data.data.data || data.data);
       }
     } catch (error) {
-      console.error("Failed to fetch categories:", error);
+      console.log("Failed to fetch categories:", error);
     }
   };
 
@@ -174,7 +174,7 @@ export default function DiscountManagement() {
   const handleStatusToggle = async (item: any) => {
     try {
       if (!item._id) {
-        console.error("No discount ID found:", item);
+        console.log("No discount ID found:", item);
         throw new Error("Discount ID is missing");
       }
 
@@ -198,7 +198,7 @@ export default function DiscountManagement() {
 
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("API error response:", errorText);
+        console.log("API error response:", errorText);
         throw new Error(`HTTP ${res.status}: ${errorText}`);
       }
 
@@ -215,7 +215,7 @@ export default function DiscountManagement() {
         console.warn("mutateRef.current is not available");
       }
     } catch (error) {
-      console.error("Status toggle error:", error);
+      console.log("Status toggle error:", error);
       const message = error instanceof Error ? error.message : "Unknown error";
       showToast.error(message || "Update failed");
     }

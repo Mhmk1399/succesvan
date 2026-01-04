@@ -190,7 +190,7 @@ export default function ReportsManagement() {
       };
       await audio.play();
     } catch (error) {
-      console.error("TTS Error:", error);
+      console.log("TTS Error:", error);
       setIsPlaying(false);
     }
   };

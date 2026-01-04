@@ -255,7 +255,7 @@ export default function FastAgentModal({
           setStartDateReservedSlots(data.data?.reservedSlots || []);
         })
         .catch((err) =>
-          console.error("Failed to fetch start date reserved slots:", err)
+          console.log("Failed to fetch start date reserved slots:", err)
         );
     }
   }, [bookingForm.officeId, bookingForm.startDate]);
@@ -272,7 +272,7 @@ export default function FastAgentModal({
           setEndDateReservedSlots(data.data?.reservedSlots || []);
         })
         .catch((err) =>
-          console.error("Failed to fetch end date reserved slots:", err)
+          console.log("Failed to fetch end date reserved slots:", err)
         );
     }
   }, [bookingForm.officeId, bookingForm.endDate]);
@@ -645,7 +645,7 @@ export default function FastAgentModal({
 
       // Check if discount has required fields
       if (!discount || !discount.percentage || !discount.validFrom || !discount.validTo) {
-        console.error("Discount missing required fields:", discount);
+        console.log("Discount missing required fields:", discount);
         setDiscountError("Invalid discount data");
         setAppliedDiscount(null);
         return;
@@ -691,7 +691,7 @@ export default function FastAgentModal({
       setDiscountError("");
       showToast.success(`Discount applied! ${discount.percentage}% off`);
     } catch (error) {
-      console.error("Error applying discount:", error);
+      console.log("Error applying discount:", error);
       setDiscountError("Failed to apply discount. Please try again.");
       setAppliedDiscount(null);
     } finally {
@@ -809,7 +809,7 @@ export default function FastAgentModal({
           throw new Error(data.error || "Failed to create reservation");
         }
       } catch (error) {
-        console.error(
+        console.log(
           "❌ [FastAgentModal] Failed to create reservation:",
           error
         );

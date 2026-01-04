@@ -123,24 +123,24 @@ export default function AboutUs() {
 
       <div className="relative z-10">
         {/* Hero Section */}
-        <div className="pt-20 ">
+        <div className="md:pt-20 ">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="about-header text-center mb-16">
-              <h1 className="text-2xl   lg:text-7xl  font-black text-white mb-6 leading-tight">
+              <h1 className="text-3xl   lg:text-7xl  font-black text-white mb-6 leading-tight">
                 What Do You Know
                 <br />
                 <span className="text-[#fe9a00]">About Us?</span>
               </h1>
 
               <div className="max-w-4xl mx-auto space-y-6">
-                <p className="text-gray-300 text-base sm:text-2xl leading-relaxed">
+                <p className="text-gray-300 text-sm sm:text-2xl leading-relaxed">
                   <span className="text-[#fe9a00] font-bold">
                     London's trusted van rental specialist
                   </span>{" "}
                   for over 15 years
                 </p>
 
-                <p className="text-gray-200 text-base sm:text-2xl  leading-relaxed">
+                <p className="text-gray-200 text-sm sm:text-2xl  leading-relaxed">
                   We provide{" "}
                   <span className="text-white font-semibold">
                     reliable, affordable van rentals
@@ -150,7 +150,7 @@ export default function AboutUs() {
                   , all maintained to the highest standards.
                 </p>
 
-                <p className="text-gray-200 text-base sm:text-2xl  leading-relaxed">
+                <p className="text-gray-200 text-sm sm:text-2xl  leading-relaxed">
                   From small deliveries to house moves, we offer{" "}
                   <span className="text-white font-semibold">
                     flexible solutions
@@ -175,9 +175,9 @@ export default function AboutUs() {
         </div>
 
         {/* Our Company Section */}
-        <div className="py-10">
+        <div className="md:py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="about-section text-center mb-16">
+            <div className="about-section text-center md:mb-16 mb-8">
               <h2 className="text-2xl   lg:text-7xl  font-black text-white mb-4">
                 Our Company
               </h2>
@@ -187,24 +187,24 @@ export default function AboutUs() {
             </div>
 
             {/* Van Ranges */}
-            <div className="about-section grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            <div className="about-section grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
               {vanRanges.map((range, index) => {
                 const Icon = range.icon;
                 return (
                   <div key={index} className="group">
                     <div className="relative h-full p-6 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-[#fe9a00]/50 transition-all duration-300 hover:scale-105">
-                      <Icon className="text-4xl text-[#fe9a00] mb-4" />
-                      <h3 className="text-xl font-black text-white mb-2">
+                      <Icon className="md:text-4xl text-2xl text-[#fe9a00] mb-4" />
+                      <h3 className="md:text-xl text-base font-black text-white mb-2">
                         {range.title}
                       </h3>
-                      <p className="text-gray-400 text-sm mb-4">
+                      <p className="text-gray-400 text-[10px] md:text-sm mb-4">
                         {range.description}
                       </p>
-                      <div className="space-y-2">
+                      <div className="md:space-y-2 space-y-1">
                         {range.features.map((feature, idx) => (
                           <div
                             key={idx}
-                            className="flex items-center gap-2 text-sm text-gray-300"
+                            className="flex items-center md:gap-2 gap-1 text-[10px] md:text-xs text-gray-300"
                           >
                             <FiCheck className="text-[#fe9a00]  shrink-0" />
                             {feature}
@@ -220,7 +220,7 @@ export default function AboutUs() {
         </div>
 
         {/* Bottom CTA */}
-        <div className=" pb-20  ">
+        <div className=" md:pb-20  ">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h3 className="text-xl sm:text-3xl font-black text-white mb-4">
               Ready to Rent Your Van?

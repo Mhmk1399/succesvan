@@ -151,7 +151,7 @@ async function createTestReservation() {
 
     process.exit(0);
   } catch (error) {
-    console.error("❌ Error:", error.message);
+    console.log("❌ Error:", error.message);
     process.exit(1);
   }
 }

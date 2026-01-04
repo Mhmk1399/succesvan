@@ -316,7 +316,7 @@ async function executeUpdateCategoryPricing(
         categoryName: resolved.categoryName,
         error: error.message || "Unknown error",
       });
-      console.error(`❌ [Execute] Failed to update ${resolved.categoryName}:`, error);
+      console.log(`❌ [Execute] Failed to update ${resolved.categoryName}:`, error);
     }
   }
   

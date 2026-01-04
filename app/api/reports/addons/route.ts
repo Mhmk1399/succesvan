@@ -261,7 +261,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Add-On report error:", error);
+    console.log("Add-On report error:", error);
     return NextResponse.json(
       {
         success: false,

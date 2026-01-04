@@ -60,6 +60,7 @@ interface Category extends VanData {
   expert?: string;
   properties?: { key: string; value: string }[];
   purpose?: string;
+  video?: string;
 }
 
 interface VanListingProps {
@@ -383,7 +384,7 @@ function ReservationPanel({
           setAddOns(addOns);
         }
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.log(err));
   }, []);
 
   // Calculate extension prices
@@ -716,7 +717,7 @@ function ReservationPanel({
         .then((data) => {
           setStartDateReservedSlots(data.data?.reservedSlots || []);
         })
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     }
   }, [formData.office, dateRange]);
 
@@ -734,7 +735,7 @@ function ReservationPanel({
         .then((data) => {
           setEndDateReservedSlots(data.data?.reservedSlots || []);
         })
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     }
   }, [formData.office, dateRange]);
 
@@ -2120,16 +2121,18 @@ function CategoryCard({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  const [isHovered, setIsHovered] = useState(false);
+
   const handleMouseEnter = () => {
-    if (videoRef.current) {
-      videoRef.current.play().catch(() => {});
-    }
+    setIsHovered(true);
+    // Video will auto-load and play once src is set (due to loading="lazy")
   };
 
   const handleMouseLeave = () => {
+    setIsHovered(false);
     if (videoRef.current) {
       videoRef.current.pause();
-      videoRef.current.currentTime = 0; // Optional: reset to start
+      videoRef.current.currentTime = 0;
     }
   };
 
@@ -2139,9 +2142,9 @@ function CategoryCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Background Layer: Image + Video */}
+      {/* Background Layer: Image + Lazy Video */}
       <div className="absolute inset-0">
-        {/* Static Image (visible initially & fallback) */}
+        {/* Static Image - always visible initially */}
         {category.image ? (
           <Image
             src={category.image}
@@ -2149,27 +2152,27 @@ function CategoryCard({
             fill
             className="object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-75"
             unoptimized
-            priority
+            priority={false}
           />
         ) : (
           <div className="w-full h-full bg-linear-to-br from-[#fe9a00]/20 to-[#fe9a00]/5" />
         )}
 
-        {/* {category.videoUrl && ( // ← Add videoUrl to your VanData type */}
-        <video
-          ref={videoRef}
-          src={"/assets/videos/eeeee.mp4"}
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 scale-110"
-        />
-        {/* )} */}
+        {/* Video - only loads when hovered */}
+        {category.video && isHovered && (
+          <video
+            ref={videoRef}
+            src={category.video}
+            muted
+            loop
+            playsInline
+            autoPlay
+            className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-700 scale-110"
+          />
+        )}
 
-        {/* Enhanced linear Overlay for Readability */}
+        {/* Overlay */}
         <div className="absolute inset-0 bg-linear-to-b from-black/30 via-black/10 to-black/50 group-hover:from-black/20 group-hover:via-black/5 group-hover:to-black/20 transition-all duration-700" />
-
-        {/* Subtle Vignette + Glow Effect */}
         <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60" />
         <div className="absolute inset-0 ring-2 ring-[#fe9a00]/0 group-hover:ring-[#fe9a00]/30 transition-all duration-500 rounded-3xl pointer-events-none" />
       </div>
@@ -2202,7 +2205,6 @@ function CategoryCard({
         </div>
 
         <div className="space-y-4 flex items-end justify-between">
-          {/* Van Dimensions Link */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -2214,41 +2216,7 @@ function CategoryCard({
             <IoIosArrowForward className="text-lg" />
           </button>
 
-          {/* Price + Book Button */}
-          <div className="">
-            {/* <div>
-              <p className="text-gray-300 text-sm">from</p>
-              {(category as any).selloffer > 0 ? (
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-lg font-medium text-gray-400 line-through">
-                      £{(category as any).showPrice}
-                    </span>
-                    <span className="text-3xl font-black">
-                      £
-                      {(
-                        (category as any).showPrice *
-                        (1 - (category as any).selloffer / 100)
-                      ).toFixed(2)}
-                      <span className="text-gray-300 text-sm font-normal ml-1">
-                        /day
-                      </span>
-                    </span>
-                  </div>
-                  <span className="inline-block mt-1 px-3 py-1 bg-[#fe9a00] text-black text-xs font-bold rounded-full">
-                    {(category as any).selloffer}% OFF
-                  </span>
-                </div>
-              ) : (
-                <div className="text-3xl font-black">
-                  £{(category as any).showPrice}
-                  <span className="text-gray-300 text-sm font-normal ml-1">
-                    /day
-                  </span>
-                </div>
-              )}
-            </div> */}
-
+          <div>
             <button
               onClick={(e) => {
                 e.stopPropagation();
