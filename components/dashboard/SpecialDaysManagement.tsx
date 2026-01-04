@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { FiX, FiPlus, FiTrash2, FiEdit2, FiCalendar } from "react-icons/fi";
+import {
+  FiX,
+  FiPlus,
+  FiTrash2,
+  FiEdit2,
+  FiCalendar,
+  FiAlertTriangle,
+} from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import useSWR from "swr";
 import { Office, SpecialDay } from "@/types/type";
@@ -14,7 +21,13 @@ export default function SpecialDaysManagement() {
   const [selectedOffice, setSelectedOffice] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    open: boolean;
+    index: number | null;
+  }>({
+    open: false,
+    index: null,
+  });
   const [formData, setFormData] = useState({
     month: 1,
     day: 1,
@@ -81,11 +94,14 @@ export default function SpecialDaysManagement() {
     }
   };
 
-  const handleDelete = async (index: number) => {
-    if (!selectedOffice) return;
+  const handleDeleteConfirm = async () => {
+    if (!selectedOffice || deleteConfirm.index === null) return;
+
     try {
       const specialDays = currentOffice?.specialDays || [];
-      const updatedSpecialDays = specialDays.filter((_, i) => i !== index);
+      const updatedSpecialDays = specialDays.filter(
+        (_, i) => i !== deleteConfirm.index
+      );
 
       const res = await fetch(`/api/offices/${selectedOffice}`, {
         method: "PATCH",
@@ -98,6 +114,7 @@ export default function SpecialDaysManagement() {
 
       showToast.success("Special day deleted!");
       mutateOffices();
+      setDeleteConfirm({ open: false, index: null });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       showToast.error(message || "Delete failed");
@@ -170,6 +187,7 @@ export default function SpecialDaysManagement() {
       </div>
 
       {/* Special Days Grid or Empty State */}
+
       {selectedOffice ? (
         currentOffice?.specialDays && currentOffice.specialDays.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -219,7 +237,7 @@ export default function SpecialDaysManagement() {
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(index)}
+                    onClick={() => setDeleteConfirm({ open: true, index })}
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl font-semibold transition-all"
                   >
                     <FiTrash2 />
@@ -402,6 +420,40 @@ export default function SpecialDaysManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* NEW: Delete Confirmation Modal */}
+      {deleteConfirm.open && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a2847] rounded-2xl max-w-sm w-full border border-red-500/30 shadow-2xl">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FiAlertTriangle className="text-red-400 text-3xl" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                Delete Special Day?
+              </h3>
+              <p className="text-gray-300 text-sm">
+                This action cannot be undone. The special day will be
+                permanently removed.
+              </p>
+            </div>
+
+            <div className="flex gap-3 p-6 pt-0">
+              <button
+                onClick={() => setDeleteConfirm({ open: false, index: null })}
+                className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-lg"
+              >
+                Yes, Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

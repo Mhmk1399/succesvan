@@ -455,14 +455,14 @@ export default function HeroSection() {
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-2 sm:hidden">
                   <div className="relative">
-                    <div className="text-gray-500 text-xs font-semibold mb-1 tracking-wide uppercase">
-                      Starting from
+                    <div className="text-gray-500 text-[10px] font-semibold mb-1 tracking-wide uppercase">
+                      Starting from 
                     </div>
-                    <div className="flex items-baseline gap-2">
+                    <div className="flex items-baseline">
                       <span className="text-4xl   lg:text-5xl font-black text-white">
                         {currentVan.price}
                       </span>
-                      <span className="text-lg text-gray-400 font-semibold">
+                      <span className="text-xs text-gray-400 font-semibold">
                         /day
                       </span>
                     </div>
@@ -495,7 +495,7 @@ export default function HeroSection() {
                 </div>
 
                 {/* Features Grid */}
-                <div className="grid grid-cols-2 gap-2.5 pt-2">
+                <div className="grid grid-cols-2 gap-2.5 pt-2 pb-16 md:pb-0">
                   {currentVan.features.map((feature, index) => {
                     const Icon = feature.icon;
                     return (
@@ -579,7 +579,7 @@ export default function HeroSection() {
                 {/* Glow Effect */}
                 <div
                   ref={glowRef}
-                  className="absolute inset-0 -z-10 blur-3xl transition-all duration-700"
+                  className="absolute inset-0 top-15 -z-10 blur-xl transition-all duration-700"
                   style={{
                     background: `radial-gradient(circle at center, ${currentVan.color}70 0%, ${currentVan.color}40 40%, transparent 70%)`,
                   }}
@@ -622,13 +622,7 @@ export default function HeroSection() {
                       quality={100}
                     />
 
-                    {/* Image glow */}
-                    <div
-                      className="absolute inset-0 opacity-30 blur-2xl -z-10"
-                      style={{
-                        background: `radial-gradient(circle at center, ${currentVan.color}80, transparent 60%)`,
-                      }}
-                    ></div>
+                  
                   </div>
                 </div>
 
