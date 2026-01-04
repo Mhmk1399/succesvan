@@ -584,7 +584,7 @@ function ReservesContent() {
       fetch(`/api/reservations/by-office?office=${(selectedReservation.office as any)._id}&startDate=${startDate}&type=start&excludeReservation=${selectedReservation._id}`)
         .then((res) => res.json())
         .then((data) => setStartDateReservedSlots(data.data?.reservedSlots || []))
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     }
   }, [selectedReservation, editDateRange]);
 
@@ -595,7 +595,7 @@ function ReservesContent() {
       fetch(`/api/reservations/by-office?office=${(selectedReservation.office as any)._id}&endDate=${endDate}&type=end&excludeReservation=${selectedReservation._id}`)
         .then((res) => res.json())
         .then((data) => setEndDateReservedSlots(data.data?.reservedSlots || []))
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     }
   }, [selectedReservation, editDateRange]);
 
@@ -1127,7 +1127,7 @@ function DiscountsContent() {
         setDiscounts(activeDiscounts);
       }
     } catch (error) {
-      console.error("Failed to fetch discounts:", error);
+      console.log("Failed to fetch discounts:", error);
     } finally {
       setLoading(false);
     }

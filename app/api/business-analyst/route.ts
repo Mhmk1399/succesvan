@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       conversationHistory: result.conversationHistory,
     });
   } catch (error) {
-    console.error("❌ [Business Analyst API] Error:", error);
+    console.log("❌ [Business Analyst API] Error:", error);
     const message = error instanceof Error ? error.message : "Analysis failed";
     return errorResponse(message, 500);
   }

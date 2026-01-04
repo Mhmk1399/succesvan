@@ -54,7 +54,7 @@ export default function SupportContent() {
         showToast.error("Failed to fetch tickets");
       }
     } catch (error) {
-      console.error("Error fetching tickets:", error);
+      console.log("Error fetching tickets:", error);
       showToast.error("Error fetching tickets");
     } finally {
       setLoading(false);
@@ -92,7 +92,7 @@ export default function SupportContent() {
         showToast.error("Failed to create ticket");
       }
     } catch (error) {
-      console.error("Error creating ticket:", error);
+      console.log("Error creating ticket:", error);
       showToast.error("Error creating ticket");
     } finally {
       setIsSubmitting(false);
@@ -130,7 +130,7 @@ export default function SupportContent() {
         showToast.error("Failed to send reply");
       }
     } catch (error) {
-      console.error("Error sending reply:", error);
+      console.log("Error sending reply:", error);
       showToast.error("Error sending reply");
     } finally {
       setIsSubmitting(false);

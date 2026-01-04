@@ -544,7 +544,7 @@ export default function ReservationsManagement() {
         .then((data) =>
           setStartDateReservedSlots(data.data?.reservedSlots || [])
         )
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     }
   }, [selectedReservation, editDateRange]);
 
@@ -561,7 +561,7 @@ export default function ReservationsManagement() {
       )
         .then((res) => res.json())
         .then((data) => setEndDateReservedSlots(data.data?.reservedSlots || []))
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     }
   }, [selectedReservation, editDateRange]);
 

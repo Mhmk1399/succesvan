@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       autoSubmit = formData.get("autoSubmit") === "true";
 
       if (!audioFile) {
-        console.error("❌ [API] No audio file provided");
+        console.log("❌ [API] No audio file provided");
         return NextResponse.json(
           { success: false, error: "No audio file provided" },
           { status: 400 }
@@ -186,8 +186,8 @@ Rules:
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const processingTime = Date.now() - startTime;
-    console.error("❌ [API] Error parsing voice:", error);
-    console.error(`⏱️ [API] Failed after ${processingTime}ms`);
+    console.log("❌ [API] Error parsing voice:", error);
+    console.log(`⏱️ [API] Failed after ${processingTime}ms`);
     return NextResponse.json(
       {
         success: false,

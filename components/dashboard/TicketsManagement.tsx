@@ -58,7 +58,7 @@ export default function TicketsManagement() {
         showToast.error(errorData.error || "Failed to fetch tickets");
       }
     } catch (error) {
-      console.error("Error fetching tickets:", error);
+      console.log("Error fetching tickets:", error);
       showToast.error("Error fetching tickets");
     } finally {
       setLoading(false);
@@ -94,7 +94,7 @@ export default function TicketsManagement() {
         showToast.error("Failed to send reply");
       }
     } catch (error) {
-      console.error("Error sending reply:", error);
+      console.log("Error sending reply:", error);
       showToast.error("Error sending reply");
     } finally {
       setIsSubmitting(false);
@@ -119,7 +119,7 @@ export default function TicketsManagement() {
         showToast.error("Failed to update status");
       }
     } catch (error) {
-      console.error("Error updating status:", error);
+      console.log("Error updating status:", error);
       showToast.error("Error updating status");
     }
   };

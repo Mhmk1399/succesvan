@@ -303,7 +303,7 @@ export async function processFastAgent(
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ [Fast Agent] Error:", error);
+    console.log("❌ [Fast Agent] Error:", error);
     return {
       message: "Sorry, something went wrong. Please try again.",
       state: currentState,
@@ -722,7 +722,7 @@ async function handleSubmitBooking(
       isComplete: false,
     };
   } catch (error) {
-    console.error("[Fast Agent] Submit booking error:", error);
+    console.log("[Fast Agent] Submit booking error:", error);
     return {
       message: "Invalid booking data. Please try again.",
       state: currentState,
@@ -1287,7 +1287,7 @@ function handleConfirmAddOns(
       isComplete: false,
     };
   } catch (error) {
-    console.error("[Fast Agent] Confirm add-ons error:", error);
+    console.log("[Fast Agent] Confirm add-ons error:", error);
     return handleSkipAddOns(currentState);
   }
 }

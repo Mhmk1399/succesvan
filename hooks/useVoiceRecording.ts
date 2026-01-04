@@ -23,7 +23,7 @@ export function useVoiceRecording({
       
       // Check browser support
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.error("❌ [Voice] Audio recording not supported");
+        console.log("❌ [Voice] Audio recording not supported");
         throw new Error("Audio recording not supported in this browser");
       }
 
@@ -69,7 +69,7 @@ export function useVoiceRecording({
       setIsRecording(true);
       showToast.success("Recording started...");
     } catch (error) {
-      console.error("Error starting recording:", error);
+      console.log("Error starting recording:", error);
       showToast.error("Failed to start recording");
       if (onError) {
         onError(error as Error);
@@ -109,7 +109,7 @@ export function useVoiceRecording({
         console.log(`⏱️ [Voice] API response received in ${processingTime}ms`);
 
         if (!response.ok) {
-          console.error("❌ [Voice] API error:", response.status, response.statusText);
+          console.log("❌ [Voice] API error:", response.status, response.statusText);
           throw new Error("Failed to process audio");
         }
 
@@ -136,11 +136,11 @@ export function useVoiceRecording({
             onTranscriptionComplete(result);
           }
         } else {
-          console.error("❌ [Voice] Processing failed:", result.error);
+          console.log("❌ [Voice] Processing failed:", result.error);
           throw new Error(result.error || "Processing failed");
         }
       } catch (error) {
-        console.error("❌ [Voice] Error processing audio:", error);
+        console.log("❌ [Voice] Error processing audio:", error);
         showToast.error("Failed to process voice input");
         if (onError) {
           onError(error as Error);

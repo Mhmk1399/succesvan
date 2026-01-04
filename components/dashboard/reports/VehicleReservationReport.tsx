@@ -58,7 +58,7 @@ export default function VehicleReservationReport() {
       const json = await res.json();
       setOffices(json.data || []);
     } catch (error) {
-      console.error("Failed to fetch offices:", error);
+      console.log("Failed to fetch offices:", error);
     }
   };
 
@@ -85,7 +85,7 @@ export default function VehicleReservationReport() {
       }
     } catch (error) {
       showToast.error("Server connection error");
-      console.error("Fetch report error:", error);
+      console.log("Fetch report error:", error);
     } finally {
       setLoading(false);
     }

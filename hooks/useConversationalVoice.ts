@@ -74,20 +74,20 @@ export function useConversationalVoice() {
         };
 
         audio.onerror = (error) => {
-          console.error("❌ [Audio] Playback error:", error);
+          console.log("❌ [Audio] Playback error:", error);
           setIsPlaying(false);
           URL.revokeObjectURL(url);
           reject(error);
         };
 
         audio.play().catch((error) => {
-          console.error("❌ [Audio] Failed to play:", error);
+          console.log("❌ [Audio] Failed to play:", error);
           setIsPlaying(false);
           URL.revokeObjectURL(url);
           reject(error);
         });
       } catch (error) {
-        console.error("❌ [Audio] Error creating audio:", error);
+        console.log("❌ [Audio] Error creating audio:", error);
         setIsPlaying(false);
         reject(error);
       }
@@ -192,7 +192,7 @@ export function useConversationalVoice() {
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unknown error";
-        console.error("❌ [Conversation Hook] Error:", error);
+        console.log("❌ [Conversation Hook] Error:", error);
         showToast.error(message || "Failed to process conversation");
         return null;
       }

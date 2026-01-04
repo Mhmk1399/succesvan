@@ -100,7 +100,7 @@ export default function OfficesContent() {
           setCategories(categories);
         }
       })
-      .catch((err) => console.error("Failed to fetch categories:", err));
+      .catch((err) => console.log("Failed to fetch categories:", err));
   }, []);
 
   const handleInputChange = (

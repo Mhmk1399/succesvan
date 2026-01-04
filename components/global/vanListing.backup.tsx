@@ -384,7 +384,7 @@ function ReservationPanel({
           setAddOns(addOns);
         }
       })
-      .catch((err) => console.error(err));
+      .catch((err) => console.log(err));
   }, []);
 
   // Calculate extension prices
@@ -717,7 +717,7 @@ function ReservationPanel({
         .then((data) => {
           setStartDateReservedSlots(data.data?.reservedSlots || []);
         })
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     }
   }, [formData.office, dateRange]);
 
@@ -735,7 +735,7 @@ function ReservationPanel({
         .then((data) => {
           setEndDateReservedSlots(data.data?.reservedSlots || []);
         })
-        .catch((err) => console.error(err));
+        .catch((err) => console.log(err));
     }
   }, [formData.office, dateRange]);
 

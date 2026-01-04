@@ -230,7 +230,7 @@ export function useFastAgent() {
         setOffices(data.data.offices);
       }
     } catch (error) {
-      console.error("Failed to fetch offices:", error);
+      console.log("Failed to fetch offices:", error);
     }
   };
 
@@ -318,7 +318,7 @@ export function useFastAgent() {
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unknown error";
-        console.error("Agent error:", error);
+        console.log("Agent error:", error);
         showToast.error(message || "Something went wrong");
         return null;
       } finally {
