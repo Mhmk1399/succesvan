@@ -26,6 +26,7 @@ import {
   FiPlusCircle,
   FiSun,
   FiVolume2,
+  FiUsers,
 } from "react-icons/fi";
 import { useStats } from "@/hooks/useStats";
 import { useRecentReservations } from "@/hooks/useRecentReservations";
@@ -113,8 +114,8 @@ const menuItems: MenuItem[] = [
   },
   {
     id: "contacts",
-    label: "Contacts",
-    icon: <FiMail />, // Better than Users — contacts are inquiries/messages
+    label: "Users",
+    icon: <FiUsers />, // Better than Users — contacts are inquiries/messages
     color: "from-cyan-500 to-cyan-600",
   },
   {

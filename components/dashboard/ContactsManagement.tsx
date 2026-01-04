@@ -28,8 +28,8 @@ interface PhoneData {
 type MutateFn = () => Promise<void>;
 
 const roleOptions = [
-  { _id: "user", name: "User" },
-  { _id: "admin", name: "Admin" },
+  { _id: "user", name: "user" },
+  { _id: "admin", name: "admin" },
 ];
 
 export default function ContactsManagement() {
