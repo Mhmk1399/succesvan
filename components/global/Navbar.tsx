@@ -63,6 +63,7 @@ const menuItems: MenuItem[] = [
   },
   { label: "ABOUT US", href: "/aboutus" },
   { label: "CONTACT", href: "/contact-us" },
+  { label: "TERMS AND CONDITIONS", href: "/terms-and-conditions" },
 ];
 
 // Animated Hamburger Icon
