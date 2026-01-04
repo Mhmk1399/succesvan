@@ -456,8 +456,8 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
           ...prev,
           name: user.name || "",
           lastName: user.lastName || "",
-          email: user.emailData?.emailAddress || user.email || "",
-          phone: user.phoneNumber?.replace("+44", "") || "",
+          email: user.emaildata?.emailAddress || "",
+          phone: user.phoneData?.phoneNumber?.replace("+44", "") || "",
         }));
         if (hasRentalData) {
           setStep(3);
@@ -528,8 +528,8 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
           ...prev,
           name: data.data.user.name,
           lastName: data.data.user.lastName,
-          email: data.data.user.emailData?.emailAddress || data.data.user.email || "",
-          phone: data.data.user.phoneNumber?.replace("+44", "") || formData.phone,
+          email: data.data.user.emaildata?.emailAddress || "",
+          phone: data.data.user.phoneData?.phoneNumber?.replace("+44", "") || formData.phone,
         }));
         setStep(3);
       } else {
@@ -845,7 +845,7 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                 {categories.length > 0 ? (
                   <>
                     {/* Desktop: Grid Layout */}
-                    <div className="hidden md:grid grid-cols-4 gap-2 max-h-[80vh] overflow-y-auto p-2 pt-2 pb-12">
+                    <div className="hidden md:grid grid-cols-3 gap-2 max-h-[80vh] overflow-y-auto p-2 pt-2 pb-12">
                       {categories.map((cat) => {
                         const catPrice = calculateCategoryPrice(cat);
                         return (
