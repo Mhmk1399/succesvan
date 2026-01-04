@@ -69,7 +69,10 @@ interface ReservationModalProps {
   isAdminMode?: boolean;
 }
 
-export default function ReservationModal({ onClose, isAdminMode = false }: ReservationModalProps) {
+export default function ReservationModal({
+  onClose,
+  isAdminMode = false,
+}: ReservationModalProps) {
   const { user: authUser } = useAuth();
   const user = isAdminMode ? null : authUser; // Ignore logged-in user in admin mode
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -123,7 +126,10 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
   const [licenseFront, setLicenseFront] = useState<string>("");
   const [licenseBack, setLicenseBack] = useState<string>("");
   const [address, setAddress] = useState<string>("");
-  const [uploadingLicense, setUploadingLicense] = useState({ front: false, back: false });
+  const [uploadingLicense, setUploadingLicense] = useState({
+    front: false,
+    back: false,
+  });
 
   const selectedCategory = categories.find((c) => c._id === formData.category);
 
@@ -305,7 +311,8 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
   const finalPrice = useMemo(() => {
     if (!priceCalc) return null;
     if (!appliedDiscount) return priceCalc.totalPrice;
-    const discountAmount = (priceCalc.totalPrice * appliedDiscount.percentage) / 100;
+    const discountAmount =
+      (priceCalc.totalPrice * appliedDiscount.percentage) / 100;
     return parseFloat((priceCalc.totalPrice - discountAmount).toFixed(2));
   }, [priceCalc, appliedDiscount]);
 
@@ -456,8 +463,8 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
           ...prev,
           name: user.name || "",
           lastName: user.lastName || "",
-          email: user.email || "",
-          phone: user.phoneNumber || "",
+          email: user.emailData?.emailAddress || "",
+          phone: user.phoneNumber?.replace("+44", "") || "",
         }));
         if (hasRentalData) {
           setStep(3);
@@ -528,7 +535,12 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
           ...prev,
           name: data.data.user.name,
           lastName: data.data.user.lastName,
-          email: data.data.user.emaildata?.emailAddress || "",
+          email:
+            data.data.user.emailData?.emailAddress ||
+            data.data.user.email ||
+            "",
+          phone:
+            data.data.user.phoneNumber?.replace("+44", "") || formData.phone,
         }));
         setStep(3);
       } else {
@@ -554,7 +566,7 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
       });
       const uploadData = await uploadRes.json();
       if (uploadData.error) throw new Error(uploadData.error);
-      
+
       if (side === "front") {
         setLicenseFront(uploadData.url);
       } else {
@@ -622,7 +634,9 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
       setDiscountError("Please enter a discount code");
       return;
     }
-    const user = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!) : null;
+    const user = localStorage.getItem("user")
+      ? JSON.parse(localStorage.getItem("user")!)
+      : null;
     if (!user) {
       setDiscountError("Please login to apply discount");
       return;
@@ -634,22 +648,29 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
       const data = await res.json();
       if (!data.success) throw new Error("Invalid discount code");
       const discounts = data.data.data || data.data;
-      const discount = discounts.find((d: any) => d.code.toUpperCase() === discountCode.toUpperCase());
+      const discount = discounts.find(
+        (d: any) => d.code.toUpperCase() === discountCode.toUpperCase()
+      );
       if (!discount) throw new Error("Invalid discount code");
       const now = new Date();
       const validFrom = new Date(discount.validFrom);
       const validTo = new Date(discount.validTo);
-      if (now < validFrom || now > validTo) throw new Error("Discount code has expired");
-      if (discount.usageLimit && discount.usageCount >= discount.usageLimit) throw new Error("Discount code usage limit reached");
-      if (discount.usedBy?.includes(user._id)) throw new Error("You have already used this discount code");
+      if (now < validFrom || now > validTo)
+        throw new Error("Discount code has expired");
+      if (discount.usageLimit && discount.usageCount >= discount.usageLimit)
+        throw new Error("Discount code usage limit reached");
+      if (discount.usedBy?.includes(user._id))
+        throw new Error("You have already used this discount code");
       if (discount.categories?.length > 0 && formData.category) {
         const categoryIds = discount.categories.map((c: any) => c._id || c);
-        if (!categoryIds.includes(formData.category)) throw new Error("Discount not valid for this vehicle");
+        if (!categoryIds.includes(formData.category))
+          throw new Error("Discount not valid for this vehicle");
       }
       setAppliedDiscount(discount);
       setDiscountError("");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Invalid discount code";
+      const message =
+        error instanceof Error ? error.message : "Invalid discount code";
       setDiscountError(message);
       setAppliedDiscount(null);
     } finally {
@@ -672,7 +693,7 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
     try {
       const token = localStorage.getItem("token");
       let userId = customerUserId;
-      
+
       if (!isAdminMode) {
         const user = localStorage.getItem("user")
           ? JSON.parse(localStorage.getItem("user")!)
@@ -731,8 +752,7 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
           status: "pending",
           addOns: selectedAddOns,
           discountCode: appliedDiscount?.code || null,
-              selectedGear: formData.gearType,
-
+          selectedGear: formData.gearType,
         },
       };
 
@@ -1028,7 +1048,9 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                       Phone Number
                     </label>
                     <div className="relative">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-medium">+44</div>
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 font-medium">
+                        +44
+                      </div>
                       <input
                         type="tel"
                         value={formData.phone}
@@ -1208,14 +1230,19 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                                 className="w-full h-32 object-cover rounded-lg"
                               />
                               <label className="absolute bottom-2 right-2 px-3 py-1.5 bg-[#fe9a00] hover:bg-orange-600 text-white rounded-lg cursor-pointer text-xs font-semibold">
-                                {uploadingLicense.front ? "Uploading..." : "Change"}
+                                {uploadingLicense.front
+                                  ? "Uploading..."
+                                  : "Change"}
                                 <input
                                   type="file"
                                   accept="image/*"
                                   className="hidden"
                                   onChange={(e) =>
                                     e.target.files?.[0] &&
-                                    handleLicenseUpload(e.target.files[0], "front")
+                                    handleLicenseUpload(
+                                      e.target.files[0],
+                                      "front"
+                                    )
                                   }
                                   disabled={uploadingLicense.front}
                                 />
@@ -1224,7 +1251,9 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                           ) : (
                             <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#fe9a00] transition-colors">
                               <span className="text-gray-400 text-sm">
-                                {uploadingLicense.front ? "Uploading..." : "+ Upload Front"}
+                                {uploadingLicense.front
+                                  ? "Uploading..."
+                                  : "+ Upload Front"}
                               </span>
                               <input
                                 type="file"
@@ -1232,7 +1261,10 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                                 className="hidden"
                                 onChange={(e) =>
                                   e.target.files?.[0] &&
-                                  handleLicenseUpload(e.target.files[0], "front")
+                                  handleLicenseUpload(
+                                    e.target.files[0],
+                                    "front"
+                                  )
                                 }
                                 disabled={uploadingLicense.front}
                               />
@@ -1256,14 +1288,19 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                                 className="w-full h-32 object-cover rounded-lg"
                               />
                               <label className="absolute bottom-2 right-2 px-3 py-1.5 bg-[#fe9a00] hover:bg-orange-600 text-white rounded-lg cursor-pointer text-xs font-semibold">
-                                {uploadingLicense.back ? "Uploading..." : "Change"}
+                                {uploadingLicense.back
+                                  ? "Uploading..."
+                                  : "Change"}
                                 <input
                                   type="file"
                                   accept="image/*"
                                   className="hidden"
                                   onChange={(e) =>
                                     e.target.files?.[0] &&
-                                    handleLicenseUpload(e.target.files[0], "back")
+                                    handleLicenseUpload(
+                                      e.target.files[0],
+                                      "back"
+                                    )
                                   }
                                   disabled={uploadingLicense.back}
                                 />
@@ -1272,7 +1309,9 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                           ) : (
                             <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#fe9a00] transition-colors">
                               <span className="text-gray-400 text-sm">
-                                {uploadingLicense.back ? "Uploading..." : "+ Upload Back"}
+                                {uploadingLicense.back
+                                  ? "Uploading..."
+                                  : "+ Upload Back"}
                               </span>
                               <input
                                 type="file"
@@ -1425,142 +1464,181 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                   {!Array.isArray(addOns) || addOns.length === 0 ? (
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
                       <FiAlertCircle className="text-gray-400 text-2xl mx-auto mb-2" />
-                      <p className="text-gray-400 text-sm">No add-ons available</p>
+                      <p className="text-gray-400 text-sm">
+                        No add-ons available
+                      </p>
                     </div>
                   ) : !priceCalc ? (
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
                       <div className="w-8 h-8 border-2 border-[#fe9a00]/30 border-t-[#fe9a00] rounded-full animate-spin mx-auto mb-2"></div>
-                      <p className="text-gray-400 text-sm">Loading pricing...</p>
+                      <p className="text-gray-400 text-sm">
+                        Loading pricing...
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-                      {addOns.filter((addon) => {
-                        return addon.pricingType === "flat" || addon.tieredPrice?.tiers?.some(
-                          (tier) => priceCalc.totalDays >= tier.minDays && priceCalc.totalDays <= tier.maxDays
-                        );
-                      }).map((addon) => {
-                        const selected = selectedAddOns.find(
-                          (s) => s.addOn === addon._id
-                        );
-                        const rentalDays = priceCalc.totalDays;
-                        return (
-                          <div
-                            key={addon._id}
-                            className="bg-white/5 border border-white/10 rounded-xl p-3"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <div className="flex-1">
-                                <h5 className="text-white font-semibold text-sm">
-                                  {addon.name}
-                                </h5>
-                                {addon.description && (
-                                  <p className="text-gray-400 text-xs mt-1">
-                                    {addon.description}
-                                  </p>
-                                )}
-                                {addon.pricingType === "flat" ? (
-                                  <p className="text-[#fe9a00] text-sm font-bold mt-1">
-                                    £{addon.flatPrice?.amount || 0}
-                                    {addon.flatPrice?.isPerDay && (
-                                      <span className="text-gray-400 text-xs ml-1">
-                                        /day × {rentalDays} days = £
-                                        {(
-                                          addon.flatPrice.amount * rentalDays
-                                        ).toFixed(2)}
-                                      </span>
-                                    )}
-                                  </p>
-                                ) : (
-                                  <div className="mt-2">
-                                    <p className="text-gray-400 text-xs mb-1">
-                                      {addon.tieredPrice?.isPerDay && `(per day × ${rentalDays} days)`}
+                      {addOns
+                        .filter((addon) => {
+                          return (
+                            addon.pricingType === "flat" ||
+                            addon.tieredPrice?.tiers?.some(
+                              (tier) =>
+                                priceCalc.totalDays >= tier.minDays &&
+                                priceCalc.totalDays <= tier.maxDays
+                            )
+                          );
+                        })
+                        .map((addon) => {
+                          const selected = selectedAddOns.find(
+                            (s) => s.addOn === addon._id
+                          );
+                          const rentalDays = priceCalc.totalDays;
+                          return (
+                            <div
+                              key={addon._id}
+                              className="bg-white/5 border border-white/10 rounded-xl p-3"
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex-1">
+                                  <h5 className="text-white font-semibold text-sm">
+                                    {addon.name}
+                                  </h5>
+                                  {addon.description && (
+                                    <p className="text-gray-400 text-xs mt-1">
+                                      {addon.description}
                                     </p>
-                                    {addon.tieredPrice?.tiers?.filter(
-                                      (tier) => rentalDays >= tier.minDays && rentalDays <= tier.maxDays
-                                    ).map((tier) => {
-                                      const originalIdx = addon.tieredPrice?.tiers?.indexOf(tier) || 0;
-                                      const totalPrice = addon.tieredPrice?.isPerDay
-                                        ? tier.price * rentalDays
-                                        : tier.price;
-                                      return (
-                                        <p key={originalIdx} className="text-[#fe9a00] text-sm font-bold">
-                                          £{tier.price}
-                                          {addon.tieredPrice?.isPerDay && (
-                                            <span className="text-gray-400 text-xs ml-1">
-                                              /day × {rentalDays} days = £{totalPrice.toFixed(2)}
-                                            </span>
-                                          )}
-                                        </p>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 ml-3">
-                                <button
-                                  onClick={() => {
-                                    setSelectedAddOns((prev) => {
-                                      const existing = prev.find(
-                                        (s) => s.addOn === addon._id
-                                      );
-                                      if (!existing || existing.quantity <= 1) {
-                                        return prev.filter(
-                                          (s) => s.addOn !== addon._id
+                                  )}
+                                  {addon.pricingType === "flat" ? (
+                                    <p className="text-[#fe9a00] text-sm font-bold mt-1">
+                                      £{addon.flatPrice?.amount || 0}
+                                      {addon.flatPrice?.isPerDay && (
+                                        <span className="text-gray-400 text-xs ml-1">
+                                          /day × {rentalDays} days = £
+                                          {(
+                                            addon.flatPrice.amount * rentalDays
+                                          ).toFixed(2)}
+                                        </span>
+                                      )}
+                                    </p>
+                                  ) : (
+                                    <div className="mt-2">
+                                      <p className="text-gray-400 text-xs mb-1">
+                                        {addon.tieredPrice?.isPerDay &&
+                                          `(per day × ${rentalDays} days)`}
+                                      </p>
+                                      {addon.tieredPrice?.tiers
+                                        ?.filter(
+                                          (tier) =>
+                                            rentalDays >= tier.minDays &&
+                                            rentalDays <= tier.maxDays
+                                        )
+                                        .map((tier) => {
+                                          const originalIdx =
+                                            addon.tieredPrice?.tiers?.indexOf(
+                                              tier
+                                            ) || 0;
+                                          const totalPrice = addon.tieredPrice
+                                            ?.isPerDay
+                                            ? tier.price * rentalDays
+                                            : tier.price;
+                                          return (
+                                            <p
+                                              key={originalIdx}
+                                              className="text-[#fe9a00] text-sm font-bold"
+                                            >
+                                              £{tier.price}
+                                              {addon.tieredPrice?.isPerDay && (
+                                                <span className="text-gray-400 text-xs ml-1">
+                                                  /day × {rentalDays} days = £
+                                                  {totalPrice.toFixed(2)}
+                                                </span>
+                                              )}
+                                            </p>
+                                          );
+                                        })}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 ml-3">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedAddOns((prev) => {
+                                        const existing = prev.find(
+                                          (s) => s.addOn === addon._id
                                         );
-                                      }
-                                      return prev.map((s) =>
-                                        s.addOn === addon._id
-                                          ? { ...s, quantity: s.quantity - 1 }
-                                          : s
-                                      );
-                                    });
-                                  }}
-                                  className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
-                                >
-                                  -
-                                </button>
-                                <span className="text-white font-semibold w-6 text-center">
-                                  {selected?.quantity || 0}
-                                </span>
-                                <button
-                                  onClick={() => {
-                                    setSelectedAddOns((prev) => {
-                                      const existing = prev.find(
-                                        (s) => s.addOn === addon._id
-                                      );
-                                      if (existing) {
+                                        if (
+                                          !existing ||
+                                          existing.quantity <= 1
+                                        ) {
+                                          return prev.filter(
+                                            (s) => s.addOn !== addon._id
+                                          );
+                                        }
                                         return prev.map((s) =>
                                           s.addOn === addon._id
-                                            ? { ...s, quantity: s.quantity + 1 }
+                                            ? { ...s, quantity: s.quantity - 1 }
                                             : s
                                         );
-                                      }
-                                      let defaultTierIndex = undefined;
-                                      if (addon.pricingType === "tiered" && addon.tieredPrice?.tiers) {
-                                        const matchingTierIndex = addon.tieredPrice.tiers.findIndex(
-                                          (tier) => rentalDays >= tier.minDays && rentalDays <= tier.maxDays
+                                      });
+                                    }}
+                                    className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                                  >
+                                    -
+                                  </button>
+                                  <span className="text-white font-semibold w-6 text-center">
+                                    {selected?.quantity || 0}
+                                  </span>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedAddOns((prev) => {
+                                        const existing = prev.find(
+                                          (s) => s.addOn === addon._id
                                         );
-                                        defaultTierIndex = matchingTierIndex !== -1 ? matchingTierIndex : 0;
-                                      }
-                                      return [
-                                        ...prev,
-                                        {
-                                          addOn: addon._id,
-                                          quantity: 1,
-                                          selectedTierIndex: defaultTierIndex,
-                                        },
-                                      ];
-                                    });
-                                  }}
-                                  className="w-7 h-7 rounded bg-[#fe9a00] hover:bg-orange-600 text-white flex items-center justify-center transition-all"
-                                >
-                                  +
-                                </button>
+                                        if (existing) {
+                                          return prev.map((s) =>
+                                            s.addOn === addon._id
+                                              ? {
+                                                  ...s,
+                                                  quantity: s.quantity + 1,
+                                                }
+                                              : s
+                                          );
+                                        }
+                                        let defaultTierIndex = undefined;
+                                        if (
+                                          addon.pricingType === "tiered" &&
+                                          addon.tieredPrice?.tiers
+                                        ) {
+                                          const matchingTierIndex =
+                                            addon.tieredPrice.tiers.findIndex(
+                                              (tier) =>
+                                                rentalDays >= tier.minDays &&
+                                                rentalDays <= tier.maxDays
+                                            );
+                                          defaultTierIndex =
+                                            matchingTierIndex !== -1
+                                              ? matchingTierIndex
+                                              : 0;
+                                        }
+                                        return [
+                                          ...prev,
+                                          {
+                                            addOn: addon._id,
+                                            quantity: 1,
+                                            selectedTierIndex: defaultTierIndex,
+                                          },
+                                        ];
+                                      });
+                                    }}
+                                    className="w-7 h-7 rounded bg-[#fe9a00] hover:bg-orange-600 text-white flex items-center justify-center transition-all"
+                                  >
+                                    +
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
                     </div>
                   )}
                 </div>
@@ -1662,25 +1740,27 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                 </div>
 
                 {/* Gear Type */}
-                {formData.gearType &&
-                  selectedCategory?.gear?.availableTypes?.length || 0 > 1 && (
+                {(formData.gearType &&
+                  selectedCategory?.gear?.availableTypes?.length) ||
+                  (0 > 1 && (
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                      <h4 className="text-white font-semibold mb-2">
-                        Gearbox
-                      </h4>
+                      <h4 className="text-white font-semibold mb-2">Gearbox</h4>
                       <p className="text-white capitalize">
                         {formData.gearType}
                       </p>
-                      {formData.gearType === "automatic" &&
-                        (selectedCategory?.gear as Category["gear"])?.automaticExtraCost|| 0 > 0 && (
+                      {(formData.gearType === "automatic" &&
+                        (selectedCategory?.gear as Category["gear"])
+                          ?.automaticExtraCost) ||
+                        (0 > 0 && (
                           <p className="text-gray-400 text-sm mt-1">
                             +£
-                            {(selectedCategory?.gear as Category["gear"]).automaticExtraCost|| 0}
+                            {(selectedCategory?.gear as Category["gear"])
+                              .automaticExtraCost || 0}
                             /day
                           </p>
-                        )}
+                        ))}
                     </div>
-                  )}
+                  ))}
 
                 {/* Add-ons */}
                 {selectedAddOns.length > 0 && (
@@ -1747,13 +1827,13 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                     <div className="flex justify-between">
                       <span className="text-gray-400">Email:</span>
                       <span className="text-white font-semibold">
-                        {formData.email}
+                        {formData.email || "N/A"}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Phone:</span>
                       <span className="text-white font-semibold">
-                        {formData.phone}
+                        +44{formData.phone}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -1767,7 +1847,9 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
 
                 {/* Discount Code */}
                 <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                  <h4 className="text-white font-semibold mb-3">Discount Code</h4>
+                  <h4 className="text-white font-semibold mb-3">
+                    Discount Code
+                  </h4>
                   {!appliedDiscount ? (
                     <div className="space-y-2">
                       <div className="flex gap-2">
@@ -1797,7 +1879,9 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                     <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-green-400 font-bold">{appliedDiscount.code}</p>
+                          <p className="text-green-400 font-bold">
+                            {appliedDiscount.code}
+                          </p>
                           <p className="text-green-300 text-xs mt-1">
                             {appliedDiscount.percentage}% discount applied
                           </p>
@@ -1827,7 +1911,12 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                             Discount ({appliedDiscount.percentage}%)
                           </span>
                           <span className="font-semibold">
-                            -£{((priceCalc.totalPrice * appliedDiscount.percentage) / 100).toFixed(2)}
+                            -£
+                            {(
+                              (priceCalc.totalPrice *
+                                appliedDiscount.percentage) /
+                              100
+                            ).toFixed(2)}
                           </span>
                         </div>
                       )}
@@ -1868,7 +1957,6 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                       >
                         Terms & Conditions
                       </a>{" "}
-                      
                     </span>
                   </label>
                   {errors.acceptTerms && (

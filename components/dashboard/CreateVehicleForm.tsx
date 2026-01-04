@@ -10,6 +10,7 @@ import { showToast } from "@/lib/toast";
 import { Category, Office, Vehicle } from "@/types/type";
 import DynamicTableView from "./DynamicTableView";
 import CustomSelect from "@/components/ui/CustomSelect";
+import { datePickerStyles } from "../global/DatePickerStyles";
 type MutateFn = () => Promise<void>;
 
 export default function VehiclesContent() {
@@ -388,21 +389,7 @@ export default function VehiclesContent() {
                     : "Select Category"
                 }
               />
-              {/* <label className="text-gray-400 text-sm mb-2 block">
-                reservation
-              </label>
-              <CustomSelect
-                options={reservations}
-                value={formData.reservation}
-                onChange={(val) =>
-                  setFormData((prev) => ({ ...prev, reservation: val }))
-                }
-                placeholder={
-                  loadingReservations
-                    ? "Loading reservations..."
-                    : "Select Reservation (Optional)"
-                }
-              /> */}
+
               <label className="text-gray-400 text-sm mb-2 block">status</label>
               <CustomSelect
                 options={[
@@ -670,36 +657,9 @@ export default function VehiclesContent() {
         onMutate={(mutate) => (mutateRef.current = mutate)}
       />
 
-      <style jsx global>{`
-        .rdrCalendarWrapper {
-          background-color: transparent !important;
-          border: none !important;
-        }
-        .rdrMonth {
-          width: 100%;
-        }
-        .rdrDayNumber span {
-          color: white !important;
-        }
-        .rdrDayPassive .rdrDayNumber span {
-          color: rgba(255, 255, 255, 0.4) !important;
-        }
-        .rdrDayToday .rdrDayNumber span {
-          color: #fe9a00 !important;
-          font-weight: bold;
-        }
-        .rdrDayInRange {
-          background-color: rgba(254, 154, 0, 0.2) !important;
-        }
-        .rdrDayStartOfMonth .rdrDayNumber span,
-        .rdrDayEndOfMonth .rdrDayNumber span {
-          color: white !important;
-          font-weight: bold;
-        }
-        .rdrWeekDay {
-          color: #fe9a00 !important;
-        }
-      `}</style>
+      <style jsx global>
+        {datePickerStyles}
+      </style>
     </div>
   );
 }

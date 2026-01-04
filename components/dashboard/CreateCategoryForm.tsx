@@ -1017,58 +1017,91 @@ export default function CategoriesContent() {
                     (enter each service period in days)
                   </span>
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="number"
-                    placeholder="Tire"
-                    value={formData.servicesPeriod.tire}
-                    onChange={(e) =>
-                      handleServiceChange("tire", e.target.value)
-                    }
-                    required
-                    min="1"
-                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Oil"
-                    value={formData.servicesPeriod.oil}
-                    onChange={(e) => handleServiceChange("oil", e.target.value)}
-                    required
-                    min="1"
-                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Battery"
-                    value={formData.servicesPeriod.battery}
-                    onChange={(e) =>
-                      handleServiceChange("battery", e.target.value)
-                    }
-                    required
-                    min="1"
-                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Air"
-                    value={formData.servicesPeriod.air}
-                    onChange={(e) => handleServiceChange("air", e.target.value)}
-                    required
-                    min="1"
-                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Service"
-                    value={formData.servicesPeriod.service}
-                    onChange={(e) =>
-                      handleServiceChange("service", e.target.value)
-                    }
-                    required
-                    min="1"
-                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-3  gap-4">
+                  <div>
+                    {" "}
+                    <label className="text-gray-400 text-sm mb-2 block">
+                      Tire
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Tire"
+                      value={formData.servicesPeriod.tire}
+                      onChange={(e) =>
+                        handleServiceChange("tire", e.target.value)
+                      }
+                      required
+                      min="1"
+                      className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                    />
+                  </div>
+                  <div>
+                    {" "}
+                    <label className="text-gray-400 text-sm mb-2 block">
+                      Oil
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Oil"
+                      value={formData.servicesPeriod.oil}
+                      onChange={(e) =>
+                        handleServiceChange("oil", e.target.value)
+                      }
+                      required
+                      min="1"
+                      className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                    />
+                  </div>
+                  <div>
+                    {" "}
+                    <label className="text-gray-400 text-sm mb-2 block">
+                      Battery
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Battery"
+                      value={formData.servicesPeriod.battery}
+                      onChange={(e) =>
+                        handleServiceChange("battery", e.target.value)
+                      }
+                      required
+                      min="1"
+                      className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                    />
+                  </div>
+                  <div>
+                    {" "}
+                    <label className="text-gray-400 text-sm mb-2 block">
+                      Battery
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Air"
+                      value={formData.servicesPeriod.air}
+                      onChange={(e) =>
+                        handleServiceChange("air", e.target.value)
+                      }
+                      required
+                      min="1"
+                      className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-gray-400 text-sm mb-2 block">
+                      Battery
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Service"
+                      value={formData.servicesPeriod.service}
+                      onChange={(e) =>
+                        handleServiceChange("service", e.target.value)
+                      }
+                      required
+                      min="1"
+                      className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                    />
+                  </div>
                 </div>
               </div>
 

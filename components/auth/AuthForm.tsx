@@ -1,13 +1,16 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { FiMail, FiUser, FiPhone, FiMapPin } from "react-icons/fi";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { FiMail, FiUser, FiPhone, FiMapPin, FiHome } from "react-icons/fi";
 import gsap from "gsap";
 import { showToast } from "@/lib/toast";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AuthForm() {
   const { setUser } = useAuth();
+  const router = useRouter();
   const [step, setStep] = useState<"phone" | "code" | "register">("phone");
   const [formData, setFormData] = useState({
     name: "",
@@ -19,6 +22,7 @@ export default function AuthForm() {
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -118,6 +122,14 @@ export default function AuthForm() {
       return;
     }
 
+    if (!agreedToTerms) {
+      setErrors({
+        ...newErrors,
+        terms: "You must accept the terms and conditions",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const res = await fetch("/api/auth", {
@@ -152,7 +164,7 @@ export default function AuthForm() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     if (name === "phoneNumber") {
       const digits = value.replace(/\D/g, "");
       setFormData((prev) => ({
@@ -177,6 +189,16 @@ export default function AuthForm() {
   return (
     <>
       <div className="w-full max-w-md mx-auto mt-20">
+        <div className="my-4 flex flex-row-reverse gap-1 justify-center items-center">
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="text-sm text-[#fe9a00] hover:underline"
+          >
+            Home
+          </button>
+          <FiHome className="text-[#fe9a00]" />
+        </div>
         <div
           ref={formRef}
           className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 shadow-2xl"
@@ -207,7 +229,9 @@ export default function AuthForm() {
             {step === "phone" && (
               <div className="relative">
                 <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
-                <div className="absolute left-12 top-1/2 -translate-y-1/2 text-white/60 font-medium">+44</div>
+                <div className="absolute left-12 top-1/2 -translate-y-1/2 text-white/60 font-medium">
+                  +44
+                </div>
                 <input
                   type="tel"
                   name="phoneNumber"
@@ -346,12 +370,36 @@ export default function AuthForm() {
                     </p>
                   )}
                 </div>
+                <div className="flex items-start gap-3">
+                  <input
+                    id="terms"
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => {
+                      setAgreedToTerms(e.target.checked);
+                      if (errors.terms)
+                        setErrors((prev) => ({ ...prev, terms: "" }));
+                    }}
+                    className="mt-1 w-4 h-4 rounded-sm text-[#fe9a00] bg-white/5 border-white/20 focus:ring-0"
+                  />
+                  <label htmlFor="terms" className="text-white/80 text-sm">
+                    I agree to the
+                    <span className="ml-2 text-[#fe9a00] hover:underline">
+                      <Link href="/terms-and-conditions/">
+                        terms and conditions
+                      </Link>
+                    </span>
+                  </label>
+                </div>
+                {errors.terms && (
+                  <p className="mt-1 text-red-400 text-sm">{errors.terms}</p>
+                )}
               </>
             )}
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || (step === "register" && !agreedToTerms)}
               className="w-full py-4 bg-[#fe9a00] text-white font-semibold rounded-xl hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (

@@ -3,10 +3,10 @@ import "./globals.css";
 import Navbar from "@/components/global/Navbar";
 import Footer from "@/components/global/footer";
 import FloatingActionMenu from "@/components/ui/FloatingActionMenu";
-import SmoothScrollProvider from "@/components/ui/smoothScrollProvider.tsx";
- import AnnouncementBar from "@/components/global/AnnouncementBar";
+  import AnnouncementBar from "@/components/global/AnnouncementBar";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/context/AuthContext";
+import MobileAppPrompt from "@/components/ui/MobileAppPrompt";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -32,9 +32,9 @@ export default function RootLayout({
           <AnnouncementBar />
           <Navbar />
           <Toaster position="bottom-center" />
+          <MobileAppPrompt />
 
-           <SmoothScrollProvider />
-          {children}
+           {children}
           <Footer />
           <FloatingActionMenu />
         </AuthProvider>

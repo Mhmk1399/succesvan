@@ -28,6 +28,7 @@ const menuLinks = [
     href: "/terms-and-conditions",
     icon: FiFileText,
   },
+  { name: "POLICY", href: "/policy", icon: FiFileText },
 ];
 
 const socialLinks = [
@@ -903,6 +904,11 @@ export default function Footer() {
                 <br className="md:hidden" />
                 <span className="hidden md:inline mx-2">•</span>
                 <span>All rights reserved.</span>
+              </div>
+              <div className="mt-3 md:mt-0 md:ml-6 text-sm">
+                <Link href="/policy#cookie-settings" className="text-gray-400 hover:text-[#fe9a00] font-semibold">
+                  Cookie settings
+                </Link>
               </div>
             </div>
           </div>

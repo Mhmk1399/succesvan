@@ -261,8 +261,8 @@ export default function ReservationForm({
     const fetchData = async () => {
       try {
         const [offRes, typeRes] = await Promise.all([
-          fetch("/api/offices"),
-          fetch("/api/types"),
+          fetch("/api/offices?status=active"),
+          fetch("/api/types?status=active"),
         ]);
         const offData = await offRes.json();
         const typeData = await typeRes.json();

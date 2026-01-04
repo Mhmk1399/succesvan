@@ -4,7 +4,6 @@ import { useRef, useLayoutEffect, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import {
-  FiDollarSign,
   FiShield,
   FiClock,
   FiTruck,
@@ -12,6 +11,7 @@ import {
   FiCheckCircle,
   FiArrowRight,
 } from "react-icons/fi";
+import { FaPoundSign } from "react-icons/fa";
 import { MdSupportAgent } from "react-icons/md";
 import Image from "next/image";
 
@@ -22,9 +22,9 @@ if (typeof window !== "undefined") {
 const whyUsData = [
   {
     id: 1,
-    icon: FiDollarSign,
+    icon: FaPoundSign,
     title: "Our Prices",
-    shortDesc: "Best value for money",
+    shortDesc: "Best value in £",
     description:
       "Wide range of prices to fit every budget. Transparent pricing with no hidden charges.",
     color: "#fe9a00",

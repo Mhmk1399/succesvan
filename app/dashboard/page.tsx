@@ -23,6 +23,7 @@ const Page = () => {
         return;
       }
       setIsVerifying(false);
+      document.title = `${user.name}'s Dashboard | SuccessVan`;
     }
   }, [user, router]);
 

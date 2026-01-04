@@ -19,13 +19,13 @@ import {
   FiMessageSquare,
   FiBarChart2,
   FiGrid,
-  FiMail,
   FiMessageCircle,
   FiPackage,
   FiPercent,
   FiPlusCircle,
   FiSun,
   FiVolume2,
+  FiUsers,
 } from "react-icons/fi";
 import { useStats } from "@/hooks/useStats";
 import { useRecentReservations } from "@/hooks/useRecentReservations";
@@ -113,8 +113,8 @@ const menuItems: MenuItem[] = [
   },
   {
     id: "contacts",
-    label: "Contacts",
-    icon: <FiMail />, // Better than Users — contacts are inquiries/messages
+    label: "Users",
+    icon: <FiUsers />, // Better than Users — contacts are inquiries/messages
     color: "from-cyan-500 to-cyan-600",
   },
   {
@@ -196,7 +196,8 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-   };
+    window.location.reload();
+  };
 
   return (
     <div className="min-h-screen bg-[#0a101f]">
@@ -230,7 +231,6 @@ export default function Dashboard() {
               <button
                 onClick={() => {
                   handleTabChange(item.id);
-                  setSidebarCollapsed(!sidebarCollapsed);
                 }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 mb-0.5
                   ${
@@ -260,12 +260,12 @@ export default function Dashboard() {
         {/* Collapse Toggle Button */}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="hidden lg:flex absolute -right-3 top-2 w-6 h-6 bg-[#1f2937] border border-white/10 rounded-full items-center justify-center text-gray-400 hover:text-white hover:bg-[#fe9a00] transition-all duration-200 shadow-lg z-60"
+          className="hidden lg:flex absolute -right-3 top-3 w-8 h-8 bg-[#1f2937] border border-white/10 rounded-full items-center justify-center text-gray-400 hover:text-white hover:bg-[#fe9a00] transition-all duration-200 shadow-lg z-60"
         >
           {sidebarCollapsed ? (
-            <FiChevronRight size={12} />
+            <FiChevronRight size={16} />
           ) : (
-            <FiChevronLeft size={12} />
+            <FiChevronLeft size={16} />
           )}
         </button>
 
@@ -459,10 +459,11 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
   const { stats, isLoading: statsLoading } = useStats();
   const { reservations, isLoading: reservationsLoading } =
     useRecentReservations();
-  const { todayActivity, isLoading: fleetLoading } = useFleetStatus() as unknown as {
-    todayActivity: TodayActivity;
-    isLoading: boolean;
-  };
+  const { todayActivity, isLoading: fleetLoading } =
+    useFleetStatus() as unknown as {
+      todayActivity: TodayActivity;
+      isLoading: boolean;
+    };
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedReservationId, setSelectedReservationId] = useState<
     string | null
@@ -1051,7 +1052,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                         categoryVehicles.length > 0 &&
                         !categoryVehicles.some((v) =>
                           v.gear?.availableTypes?.some(
-                            (g:any) => g.gearType === requestedGear
+                            (g: any) => g.gearType === requestedGear
                           )
                         ) && (
                           <p className="text-center text-red-400 text-sm mt-4 font-medium">
