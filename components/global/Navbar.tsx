@@ -19,6 +19,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useAnnouncement } from "./AnnouncementBar";
 
+
 interface MenuItem {
   label: string;
   href: string;
