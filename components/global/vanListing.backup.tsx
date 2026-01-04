@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { IoIosArrowForward } from "react-icons/io";
+import { PiDoorOpen } from "react-icons/pi";
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
@@ -1169,7 +1170,7 @@ function ReservationPanel({
           {/* Quick Info Grid */}
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
-              <FiPackage className="text-[#fe9a00] mx-auto mb-1 text-sm" />
+              <PiDoorOpen  className="text-[#fe9a00] mx-auto mb-1 text-sm" />
               <p className="text-white font-semibold text-xs">{van.doors}</p>
               <p className="text-gray-400 text-[10px]">doors</p>
             </div>
@@ -2267,7 +2268,7 @@ function CategoryCard({
               </span>
             </div>
             <div className="px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
-              <FiPackage className="text-[#fe9a00] text-xs md:text-sm" />
+              <PiDoorOpen className="text-[#fe9a00] text-xs md:text-sm" />
               <span className="text-[10px] md:text-xs font-bold">
                 {category.doors} doors
               </span>
