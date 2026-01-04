@@ -935,7 +935,7 @@ function ReservesContent() {
                             : "Select Dates"}
                         </button>
                         {showDateRange && (
-                          <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center" onClick={() => setShowDateRange(false)}>
+                          <div className="fixed inset-0 bg-black/50 z-60 flex items-center justify-center" onClick={() => setShowDateRange(false)}>
                             <div className="bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4" onClick={(e) => e.stopPropagation()}>
                               <DateRange
                                 ranges={editDateRange}

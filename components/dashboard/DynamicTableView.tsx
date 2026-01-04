@@ -55,6 +55,12 @@ export default function DynamicTableView<
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [togglingIds, setTogglingIds] = useState<string[]>([]);
+  const startToggling = (id: string) =>
+    setTogglingIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  const stopToggling = (id: string) =>
+    setTogglingIds((prev) => prev.filter((x) => x !== id));
+  const isTogglingId = (id: string) => togglingIds.includes(id);
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
   const [dateRanges, setDateRanges] = useState<
     Record<string, [Date | null, Date | null]>
@@ -481,98 +487,120 @@ export default function DynamicTableView<
             </tr>
           </thead>
           <tbody>
-            {items.map((item: T, idx: number) => (
-              <tr
-                key={idx}
-                className="border-b border-white/10 hover:bg-white/10 transition-colors"
-              >
-                <td className="px-3 py-2 text-gray-300 font-semibold">
-                  {(currentPage - 1) * itemsPerPage + idx + 1}
-                </td>
-                {visibleColumns.map((col, colIdx) => {
-                  const cellValue = item[col.key];
-                  let displayContent;
+            {items.map((item: T, idx: number) => {
+              const itemId =
+                (item as any)._id || (item as any).id || String(idx);
+              return (
+                <tr
+                  key={idx}
+                  className="border-b border-white/10 hover:bg-white/10 transition-colors"
+                >
+                  <td className="px-3 py-2 text-gray-300 font-semibold">
+                    {(currentPage - 1) * itemsPerPage + idx + 1}
+                  </td>
+                  {visibleColumns.map((col, colIdx) => {
+                    const cellValue = item[col.key];
+                    let displayContent;
 
-                  if (col.render) {
-                    displayContent = col.render(cellValue, item);
-                  } else if (
-                    typeof cellValue === "object" &&
-                    cellValue !== null
-                  ) {
-                    displayContent = JSON.stringify(cellValue);
-                  } else {
-                    displayContent = String(cellValue || "-");
-                  }
+                    if (col.render) {
+                      displayContent = col.render(cellValue, item);
+                    } else if (
+                      typeof cellValue === "object" &&
+                      cellValue !== null
+                    ) {
+                      displayContent = JSON.stringify(cellValue);
+                    } else {
+                      displayContent = String(cellValue || "-");
+                    }
 
-                  return (
-                    <td
-                      key={`${colIdx}-${String(col.key)}`}
-                      className="px-3 py-2 text-gray-300"
-                    >
-                      {displayContent}
-                    </td>
-                  );
-                })}
-                <td className="px-3 py-2 flex gap-2">
-                  <button
-                    onClick={() => {
-                      setViewingItem(item);
-                      setIsViewOpen(true);
-                    }}
-                    className="p-2 hover:bg-green-500/20 cursor-pointer rounded transition-colors tooltip"
-                    data-tooltip="View"
-                  >
-                    <FiEye className="text-yellow-400" />
-                  </button>
-                  {onEdit && (
-                    <button
-                      onClick={() => onEdit(item)}
-                      className="p-2 hover:bg-blue-500/20 rounded cursor-pointer transition-colors tooltip"
-                      data-tooltip="Edit"
-                    >
-                      <FiEdit2 className="text-blue-400" />
-                    </button>
-                  )}
-                  {onDuplicate && (
-                    <button
-                      onClick={() => onDuplicate(item)}
-                      className="p-2 hover:bg-purple-500/20 rounded cursor-pointer transition-colors tooltip"
-                      data-tooltip="Duplicate"
-                    >
-                      <FiCopy className="text-purple-400" />
-                    </button>
-                  )}
-                  {onStatusToggle && (
+                    return (
+                      <td
+                        key={`${colIdx}-${String(col.key)}`}
+                        className="px-3 py-2 text-gray-300"
+                      >
+                        {displayContent}
+                      </td>
+                    );
+                  })}
+                  <td className="px-3 py-2 flex gap-2">
                     <button
                       onClick={() => {
-                        onStatusToggle(item);
+                        setViewingItem(item);
+                        setIsViewOpen(true);
                       }}
-                      className="p-2 hover:bg-orange-500/20 rounded cursor-pointer transition-colors tooltip"
-                      data-tooltip="Toggle Status"
+                      className="p-2 hover:bg-green-500/20 cursor-pointer rounded transition-colors tooltip"
+                      data-tooltip="View"
                     >
-                      <FiPower
-                        className={
-                          (item as Record<string, unknown>).status === "active"
-                            ? "text-green-400"
-                            : "text-orange-400"
+                      <FiEye className="text-yellow-400" />
+                    </button>
+                    {onEdit && (
+                      <button
+                        onClick={() => onEdit(item)}
+                        className="p-2 hover:bg-blue-500/20 rounded cursor-pointer transition-colors tooltip"
+                        data-tooltip="Edit"
+                      >
+                        <FiEdit2 className="text-blue-400" />
+                      </button>
+                    )}
+                    {onDuplicate && (
+                      <button
+                        onClick={() => onDuplicate(item)}
+                        className="p-2 hover:bg-purple-500/20 rounded cursor-pointer transition-colors tooltip"
+                        data-tooltip="Duplicate"
+                      >
+                        <FiCopy className="text-purple-400" />
+                      </button>
+                    )}
+                    {onStatusToggle && (
+                      <button
+                        onClick={async () => {
+                          if (isTogglingId(itemId)) return;
+                          startToggling(itemId);
+                          try {
+                            await Promise.resolve(onStatusToggle(item));
+                          } catch (err) {
+                            console.error("Status toggle failed:", err);
+                          } finally {
+                            stopToggling(itemId);
+                          }
+                        }}
+                        className={`p-2 rounded cursor-pointer transition-colors tooltip ${
+                          isTogglingId(itemId)
+                            ? "opacity-60 cursor-not-allowed"
+                            : "hover:bg-orange-500/20"
+                        }`}
+                        data-tooltip="Toggle Status"
+                        disabled={isTogglingId(itemId)}
+                      >
+                        {isTogglingId(itemId) ? (
+                          <span className="w-4 h-4 inline-block border-2 border-white/30 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <FiPower
+                            className={
+                              (item as Record<string, unknown>).status ===
+                              "active"
+                                ? "text-green-400"
+                                : "text-orange-400"
+                            }
+                          />
+                        )}
+                      </button>
+                    )}
+                    {!hideDelete && (
+                      <button
+                        onClick={() =>
+                          handleDeleteClick(item._id || item.id || "")
                         }
-                      />
-                    </button>
-                  )}
-                  {!hideDelete && (
-                    <button
-                      onClick={() =>
-                        handleDeleteClick(item._id || item.id || "")
-                      }
-                      className="p-2 hover:bg-red-500/20 rounded cursor-pointer transition-colors tooltip"
-                      data-tooltip="Delete"
-                    >
-                      <FiTrash2 className="text-red-400" />
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
+                        className="p-2 hover:bg-red-500/20 rounded cursor-pointer transition-colors tooltip"
+                        data-tooltip="Delete"
+                      >
+                        <FiTrash2 className="text-red-400" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

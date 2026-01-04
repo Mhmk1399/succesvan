@@ -357,8 +357,7 @@ function ReservationPanel({
 
   // Fetch offices
   useEffect(() => {
-    console.log("Fetching offices...");
-    fetch("/api/offices")
+    fetch("/api/offices?status=active")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
