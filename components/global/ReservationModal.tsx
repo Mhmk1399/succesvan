@@ -1038,7 +1038,7 @@ export default function ReservationModal({
             {step === 2 && (
               <div className="space-y-4">
                 <h3 className="text-white font-bold text-lg mb-4">
-                  Login or Sign Up
+                  Reservation Request
                 </h3>
 
                 {authStep === "phone" && (

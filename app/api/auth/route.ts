@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         console.log("SMS Error:", message);
       }
       console.log(`[DEV] Code for ${phoneNumber}: ${verificationCode}`);
-      return successResponse({ message: "Code sent", code: verificationCode });
+      return successResponse({ message: "Code sent"});
     }
 
     if (action === "verify") {
