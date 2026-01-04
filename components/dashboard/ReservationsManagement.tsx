@@ -916,7 +916,7 @@ export default function ReservationsManagement() {
       {isDetailOpen && selectedReservation && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-[#1a2847] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/10">
-            <div className="sticky top-0 flex items-center justify-between p-6 border-b border-white/10 bg-[#1a2847]">
+            <div className="sticky top-0 flex items-center justify-between p-6 border-b z-10 border-white/10 bg-[#1a2847]">
               <h2 className="text-2xl font-black text-white">
                 Reservation Details
               </h2>

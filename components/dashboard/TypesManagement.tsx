@@ -273,20 +273,21 @@ export default function TypesManagement() {
                 <label className="block text-sm font-semibold text-gray-300 mb-2">
                   Status
                 </label>
-                <select
+                <CustomSelect
+                  options={[
+                    { _id: "active", name: "Active" },
+                    { _id: "inactive", name: "Inactive" },
+                  ]}
                   value={formData.status}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      status: e.target.value as "active" | "inactive",
-                    })
+                  onChange={(val) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      status: val as "active" | "inactive",
+                    }))
                   }
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  placeholder="Select Status"
                   disabled={isSubmitting}
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                />
               </div>
 
               <div>

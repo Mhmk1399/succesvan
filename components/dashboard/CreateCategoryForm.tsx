@@ -380,7 +380,7 @@ export default function CategoriesContent() {
       {isFormOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-[#1a2847] rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-white/10">
-            <div className="sticky top-0 flex items-center justify-between p-6 border-b border-white/10 bg-[#1a2847]">
+            <div className="sticky top-0 flex items-center justify-between p-6 border-b z-10 border-white/10 bg-[#1a2847]">
               <h2 className="text-2xl font-black text-white">
                 {editingId ? "Edit Category" : "Create Category"}
               </h2>
@@ -438,36 +438,81 @@ export default function CategoriesContent() {
                 <label className="text-gray-400 text-sm mb-2 block">
                   Image
                 </label>
+
                 {formData.image ? (
-                  <div className="relative">
+                  <div className="relative group">
                     <img
                       src={formData.image}
-                      alt="Category"
-                      className="w-full h-32 object-cover rounded-lg"
+                      alt="Category preview"
+                      className="w-full h-64 object-cover rounded-xl shadow-lg transition-opacity duration-300"
                     />
-                    <label className="absolute bottom-2 right-2 px-3 py-1 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg cursor-pointer text-sm font-semibold">
-                      {uploading.image ? "Uploading..." : "Change"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) =>
-                          e.target.files?.[0] &&
-                          handleFileUpload(e.target.files[0], "image")
-                        }
-                        disabled={uploading.image}
-                      />
-                    </label>
+
+                    <div className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      {uploading.image ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <p className="text-white text-sm font-medium">
+                            Uploading...
+                          </p>
+                        </div>
+                      ) : (
+                        <label className="px-6 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold rounded-lg cursor-pointer shadow-lg transition-all">
+                          Change Image
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                            className="hidden"
+                            onChange={(e) =>
+                              e.target.files?.[0] &&
+                              handleFileUpload(e.target.files[0], "image")
+                            }
+                            disabled={uploading.image}
+                          />
+                        </label>
+                      )}
+                    </div>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#fe9a00] transition-colors">
-                    <span className="text-gray-400 text-sm">
-                      {uploading.image ? "Uploading..." : "+ Upload Image"}
-                    </span>
+                  <label
+                    className={`relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-xl cursor-pointer transition-all overflow-hidden ${
+                      uploading.image
+                        ? "border-[#fe9a00] bg-[#fe9a00]/10"
+                        : "border-white/20 hover:border-[#fe9a00] hover:bg-white/5"
+                    }`}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDragEnter={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files[0];
+                      if (file && file.type.startsWith("image/")) {
+                        handleFileUpload(file, "image");
+                      }
+                    }}
+                  >
+                    {uploading.image ? (
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-[#fe9a00]/30 border-t-[#fe9a00] rounded-full animate-spin"></div>
+                        <p className="text-[#fe9a00] font-semibold">
+                          Uploading Image...
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-16 h-16 bg-[#fe9a00]/20 rounded-full flex items-center justify-center mb-4">
+                          <FiPlus className="text-[#fe9a00] text-3xl" />
+                        </div>
+                        <p className="text-gray-300 font-medium">
+                          Drag & drop or click to upload image
+                        </p>
+                        <p className="text-gray-500 text-sm mt-1">
+                          JPG, PNG, WebP, GIF, AVIF
+                        </p>
+                      </>
+                    )}
                     <input
                       type="file"
-                      accept="image/*"
-                      className="hidden"
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
                       onChange={(e) =>
                         e.target.files?.[0] &&
                         handleFileUpload(e.target.files[0], "image")
@@ -480,38 +525,84 @@ export default function CategoriesContent() {
 
               <div>
                 <label className="text-gray-400 text-sm mb-2 block">
-                  Video
+                  Video (Optional)
                 </label>
+
                 {formData.video ? (
-                  <div className="relative">
+                  <div className="relative group">
                     <video
                       src={formData.video}
-                      className="w-full h-32 object-cover rounded-lg"
+                      className="w-full h-64 object-cover rounded-xl shadow-lg transition-opacity duration-300"
                       controls
+                      poster={formData.image || undefined}
                     />
-                    <label className="absolute bottom-2 right-2 px-3 py-1 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg cursor-pointer text-sm font-semibold">
-                      {uploading.video ? "Uploading..." : "Change"}
-                      <input
-                        type="file"
-                        accept="video/*"
-                        className="hidden"
-                        onChange={(e) =>
-                          e.target.files?.[0] &&
-                          handleFileUpload(e.target.files[0], "video")
-                        }
-                        disabled={uploading.video}
-                      />
-                    </label>
+
+                    <div className="absolute inset-0 bg-black/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      {uploading.video ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <p className="text-white text-sm font-medium">
+                            Uploading Video...
+                          </p>
+                        </div>
+                      ) : (
+                        <label className="px-6 py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold rounded-lg cursor-pointer shadow-lg transition-all">
+                          Change Video
+                          <input
+                            type="file"
+                            accept="video/mp4,video/quicktime,video/webm"
+                            className="hidden"
+                            onChange={(e) =>
+                              e.target.files?.[0] &&
+                              handleFileUpload(e.target.files[0], "video")
+                            }
+                            disabled={uploading.video}
+                          />
+                        </label>
+                      )}
+                    </div>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#fe9a00] transition-colors">
-                    <span className="text-gray-400 text-sm">
-                      {uploading.video ? "Uploading..." : "+ Upload Video"}
-                    </span>
+                  <label
+                    className={`relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-xl cursor-pointer transition-all overflow-hidden ${
+                      uploading.video
+                        ? "border-[#fe9a00] bg-[#fe9a00]/10"
+                        : "border-white/20 hover:border-[#fe9a00] hover:bg-white/5"
+                    }`}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDragEnter={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files[0];
+                      if (file && file.type.startsWith("video/")) {
+                        handleFileUpload(file, "video");
+                      }
+                    }}
+                  >
+                    {uploading.video ? (
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 border-4 border-[#fe9a00]/30 border-t-[#fe9a00] rounded-full animate-spin"></div>
+                        <p className="text-[#fe9a00] font-semibold">
+                          Uploading Video...
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-16 h-16 bg-[#fe9a00]/20 rounded-full flex items-center justify-center mb-4">
+                          <FiPlus className="text-[#fe9a00] text-3xl" />
+                        </div>
+                        <p className="text-gray-300 font-medium">
+                          Drag & drop or click to upload video
+                        </p>
+                        <p className="text-gray-500 text-sm mt-1">
+                          MP4, MOV, WebM
+                        </p>
+                      </>
+                    )}
                     <input
                       type="file"
-                      accept="video/*"
-                      className="hidden"
+                      accept="video/mp4,video/quicktime,video/webm"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
                       onChange={(e) =>
                         e.target.files?.[0] &&
                         handleFileUpload(e.target.files[0], "video")
