@@ -336,7 +336,7 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
             const filtered = office.categories.filter((cat: any) => {
               const catTypeId =
                 typeof cat.type === "string" ? cat.type : cat.type?._id;
-              return catTypeId === typeId;
+              return catTypeId === typeId && cat.status === "active";
             });
             setCategories(filtered);
           } else {
