@@ -19,7 +19,6 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useAnnouncement } from "./AnnouncementBar";
 
-
 interface MenuItem {
   label: string;
   href: string;
@@ -250,8 +249,8 @@ export default function Navbar() {
         ref={navRef}
         className={`fixed w-full z-9999 transition-[background,box-shadow] duration-300 ${
           isScrolled
-            ? "bg-[#0a0f1c]/90 backdrop-blur-md shadow-lg shadow-black/10"
-            : "bg-linear-to-b from-[#0a0f1c]/80 to-[#0a0f1c]/60 backdrop-blur-sm"
+            ? "bg-[#0a0f1c]/50 backdrop-blur-md shadow-lg shadow-black/10"
+            : "bg-linear-to-b from-[#0a0f1c]/10 to-[#0a0f1c]/20 backdrop-blur-sm"
         }`}
         style={{ top: navTopPosition, willChange: "transform" }}
       >

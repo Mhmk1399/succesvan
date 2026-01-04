@@ -52,6 +52,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format } from "date-fns";
 import Link from "next/link";
+import { HiIdentification } from "react-icons/hi2";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -2274,34 +2275,44 @@ function CategoryCard({
               </span>
             </div>
           </div>
-          <p className="text-green-500 text-xs font-bold  mb-2 drop-shadow-md">
-            {category.requiredLicense}{" "}
-          </p>
         </div>
 
         <div className="space-y-4 flex items-end justify-between">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDetails();
-            }}
-            className="flex items-center gap-2 text-[#fe9a00] font-bold text-xs md:text-sm hover:gap-3 hover:border-b-2 hover:border-[#fe9a00] transition-all duration-300"
-          >
-            <span>Van Dimensions</span>
-            <IoIosArrowForward className="text-lg" />
-          </button>
+          <div className="space-y-2">
+            {/* License Badge */}
+            <div className="inline-flex items-center gap-2 px-2 py-1.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-500 text-[10px] font-semibold shadow-sm">
+              <span>{category.requiredLicense}</span>
+            </div>
 
-          <div>
+            {/* Details Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onView();
+                onDetails();
               }}
-              className="px-7 py-3 bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] text-black font-bold rounded-xl shadow-lg hover:shadow-[#fe9a00]/50 transform hover:scale-105 transition-all duration-300"
+              className="flex items-center gap-2 text-[#fe9a00] font-bold text-xs md:text-sm
+                 hover:gap-3 hover:border-b-2 hover:border-[#fe9a00]
+                 transition-all duration-300"
             >
-              Book Now
+              <span>Van Dimensions</span>
+              <IoIosArrowForward className="text-lg" />
             </button>
           </div>
+
+          {/* Book Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onView();
+            }}
+            className="px-7 py-3 bg-linear-to-r from-[#fe9a00] to-[#ff8800]
+               hover:from-[#ff8800] hover:to-[#fe9a00]
+               text-black font-bold rounded-xl shadow-lg
+               hover:shadow-[#fe9a00]/50 transform hover:scale-105
+               transition-all duration-300"
+          >
+            Book Now
+          </button>
         </div>
       </div>
     </div>

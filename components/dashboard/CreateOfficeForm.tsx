@@ -8,6 +8,7 @@ import DynamicTableView from "./DynamicTableView";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker.css";
+import CustomSelect from "@/components/ui/CustomSelect";
 type MutateFn = () => Promise<void>;
 
 export default function OfficesContent() {
@@ -25,6 +26,7 @@ export default function OfficesContent() {
       latitude: "",
       longitude: "",
     },
+    status: "active",
     workingTime: [
       {
         day: "monday",
@@ -140,6 +142,7 @@ export default function OfficesContent() {
         latitude: "",
         longitude: "",
       },
+      status: "active",
       workingTime: [
         {
           day: "monday",
@@ -214,6 +217,7 @@ export default function OfficesContent() {
         latitude: String(item.location.latitude),
         longitude: String(item.location.longitude),
       },
+      status: (item as any).status || "active",
       workingTime: item.workingTime.map((wt) => ({
         day: wt.day,
         isOpen: wt.isOpen,
@@ -235,6 +239,39 @@ export default function OfficesContent() {
     setIsFormOpen(true);
   };
 
+  const handleStatusToggle = async (item: any) => {
+    try {
+      if (!item._id) {
+        console.log("No office ID found:", item);
+        throw new Error("Office ID is missing");
+      }
+
+      const currentStatus = item.status || "active";
+      const newStatus = currentStatus === "active" ? "inactive" : "active";
+
+      const res = await fetch(`/api/offices/${item._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`HTTP ${res.status}: ${errorText}`);
+      }
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Update failed");
+
+      showToast.success(`Office status updated to ${newStatus}`);
+      if (mutateRef.current) mutateRef.current();
+    } catch (error) {
+      console.log("Status toggle error:", error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Update failed");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -249,6 +286,7 @@ export default function OfficesContent() {
           latitude: parseFloat(formData.location.latitude),
           longitude: parseFloat(formData.location.longitude),
         },
+        status: formData.status,
       };
 
       const res = await fetch(url, {
@@ -363,6 +401,21 @@ export default function OfficesContent() {
                     </label>
                   ))}
                 </div>
+              </div>
+
+              <div className="mt-3">
+                <label className="text-gray-400 text-sm mb-2 block">Status</label>
+                <CustomSelect
+                  options={[
+                    { _id: "active", name: "Active" },
+                    { _id: "inactive", name: "Inactive" },
+                  ]}
+                  value={formData.status}
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, status: val }))
+                  }
+                  placeholder="Select Status"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -646,6 +699,7 @@ export default function OfficesContent() {
           { key: "phone", label: "Phone" },
         ]}
         onEdit={handleEdit}
+          onStatusToggle={handleStatusToggle}
         onMutate={(mutate) => (mutateRef.current = mutate)}
       />
     </div>
