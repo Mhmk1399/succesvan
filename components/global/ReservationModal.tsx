@@ -456,8 +456,8 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
           ...prev,
           name: user.name || "",
           lastName: user.lastName || "",
-          email: user.email || "",
-          phone: user.phoneNumber || "",
+          email: user.emailData?.emailAddress || user.email || "",
+          phone: user.phoneNumber?.replace("+44", "") || "",
         }));
         if (hasRentalData) {
           setStep(3);
@@ -528,7 +528,8 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
           ...prev,
           name: data.data.user.name,
           lastName: data.data.user.lastName,
-          email: data.data.user.emaildata?.emailAddress || "",
+          email: data.data.user.emailData?.emailAddress || data.data.user.email || "",
+          phone: data.data.user.phoneNumber?.replace("+44", "") || formData.phone,
         }));
         setStep(3);
       } else {
@@ -1747,13 +1748,13 @@ export default function ReservationModal({ onClose, isAdminMode = false }: Reser
                     <div className="flex justify-between">
                       <span className="text-gray-400">Email:</span>
                       <span className="text-white font-semibold">
-                        {formData.email}
+                        {formData.email || "N/A"}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Phone:</span>
                       <span className="text-white font-semibold">
-                        {formData.phone}
+                        +44{formData.phone}
                       </span>
                     </div>
                     <div className="flex justify-between">
