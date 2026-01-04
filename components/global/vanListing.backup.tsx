@@ -1170,7 +1170,7 @@ function ReservationPanel({
           {/* Quick Info Grid */}
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
-              <PiDoorOpen  className="text-[#fe9a00] mx-auto mb-1 text-sm" />
+              <PiDoorOpen className="text-[#fe9a00] mx-auto mb-1 text-sm" />
               <p className="text-white font-semibold text-xs">{van.doors}</p>
               <p className="text-gray-400 text-[10px]">doors</p>
             </div>
@@ -2249,12 +2249,12 @@ function CategoryCard({
           <h3 className="text-xl md:text-2xl font-black leading-tight mb-2 drop-shadow-lg">
             {category.name}
           </h3>
-          <p className="text-gray-200 text-xs md:text-sm font-medium mb-5 drop-shadow-md">
+          <p className="text-gray-200 text-xs md:text-sm font-medium mb-4 drop-shadow-md">
             {category.expert}
           </p>
 
           {/* Feature Badges */}
-          <div className="flex flex-wrap gap-1 md:gap-2 mb-6">
+          <div className="flex flex-wrap gap-1 md:gap-2 mb-3">
             <div className="md:px-3 md:py-1.5 px-2 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
               <FiUsers className="text-[#fe9a00] text-xs md:text-sm" />
               <span className="text-[10px] md:text-xs font-bold">
@@ -2274,6 +2274,9 @@ function CategoryCard({
               </span>
             </div>
           </div>
+          <p className="text-green-500 text-xs font-bold  mb-2 drop-shadow-md">
+            {category.requiredLicense}{" "}
+          </p>
         </div>
 
         <div className="space-y-4 flex items-end justify-between">
