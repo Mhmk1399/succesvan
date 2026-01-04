@@ -435,7 +435,7 @@ export default function Navbar() {
         {/* Scrollable Content */}
         <div
           className={`relative h-full ${
-            isScrolled ? "mt-10" : "mt-25"
+            isScrolled ? "mt-10" : "mt-20"
           } overflow-y-auto`}
         >
           {/* Menu Items */}
@@ -460,7 +460,7 @@ export default function Navbar() {
                       aria-label={`Toggle ${item.label} submenu`}
                       onMouseEnter={() => setHoveredItem(item.label)}
                       onMouseLeave={() => setHoveredItem(null)}
-                      className={`flex items-center justify-between w-full text-base font-semibold py-3.5 px-4 rounded-xl transition-colors duration-200 ${
+                      className={`flex items-center justify-between w-full text-sm md:text-base font-semibold py-2 px-4 rounded-xl transition-colors duration-200 ${
                         activeDropdown === item.label
                           ? "bg-[#fe9a00]/10 text-[#fe9a00]"
                           : "text-white hover:bg-white/5 hover:text-[#fe9a00]"
@@ -498,7 +498,7 @@ export default function Navbar() {
                           <Link
                             key={child.label}
                             href={child.href}
-                            className={`flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-colors duration-200 ${
+                            className={`flex items-center gap-3 px-4 py-2 text-xs rounded-lg transition-colors duration-200 ${
                               pathname === child.href
                                 ? "text-[#fe9a00] bg-[#fe9a00]/10"
                                 : "text-white/70 hover:text-[#fe9a00] hover:bg-[#fe9a00]/5"
@@ -523,7 +523,7 @@ export default function Navbar() {
                     onClick={closeMenu}
                     onMouseEnter={() => setHoveredItem(item.label)}
                     onMouseLeave={() => setHoveredItem(null)}
-                    className={`flex items-center gap-3 text-base font-semibold py-3.5 px-4 rounded-xl transition-colors duration-200 ${
+                    className={`flex items-center gap-3 text-sm md:text-base font-semibold py-2 px-4 rounded-xl transition-colors duration-200 ${
                       pathname === item.href
                         ? "bg-[#fe9a00]/10 text-[#fe9a00]"
                         : "text-white hover:bg-white/5 hover:text-[#fe9a00]"
@@ -549,18 +549,22 @@ export default function Navbar() {
           </div>
 
           {/* Quick Contact Section */}
-          <div className="mt-8 mx-4 p-4 bg-white/5 rounded-2xl border border-white/5">
+          <div className="md:mt-8 mt-4 mx-4 p-4 bg-white/5 rounded-2xl border border-white/5">
             <div className="space-y-3">
               <a
                 href="tel:+442030111198"
                 className="flex items-center gap-3 text-white/80 hover:text-[#fe9a00] transition-colors duration-200"
               >
-                <div className="w-10 h-10 rounded-xl bg-[#fe9a00]/10 flex items-center justify-center">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-[#fe9a00]/10 flex items-center justify-center">
                   <FiPhone size={18} className="text-[#fe9a00]" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">+44 20 3011 1198</p>
-                  <p className="text-xs text-white/40">Call us anytime</p>
+                  <p className="text-xs md:text-sm font-medium">
+                    +44 20 3011 1198
+                  </p>
+                  <p className="text-[10px] md:text-xs text-white/40">
+                    Call us anytime
+                  </p>
                 </div>
               </a>
 
@@ -570,19 +574,21 @@ export default function Navbar() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 text-white/80 hover:text-[#fe9a00] transition-colors duration-200"
               >
-                <div className="w-10 h-10 rounded-xl bg-[#fe9a00]/10 flex items-center justify-center">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-[#fe9a00]/10 flex items-center justify-center">
                   <FiMapPin size={18} className="text-[#fe9a00]" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">London, UK</p>
-                  <p className="text-xs text-white/40">View on map</p>
+                  <p className="text-xs md:text-sm font-medium">London, UK</p>
+                  <p className="text-[10px] md:text-xs text-white/40">
+                    Strata House,Waterloo Road, London, NW2 7UH
+                  </p>
                 </div>
               </a>
             </div>
           </div>
 
           {/* Footer Actions */}
-          <div className="sticky bottom-0 mt-6 p-4 bg-linear-to-t from-[#080d17] via-[#080d17] to-transparent">
+          <div className="sticky bottom-0 md:mt-6 mt-1 p-4 bg-linear-to-t from-[#080d17] via-[#080d17] to-transparent">
             {user ? (
               <div className="flex gap-3">
                 <Link
