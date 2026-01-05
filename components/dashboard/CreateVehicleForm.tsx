@@ -157,11 +157,12 @@ export default function VehiclesContent() {
       properties: [{ name: "", value: "" }],
       needsService: false,
       serviceHistory: {
-        tire: new Date(),
+        tyre: new Date(),
         oil: new Date(),
-        battery: new Date(),
-        air: new Date(),
+        coolant: new Date(),
+        breakes: new Date(),
         service: new Date(),
+        adBlue: new Date(),
       },
       status: "active",
     });

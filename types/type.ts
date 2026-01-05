@@ -56,11 +56,12 @@ export interface Office {
 
 // Vehicle --------------------------------------------------------------------------------
 export interface ServiceHistory {
-  tire: Date;
+  tyre: Date;
   oil: Date;
-  battery: Date;
-  air: Date;
+  coolant: Date;
+  breakes: Date;
   service: Date;
+  adBlue: Date;
 }
 
 export interface Property {
@@ -92,11 +93,12 @@ export interface Vehicle {
 
 // Category -----------------------------------------------------------------------------------
 export interface ServicesPeriod {
-  tire: number;
+  tyre: number;
   oil: number;
-  battery: number;
-  air: number;
+  coolant: number;
+  breakes: number;
   service: number;
+  adBlue: number;
 }
 
 export interface Category {
@@ -293,11 +295,12 @@ export interface VanData {
   requiredLicense: string;
   type?: string;
   servicesPeriod?: {
-    tire: number;
+    tyre: number;
     oil: number;
-    battery: number;
-    air: number;
+    coolant: number;
+    breakes: number;
     service: number;
+    adBlue: number;
   };
   pricePerHour: number;
   fuel: "gas" | "diesel" | "electric" | "hybrid";
