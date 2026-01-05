@@ -1776,24 +1776,22 @@ export default function ReservationModal({
                 </div>
 
                 {/* Gear Type */}
-                {(formData.gearType &&
-                  selectedCategory?.gear?.availableTypes?.length) ||
-                  (0 > 1 && (
+                {formData.gearType &&selectedCategory?.gear?.availableTypes?.length > 1 && (
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                       <h4 className="text-white font-semibold mb-2">Gearbox</h4>
                       <p className="text-white capitalize">
                         {formData.gearType}
                       </p>
                       {formData.gearType === "automatic" &&
-                        (selectedCategory?.gear as Category["gear"])?.automaticExtraCost || 0 > 0 && (
+                        ((selectedCategory?.gear as Category["gear"])?.automaticExtraCost || 0) > 0 && (
                           <p className="text-gray-400 text-sm mt-1">
                             +£
                             {(selectedCategory?.gear as Category["gear"]).automaticExtraCost || 0}
                             /day
                           </p>
-                        ))}
+                        )}
                     </div>
-                  ))}
+                  )}
 
                 {/* Add-ons */}
                 {selectedAddOns.length > 0 && (
