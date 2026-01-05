@@ -1776,7 +1776,7 @@ export default function ReservationModal({
                 </div>
 
                 {/* Gear Type */}
-                {formData.gearType &&selectedCategory?.gear?.availableTypes?.length > 1 && (
+                {formData.gearType && selectedCategory?.gear?.availableTypes && selectedCategory.gear.availableTypes.length > 1 && (
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                       <h4 className="text-white font-semibold mb-2">Gearbox</h4>
                       <p className="text-white capitalize">

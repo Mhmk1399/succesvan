@@ -6,7 +6,6 @@ import AddOn from "@/model/addOn";
 import bcrypt from "bcryptjs";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { sendSMS } from "@/lib/sms";
-import { scheduleReservationNotifications } from "@/lib/notification-scheduler";
 
 export async function GET(req: NextRequest) {
   try {
@@ -239,16 +238,6 @@ export async function POST(req: NextRequest) {
     } catch (error) {
       console.log(
         "Creation SMS Error:",
-        error instanceof Error ? error.message : "Unknown error"
-      );
-    }
-
-    // Only schedule reminders, don't send confirmation yet
-    try {
-      await scheduleReservationNotifications(reservation._id.toString());
-    } catch (error) {
-      console.log(
-        "Notification scheduling error:",
         error instanceof Error ? error.message : "Unknown error"
       );
     }

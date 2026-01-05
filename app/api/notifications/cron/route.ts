@@ -6,7 +6,6 @@ import { successResponse, errorResponse } from "@/lib/api-response";
 
 export async function GET(req: NextRequest) {
   try {
-    // Verify cron secret for security
     const authHeader = req.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return errorResponse("Unauthorized", 401);
@@ -14,11 +13,16 @@ export async function GET(req: NextRequest) {
 
     await connect();
 
-    // Find notifications that are due
+    const now = new Date();
+    const hourStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 0, 0);
+    const hourEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), 59, 59);
+
     const dueNotifications = await Notification.find({
       status: "pending",
-      scheduledFor: { $lte: new Date() },
-    }).limit(50); // Process 50 at a time
+      scheduledFor: { $gte: hourStart, $lte: hourEnd },
+    }).limit(50);
+
+    console.log(`[CRON] Found ${dueNotifications.length} pending notifications`);
 
     const results = {
       processed: 0,
@@ -29,12 +33,14 @@ export async function GET(req: NextRequest) {
 
     for (const notification of dueNotifications) {
       results.processed++;
+      console.log(`[CRON] Processing notification ${notification._id} to ${notification.phoneNumber}`);
 
       try {
         await sendSMS(
           notification.phoneNumber.replace("+", ""),
           notification.message
         );
+        console.log(`[CRON] SMS sent successfully to ${notification.phoneNumber}`);
 
         // Delete reminder notifications after sending
         if (notification.type === "reservation_reminder") {
@@ -47,6 +53,7 @@ export async function GET(req: NextRequest) {
         }
         results.sent++;
       } catch (error) {
+        console.log(`[CRON] SMS failed to ${notification.phoneNumber}:`, error);
         notification.status = "failed";
         notification.error =
           error instanceof Error ? error.message : "Unknown error";
@@ -55,6 +62,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    console.log(`[CRON] Results:`, results);
     return successResponse(results);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

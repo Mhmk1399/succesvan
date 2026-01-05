@@ -89,6 +89,40 @@ export async function sendStatusNotification(
     );
   }
 
+  // Delete old pickup reminders and create return reminders when delivered
+  if (status === "delivered") {
+    await Notification.deleteMany({
+      reservation: reservationId,
+      status: "pending",
+      type: "reservation_reminder",
+    });
+
+    // Create return reminders (3 hours before endDate)
+    const endDate = new Date(reservation.endDate);
+    const now = new Date();
+    const returnTimes = [
+      endDate,
+      new Date(endDate.getTime() + 15 * 60 * 1000),
+      new Date(endDate.getTime() + 30 * 60 * 1000),
+      new Date(endDate.getTime() + 45 * 60 * 1000),
+    ];
+
+    for (const returnTime of returnTimes) {
+      const reminderFor = new Date(returnTime.getTime() - 3 * 60 * 60 * 1000);
+      if (reminderFor > now) {
+        await Notification.create({
+          type: "reservation_reminder",
+          reservation: reservationId,
+          user: user._id,
+          phoneNumber,
+          message: `Reminder: Van return in 3hrs at ${office?.name || 'office'}. Time: ${returnTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} ${returnTime.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}. SuccessVanHire.co.uk`,
+          scheduledFor: reminderFor,
+        });
+        console.log(`[NOTIF] Created return reminder for ${reservationId} at ${reminderFor}`);
+      }
+    }
+  }
+
   // Cancel pending reminders if canceled
   if (status === "canceled") {
     await Notification.deleteMany({

@@ -640,7 +640,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
 
   return (
     <div className="space-y-5">
-      {/* Create Reservation Button */}
+      {/* Quick Actions */}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-bold text-white">Quick Actions</h3>
         <button
