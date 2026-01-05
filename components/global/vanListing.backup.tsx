@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { IoIosArrowForward } from "react-icons/io";
-import { PiDoorOpen } from "react-icons/pi";
+import { GiCarDoor } from "react-icons/gi";
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
@@ -316,6 +316,8 @@ function ReservationPanel({
   const [appliedDiscount, setAppliedDiscount] = useState<any>(null);
   const [discountError, setDiscountError] = useState("");
   const [isApplyingDiscount, setIsApplyingDiscount] = useState(false);
+  const [postalCode, setPostalCode] = useState<string>("");
+  const [city, setCity] = useState<string>("");
 
   const basePriceCalc = usePriceCalculation(
     dateRange[0].startDate && formData.pickupTime
@@ -894,6 +896,8 @@ function ReservationPanel({
     if (!formData.lastName.trim()) newErrors.lastName = "Last name required";
     if (!formData.email.trim()) newErrors.email = "Email required";
     if (!formData.address.trim()) newErrors.address = "Address required";
+    if (!postalCode.trim()) newErrors.postalCode = "Postal code required";
+    if (!city.trim()) newErrors.city = "City required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -912,6 +916,8 @@ function ReservationPanel({
           lastName: formData.lastName,
           emailAddress: formData.email,
           address: formData.address,
+          postalCode: postalCode,
+          city: city,
         }),
       });
       const data = await res.json();
@@ -1169,7 +1175,7 @@ function ReservationPanel({
           {/* Quick Info Grid */}
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
-              <PiDoorOpen className="text-[#fe9a00] mx-auto mb-1 text-sm" />
+              <GiCarDoor className="text-[#fe9a00] mx-auto mb-1 text-sm" />
               <p className="text-white font-semibold text-xs">{van.doors}</p>
               <p className="text-gray-400 text-[10px]">doors</p>
             </div>
@@ -1191,7 +1197,7 @@ function ReservationPanel({
           <div className="px-6 pb-6 space-y-5">
             <div className="text-center mb-4">
               <h3 className="text-white font-bold text-lg mb-2">
-                Login or Sign Up
+                Reservation Request
               </h3>
               <p className="text-gray-400 text-sm">
                 Verify your phone to continue
@@ -1352,13 +1358,61 @@ function ReservationPanel({
                     className={`w-full bg-white/5 border ${
                       errors.address ? "border-red-500" : "border-white/10"
                     } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
-                    placeholder="123 Main Street, London"
+                    placeholder="123 Main Street"
                   />
                   {errors.address && (
                     <p className="text-red-400 text-xs mt-1">
                       {errors.address}
                     </p>
                   )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                      <FiMapPin className="text-[#fe9a00]" />
+                      Postal Code
+                    </label>
+                    <input
+                      type="text"
+                      value={postalCode}
+                      onChange={(e) => {
+                        setPostalCode(e.target.value);
+                        setErrors({ ...errors, postalCode: "" });
+                      }}
+                      className={`w-full bg-white/5 border ${
+                        errors.postalCode ? "border-red-500" : "border-white/10"
+                      } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                      placeholder="SW1A 1AA"
+                    />
+                    {errors.postalCode && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {errors.postalCode}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
+                      <FiMapPin className="text-[#fe9a00]" />
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      value={city}
+                      onChange={(e) => {
+                        setCity(e.target.value);
+                        setErrors({ ...errors, city: "" });
+                      }}
+                      className={`w-full bg-white/5 border ${
+                        errors.city ? "border-red-500" : "border-white/10"
+                      } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all`}
+                      placeholder="London"
+                    />
+                    {errors.city && (
+                      <p className="text-red-400 text-xs mt-1">
+                        {errors.city}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <button
                   type="button"
@@ -2267,7 +2321,7 @@ function CategoryCard({
               </span>
             </div>
             <div className="px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
-              <PiDoorOpen className="text-[#fe9a00] text-xs md:text-sm" />
+              <GiCarDoor className="text-[#fe9a00] text-xs md:text-sm" />
               <span className="text-[10px] md:text-xs font-bold">
                 {category.doors} doors
               </span>

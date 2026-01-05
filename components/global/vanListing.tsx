@@ -629,7 +629,7 @@ function ReservationPanel({
           <div className="px-6 pb-6 space-y-5">
             <div className="text-center mb-4">
               <h3 className="text-white font-bold text-lg mb-2">
-                Login or Sign Up
+                Reservation Request
               </h3>
               <p className="text-gray-400 text-sm">
                 Verify your phone to continue

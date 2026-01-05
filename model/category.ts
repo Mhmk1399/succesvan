@@ -20,11 +20,12 @@ const categorySchema = new mongoose.Schema(
     ],
     requiredLicense: { type: String, required: true },
     servicesPeriod: {
-      tire: { type: Number, min: 1 },
+      tyre: { type: Number, min: 1 },
       oil: { type: Number, min: 1 },
-      battery: { type: Number, min: 1 },
-      air: { type: Number, min: 1 },
+      coolant: { type: Number, min: 1 },
+      breakes: { type: Number, min: 1 },
       service: { type: Number, min: 1 },
+      adBlue: { type: Number, min: 1 },
     },
     pricingTiers: [
       {
