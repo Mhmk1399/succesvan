@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     await connect();
     const body = await req.json();
-    const { action, phoneNumber, code, name, lastName, emailAddress, licenceAttached, address } = body;
+    const { action, phoneNumber, code, name, lastName, emailAddress, licenceAttached, address, postalCode, city } = body;
 
     if (action === "send-code") {
       if (!phoneNumber) return errorResponse("Phone number required", 400);
@@ -100,6 +100,12 @@ export async function POST(req: NextRequest) {
       }
       if (address) {
         userData.address = address;
+      }
+      if (postalCode) {
+        userData.postalCode = postalCode;
+      }
+      if (city) {
+        userData.city = city;
       }
 
       const user = await User.create(userData);

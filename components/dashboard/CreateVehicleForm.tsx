@@ -40,11 +40,12 @@ export default function VehiclesContent() {
     properties: [{ name: "", value: "" }],
     needsService: false,
     serviceHistory: {
-      tire: new Date(),
+      tyre: new Date(),
       oil: new Date(),
-      battery: new Date(),
-      air: new Date(),
+      coolant: new Date(),
+      breakes: new Date(),
       service: new Date(),
+      adBlue: new Date(),
     },
     status: "active",
   });
@@ -193,12 +194,13 @@ export default function VehiclesContent() {
           .map((t: any) => (typeof t === "string" ? t : t.gearType))
           .filter(Boolean),
       },
-      serviceHistory: item.serviceHistory || {
-        tire: new Date(),
-        oil: new Date(),
-        battery: new Date(),
-        air: new Date(),
-        service: new Date(),
+      serviceHistory: {
+        tyre: item.serviceHistory?.tyre ? new Date(item.serviceHistory.tyre) : new Date(),
+        oil: item.serviceHistory?.oil ? new Date(item.serviceHistory.oil) : new Date(),
+        coolant: item.serviceHistory?.coolant ? new Date(item.serviceHistory.coolant) : new Date(),
+        breakes: item.serviceHistory?.breakes ? new Date(item.serviceHistory.breakes) : new Date(),
+        service: item.serviceHistory?.service ? new Date(item.serviceHistory.service) : new Date(),
+        adBlue: item.serviceHistory?.adBlue ? new Date(item.serviceHistory.adBlue) : new Date(),
       },
       status: (item as any).status || "active",
     });
@@ -267,11 +269,12 @@ export default function VehiclesContent() {
           })),
         },
         serviceHistory: {
-          tire: formData.serviceHistory.tire,
+          tyre: formData.serviceHistory.tyre,
           oil: formData.serviceHistory.oil,
-          battery: formData.serviceHistory.battery,
-          air: formData.serviceHistory.air,
+          coolant: formData.serviceHistory.coolant,
+          breakes: formData.serviceHistory.breakes,
           service: formData.serviceHistory.service,
+          adBlue: formData.serviceHistory.adBlue,
         },
         status: formData.status,
       };
@@ -509,7 +512,7 @@ export default function VehiclesContent() {
               <div className="space-y-3">
                 <h3 className="text-white font-semibold">Service History</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {["tire", "oil", "battery", "air", "service"].map((field) => (
+                  {["tyre", "oil", "coolant", "breakes", "service", "adBlue"].map((field) => (
                     <div key={field} className="relative">
                       <label className="text-xs text-gray-400 capitalize">
                         {field} Service
@@ -524,12 +527,16 @@ export default function VehiclesContent() {
                         className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded text-white text-sm text-left focus:outline-none focus:border-[#fe9a00] flex items-center gap-2"
                       >
                         <FiCalendar className="text-[#fe9a00]" />
-                        {format(
-                          formData.serviceHistory[
+                        {(() => {
+                          const date = formData.serviceHistory[
                             field as keyof typeof formData.serviceHistory
-                          ],
-                          "dd/MM/yyyy"
-                        )}
+                          ];
+                          try {
+                            return format(new Date(date), "dd/MM/yyyy");
+                          } catch {
+                            return "Invalid Date";
+                          }
+                        })()}
                       </button>
                       {showServiceDatePicker === field && (
                         <div className="absolute top-full mt-2 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-3">

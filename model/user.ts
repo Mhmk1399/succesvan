@@ -17,7 +17,10 @@ const userSchema = new mongoose.Schema(
       front: { type: String },
       back: { type: String },
     },
-    address: { type: String },
+    address: { type: String },  
+    postalCode: { type: String },
+    city:{type: String},
+  
   },
   { timestamps: true }
 );

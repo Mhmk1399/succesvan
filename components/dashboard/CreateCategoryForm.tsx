@@ -38,11 +38,12 @@ export default function CategoriesContent() {
     seats: "",
     doors: "",
     servicesPeriod: {
-      tire: "",
+      tyre: "",
       oil: "",
-      battery: "",
-      air: "",
+      coolant: "",
+      breakes: "",
       service: "",
+      adBlue: "",
     },
     offices: [] as string[],
     status: "active",
@@ -128,11 +129,12 @@ export default function CategoriesContent() {
       seats: "",
       doors: "",
       servicesPeriod: {
-        tire: "",
+        tyre: "",
         oil: "",
-        battery: "",
-        air: "",
+        coolant: "",
+        breakes: "",
         service: "",
+        adBlue: "",
       },
       offices: [] as string[],
       status: "active",
@@ -174,11 +176,12 @@ export default function CategoriesContent() {
       seats: String(item.seats || ""),
       doors: String(item.doors || ""),
       servicesPeriod: {
-        tire: String(item.servicesPeriod?.tire || ""),
+        tyre: String(item.servicesPeriod?.tyre || ""),
         oil: String(item.servicesPeriod?.oil || ""),
-        battery: String(item.servicesPeriod?.battery || ""),
-        air: String(item.servicesPeriod?.air || ""),
+        coolant: String(item.servicesPeriod?.coolant || ""),
+        breakes: String(item.servicesPeriod?.breakes || ""),
         service: String(item.servicesPeriod?.service || ""),
+        adBlue: String(item.servicesPeriod?.adBlue || ""),
       },
       offices: [],
       status: (item as any).status || "active",
@@ -320,11 +323,12 @@ export default function CategoriesContent() {
         seats: parseInt(formData.seats),
         doors: parseInt(formData.doors),
         servicesPeriod: {
-          tire: parseInt(formData.servicesPeriod.tire),
+          tyre: parseInt(formData.servicesPeriod.tyre),
           oil: parseInt(formData.servicesPeriod.oil),
-          battery: parseInt(formData.servicesPeriod.battery),
-          air: parseInt(formData.servicesPeriod.air),
+          coolant: parseInt(formData.servicesPeriod.coolant),
+          breakes: parseInt(formData.servicesPeriod.breakes),
           service: parseInt(formData.servicesPeriod.service),
+          adBlue: parseInt(formData.servicesPeriod.adBlue),
         },
         status: formData.status,
       };
@@ -1018,57 +1022,98 @@ export default function CategoriesContent() {
                   </span>
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="number"
-                    placeholder="Tire"
-                    value={formData.servicesPeriod.tire}
-                    onChange={(e) =>
-                      handleServiceChange("tire", e.target.value)
-                    }
-                    required
-                    min="1"
-                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Oil"
-                    value={formData.servicesPeriod.oil}
-                    onChange={(e) => handleServiceChange("oil", e.target.value)}
-                    required
-                    min="1"
-                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Battery"
-                    value={formData.servicesPeriod.battery}
-                    onChange={(e) =>
-                      handleServiceChange("battery", e.target.value)
-                    }
-                    required
-                    min="1"
-                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Air"
-                    value={formData.servicesPeriod.air}
-                    onChange={(e) => handleServiceChange("air", e.target.value)}
-                    required
-                    min="1"
-                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Service"
-                    value={formData.servicesPeriod.service}
-                    onChange={(e) =>
-                      handleServiceChange("service", e.target.value)
-                    }
-                    required
-                    min="1"
-                    className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
-                  />
+                  <div>
+                    <label className="text-gray-400 text-sm mb-2 block">
+                      Tyre Service Period (days)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Tyre"
+                      value={formData.servicesPeriod.tyre}
+                      onChange={(e) =>
+                        handleServiceChange("tyre", e.target.value)
+                      }
+                      required
+                      min="1"
+                      className="px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-gray-400 text-sm mb-2 block">
+                      Oil Service Period (days)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Oil"
+                      value={formData.servicesPeriod.oil}
+                      onChange={(e) => handleServiceChange("oil", e.target.value)}
+                      required
+                      min="1"
+                      className="px-4 py-3 w-full bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-gray-400 text-sm mb-2 block">
+                      Coolant Service Period (days)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Coolant"
+                      value={formData.servicesPeriod.coolant}
+                      onChange={(e) =>
+                        handleServiceChange("coolant", e.target.value)
+                      }
+                      required
+                      min="1"
+                      className="px-4 py-3 w-full bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-gray-400 text-sm mb-2 block">
+                      Brakes Service Period (days)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Breakes"
+                      value={formData.servicesPeriod.breakes}
+                      onChange={(e) => handleServiceChange("breakes", e.target.value)}
+                      required
+                      min="1"
+                      className="px-4 py-3 w-full bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-gray-400 text-sm mb-2 block">
+                      General Service Period (days)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Service"
+                      value={formData.servicesPeriod.service}
+                      onChange={(e) =>
+                        handleServiceChange("service", e.target.value)
+                      }
+                      required
+                      min="1"
+                      className="px-4 py-3 w-full bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-gray-400 text-sm mb-2 block">
+                      AdBlue Service Period (days)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="AdBlue"
+                      value={formData.servicesPeriod.adBlue}
+                      onChange={(e) =>
+                        handleServiceChange("adBlue", e.target.value)
+                      }
+                      required
+                      min="1"
+                      className="px-4 py-3 w-full bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+                    />
+                  </div>
                 </div>
               </div>
 

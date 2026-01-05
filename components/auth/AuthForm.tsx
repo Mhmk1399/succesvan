@@ -17,6 +17,8 @@ export default function AuthForm() {
     phoneNumber: "",
     code: "",
     address: "",
+    postalCode: "",
+    city: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -114,6 +116,8 @@ export default function AuthForm() {
       newErrors.emailAddress = "Email is invalid";
     }
     if (!formData.address.trim()) newErrors.address = "Address is required";
+    if (!formData.postalCode.trim()) newErrors.postalCode = "Postal code is required";
+    if (!formData.city.trim()) newErrors.city = "City is required";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -140,6 +144,8 @@ export default function AuthForm() {
           lastName: formData.lastName,
           emailAddress: formData.emailAddress,
           address: formData.address,
+          postalCode: formData.postalCode,
+          city: formData.city,
         }),
       });
       const data = await res.json();
@@ -357,6 +363,50 @@ export default function AuthForm() {
                       {errors.address}
                     </p>
                   )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="relative">
+                    <FiMapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                    <input
+                      type="text"
+                      name="postalCode"
+                      value={formData.postalCode}
+                      onChange={handleInputChange}
+                      placeholder="Postal Code"
+                      required
+                      className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
+                        errors.postalCode
+                          ? "border-red-500/50 focus:border-red-500"
+                          : "border-white/20 focus:border-[#fe9a00]"
+                      }`}
+                    />
+                    {errors.postalCode && (
+                      <p className="mt-1 text-red-400 text-sm">
+                        {errors.postalCode}
+                      </p>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <FiMapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                    <input
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      placeholder="City"
+                      required
+                      className={`w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-white/40 focus:outline-none focus:bg-white/10 transition-all duration-300 ${
+                        errors.city
+                          ? "border-red-500/50 focus:border-red-500"
+                          : "border-white/20 focus:border-[#fe9a00]"
+                      }`}
+                    />
+                    {errors.city && (
+                      <p className="mt-1 text-red-400 text-sm">
+                        {errors.city}
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <input
