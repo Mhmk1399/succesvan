@@ -1,12 +1,20 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 interface User {
   _id: string;
   name: string;
   lastName?: string;
-  email: string;
+  emailData: {
+    emailAddress: string;
+  };
   phoneNumber: string;
   role: string;
 }
@@ -32,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        
+
         if (data.success) {
           setUser(data.data);
           localStorage.setItem("user", JSON.stringify(data.data));

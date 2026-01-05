@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { IoIosArrowForward } from "react-icons/io";
-import { PiDoorOpen } from "react-icons/pi";
+import { GiCarDoor } from "react-icons/gi";
 
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
@@ -31,6 +31,7 @@ import TimeSelect from "@/components/ui/TimeSelect";
 import { generateTimeSlots } from "@/utils/timeSlots";
 import { usePriceCalculation } from "@/hooks/usePriceCalculation";
 import AddOnsModal from "./AddOnsModal";
+import useCategories from "@/hooks/useCategories";
 
 interface AddOn {
   _id: string;
@@ -52,6 +53,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format } from "date-fns";
 import Link from "next/link";
+import { FaArrowRight } from "react-icons/fa";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -85,23 +87,22 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
     }
   }, [vans.length]);
 
+  const { categories: fetchedCategories, isLoading: categoriesLoading } =
+    useCategories("active");
+
   useEffect(() => {
     setIsLoading(true);
-    fetch("/api/categories?status=active")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        const categoriesData = data?.data?.data || data?.data || [];
-        if (Array.isArray(categoriesData) && categoriesData.length > 0) {
-          console.log("Setting van categories:", categoriesData.length);
-          setCategories(categoriesData);
-        }
-      })
-      .catch((err) => console.log("Failed to fetch categories", err))
-      .finally(() => setIsLoading(false));
-  }, [vans.length]);
+    if (vans.length > 0) {
+      setCategories(vans as Category[]);
+      setIsLoading(false);
+      return;
+    }
+    if (Array.isArray(fetchedCategories) && fetchedCategories.length > 0) {
+      console.log("Setting van categories:", fetchedCategories.length);
+      setCategories(fetchedCategories);
+    }
+    setIsLoading(!!categoriesLoading);
+  }, [vans.length, fetchedCategories, categoriesLoading]);
 
   const setCardRef = useCallback((index: number, el: HTMLDivElement | null) => {
     cardsRef.current[index] = el;
@@ -358,8 +359,7 @@ function ReservationPanel({
 
   // Fetch offices
   useEffect(() => {
-    console.log("Fetching offices...");
-    fetch("/api/offices")
+    fetch("/api/offices?status=active")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -552,7 +552,6 @@ function ReservationPanel({
 
   // Calculate add-ons cost
   useEffect(() => {
-    const rentalDays = basePriceCalc?.totalDays || 1;
     const cost = selectedAddOns.reduce((total, item) => {
       const addon = addOns.find((a) => a._id === item.addOn);
       if (!addon) return total;
@@ -1176,7 +1175,7 @@ function ReservationPanel({
           {/* Quick Info Grid */}
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-white/5 rounded-lg p-2 text-center border border-white/5">
-              <PiDoorOpen  className="text-[#fe9a00] mx-auto mb-1 text-sm" />
+              <GiCarDoor className="text-[#fe9a00] mx-auto mb-1 text-sm" />
               <p className="text-white font-semibold text-xs">{van.doors}</p>
               <p className="text-gray-400 text-[10px]">doors</p>
             </div>
@@ -1198,7 +1197,7 @@ function ReservationPanel({
           <div className="px-6 pb-6 space-y-5">
             <div className="text-center mb-4">
               <h3 className="text-white font-bold text-lg mb-2">
-                Login or Sign Up
+                Reservation Request
               </h3>
               <p className="text-gray-400 text-sm">
                 Verify your phone to continue
@@ -2303,12 +2302,12 @@ function CategoryCard({
           <h3 className="text-xl md:text-2xl font-black leading-tight mb-2 drop-shadow-lg">
             {category.name}
           </h3>
-          <p className="text-gray-200 text-xs md:text-sm font-medium mb-5 drop-shadow-md">
+          <p className="text-gray-200 text-xs md:text-sm font-medium mb-4 drop-shadow-md">
             {category.expert}
           </p>
 
           {/* Feature Badges */}
-          <div className="flex flex-wrap gap-1 md:gap-2 mb-6">
+          <div className="flex flex-wrap gap-1 md:gap-2 mb-3">
             <div className="md:px-3 md:py-1.5 px-2 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
               <FiUsers className="text-[#fe9a00] text-xs md:text-sm" />
               <span className="text-[10px] md:text-xs font-bold">
@@ -2322,7 +2321,7 @@ function CategoryCard({
               </span>
             </div>
             <div className="px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 flex items-center gap-2 shadow-sm">
-              <PiDoorOpen className="text-[#fe9a00] text-xs md:text-sm" />
+              <GiCarDoor className="text-[#fe9a00] text-xs md:text-sm" />
               <span className="text-[10px] md:text-xs font-bold">
                 {category.doors} doors
               </span>
@@ -2331,28 +2330,42 @@ function CategoryCard({
         </div>
 
         <div className="space-y-4 flex items-end justify-between">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDetails();
-            }}
-            className="flex items-center gap-2 text-[#fe9a00] font-bold text-xs md:text-sm hover:gap-3 hover:border-b-2 hover:border-[#fe9a00] transition-all duration-300"
-          >
-            <span>Van Dimensions</span>
-            <IoIosArrowForward className="text-lg" />
-          </button>
+          <div className="space-y-2">
+            {/* License Badge */}
+            <div className="inline-flex items-center gap-2 px-2 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-500 text-[10px] font-semibold shadow-sm">
+              <span>{category.requiredLicense}</span>
+            </div>
 
-          <div>
+            {/* Details Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onView();
+                onDetails();
               }}
-              className="px-7 py-3 bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] text-black font-bold rounded-xl shadow-lg hover:shadow-[#fe9a00]/50 transform hover:scale-105 transition-all duration-300"
+              className="flex items-center gap-2 text-[#fe9a00] font-bold text-xs md:text-sm
+                 hover:gap-3 hover:border-b-2 hover:border-[#fe9a00]
+                 transition-all duration-300"
             >
-              Book Now
+              <span>Van Dimensions</span>
+              <IoIosArrowForward className="text-lg" />
             </button>
           </div>
+
+          {/* Book Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onView();
+            }}
+            className="px-5 py-3 bg-linear-to-r flex gap-1 items-center  from-[#fe9a00] to-[#ff8800]
+               hover:from-[#ff8800] hover:to-[#fe9a00]
+               text-black font-semibold rounded-xl shadow-lg
+               hover:shadow-[#fe9a00]/50 transform hover:scale-105
+               transition-all duration-300"
+          >
+            Book Now
+            <IoIosArrowForward className="text-base text-black" />
+          </button>
         </div>
       </div>
     </div>

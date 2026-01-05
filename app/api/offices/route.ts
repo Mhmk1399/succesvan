@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const name = searchParams.get("name");
     const phone = searchParams.get("phone");
+    const status = searchParams.get("status");
     const skip = (page - 1) * limit;
 
     const query: any = {};
@@ -21,6 +22,10 @@ export async function GET(req: NextRequest) {
     }
     if (phone) {
       query.phone = { $regex: phone, $options: "i" };
+    }
+    if (status) {
+      // accept explicit status filter (e.g. "active" or "inactive")
+      query.status = status;
     }
 
     const offices = await Office.find(query)

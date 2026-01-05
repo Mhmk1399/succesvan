@@ -290,6 +290,7 @@ export interface VanData {
   name: string;
   description?: string;
   image: string;
+  requiredLicense: string;
   type?: string;
   servicesPeriod?: {
     tire: number;

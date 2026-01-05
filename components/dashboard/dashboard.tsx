@@ -196,6 +196,7 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    window.location.reload();
   };
 
   return (
