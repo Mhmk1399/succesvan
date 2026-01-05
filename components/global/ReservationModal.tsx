@@ -128,7 +128,10 @@ export default function ReservationModal({
   const [address, setAddress] = useState<string>("");
   const [postalCode, setPostalCode] = useState<string>("");
   const [city, setCity] = useState<string>("");
-  const [uploadingLicense, setUploadingLicense] = useState({ front: false, back: false });
+  const [uploadingLicense, setUploadingLicense] = useState({
+    front: false,
+    back: false,
+  });
 
   const selectedCategory = categories.find((c) => c._id === formData.category);
 
@@ -273,14 +276,17 @@ export default function ReservationModal({
     const totalPrice = daysPrice + extraHoursPrice;
     let breakdown = "";
     if (totalDays > 0 && extraHours > 0) {
-      breakdown = `${totalDays} day${totalDays > 1 ? "s" : ""
-        } (£${pricePerDay}/day) + ${extraHours}h (£${cat.extrahoursRate
-        }/hr) = £${totalPrice}`;
+      breakdown = `${totalDays} day${
+        totalDays > 1 ? "s" : ""
+      } (£${pricePerDay.toFixed(2)}/day) + ${extraHours}h (£${
+        (cat.extrahoursRate || 0).toFixed(2)
+      }/hr) = £${totalPrice.toFixed(2)}`;
     } else if (totalDays > 0) {
-      breakdown = `${totalDays} day${totalDays > 1 ? "s" : ""
-        } (£${pricePerDay}/day) = £${totalPrice}`;
+      breakdown = `${totalDays} day${
+        totalDays > 1 ? "s" : ""
+      } (£${pricePerDay.toFixed(2)}/day) = £${totalPrice.toFixed(2)}`;
     } else {
-      breakdown = `${extraHours}h (£${cat.extrahoursRate}/hr) = £${totalPrice}`;
+      breakdown = `${extraHours}h (£${(cat.extrahoursRate || 0).toFixed(2)}/hr) = £${totalPrice.toFixed(2)}`;
     }
     return {
       totalPrice: parseFloat(totalPrice.toFixed(2)),
@@ -459,8 +465,8 @@ export default function ReservationModal({
           ...prev,
           name: user.name || "",
           lastName: user.lastName || "",
-          email: user.emaildata?.emailAddress || "",
-          phone: user.phoneData?.phoneNumber?.replace("+44", "") || "",
+          email: user.emailData?.emailAddress || "",
+          phone: user.phoneNumber?.replace("+44", "") || "",
         }));
         if (hasRentalData) {
           setStep(3);
@@ -532,7 +538,9 @@ export default function ReservationModal({
           name: data.data.user.name,
           lastName: data.data.user.lastName,
           email: data.data.user.emaildata?.emailAddress || "",
-          phone: data.data.user.phoneData?.phoneNumber?.replace("+44", "") || formData.phone,
+          phone:
+            data.data.user.phoneData?.phoneNumber?.replace("+44", "") ||
+            formData.phone,
         }));
         setStep(3);
       } else {
@@ -748,8 +756,8 @@ export default function ReservationModal({
           status: "pending",
           addOns: selectedAddOns,
           discountCode: appliedDiscount?.code || null,
-  selectedGear: formData.gearType,
-},
+          selectedGear: formData.gearType,
+        },
       };
 
       if (appliedDiscount) {
@@ -834,8 +842,9 @@ export default function ReservationModal({
                   {[1, 2, 3, 4].map((s) => (
                     <div
                       key={s}
-                      className={`h-1 rounded-full transition-all ${s <= step ? "bg-[#fe9a00] w-8" : "bg-white/20 w-6"
-                        }`}
+                      className={`h-1 rounded-full transition-all ${
+                        s <= step ? "bg-[#fe9a00] w-8" : "bg-white/20 w-6"
+                      }`}
                     />
                   ))}
                 </div>
@@ -871,10 +880,11 @@ export default function ReservationModal({
                                 category: cat._id,
                               }))
                             }
-                            className={`group relative h-96 rounded-2xl overflow-hidden cursor-pointer transition-all ${formData.category === cat._id
+                            className={`group relative h-96 rounded-2xl overflow-hidden cursor-pointer transition-all ${
+                              formData.category === cat._id
                                 ? "ring-2 ring-[#fe9a00]"
                                 : ""
-                              }`}
+                            }`}
                           >
                             <div className="absolute inset-0">
                               <Image
@@ -919,7 +929,7 @@ export default function ReservationModal({
                                 {catPrice ? (
                                   <>
                                     {(cat as any).selloffer &&
-                                      (cat as any).selloffer > 0 ? (
+                                    (cat as any).selloffer > 0 ? (
                                       <>
                                         <div className="flex items-baseline gap-1 mb-1">
                                           <span className="text-sm font-bold text-gray-400 line-through">
@@ -1032,7 +1042,8 @@ export default function ReservationModal({
             {step === 2 && (
               <div className="space-y-4">
                 <h3 className="text-white font-bold text-lg mb-4">
-                  Reservation Request                </h3>
+                  Reservation Request{" "}
+                </h3>
 
                 {authStep === "phone" && (
                   <div>
@@ -1198,8 +1209,9 @@ export default function ReservationModal({
                           setAddress(e.target.value);
                           setErrors({ ...errors, address: "" });
                         }}
-                        className={`w-full bg-white/5 border ${errors.address ? "border-red-500" : "border-white/10"
-                          } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]`}
+                        className={`w-full bg-white/5 border ${
+                          errors.address ? "border-red-500" : "border-white/10"
+                        } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]`}
                         placeholder="123 Main Street"
                       />
                       {errors.address && (
@@ -1221,8 +1233,11 @@ export default function ReservationModal({
                             setPostalCode(e.target.value);
                             setErrors({ ...errors, postalCode: "" });
                           }}
-                          className={`w-full bg-white/5 border ${errors.postalCode ? "border-red-500" : "border-white/10"
-                            } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]`}
+                          className={`w-full bg-white/5 border ${
+                            errors.postalCode
+                              ? "border-red-500"
+                              : "border-white/10"
+                          } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]`}
                           placeholder="SW1A 1AA"
                         />
                         {errors.postalCode && (
@@ -1243,8 +1258,9 @@ export default function ReservationModal({
                             setCity(e.target.value);
                             setErrors({ ...errors, city: "" });
                           }}
-                          className={`w-full bg-white/5 border ${errors.city ? "border-red-500" : "border-white/10"
-                            } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]`}
+                          className={`w-full bg-white/5 border ${
+                            errors.city ? "border-red-500" : "border-white/10"
+                          } rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]`}
                           placeholder="London"
                         />
                         {errors.city && (
@@ -1435,58 +1451,60 @@ export default function ReservationModal({
                     {selectedCategory?.gear?.availableTypes?.length > 1 && (
                       <div className="mt-3 pt-3 border-t border-white/10">
                         <h5 className="text-white text-sm font-semibold mb-2">
-                          Gearbox
+                          Gear Option
                         </h5>
                         <div className="flex gap-2">
                           {selectedCategory.gear.availableTypes.includes(
                             "manual"
                           ) && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    gearType: "manual",
-                                  }))
-                                }
-                                className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${formData.gearType === "manual"
-                                    ? "bg-[#fe9a00] text-white"
-                                    : "bg-white/10 text-gray-300 hover:bg-white/20"
-                                  }`}
-                              >
-                                Manual
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  gearType: "manual",
+                                }))
+                              }
+                              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                                formData.gearType === "manual"
+                                  ? "bg-[#fe9a00] text-white"
+                                  : "bg-white/10 text-gray-300 hover:bg-white/20"
+                              }`}
+                            >
+                              Manual
+                            </button>
+                          )}
                           {selectedCategory.gear.availableTypes.includes(
                             "automatic"
                           ) && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    gearType: "automatic",
-                                  }))
-                                }
-                                className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${formData.gearType === "automatic"
-                                    ? "bg-[#fe9a00] text-white"
-                                    : "bg-white/10 text-gray-300 hover:bg-white/20"
-                                  }`}
-                              >
-                                Automatic
-                                {(selectedCategory.gear as any)
-                                  ?.automaticExtraCost > 0 && (
-                                    <span className="text-xs ml-1">
-                                      (+£
-                                      {
-                                        (selectedCategory.gear as any)
-                                          .automaticExtraCost
-                                      }
-                                      /day)
-                                    </span>
-                                  )}
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  gearType: "automatic",
+                                }))
+                              }
+                              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                                formData.gearType === "automatic"
+                                  ? "bg-[#fe9a00] text-white"
+                                  : "bg-white/10 text-gray-300 hover:bg-white/20"
+                              }`}
+                            >
+                              Automatic
+                              {(selectedCategory.gear as any)
+                                ?.automaticExtraCost > 0 && (
+                                <span className="text-xs ml-1">
+                                  (+£
+                                  {
+                                    (selectedCategory.gear as any)
+                                      .automaticExtraCost
+                                  }
+                                  /day)
+                                </span>
+                              )}
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}
@@ -1524,15 +1542,40 @@ export default function ReservationModal({
                             )
                           );
                         })
+                        .sort((a, b) => {
+                          const typeA = (a as any).type || '';
+                          const typeB = (b as any).type || '';
+                          // Group by type - items with same type together
+                          if (typeA === typeB) return 0;
+                          // Items without type go to the end
+                          if (!typeA) return 1;
+                          if (!typeB) return -1;
+                          // Sort alphabetically by type
+                          return typeA.localeCompare(typeB);
+                        })
                         .map((addon) => {
                           const selected = selectedAddOns.find(
                             (s) => s.addOn === addon._id
                           );
                           const rentalDays = priceCalc.totalDays;
+                          
+                          // Check if another addon with the same type is already selected
+                          const addonType = (addon as any).type;
+                          const isTypeDisabled = addonType && selectedAddOns.some((s) => {
+                            const selectedAddon = addOns.find((a) => a._id === s.addOn);
+                            return selectedAddon && (selectedAddon as any).type === addonType && selectedAddon._id !== addon._id;
+                          });
+                          
+                          // Max quantity is 1
+                          const isMaxQuantity = selected && selected.quantity >= 1;
+                          const canAdd = !isTypeDisabled && !isMaxQuantity;
+                          
                           return (
                             <div
                               key={addon._id}
-                              className="bg-white/5 border border-white/10 rounded-xl p-3"
+                              className={`bg-white/5 border rounded-xl p-3 transition-all ${
+                                isTypeDisabled ? 'border-red-500/30 opacity-50' : 'border-white/10'
+                              }`}
                             >
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex-1">
@@ -1542,6 +1585,11 @@ export default function ReservationModal({
                                   {addon.description && (
                                     <p className="text-gray-400 text-xs mt-1">
                                       {addon.description}
+                                    </p>
+                                  )}
+                                  {isTypeDisabled && (
+                                    <p className="text-red-400 text-xs mt-1">
+                                      Another option of this type is already selected
                                     </p>
                                   )}
                                   {addon.pricingType === "flat" ? (
@@ -1617,7 +1665,8 @@ export default function ReservationModal({
                                         );
                                       });
                                     }}
-                                    className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
+                                    disabled={!selected}
+                                    className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                                   >
                                     -
                                   </button>
@@ -1626,19 +1675,14 @@ export default function ReservationModal({
                                   </span>
                                   <button
                                     onClick={() => {
+                                      if (!canAdd) return;
                                       setSelectedAddOns((prev) => {
                                         const existing = prev.find(
                                           (s) => s.addOn === addon._id
                                         );
                                         if (existing) {
-                                          return prev.map((s) =>
-                                            s.addOn === addon._id
-                                              ? {
-                                                  ...s,
-                                                  quantity: s.quantity + 1,
-                                                }
-                                              : s
-                                          );
+                                          // Max quantity is 1, so don't increment
+                                          return prev;
                                         }
                                         let defaultTierIndex = undefined;
                                         if (
@@ -1666,7 +1710,19 @@ export default function ReservationModal({
                                         ];
                                       });
                                     }}
-                                    className="w-7 h-7 rounded bg-[#fe9a00] hover:bg-orange-600 text-white flex items-center justify-center transition-all"
+                                    disabled={!canAdd}
+                                    className={`w-7 h-7 rounded flex items-center justify-center transition-all ${
+                                      canAdd 
+                                        ? 'bg-[#fe9a00] hover:bg-orange-600 text-white cursor-pointer' 
+                                        : 'bg-gray-600/50 text-gray-400 cursor-not-allowed opacity-50'
+                                    }`}
+                                    title={
+                                      isTypeDisabled 
+                                        ? 'Another option of this type is already selected' 
+                                        : isMaxQuantity 
+                                        ? 'Maximum quantity reached' 
+                                        : 'Add addon'
+                                    }
                                   >
                                     +
                                   </button>
@@ -1776,17 +1832,21 @@ export default function ReservationModal({
                 </div>
 
                 {/* Gear Type */}
-                {formData.gearType && selectedCategory?.gear?.availableTypes && selectedCategory.gear.availableTypes.length > 1 && (
+                {formData.gearType &&
+                  selectedCategory?.gear?.availableTypes &&
+                  selectedCategory.gear.availableTypes.length > 1 && (
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                       <h4 className="text-white font-semibold mb-2">Gearbox</h4>
                       <p className="text-white capitalize">
                         {formData.gearType}
                       </p>
                       {formData.gearType === "automatic" &&
-                        ((selectedCategory?.gear as Category["gear"])?.automaticExtraCost || 0) > 0 && (
+                        ((selectedCategory?.gear as Category["gear"])
+                          ?.automaticExtraCost || 0) > 0 && (
                           <p className="text-gray-400 text-sm mt-1">
                             +£
-                            {(selectedCategory?.gear as Category["gear"]).automaticExtraCost || 0}
+                            {(selectedCategory?.gear as Category["gear"])
+                              .automaticExtraCost || 0}
                             /day
                           </p>
                         )}
@@ -1981,14 +2041,14 @@ export default function ReservationModal({
                     />
                     <span className="text-gray-300 text-sm">
                       I agree to the{" "}
-  <a
-    href="/terms-and-conditions"
-    target="_blank"
-    className="text-[#fe9a00] hover:underline font-semibold"
-  >
-    Terms & Conditions
-  </a>{" "}
-</span>
+                      <a
+                        href="/terms-and-conditions"
+                        target="_blank"
+                        className="text-[#fe9a00] hover:underline font-semibold"
+                      >
+                        Terms & Conditions
+                      </a>{" "}
+                    </span>
                   </label>
                   {errors.acceptTerms && (
                     <p className="text-red-400 text-xs mt-2">

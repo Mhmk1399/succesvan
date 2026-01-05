@@ -4,6 +4,7 @@ const addOnSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     description: { type: String },
+    type: { type: String },
     pricingType: { type: String, enum: ["flat", "tiered"], required: true },
     flatPrice: {
       amount: {
