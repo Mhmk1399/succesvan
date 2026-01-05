@@ -11,12 +11,17 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const name = searchParams.get("name");
+    const status = searchParams.get("status");
     const createdAtStart = searchParams.get("createdAtStart");
     const createdAtEnd = searchParams.get("createdAtEnd");
     const skip = (page - 1) * limit;
 
     const query: any = {};
     if (name) query.name = { $regex: name, $options: "i" };
+    if (status) {
+      // accept explicit status filter (e.g. "active" or "inactive")
+      query.status = status;
+    }
     if (createdAtStart || createdAtEnd) {
       query.createdAt = {};
       if (createdAtStart) query.createdAt.$gte = new Date(createdAtStart);
@@ -27,10 +32,14 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const types = await Type.find(query).populate({
-      path: "offices",
-      model: Office
-    }).skip(skip).limit(limit);
+    const types = await Type.find(query)
+      .populate({
+        path: "offices",
+        model: Office,
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
     const total = await Type.countDocuments(query);
     const pages = Math.ceil(total / limit);
 
