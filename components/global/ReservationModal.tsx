@@ -1744,12 +1744,21 @@ export default function ReservationModal({
                   )}
                 </div>
 
-                <button
-                  onClick={() => setStep(4)}
-                  className="w-full bg-[#fe9a00] hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all"
-                >
-                  Continue to Review
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setStep(user ? 1 : 2)}
+                    className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
+                  >
+                    <FiArrowLeft />
+                    Back
+                  </button>
+                  <button
+                    onClick={() => setStep(4)}
+                    className="flex-1 bg-[#fe9a00] hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all"
+                  >
+                    Continue to Review
+                  </button>
+                </div>
               </div>
             )}
 
@@ -2069,8 +2078,9 @@ export default function ReservationModal({
                 <div className="flex gap-3">
                   <button
                     onClick={() => setStep(3)}
-                    className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all"
+                    className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
                   >
+                    <FiArrowLeft />
                     Back
                   </button>
                   <button

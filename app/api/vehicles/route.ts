@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
     const number = searchParams.get("number");
     const office = searchParams.get("office");
     const status = searchParams.get("status");
-    const available = searchParams.get("available"); // ← NEW
+    const available = searchParams.get("available");
+    const category = searchParams.get("category");
 
     const skip = (page - 1) * limit;
 
@@ -25,6 +26,7 @@ export async function GET(req: NextRequest) {
     if (number) query.number = { $regex: number, $options: "i" };
     if (office) query.office = office;
     if (status) query.status = status;
+    if (category) query.category = category;
 
     // Special: only available vehicles
     if (available === "true") {
