@@ -12,6 +12,7 @@ import {
   FiPackage,
   FiUsers,
   FiAlertCircle,
+  FiArrowLeft,
 } from "react-icons/fi";
 
 import AddOnsModal from "./AddOnsModal";
@@ -825,6 +826,14 @@ export default function ReservationModal({
         <div className="relative bg-[#0f172b] rounded-2xl max-w-6xl w-full max-h-[99vh] overflow-y-auto border border-white/10">
           {/* Header */}
           <div className="sticky top-0 bg-linear-to-b from-[#0f172b] to-[#0f172b]/95 border-b border-white/10 px-4 py-3 flex items-center justify-between z-10 backdrop-blur-sm">
+            {step > 1 && (
+              <button
+                onClick={() => setStep((prev) => Math.max(1, prev - 1) as 1 | 2 | 3 | 4)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors shrink-0 mr-2"
+              >
+                <FiArrowLeft className="text-white text-xl" />
+              </button>
+            )}
             <div className="flex-1">
               <h2 className="text-xl md:text-2xl font-black text-white">
                 Book Your Van

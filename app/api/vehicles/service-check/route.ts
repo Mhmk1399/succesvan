@@ -1,69 +1,74 @@
 import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import Vehicle from "@/model/vehicle";
-import Category from "@/model/category";
+import User from "@/model/user";
+import { sendSMS } from "@/lib/sms";
 import { successResponse, errorResponse } from "@/lib/api-response";
 
 export async function GET(req: NextRequest) {
   try {
+    const authHeader = req.headers.get("authorization");
+    const isManualTrigger = !authHeader;
+    
+    if (!isManualTrigger && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return errorResponse("Unauthorized", 401);
+    }
+
     await connect();
 
-    const vehicles = await Vehicle.find().populate("category");
+    const vehicles = await Vehicle.find({ status: "active" }).populate("category");
     const now = new Date();
-    const vehiclesNeedingService = [];
+    const results = { checked: 0, needsService: 0, smsCount: 0 };
 
     for (const vehicle of vehicles) {
+      results.checked++;
       const category = vehicle.category as any;
       if (!category?.servicesPeriod) continue;
 
-      const expiredServices = [];
-      const serviceTypes = ["tire", "oil", "battery", "air", "service"];
+      const services = ["tyre", "oil", "coolant", "breakes", "service", "adBlue"];
+      const overdueServices: string[] = [];
 
-      for (const serviceType of serviceTypes) {
-        const lastServiceDate = vehicle.serviceHistory?.[serviceType];
+      for (const serviceType of services) {
+        const lastService = vehicle.serviceHistory?.[serviceType];
         const periodDays = category.servicesPeriod[serviceType];
-
-        if (lastServiceDate && periodDays) {
-          const daysSinceService = Math.floor(
-            (now.getTime() - new Date(lastServiceDate).getTime()) /
-              (1000 * 60 * 60 * 24)
-          );
-
+        
+        if (lastService && periodDays) {
+          const daysSinceService = Math.floor((now.getTime() - new Date(lastService).getTime()) / (1000 * 60 * 60 * 24));
           if (daysSinceService >= periodDays) {
-            expiredServices.push({
-              type: serviceType,
-              lastService: lastServiceDate,
-              daysSinceService,
-              requiredPeriod: periodDays,
-              daysOverdue: daysSinceService - periodDays,
-            });
+            overdueServices.push(serviceType);
           }
         }
       }
 
-      if (expiredServices.length > 0) {
-        // Update needsService flag
-        await Vehicle.findByIdAndUpdate(vehicle._id, { needsService: true });
+      if (overdueServices.length > 0) {
+        vehicle.needsService = true;
+        await vehicle.save();
+        results.needsService++;
 
-        vehiclesNeedingService.push({
-          _id: vehicle._id,
-          title: vehicle.title,
-          category: category.name,
-          needsService: true,
-          expiredServices,
-        });
-      } else {
-        // Update needsService flag to false if all services are up to date
-        await Vehicle.findByIdAndUpdate(vehicle._id, { needsService: false });
+        // Send SMS to admins
+        const admins = await User.find({ role: "admin" });
+        for (const admin of admins) {
+          if (admin.phoneData?.phoneNumber) {
+            try {
+              await sendSMS(
+                admin.phoneData.phoneNumber.replace("+", ""),
+                `Vehicle ${vehicle.number} needs service: ${overdueServices.join(", ")}. SuccessVanHire.co.uk`
+              );
+              results.smsCount++;
+            } catch (error) {
+              console.log(`Service SMS Error (${admin.phoneData.phoneNumber}):`, error);
+            }
+          }
+        }
+      } else if (vehicle.needsService) {
+        vehicle.needsService = false;
+        await vehicle.save();
       }
     }
 
-    return successResponse({
-      total: vehiclesNeedingService.length,
-      vehicles: vehiclesNeedingService,
-    });
+    return successResponse(results);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse( message, 500);
+    return errorResponse(message, 500);
   }
 }
