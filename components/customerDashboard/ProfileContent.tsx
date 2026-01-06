@@ -90,14 +90,14 @@ export default function ProfileContent({
   };
 
   const handleFileUpload = async (file: File, side: "front" | "back") => {
-    setUploading({ ...uploading, [side]: true });
+    setUploading((prev) => ({ ...prev, [side]: true }));
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
 
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
-        body: formData,
+        body: formDataUpload,
       });
       const uploadData = await uploadRes.json();
       if (uploadData.error) throw new Error(uploadData.error);
@@ -129,7 +129,7 @@ export default function ProfileContent({
       const message = error instanceof Error ? error.message : "Unknown error";
       showToast.error(message || "Upload failed");
     } finally {
-      setUploading({ ...uploading, [side]: false });
+      setUploading((prev) => ({ ...prev, [side]: false }));
     }
   };
 
