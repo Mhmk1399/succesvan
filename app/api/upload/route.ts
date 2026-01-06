@@ -2,16 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
-  region: process.env.this_S3_REGION,
+  region: process.env.this_S3_REGION || "eu-west-2",
   credentials: {
-    accessKeyId: process.env.this_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.this_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.this_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.this_SECRET_ACCESS_KEY || "",
   },
 });
 
 export async function POST(req: NextRequest) {
   try {
- 
+    if (!process.env.this_ACCESS_KEY_ID || !process.env.this_SECRET_ACCESS_KEY) {
+      console.error("Missing AWS credentials");
+      return NextResponse.json(
+        { error: "Server configuration error: Missing AWS credentials" },
+        { status: 500 }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File;
 
