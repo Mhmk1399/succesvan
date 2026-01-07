@@ -43,6 +43,8 @@ export async function PUT(
     if (body.name) updateData.name = body.name;
     if (body.lastName) updateData.lastName = body.lastName;
     if (body.address) updateData.address = body.address;
+    if (body.city) updateData.city = body.city; // ADD THIS
+    if (body.postalCode) updateData.postalCode = body.postalCode; // ADD THIS
     if (body.email) updateData["emaildata.emailAddress"] = body.email;
     if (body.phone) updateData["phoneData.phoneNumber"] = body.phone;
     if (body.password) updateData.password = body.password;
