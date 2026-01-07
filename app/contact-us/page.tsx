@@ -40,7 +40,7 @@ export default function ContactUs() {
     {
       question: "What do I need to rent a van?",
       answer:
-        "Your ID, Valid driving Licenses, A proof of address, and your bank card.",
+        "Your ID, Valid driving licences, A proof of address, and your bank card.",
       category: "Requirements",
     },
     {

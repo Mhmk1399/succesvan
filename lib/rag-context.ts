@@ -141,7 +141,7 @@ export async function buildRAGContext(
     
     context += `- Seats: ${category.seats}\n`;
     context += `- Doors: ${category.doors}\n`;
-    context += `- Required Licenses: ${category.requiredLicense}\n`;
+    context += `- Required licences: ${category.requiredLicense}\n`;
     context += `- Starting Price: £${category.showPrice}/day\n`;
     
     // Vehicle Properties (cargo space, dimensions, etc.)

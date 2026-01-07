@@ -1804,7 +1804,7 @@ export default function FastAgentModal({
               </h3>
               <p className="text-gray-400">
                 {agentState.isNewUser
-                  ? "Account created! Redirecting to upload your license..."
+                  ? "Account created! Redirecting to upload your licences..."
                   : "Redirecting to your dashboard..."}
               </p>
             </div>

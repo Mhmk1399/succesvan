@@ -899,7 +899,7 @@ export default function DynamicTableView<
                           <p className="text-xs text-gray-400 mb-2">Front</p>
                           <Image
                             src={item.licenceAttached.front}
-                            alt="Licenses Front"
+                            alt="licences Front"
                             width={150}
                             height={100}
                             className="rounded-lg object-cover"
@@ -917,7 +917,7 @@ export default function DynamicTableView<
                           <p className="text-xs text-gray-400 mb-2">Back</p>
                           <Image
                             src={item.licenceAttached.back}
-                            alt="Licenses Back"
+                            alt="licences Back"
                             width={150}
                             height={100}
                             className="rounded-lg object-cover"

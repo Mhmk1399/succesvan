@@ -14,8 +14,7 @@ export default function CategoriesContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const mutateRef = useRef<MutateFn | null>(null);
   const [types, setTypes] = useState<Type[]>([]);
-  const [offices, setOffices] = useState<any[]>([]);
-  const [uploading, setUploading] = useState({ image: false, video: false });
+   const [uploading, setUploading] = useState({ image: false, video: false });
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -59,8 +58,7 @@ export default function CategoriesContent() {
         const typesData = await typesRes.json();
         const officesData = await officesRes.json();
         if (typesData.success) setTypes(typesData.data);
-        if (officesData.success) setOffices(officesData.data);
-      } catch (error) {
+       } catch (error) {
         console.log("Failed to fetch data", error);
       }
     };
@@ -861,12 +859,12 @@ export default function CategoriesContent() {
 
               <div>
                 <label className="text-gray-400 text-sm mb-2 block">
-                  Required Licenses
+                  Required Licences
                 </label>
                 <input
                   type="text"
-                  name="requiredLicense"
-                  placeholder="Required Licenses"
+                  name="requiredLicence"
+                  placeholder="Required Licences"
                   value={formData.requiredLicense}
                   onChange={handleInputChange}
                   required
@@ -1220,8 +1218,8 @@ export default function CategoriesContent() {
             render: (value: any) => (value ? `£${value}/hr` : "-"),
           },
           {
-            key: "requiredLicense" as keyof Category,
-            label: "Licenses",
+            key: "requiredLicence" as keyof Category,
+            label: "licences",
           },
           { key: "fuel", label: "Fuel" },
           {
@@ -1261,7 +1259,7 @@ export default function CategoriesContent() {
             "properties",
             "pricingTiers",
             "expert",
-            "requiredLicenses",
+            "requiredLicences",
             "purpose",
             "fuel",
             "showPrice",

@@ -109,7 +109,7 @@ export default function CustomerDashboard() {
             !hasLicenseUploaded
           ) {
             showToast.error(
-              "Your reservation is pending. Please upload your Licenses to confirm your reservation."
+              "Your reservation is pending. Please upload your licences to confirm your reservation."
             );
             setActiveTab("profile");
             window.history.replaceState({}, "", window.location.pathname);
@@ -230,17 +230,17 @@ export default function CustomerDashboard() {
               <FiAlertCircle className="text-yellow-500 text-xl mt-0.5 shrink-0" />
               <div>
                 <h3 className="text-yellow-500 font-bold mb-1">
-                  Licenses Required
+                  licences Required
                 </h3>
                 <p className="text-gray-300 text-sm">
                   Your reservations are pending. Please upload your driver's
-                  Licenses in the Profile section to confirm your bookings.
+                  licences in the Profile section to confirm your bookings.
                 </p>
                 <button
                   onClick={() => handleTabChange("profile", "license")}
                   className="mt-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-black rounded-lg transition-colors font-semibold text-sm"
                 >
-                  Upload Licenses Now
+                  Upload licences Now
                 </button>
               </div>
             </div>

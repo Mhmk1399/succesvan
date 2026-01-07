@@ -353,7 +353,7 @@ export default function ProfileContent({
               <div className="relative">
                 <img
                   src={user.licenceAttached.front}
-                  alt="License Front"
+                  alt="licences Front"
                   className="w-full h-48 object-cover rounded-lg"
                 />
                 <label className="absolute bottom-2 right-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg cursor-pointer text-sm font-semibold">
@@ -396,7 +396,7 @@ export default function ProfileContent({
               <div className="relative">
                 <img
                   src={user.licenceAttached.back}
-                  alt="License Back"
+                  alt="licences Back"
                   className="w-full h-48 object-cover rounded-lg"
                 />
                 <label className="absolute bottom-2 right-2 px-4 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg cursor-pointer text-sm font-semibold">

@@ -13,62 +13,20 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-// Default testimonials data
-export const defaultTestimonials: Testimonial[] = [
-  {
-    id: 1,
-    name: "Sam Labban",
-    message:
-      "Extremely professional company and service. Would highly recommend to anyone looking to hire a commercial van.",
-    rating: 5,
-    location: "London",
-  },
-  {
-    id: 2,
-    name: "JC",
-    message:
-      "Had bad experiences in the past with bigger companies, but only good things to say about Mehdi and Success Van Hire. Thank you!",
-    rating: 5,
-    location: "London",
-  },
-  {
-    id: 3,
-    name: "Nick Young",
-    message:
-      "Success Van Hire went beyond all expectations to find me a van at short notice when I desperately needed it. They were super accommodating in an unusual situation.",
-    rating: 5,
-    location: "London",
-  },
-  {
-    id: 4,
-    name: "Denise Reeves",
-    message:
-      "Brilliant service. Clear communication, rapid response, including refunding deposit within 24 hours. Highly recommended Success for van hire.",
-    rating: 5,
-    location: "London",
-  },
-  {
-    id: 5,
-    name: "Gaur Varun",
-    message:
-      "Highly recommend good van, great and easy service with a competitive price. I will hire from these guys again. Thanks Mehdi for good service again Highly recommend you guys",
-    rating: 5,
-    location: "London",
-  },
-];
-
 export default function Testimonials({
-  testimonials = defaultTestimonials,
+  testimonials,
   layout = "carousel",
   autoPlay = true,
-  autoPlayInterval = 5000,
+  autoPlayInterval = 2000,
   showRating = true,
   accentColor = "#fe9a00",
 }: TestimonialsProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(autoPlay);
-  const [displayTestimonials, setDisplayTestimonials] = useState(testimonials);
+  const [displayTestimonials, setDisplayTestimonials] = useState(
+    testimonials || []
+  );
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -82,7 +40,7 @@ export default function Testimonials({
           );
           if (approved.length > 0) {
             setDisplayTestimonials(
-              approved.map((t: any) => ({
+              approved.map((t: Testimonial) => ({
                 id: t._id,
                 name: t.name,
                 message: t.message,
@@ -278,7 +236,7 @@ function CarouselLayout({
       {/* Main Card */}
       <div className="max-w-5xl mx-auto">
         <div
-          className="relative rounded-3xl backdrop-blur-xl border p-8 lg:p-12 transition-all duration-500"
+          className="relative rounded-3xl backdrop-blur-xl border p-6 lg:p-12 transition-all duration-500"
           style={{
             background: "rgba(255, 255, 255, 0.05)",
             borderColor: `${accentColor}40`,
@@ -287,7 +245,7 @@ function CarouselLayout({
         >
           {/* Quote Icon */}
           <div
-            className="absolute -top-6 left-8 w-10 h-10 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shadow-2xl"
+            className="absolute -top-6 left-8 w-8 h-8 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shadow-2xl"
             style={{
               background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`,
             }}
@@ -303,7 +261,7 @@ function CarouselLayout({
                 {[...Array(5)].map((_, i) => (
                   <FiStar
                     key={i}
-                    className={`text-2xl ${
+                    className={`md:text-2xl ${
                       i < current.rating ? "fill-current" : "fill-none"
                     }`}
                     style={{
@@ -315,7 +273,7 @@ function CarouselLayout({
             )}
 
             {/* Message */}
-            <p className="text-gray-200 line-clamp-2  text-base lg:text-2xl  mb-8 italic">
+            <p className="text-gray-200 line-clamp-2  text-sm lg:text-xl  mb-8 italic">
               {current.message}
             </p>
 
@@ -323,7 +281,7 @@ function CarouselLayout({
             <div className="flex items-center gap-4">
               {/* Avatar */}
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-white"
+                className="w-12 md:w-16 h-12 md:h-16 rounded-2xl flex items-center justify-center text-2xl font-black text-white"
                 style={{
                   background: `linear-gradient(135deg, ${accentColor}, ${accentColor}80)`,
                 }}
@@ -415,7 +373,7 @@ function GridLayout({ testimonials, showRating, accentColor }: any) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
       {testimonials.map((testimonial: Testimonial) => (
         <TestimonialCard
-          key={testimonial.id}
+          key={testimonial._id}
           testimonial={testimonial}
           showRating={showRating}
           accentColor={accentColor}
@@ -430,7 +388,7 @@ function MasonryLayout({ testimonials, showRating, accentColor }: any) {
   return (
     <div className="columns-1 md:columns-2 lg:columns-3 gap-6 lg:gap-8 space-y-6 lg:space-y-8">
       {testimonials.map((testimonial: Testimonial) => (
-        <div key={testimonial.id} className="break-inside-avoid">
+        <div key={testimonial._id} className="break-inside-avoid">
           <TestimonialCard
             testimonial={testimonial}
             showRating={showRating}

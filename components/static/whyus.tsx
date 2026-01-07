@@ -59,10 +59,10 @@ const whyUsData = [
   {
     id: 5,
     icon: MdSupportAgent,
-    title: "UK/EU Licenses",
+    title: "UK/EU licences",
     shortDesc: "Easy verification",
     description:
-      "We accept full UK and EU driving licenses with quick verification process.",
+      "We accept full UK and EU driving licences with quick verification process.",
     color: "#fe9a00",
   },
   {

@@ -1170,7 +1170,7 @@ async function handleVerifyCode(
     };
 
     const successMessage = isNewUser
-      ? `🎉 Booking confirmed! We've created an account for you. Redirecting to upload your license...`
+      ? `🎉 Booking confirmed! We've created an account for you. Redirecting to upload your licences...`
       : `🎉 Booking confirmed! Your ${selectedCategory?.name} is reserved. Redirecting to your dashboard...`;
 
     return {

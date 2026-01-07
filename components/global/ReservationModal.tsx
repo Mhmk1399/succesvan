@@ -591,8 +591,8 @@ export default function ReservationModal({
     if (!postalCode.trim()) newErrors.postalCode = "Postal code required";
     if (!city.trim()) newErrors.city = "City required";
     if (isAdminMode) {
-      if (!licenseFront) newErrors.licenseFront = "License front required";
-      if (!licenseBack) newErrors.licenseBack = "License back required";
+      if (!licenseFront) newErrors.licenseFront = "licences front required";
+      if (!licenseBack) newErrors.licenseBack = "licences back required";
     }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -815,7 +815,7 @@ export default function ReservationModal({
             </h3>
             <p className="text-gray-400">
               {isNewUser
-                ? "Please upload your Licenses in the dashboard."
+                ? "Please upload your licences in the dashboard."
                 : "We'll send you a confirmation email shortly."}
             </p>
           </div>
@@ -1289,7 +1289,7 @@ export default function ReservationModal({
                             <div className="relative">
                               <img
                                 src={licenseFront}
-                                alt="License Front"
+                                alt="licences Front"
                                 className="w-full h-32 object-cover rounded-lg"
                               />
                               <label className="absolute bottom-2 right-2 px-3 py-1.5 bg-[#fe9a00] hover:bg-orange-600 text-white rounded-lg cursor-pointer text-xs font-semibold">

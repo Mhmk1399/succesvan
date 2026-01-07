@@ -739,7 +739,7 @@ export default function ReservationsManagement() {
           },
           {
             key: "user",
-            label: "License",
+            label: "licences",
             render: (value: any) => {
               const hasFront = value?.licenceAttached?.front;
               const hasBack = value?.licenceAttached?.back;
@@ -979,7 +979,7 @@ export default function ReservationsManagement() {
                 selectedReservation.user?.licenceAttached?.back) && (
                 <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                   <h3 className="text-white font-semibold mb-3">
-                    Driver License
+                    Driver licences
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {selectedReservation.user?.licenceAttached?.front && (
@@ -998,7 +998,7 @@ export default function ReservationsManagement() {
                               src={
                                 selectedReservation.user.licenceAttached.front
                               }
-                              alt="License Front"
+                              alt="licences Front"
                               className="w-full h-32 object-cover rounded-lg border border-white/10 cursor-pointer hover:border-[#fe9a00]/50 transition-colors"
                             />
                             <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center opacity-0 hover:opacity-100">
@@ -1024,7 +1024,7 @@ export default function ReservationsManagement() {
                               src={
                                 selectedReservation.user.licenceAttached.back
                               }
-                              alt="License Back"
+                              alt="licences Back"
                               className="w-full h-32 object-cover rounded-lg border border-white/10 cursor-pointer hover:border-[#fe9a00]/50 transition-colors"
                             />
                             <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center opacity-0 hover:opacity-100">
@@ -1056,8 +1056,8 @@ export default function ReservationsManagement() {
                       ></span>
                       {selectedReservation.user?.licenceAttached?.front &&
                       selectedReservation.user?.licenceAttached?.back
-                        ? "Complete License"
-                        : "Partial License"}
+                        ? "Complete licences"
+                        : "Partial licences"}
                     </span>
                   </div>
                 </div>

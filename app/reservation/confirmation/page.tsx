@@ -160,7 +160,7 @@ export default function ReservationConfirmation() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-amber-400 mt-1">✓</span>
-              <span>Bring a valid driver's Licenses and ID on pickup day</span>
+              <span>Bring a valid driver's licences and ID on pickup day</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-amber-400 mt-1">✓</span>

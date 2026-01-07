@@ -27,9 +27,9 @@ export default function HomeContainer() {
       category: "About Us",
     },
     {
-      question: "What driving Licenses do you accept?",
+      question: "What driving licences do you accept?",
       answer:
-        "We accept full UK and EU driving licenses with a quick and easy verification process.",
+        "We accept full UK and EU driving licences with a quick and easy verification process.",
       category: "Requirements",
     },
     {
@@ -81,7 +81,7 @@ export default function HomeContainer() {
       <VanListingHome />
       <HeroSlider />
       <WhyUs />
-      <Testimonials layout="carousel" autoPlay={true} autoPlayInterval={5000} />
+      <Testimonials layout="carousel" autoPlay={true} autoPlayInterval={2000} />
       <AboutUs />
       <FAQComponent
         title="Frequently Asked Questions"
