@@ -11,6 +11,14 @@ const s3 = new S3Client({
 
 export async function POST(req: NextRequest) {
   try {
+    // Debug logging for environment variables
+    console.log("Environment check:", {
+      hasAccessKey: !!process.env.this_ACCESS_KEY_ID,
+      hasSecretKey: !!process.env.this_SECRET_ACCESS_KEY,
+      hasRegion: !!process.env.this_S3_REGION,
+      hasBucket: !!process.env.this_S3_BUCKET,
+    });
+
     if (!process.env.this_ACCESS_KEY_ID || !process.env.this_SECRET_ACCESS_KEY) {
       console.error("Missing AWS credentials");
       return NextResponse.json(
