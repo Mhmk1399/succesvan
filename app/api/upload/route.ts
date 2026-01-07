@@ -16,12 +16,16 @@ export async function POST(req: NextRequest) {
       hasAccessKey: !!(process.env.AWS_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID),
       hasSecretKey: !!(process.env.AWS_SECRET_ACCESS_KEY || process.env.this_SECRET_ACCESS_KEY),
       hasRegion: !!(process.env.AWS_REGION || process.env.S3_REGION),
-      hasBucket: !!(process.env.S3_BUCKET || process.env.S3_BUCKET),
+      hasBucket: !!(process.env.S3_BUCKET),
+      // Log actual env var names that exist (without values for security)
+      availableEnvVars: Object.keys(process.env).filter(key => 
+        key.includes('AWS') || key.includes('S3') || key.includes('ACCESS') || key.includes('SECRET')
+      )
     });
 
     const accessKey = process.env.AWS_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID;
     const secretKey = process.env.AWS_SECRET_ACCESS_KEY || process.env.this_SECRET_ACCESS_KEY;
-    const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET;
+    const bucket = process.env.S3_BUCKET;
 
     if (!accessKey || !secretKey || !bucket) {
       console.error("Missing AWS configuration");
