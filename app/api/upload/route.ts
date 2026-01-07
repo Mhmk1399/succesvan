@@ -2,30 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
-  region: process.env.AWS_REGION || process.env.S3_REGION || "eu-west-2",
+  region:"eu-west-2",
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || process.env.this_SECRET_ACCESS_KEY || "",
+    accessKeyId: "AKIAYPHV2DKYBE2S7LWO",
+    secretAccessKey:"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",
   },
 });
 
 export async function POST(req: NextRequest) {
   try {
     // Debug logging for environment variables
-    console.log("Environment check:", {
-      hasAccessKey: !!(process.env.AWS_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID),
-      hasSecretKey: !!(process.env.AWS_SECRET_ACCESS_KEY || process.env.this_SECRET_ACCESS_KEY),
-      hasRegion: !!(process.env.AWS_REGION || process.env.S3_REGION),
-      hasBucket: !!(process.env.S3_BUCKET),
-      // Log actual env var names that exist (without values for security)
-      availableEnvVars: Object.keys(process.env).filter(key => 
-        key.includes('AWS') || key.includes('S3') || key.includes('ACCESS') || key.includes('SECRET')
-      )
-    });
+   
 
-    const accessKey = process.env.AWS_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID;
-    const secretKey = process.env.AWS_SECRET_ACCESS_KEY || process.env.this_SECRET_ACCESS_KEY;
-    const bucket = process.env.S3_BUCKET;
+    const accessKey = "AKIAYPHV2DKYBE2S7LWO";
+    const secretKey ="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";
+    const bucket = "svh-bucket-s3";
 
     if (!accessKey || !secretKey || !bucket) {
       console.error("Missing AWS configuration");
@@ -84,7 +75,7 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    const region = process.env.AWS_REGION || process.env.S3_REGION || "eu-west-2";
+    const region = "eu-west-2";
     const url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
     console.log("Upload successful:", url);
     return NextResponse.json({ url });
