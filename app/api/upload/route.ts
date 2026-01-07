@@ -3,10 +3,7 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
   region: process.env.this_S3_REGION || "eu-west-2",
-  credentials: {
-    accessKeyId: process.env.this_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.this_SECRET_ACCESS_KEY || "",
-  },
+  // Remove credentials to use IAM role
 });
 
 export async function POST(req: NextRequest) {
@@ -19,10 +16,10 @@ export async function POST(req: NextRequest) {
       hasBucket: !!process.env.this_S3_BUCKET,
     });
 
-    if (!process.env.this_ACCESS_KEY_ID || !process.env.this_SECRET_ACCESS_KEY) {
-      console.error("Missing AWS credentials");
+    if (!process.env.this_S3_BUCKET) {
+      console.error("Missing S3 bucket configuration");
       return NextResponse.json(
-        { error: "Server configuration error: Missing AWS credentials" },
+        { error: "Server configuration error: Missing S3 bucket" },
         { status: 500 }
       );
     }
