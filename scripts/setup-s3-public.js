@@ -8,9 +8,9 @@ const env = fs.readFileSync(".env", "utf8").split("\n").reduce((acc, line) => {
 }, {});
 
 const s3 = new S3Client({
-  region: env.this_S3_REGION,
+  region: env.S3_REGION,
   credentials: {
-    accessKeyId: env.this_ACCESS_KEY_ID,
+    accessKeyId: env.ACCESS_KEY_ID,
     secretAccessKey: env.this_SECRET_ACCESS_KEY,
   },
 });
@@ -18,7 +18,7 @@ const s3 = new S3Client({
 async function setup() {
   try {
     await s3.send(new PutPublicAccessBlockCommand({
-      Bucket: env.this_S3_BUCKET,
+      Bucket: env.S3_BUCKET,
       PublicAccessBlockConfiguration: {
         BlockPublicAcls: false,
         IgnorePublicAcls: false,
@@ -34,12 +34,12 @@ async function setup() {
         Effect: "Allow",
         Principal: "*",
         Action: "s3:GetObject",
-        Resource: `arn:aws:s3:::${env.this_S3_BUCKET}/*`
+        Resource: `arn:aws:s3:::${env.S3_BUCKET}/*`
       }]
     };
 
     await s3.send(new PutBucketPolicyCommand({
-      Bucket: env.this_S3_BUCKET,
+      Bucket: env.S3_BUCKET,
       Policy: JSON.stringify(policy),
     }));
 

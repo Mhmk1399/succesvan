@@ -2,24 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
-  region: process.env.this_S3_REGION || "eu-west-2",
-  // Remove credentials to use IAM role
+  region:"eu-west-2",
+  credentials: {
+    accessKeyId: "AKIAYPHV2DKYBE2S7LWO",
+    secretAccessKey:"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",
+  },
 });
 
 export async function POST(req: NextRequest) {
   try {
     // Debug logging for environment variables
-    console.log("Environment check:", {
-      hasAccessKey: !!process.env.this_ACCESS_KEY_ID,
-      hasSecretKey: !!process.env.this_SECRET_ACCESS_KEY,
-      hasRegion: !!process.env.this_S3_REGION,
-      hasBucket: !!process.env.this_S3_BUCKET,
-    });
+   
 
-    if (!process.env.this_S3_BUCKET) {
-      console.error("Missing S3 bucket configuration");
+    const accessKey = "AKIAYPHV2DKYBE2S7LWO";
+    const secretKey ="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";
+    const bucket = "svh-bucket-s3";
+
+    if (!accessKey || !secretKey || !bucket) {
+      console.error("Missing AWS configuration");
       return NextResponse.json(
-        { error: "Server configuration error: Missing S3 bucket" },
+        { error: "Server configuration error: Missing AWS configuration" },
         { status: 500 }
       );
     }
@@ -58,14 +60,14 @@ export async function POST(req: NextRequest) {
     )}`;
 
     console.log("Uploading to S3:", {
-      bucket: process.env.this_S3_BUCKET,
+      bucket,
       key,
       size: buffer.length,
     });
 
     await s3.send(
       new PutObjectCommand({
-        Bucket: process.env.this_S3_BUCKET,
+        Bucket: bucket,
         Key: key,
         Body: buffer,
         ContentType: file.type,
@@ -73,7 +75,8 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    const url = `https://${process.env.this_S3_BUCKET}.s3.${process.env.this_S3_REGION}.amazonaws.com/${key}`;
+    const region = "eu-west-2";
+    const url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
     console.log("Upload successful:", url);
     return NextResponse.json({ url });
   } catch (error) {
