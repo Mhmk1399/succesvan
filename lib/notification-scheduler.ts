@@ -70,12 +70,12 @@ export async function sendStatusNotification(
 
   if (!phoneNumber) return;
 
-  const vehicleInfo = vehicle?.number ? ` Vehicle: ${vehicle.number}` : "";
+  const vehicleInfo = vehicle?.number ? ` Vehicle number: ${vehicle.number}` : "";
 
   const messages = {
     confirmed: `Reservation confirmed! Pickup: ${new Date(reservation.startDate).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} at ${office.name}. SuccessVanHire.co.uk`,
     canceled: `Reservation canceled. Questions? Contact us. SuccessVanHire.co.uk or call +44 20 3011 1198`,
-    delivered: `Vehicle delivered!${vehicleInfo} Return by ${new Date(reservation.endDate).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}.  SuccessVanHire.co.uk `,
+    delivered: `Vehicle delivered! ${vehicleInfo} Return by ${new Date(reservation.endDate).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}.  SuccessVanHire.co.uk `,
     completed: `Thank you for choosing SuccessVanHire.co.uk! rate your experience at uk.trustpilot.com/review/successvanhire.com`,
   };
 

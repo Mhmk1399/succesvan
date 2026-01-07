@@ -26,7 +26,7 @@ export default function ReservationsManagement() {
   const [isEditDatesOpen, setIsEditDatesOpen] = useState(false);
   const [newStatus, setNewStatus] = useState("");
   const [newVehicle, setNewVehicle] = useState("");
-  const [vehicles, setVehicles] = useState<{ _id: string; name: string }[]>([]);
+  const [vehicles, setVehicles] = useState<{ _id: string; name: string; category: string; gear: string; available: boolean }[]>([]);
   const [users, setUsers] = useState<{ _id: string; name: string }[]>([]);
   const [categories, setCategories] = useState<
     {
@@ -69,6 +69,11 @@ export default function ReservationsManagement() {
   const selectedCategory = useMemo(() => {
     return categories.find((c) => c._id === editCategory);
   }, [editCategory, categories]);
+
+  const filteredVehicles = useMemo(() => {
+    if (!editCategory) return vehicles.filter(v => v.available);
+    return vehicles.filter(v => v.category === editCategory && v.available);
+  }, [vehicles, editCategory]);
 
   const pickupTimeSlots = useMemo(() => {
     if (!selectedReservation?.office || !editDateRange[0].startDate) return [];
@@ -317,7 +322,7 @@ export default function ReservationsManagement() {
       try {
         const [vehiclesRes, usersRes, categoriesRes, officesRes, addOnsRes] =
           await Promise.all([
-            fetch("/api/vehicles?status=active&available=true"),
+            fetch("/api/vehicles?status=active&limit=1000"),
             fetch("/api/users?limit=100"),
             fetch("/api/categories?status=active"),
             fetch("/api/offices"),
@@ -330,10 +335,16 @@ export default function ReservationsManagement() {
         const addOnsData = await addOnsRes.json();
 
         setVehicles(
-          (vehiclesData.data || []).map((vehicle: any) => ({
-            _id: vehicle._id,
-            name: vehicle.title || vehicle.number || "Unknown",
-          }))
+          (vehiclesData.data || []).map((vehicle: any) => {
+            const gearTypes = vehicle.gear?.availableTypes?.map((g: any) => g.gearType).join("/") || "";
+            return {
+              _id: vehicle._id,
+              name: `${vehicle.number || "Unknown"} - ${gearTypes || "N/A"}`,
+              category: typeof vehicle.category === "string" ? vehicle.category : vehicle.category?._id || "",
+              gear: gearTypes,
+              available: vehicle.available !== false,
+            };
+          })
         );
         setUsers(
           (usersData.data || []).map((user: any) => ({
@@ -683,7 +694,7 @@ export default function ReservationsManagement() {
             type: "select",
             options: categories,
           },
-
+        
           {
             key: "status",
             label: "Status",
@@ -773,7 +784,7 @@ export default function ReservationsManagement() {
             key: "startDate",
             label: "Start Date",
             render: (value: string) =>
-              value ? new Date(value).toLocaleDateString() : "-",
+              value ? new Date(value).toLocaleDateString('en-GB') : "-",
           },
           {
             key: "startDate",
@@ -790,7 +801,7 @@ export default function ReservationsManagement() {
             key: "endDate",
             label: "End Date",
             render: (value: string) =>
-              value ? new Date(value).toLocaleDateString() : "-",
+              value ? new Date(value).toLocaleDateString('en-GB') : "-",
           },
           {
             key: "endDate",
@@ -959,6 +970,7 @@ export default function ReservationsManagement() {
                       {selectedReservation.driverAge}
                     </p>
                   </div>
+
                 </div>
               </div>
 
@@ -1069,22 +1081,29 @@ export default function ReservationsManagement() {
                       {(selectedReservation as any).category?.name || "-"}
                     </p>
                   </div>
+                    <div>
+                    <p className="text-gray-400">Gear option</p>
+                    <p className="text-white font-semibold">
+                      {(selectedReservation as any).selectedGear|| "-"}
+                    </p>
+                  </div>
                   <div>
                     <p className="text-gray-400">Vehicle</p>
                     <p className="text-white font-semibold">
                       {(selectedReservation as any).vehicle?.title || "-"}
                     </p>
                   </div>
+                  
                   <div>
                     <p className="text-gray-400">Start Date & Time</p>
                     <p className="text-white font-semibold">
-                      {new Date(selectedReservation.startDate).toLocaleString()}
+                      {new Date(selectedReservation.startDate).toLocaleString('en-GB')}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-400">End Date & Time</p>
                     <p className="text-white font-semibold">
-                      {new Date(selectedReservation.endDate).toLocaleString()}
+                      {new Date(selectedReservation.endDate).toLocaleString('en-GB')}
                     </p>
                   </div>
                   <div>
@@ -1223,7 +1242,7 @@ export default function ReservationsManagement() {
                         className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm text-left focus:outline-none focus:border-[#fe9a00]"
                       >
                         {editDateRange[0].startDate && editDateRange[0].endDate
-                          ? `${editDateRange[0].startDate.toLocaleDateString()} - ${editDateRange[0].endDate.toLocaleDateString()}`
+                          ? `${editDateRange[0].startDate.toLocaleDateString('en-GB')} - ${editDateRange[0].endDate.toLocaleDateString('en-GB')}`
                           : "Select Dates"}
                       </button>
                       {showDateRange && (
@@ -1431,7 +1450,7 @@ export default function ReservationsManagement() {
                 {isEditOpen && (
                   <div className="mt-3 space-y-2">
                     <CustomSelect
-                      options={vehicles}
+                      options={filteredVehicles}
                       value={newVehicle}
                       onChange={setNewVehicle}
                       placeholder={
@@ -1534,9 +1553,10 @@ export default function ReservationsManagement() {
                       options={[
                         { _id: "pending", name: "Pending" },
                         { _id: "confirmed", name: "Confirmed" },
+                        { _id: "delivered", name: "Collected " },
                         { _id: "completed", name: "Completed" },
                         { _id: "canceled", name: "Canceled" },
-                        { _id: "delivered", name: "Collected" },
+                       
                       ]}
                       value={newStatus}
                       onChange={setNewStatus}

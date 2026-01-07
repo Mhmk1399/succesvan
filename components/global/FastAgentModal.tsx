@@ -1180,7 +1180,7 @@ export default function FastAgentModal({
                     {/* Header */}
                     <div className="text-center border-b border-white/10 pb-3">
                       <h3 className="text-xl font-bold text-white">
-                        ⚙️ Select Gearbox
+                        ⚙️ Select Gear Option
                       </h3>
                       <p className="text-gray-400 text-sm">
                         Choose your preferred transmission
@@ -1287,58 +1287,105 @@ export default function FastAgentModal({
 
                   {/* Add-ons List */}
                   <div className="space-y-3">
-                    {agentState.availableAddOns.map((addOn) => {
-                      const price = getAddOnPrice(addOn);
-                      const quantity = addOnQuantities[addOn._id] || 0;
+                    {agentState.availableAddOns
+                      .sort((a, b) => {
+                        const typeA = (a as any).type || '';
+                        const typeB = (b as any).type || '';
+                        // Group by type - items with same type together
+                        if (typeA === typeB) return 0;
+                        // Items without type go to the end
+                        if (!typeA) return 1;
+                        if (!typeB) return -1;
+                        // Sort alphabetically by type
+                        return typeA.localeCompare(typeB);
+                      })
+                      .map((addOn) => {
+                        const price = getAddOnPrice(addOn);
+                        const quantity = addOnQuantities[addOn._id] || 0;
+                        
+                        // Check if another addon with the same type is already selected
+                        const addonType = (addOn as any).type;
+                        const isTypeDisabled = addonType && Object.entries(addOnQuantities).some(([id, qty]) => {
+                          if (id === addOn._id || qty === 0) return false;
+                          const selectedAddon = agentState.availableAddOns?.find((a) => a._id === id);
+                          return selectedAddon && (selectedAddon as any).type === addonType;
+                        });
+                        
+                        // Max quantity is 1
+                        const isMaxQuantity = quantity >= 1;
+                        const canAdd = !isTypeDisabled && !isMaxQuantity;
 
-                      return (
-                        <div
-                          key={addOn._id}
-                          className="flex items-center justify-between bg-white/5 rounded-lg p-3"
-                        >
-                          <div className="flex-1">
-                            <p className="text-white font-medium">
-                              {addOn.name}
-                            </p>
-                            {addOn.description && (
-                              <p className="text-gray-400 text-xs">
-                                {addOn.description}
+                        return (
+                          <div
+                            key={addOn._id}
+                            className={`flex items-center justify-between rounded-lg p-3 transition-all ${
+                              isTypeDisabled 
+                                ? 'bg-white/5 opacity-50 border border-red-500/30' 
+                                : 'bg-white/5'
+                            }`}
+                          >
+                            <div className="flex-1">
+                              <p className="text-white font-medium">
+                                {addOn.name}
                               </p>
-                            )}
-                            <p className="text-orange-400 text-sm font-medium">
-                              £{price.toFixed(2)}{" "}
-                              {addOn.pricingType === "flat" ? "" : "/ rental"}
-                            </p>
-                          </div>
+                              {addOn.description && (
+                                <p className="text-gray-400 text-xs">
+                                  {addOn.description}
+                                </p>
+                              )}
+                              {isTypeDisabled && (
+                                <p className="text-red-400 text-xs mt-1">
+                                  Another option of this type is already selected
+                                </p>
+                              )}
+                              <p className="text-orange-400 text-sm font-medium">
+                                £{price.toFixed(2)}{" "}
+                                {addOn.pricingType === "flat" ? "" : "/ rental"}
+                              </p>
+                            </div>
 
-                          {/* Quantity Controls */}
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleAddOnQuantityChange(addOn._id, -1)
-                              }
-                              disabled={quantity === 0}
-                              className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <FiMinus className="w-4 h-4" />
-                            </button>
-                            <span className="w-8 text-center text-white font-medium">
-                              {quantity}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleAddOnQuantityChange(addOn._id, 1)
-                              }
-                              className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white hover:bg-orange-600"
-                            >
-                              <FiPlus className="w-4 h-4" />
-                            </button>
+                            {/* Quantity Controls */}
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleAddOnQuantityChange(addOn._id, -1)
+                                }
+                                disabled={quantity === 0}
+                                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <FiMinus className="w-4 h-4" />
+                              </button>
+                              <span className="w-8 text-center text-white font-medium">
+                                {quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (canAdd) {
+                                    handleAddOnQuantityChange(addOn._id, 1);
+                                  }
+                                }}
+                                disabled={!canAdd}
+                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                                  canAdd
+                                    ? 'bg-orange-500 text-white hover:bg-orange-600'
+                                    : 'bg-gray-600/50 text-gray-400 cursor-not-allowed opacity-50'
+                                }`}
+                                title={
+                                  isTypeDisabled 
+                                    ? 'Another option of this type is already selected' 
+                                    : isMaxQuantity 
+                                    ? 'Maximum quantity reached' 
+                                    : 'Add addon'
+                                }
+                              >
+                                <FiPlus className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
 
                   {/* Total for selected add-ons */}

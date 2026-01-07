@@ -1752,7 +1752,7 @@ function ReservationPanel({
                   <div className="w-6 h-6 rounded-full bg-[#fe9a00]/20 flex items-center justify-center text-[#fe9a00] text-xs font-bold">
                     3
                   </div>
-                  Gearbox
+                  Gear Option
                 </h3>
                 <div className="flex gap-2">
                   {(van as any).gear.availableTypes.includes("manual") && (

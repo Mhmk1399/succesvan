@@ -17,6 +17,7 @@ export default function AddOnsContent() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    type: "",
     pricingType: "flat" as "flat" | "tiered",
     flatPrice: { amount: "", isPerDay: false },
     tieredPrice: {
@@ -70,6 +71,7 @@ export default function AddOnsContent() {
     setFormData({
       name: "",
       description: "",
+      type: "",
       pricingType: "flat",
       flatPrice: { amount: "", isPerDay: false },
       tieredPrice: {
@@ -104,6 +106,7 @@ export default function AddOnsContent() {
     setFormData({
       name: item.name,
       description: item.description || "",
+      type: (item as any).type || "",
       pricingType: item.pricingType,
       flatPrice: {
         amount: String((item.flatPrice as any)?.amount || ""),
@@ -138,6 +141,7 @@ export default function AddOnsContent() {
       const payload: any = {
         name: formData.name,
         description: formData.description,
+        type: formData.type,
         pricingType: formData.pricingType,
         status: formData.status,
       };
@@ -225,6 +229,17 @@ export default function AddOnsContent() {
                 name="description"
                 placeholder="Description"
                 value={formData.description}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
+              />
+              <label className="text-gray-400 text-sm mb-2 block">
+                Type
+              </label>
+              <input
+                type="text"
+                name="type"
+                placeholder="AddOn Type (e.g., insurance, equipment)"
+                value={formData.type}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00]"
               />

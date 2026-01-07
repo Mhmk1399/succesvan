@@ -770,7 +770,7 @@ function ReservesContent() {
                     : "bg-blue-500/20 text-blue-400"
                 }`}
               >
-                {value}
+                {value==="confirmed" ? "Confirmed" : value==="pending" ? "Pending" : value==="canceled" ? "Canceled" : value==="delivered" ? "collected" : "Unknown"}
               </span>
             ),
           },

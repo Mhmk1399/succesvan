@@ -133,19 +133,41 @@ export default function AddOnsModal({
               return addon.pricingType === "flat" || addon.tieredPrice?.tiers?.some(
                 (tier) => rentalDays >= tier.minDays && rentalDays <= tier.maxDays
               );
+            }).sort((a, b) => {
+              const typeA = (a as any).type || '';
+              const typeB = (b as any).type || '';
+              // Group by type - items with same type together
+              if (typeA === typeB) return 0;
+              // Items without type go to the end
+              if (!typeA) return 1;
+              if (!typeB) return -1;
+              // Sort alphabetically by type
+              return typeA.localeCompare(typeB);
             }).map((addon) => {
               const isSelected = selected.find((s) => s.addOn === addon._id);
               const price = getAddOnPrice(addon, isSelected?.selectedTierIndex);
+              
+              // Check if another addon with the same type is already selected
+              const addonType = (addon as any).type;
+              const isTypeDisabled = addonType && selected.some((s) => {
+                const selectedAddon = addOns.find((a) => a._id === s.addOn);
+                return selectedAddon && (selectedAddon as any).type === addonType && selectedAddon._id !== addon._id;
+              });
+              
+              // Max quantity is 1
+              const isMaxQuantity = isSelected && isSelected.quantity >= 1;
 
               return (
                 <div
                   key={addon._id}
-                  className={`border rounded-xl p-2 transition-all cursor-pointer ${
+                  className={`border rounded-xl p-2 transition-all ${
                     isSelected
-                      ? "border-[#fe9a00] bg-[#fe9a00]/10"
-                      : "border-white/10 bg-white/5 hover:border-white/20"
+                      ? "border-[#fe9a00] bg-[#fe9a00]/10 cursor-pointer"
+                      : isTypeDisabled
+                      ? "border-red-500/30 bg-white/5 opacity-50 cursor-not-allowed"
+                      : "border-white/10 bg-white/5 hover:border-white/20 cursor-pointer"
                   }`}
-                  onClick={() => !isSelected && handleToggle(addon._id, addon)}
+                  onClick={() => !isSelected && !isTypeDisabled && handleToggle(addon._id, addon)}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -155,6 +177,11 @@ export default function AddOnsModal({
                       {addon.description && (
                         <p className="text-gray-400 text-sm mt-1">
                           {addon.description}
+                        </p>
+                      )}
+                      {isTypeDisabled && (
+                        <p className="text-red-400 text-xs mt-1">
+                          Another option of this type is already selected
                         </p>
                       )}
                       {addon.pricingType === "flat" ? (
@@ -212,11 +239,7 @@ export default function AddOnsModal({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (isSelected.quantity === 1) {
-                              handleToggle(addon._id, addon);
-                            } else {
-                              handleQuantityChange(addon._id, -1);
-                            }
+                            handleToggle(addon._id, addon);
                           }}
                           className="w-8 h-5 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
                         >
@@ -229,9 +252,10 @@ export default function AddOnsModal({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleQuantityChange(addon._id, 1);
                           }}
-                          className="w-8 h-8 rounded-lg bg-[#fe9a00] hover:bg-orange-600 flex items-center justify-center text-white transition-colors"
+                          disabled={true}
+                          className="w-8 h-8 rounded-lg bg-gray-600/50 text-gray-400 flex items-center justify-center cursor-not-allowed opacity-50"
+                          title="Maximum quantity reached"
                         >
                           <FiPlus />
                         </button>
@@ -241,9 +265,17 @@ export default function AddOnsModal({
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleToggle(addon._id, addon);
+                          if (!isTypeDisabled) {
+                            handleToggle(addon._id, addon);
+                          }
                         }}
-                        className="px-4 py-2 bg-[#fe9a00] hover:bg-orange-600 text-white rounded-lg font-semibold transition-colors"
+                        disabled={isTypeDisabled}
+                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                          isTypeDisabled
+                            ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed'
+                            : 'bg-[#fe9a00] hover:bg-orange-600 text-white'
+                        }`}
+                        title={isTypeDisabled ? 'Another option of this type is already selected' : 'Add addon'}
                       >
                         Add
                       </button>
