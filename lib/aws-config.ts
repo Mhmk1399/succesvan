@@ -1,6 +1,6 @@
 import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
 
-const ssmClient = new SSMClient({ region: process.env.this_S3_REGION || "eu-west-2" });
+const ssmClient = new SSMClient({ region: process.env.S3_REGION || "eu-west-2" });
 
 export async function getSecureParameter(name: string): Promise<string> {
   try {

@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const s3 = new S3Client({
-  region: process.env.this_S3_REGION || "eu-west-2",
+  region: process.env.AWS_REGION || process.env.S3_REGION || "eu-west-2",
   credentials: {
-    accessKeyId: process.env.this_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.this_SECRET_ACCESS_KEY || "",
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || process.env.this_SECRET_ACCESS_KEY || "",
   },
 });
 
@@ -13,13 +13,17 @@ export async function POST(req: NextRequest) {
   try {
     // Debug logging for environment variables
     console.log("Environment check:", {
-      hasAccessKey: !!process.env.this_ACCESS_KEY_ID,
-      hasSecretKey: !!process.env.this_SECRET_ACCESS_KEY,
-      hasRegion: !!process.env.this_S3_REGION,
-      hasBucket: !!process.env.this_S3_BUCKET,
+      hasAccessKey: !!(process.env.AWS_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID),
+      hasSecretKey: !!(process.env.AWS_SECRET_ACCESS_KEY || process.env.this_SECRET_ACCESS_KEY),
+      hasRegion: !!(process.env.AWS_REGION || process.env.S3_REGION),
+      hasBucket: !!(process.env.S3_BUCKET || process.env.S3_BUCKET),
     });
 
-    if (!process.env.this_ACCESS_KEY_ID || !process.env.this_SECRET_ACCESS_KEY || !process.env.this_S3_BUCKET) {
+    const accessKey = process.env.AWS_ACCESS_KEY_ID || process.env.ACCESS_KEY_ID;
+    const secretKey = process.env.AWS_SECRET_ACCESS_KEY || process.env.this_SECRET_ACCESS_KEY;
+    const bucket = process.env.S3_BUCKET || process.env.S3_BUCKET;
+
+    if (!accessKey || !secretKey || !bucket) {
       console.error("Missing AWS configuration");
       return NextResponse.json(
         { error: "Server configuration error: Missing AWS configuration" },
@@ -61,14 +65,14 @@ export async function POST(req: NextRequest) {
     )}`;
 
     console.log("Uploading to S3:", {
-      bucket: process.env.this_S3_BUCKET,
+      bucket,
       key,
       size: buffer.length,
     });
 
     await s3.send(
       new PutObjectCommand({
-        Bucket: process.env.this_S3_BUCKET,
+        Bucket: bucket,
         Key: key,
         Body: buffer,
         ContentType: file.type,
@@ -76,7 +80,8 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    const url = `https://${process.env.this_S3_BUCKET}.s3.${process.env.this_S3_REGION}.amazonaws.com/${key}`;
+    const region = process.env.AWS_REGION || process.env.S3_REGION || "eu-west-2";
+    const url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
     console.log("Upload successful:", url);
     return NextResponse.json({ url });
   } catch (error) {
