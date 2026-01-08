@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useLayoutEffect, useState } from "react";
+import { useRef, useLayoutEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import {
@@ -13,7 +13,6 @@ import {
 } from "react-icons/fi";
 import { FaPoundSign, FaLeaf } from "react-icons/fa";
 import { MdSupportAgent } from "react-icons/md";
-import Image from "next/image";
 import Link from "next/link";
 
 if (typeof window !== "undefined") {

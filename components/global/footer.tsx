@@ -10,19 +10,13 @@ import {
   FiInfo,
   FiHelpCircle,
   FiFileText,
-  FiHeart,
 } from "react-icons/fi";
-import {
-  FaFacebook,
-  FaInstagram,
-  FaYoutube,
-  FaGithub,
-  FaWhatsapp,
-} from "react-icons/fa";
+import { FaFacebook, FaInstagram, FaYoutube, FaWhatsapp } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const menuLinks = [
   { name: "HOME", href: "/", icon: FiHome },
@@ -72,7 +66,18 @@ const socialLinks = [
 
 export default function Footer() {
   const pathname = usePathname();
+  const [isMobile, setIsMobile] = useState(false);
 
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 640);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   // Hide footer on specific routes
   if (
     pathname === "/terms-and-conditions" ||
@@ -867,14 +872,14 @@ export default function Footer() {
                         )}, ${parseInt(social.color.slice(5, 7), 16)}, 0.1)`,
                       }}
                       onMouseEnter={(e) => {
-                        if (window.innerWidth > 640) {
-                          // فقط در دسکتاپ (sm و بزرگتر)
+                        // فقط در دسکتاپ hover effect داشته باشه
+                        if (!isMobile) {
                           e.currentTarget.style.background = `${social.color}30`;
                           e.currentTarget.style.boxShadow = `0 0 40px ${social.color}90`;
                         }
                       }}
                       onMouseLeave={(e) => {
-                        if (window.innerWidth > 640) {
+                        if (!isMobile) {
                           e.currentTarget.style.background = `rgba(${parseInt(
                             social.color.slice(1, 3),
                             16
@@ -890,16 +895,16 @@ export default function Footer() {
                       <social.icon
                         className="text-2xl sm:text-3xl text-center transition-colors duration-500"
                         style={{
-                          color:
-                            window.innerWidth <= 640 ? social.color : "#ffffff", // موبایل: رنگ اصلی، دسکتاپ: سفید (تا hover)
+                          // رنگ آیکن: در موبایل همیشه رنگ اصلی، در دسکتاپ سفید (تا hover)
+                          color: isMobile ? social.color : "#ffffff",
                         }}
                         onMouseEnter={(e) => {
-                          if (window.innerWidth > 640) {
+                          if (!isMobile) {
                             e.currentTarget.style.color = social.color;
                           }
                         }}
                         onMouseLeave={(e) => {
-                          if (window.innerWidth > 640) {
+                          if (!isMobile) {
                             e.currentTarget.style.color = "#ffffff";
                           }
                         }}

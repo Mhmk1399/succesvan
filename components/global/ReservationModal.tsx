@@ -279,15 +279,17 @@ export default function ReservationModal({
     if (totalDays > 0 && extraHours > 0) {
       breakdown = `${totalDays} day${
         totalDays > 1 ? "s" : ""
-      } (£${pricePerDay.toFixed(2)}/day) + ${extraHours}h (£${
-        (cat.extrahoursRate || 0).toFixed(2)
-      }/hr) = £${totalPrice.toFixed(2)}`;
+      } (£${pricePerDay.toFixed(2)}/day) + ${extraHours}h (£${(
+        cat.extrahoursRate || 0
+      ).toFixed(2)}/hr) = £${totalPrice.toFixed(2)}`;
     } else if (totalDays > 0) {
       breakdown = `${totalDays} day${
         totalDays > 1 ? "s" : ""
       } (£${pricePerDay.toFixed(2)}/day) = £${totalPrice.toFixed(2)}`;
     } else {
-      breakdown = `${extraHours}h (£${(cat.extrahoursRate || 0).toFixed(2)}/hr) = £${totalPrice.toFixed(2)}`;
+      breakdown = `${extraHours}h (£${(cat.extrahoursRate || 0).toFixed(
+        2
+      )}/hr) = £${totalPrice.toFixed(2)}`;
     }
     return {
       totalPrice: parseFloat(totalPrice.toFixed(2)),
@@ -483,6 +485,45 @@ export default function ReservationModal({
       }
     }
   }, [types, isAdminMode, user]);
+
+  // بالای return، بعد از useEffect ها
+  const displayUser = useMemo(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        return {
+          name: parsed.name || "",
+          lastName: parsed.lastName || "",
+          email:
+            parsed.emaildata?.emailAddress ||
+            parsed.emailData?.emailAddress ||
+            "",
+          phone:
+            parsed.phoneData?.phoneNumber?.replace("+44", "") ||
+            parsed.phoneNumber?.replace("+44", "") ||
+            "",
+          address: parsed.address || "",
+        };
+      } catch (e) {
+        console.error("Failed to parse user from localStorage");
+      }
+    }
+    // fallback به formData
+    return {
+      name: formData.name,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      address: address || "",
+    };
+  }, [
+    formData.name,
+    formData.lastName,
+    formData.email,
+    formData.phone,
+    address,
+  ]);
 
   const handleSendCode = async () => {
     if (!formData.phone.trim()) {
@@ -827,16 +868,18 @@ export default function ReservationModal({
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999"
+        className="fixed inset-0 bg-black/60 backdrop-blur-lg z-9999"
         onClick={onClose}
       />
       <div className="fixed inset-0 z-10000 flex items-center justify-center p-2 overflow-y-auto">
-        <div className="relative bg-[#0f172b] rounded-2xl max-w-6xl w-full max-h-[99vh] overflow-y-auto border border-white/10">
+        <div className="relative bg-[#0f172b]/20 rounded-2xl max-w-6xl w-full max-h-[99vh] overflow-y-auto border border-white/10">
           {/* Header */}
-          <div className="sticky top-0 bg-linear-to-b from-[#0f172b] to-[#0f172b]/95 border-b border-white/10 px-4 py-3 flex items-center justify-between z-10 backdrop-blur-sm">
+          <div className="sticky top-0 bg-linear-to-b from-[#0f172b]/50 to-[#0f172b]/70 border-b border-white/10 px-6 py-3 flex items-center justify-between z-10 backdrop-blur-sm">
             {step > 1 && (
               <button
-                onClick={() => setStep((prev) => Math.max(1, prev - 1) as 1 | 2 | 3 | 4)}
+                onClick={() =>
+                  setStep((prev) => Math.max(1, prev - 1) as 1 | 2 | 3 | 4)
+                }
                 className="p-2 hover:bg-white/10 rounded-lg transition-colors shrink-0 mr-2"
               >
                 <FiArrowLeft className="text-white text-xl" />
@@ -1552,8 +1595,8 @@ export default function ReservationModal({
                           );
                         })
                         .sort((a, b) => {
-                          const typeA = (a as any).type || '';
-                          const typeB = (b as any).type || '';
+                          const typeA = (a as any).type || "";
+                          const typeB = (b as any).type || "";
                           // Group by type - items with same type together
                           if (typeA === typeB) return 0;
                           // Items without type go to the end
@@ -1567,23 +1610,34 @@ export default function ReservationModal({
                             (s) => s.addOn === addon._id
                           );
                           const rentalDays = priceCalc.totalDays;
-                          
+
                           // Check if another addon with the same type is already selected
                           const addonType = (addon as any).type;
-                          const isTypeDisabled = addonType && selectedAddOns.some((s) => {
-                            const selectedAddon = addOns.find((a) => a._id === s.addOn);
-                            return selectedAddon && (selectedAddon as any).type === addonType && selectedAddon._id !== addon._id;
-                          });
-                          
+                          const isTypeDisabled =
+                            addonType &&
+                            selectedAddOns.some((s) => {
+                              const selectedAddon = addOns.find(
+                                (a) => a._id === s.addOn
+                              );
+                              return (
+                                selectedAddon &&
+                                (selectedAddon as any).type === addonType &&
+                                selectedAddon._id !== addon._id
+                              );
+                            });
+
                           // Max quantity is 1
-                          const isMaxQuantity = selected && selected.quantity >= 1;
+                          const isMaxQuantity =
+                            selected && selected.quantity >= 1;
                           const canAdd = !isTypeDisabled && !isMaxQuantity;
-                          
+
                           return (
                             <div
                               key={addon._id}
                               className={`bg-white/5 border rounded-xl p-3 transition-all ${
-                                isTypeDisabled ? 'border-red-500/30 opacity-50' : 'border-white/10'
+                                isTypeDisabled
+                                  ? "border-red-500/30 opacity-50"
+                                  : "border-white/10"
                               }`}
                             >
                               <div className="flex items-start justify-between mb-2">
@@ -1598,7 +1652,8 @@ export default function ReservationModal({
                                   )}
                                   {isTypeDisabled && (
                                     <p className="text-red-400 text-xs mt-1">
-                                      Another option of this type is already selected
+                                      Another option of this type is already
+                                      selected
                                     </p>
                                   )}
                                   {addon.pricingType === "flat" ? (
@@ -1721,16 +1776,16 @@ export default function ReservationModal({
                                     }}
                                     disabled={!canAdd}
                                     className={`w-7 h-7 rounded flex items-center justify-center transition-all ${
-                                      canAdd 
-                                        ? 'bg-[#fe9a00] hover:bg-orange-600 text-white cursor-pointer' 
-                                        : 'bg-gray-600/50 text-gray-400 cursor-not-allowed opacity-50'
+                                      canAdd
+                                        ? "bg-[#fe9a00] hover:bg-orange-600 text-white cursor-pointer"
+                                        : "bg-gray-600/50 text-gray-400 cursor-not-allowed opacity-50"
                                     }`}
                                     title={
-                                      isTypeDisabled 
-                                        ? 'Another option of this type is already selected' 
-                                        : isMaxQuantity 
-                                        ? 'Maximum quantity reached' 
-                                        : 'Add addon'
+                                      isTypeDisabled
+                                        ? "Another option of this type is already selected"
+                                        : isMaxQuantity
+                                        ? "Maximum quantity reached"
+                                        : "Add addon"
                                     }
                                   >
                                     +
@@ -1936,13 +1991,13 @@ export default function ReservationModal({
                     <div className="flex justify-between">
                       <span className="text-gray-400">Email:</span>
                       <span className="text-white font-semibold">
-                        {formData.email || "N/A"}
+                        {displayUser.email || "N/A"}{" "}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Phone:</span>
                       <span className="text-white font-semibold">
-                        +44{formData.phone}
+                        {displayUser.phone ? `+44${displayUser.phone}` : "N/A"}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -2055,7 +2110,7 @@ export default function ReservationModal({
                           acceptTerms: e.target.checked,
                         }))
                       }
-                      className="mt-1 w-5 h-5 rounded border-white/20 bg-white/5 text-[#fe9a00] focus:ring-[#fe9a00] focus:ring-offset-0 cursor-pointer"
+                      className=" w-5 h-5 rounded border-white/20 bg-white/5 text-[#fe9a00] focus:ring-[#fe9a00] focus:ring-offset-0 cursor-pointer"
                     />
                     <span className="text-gray-300 text-sm">
                       I agree to the{" "}
@@ -2078,7 +2133,7 @@ export default function ReservationModal({
                 <div className="flex gap-3">
                   <button
                     onClick={() => setStep(3)}
-                    className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
+                    className="flex-1 bg-white/10 hover:bg-white/20 text-white text-sm md:text-base font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
                   >
                     <FiArrowLeft />
                     Back
@@ -2086,7 +2141,7 @@ export default function ReservationModal({
                   <button
                     onClick={handleSubmit}
                     disabled={isSubmitting || !formData.acceptTerms}
-                    className="flex-1 bg-[#fe9a00] hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50"
+                    className="flex-1 bg-[#fe9a00] text-sm md:text-base hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50"
                   >
                     {isSubmitting ? "Processing..." : "Confirm Reservation"}
                   </button>
