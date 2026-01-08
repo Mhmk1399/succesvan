@@ -12,7 +12,13 @@ import {
   FiFileText,
   FiHeart,
 } from "react-icons/fi";
-import { FaFacebook, FaInstagram, FaYoutube, FaGithub } from "react-icons/fa";
+import {
+  FaFacebook,
+  FaInstagram,
+  FaYoutube,
+  FaGithub,
+  FaWhatsapp,
+} from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import Link from "next/link";
 import Image from "next/image";
@@ -35,32 +41,32 @@ const socialLinks = [
   {
     name: "Facebook",
     icon: FaFacebook,
-    href: "https://facebook.com/successvanhire",
-    color: "#1877f2",
+    href: "https://www.facebook.com/topvanhire",
+    color: "#1877F2", // آبی رسمی فیسبوک
   },
   {
     name: "Instagram",
     icon: FaInstagram,
-    href: "https://instagram.com/successvanhire",
-    color: "#e4405f",
+    href: "https://www.instagram.com/success.van.hire",
+    color: "#E4405F", // صورتی-قرمز رسمی اینستاگرام
   },
   {
     name: "X",
     icon: FaXTwitter,
-    href: "https://x.com/successvanhire",
-    color: "#000000",
+    href: "https://twitter.com/MatinDiba?t=GKR1BWNSQK6yB2Rj4W5Jhg&s=09",
+    color: "#ffffff", // سیاه رسمی X (Twitter جدید)
   },
   {
     name: "YouTube",
     icon: FaYoutube,
-    href: "https://youtube.com/@successvanhire",
-    color: "#ff0000",
+    href: "https://youtube.com/channel/UCTSPTUFbkBJSHu5oLiXTJAQ",
+    color: "#FF0000", // قرمز رسمی یوتیوب
   },
   {
-    name: "GitHub",
-    icon: FaGithub,
-    href: "https://github.com/successvanhire",
-    color: "#333333",
+    name: "WhatsApp",
+    icon: FaWhatsapp,
+    href: "https://api.whatsapp.com/send/?phone=447915193000&text=Hello%2C+I+need+help%21&type=phone_number&app_absent=0",
+    color: "#25D366", // سبز رسمی واتساپ
   },
 ];
 
@@ -629,27 +635,27 @@ export default function Footer() {
 
       {/* Content */}
       <div className="relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 md:pt-20 pb-10 md:pb-14">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 md:pt-2 pb-10 md:pb-14">
           {/* Top Section - Logo & CTA */}
           <div className="footer-reveal mb-12 md:mb-16 text-center">
             <Link
               href="/"
-              className="inline-flex flex-col items-center group mb-6"
+              className="inline-flex flex-col items-center group mb-2 md:mb-6"
             >
               <Image
-                src="/assets/images/logo.png"
+                src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
                 alt="Success Van Hire"
-                width={220}
-                height={80}
-                className="h-14 md:h-16 w-auto group-hover:scale-110 transition-transform duration-500 drop-shadow-2xl"
+                width={500}
+                height={500}
+                className="h-30 md:h-40 w-auto group-hover:scale-110 transition-transform duration-500 drop-shadow-2xl"
                 priority
               />
-              <span className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#fe9a00]/30 bg-black/20 px-4 py-1 text-[11px] uppercase tracking-[0.18em] text-[#fbbf24]">
+              <span className="md:-mt-10 -mt-6 inline-flex items-center gap-2 rounded-full border border-[#fe9a00]/30 bg-black/20 px-4 py-1 text-[8px] uppercase tracking-[0.18em] text-[#fbbf24]">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#22c55e]" />
                 Trusted Self-Drive Van & Minibus Hire in London
               </span>
             </Link>
-            <p className="text-gray-400 text-sm sm:text-base md:text-lg max-w-3xl mx-auto leading-relaxed">
+            <p className="text-gray-400 text-xs sm:text-base md:text-lg max-w-3xl mx-auto leading-relaxed">
               Clean, reliable vehicles. Transparent pricing. Easy online
               booking. Everything you need to keep your move or journey on
               track.
@@ -825,7 +831,7 @@ export default function Footer() {
           {/* Social Media Section */}
           <div className="footer-reveal mb-10 md:mb-12">
             <div
-              className="relative p-6 md:p-8 rounded-3xl border overflow-hidden"
+              className="relative px-4 py-9 md:p-8 rounded-3xl border overflow-hidden"
               style={{
                 background: "rgba(15, 23, 42, 0.5)",
                 backdropFilter: "blur(20px)",
@@ -843,27 +849,63 @@ export default function Footer() {
                   and updates.
                 </p>
 
-                <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
-                  {socialLinks.map((social, index) => {
-                    const Icon = social.icon;
-                    return (
-                      <a
-                        key={index}
-                        href={social.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#fe9a00] focus-visible:ring-offset-[#020617] rounded-2xl"
-                        aria-label={social.name}
-                      >
-                        <div className="w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-[#fe9a00] group-hover:border-[#fe9a00] transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1">
-                          <Icon className="text-gray-300 group-hover:text-white transition-colors text-xl" />
-                        </div>
-                        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[11px] text-gray-500 group-hover:text-[#fe9a00] transition-colors whitespace-nowrap">
-                          {social.name}
-                        </span>
-                      </a>
-                    );
-                  })}
+                <div className="grid grid-cols-5 sm:grid-cols-5 items-center justify-center gap-4 md:gap-10 max-w-md mx-auto">
+                  {socialLinks.map((social) => (
+                    <a
+                      key={social.name}
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative p-3 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 transition-all duration-500 hover:scale-110 hover:border-transparent hover:shadow-2xl"
+                      style={{
+                        background: `rgba(${parseInt(
+                          social.color.slice(1, 3),
+                          16
+                        )}, ${parseInt(
+                          social.color.slice(3, 5),
+                          16
+                        )}, ${parseInt(social.color.slice(5, 7), 16)}, 0.1)`,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (window.innerWidth > 640) {
+                          // فقط در دسکتاپ (sm و بزرگتر)
+                          e.currentTarget.style.background = `${social.color}30`;
+                          e.currentTarget.style.boxShadow = `0 0 40px ${social.color}90`;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (window.innerWidth > 640) {
+                          e.currentTarget.style.background = `rgba(${parseInt(
+                            social.color.slice(1, 3),
+                            16
+                          )}, ${parseInt(
+                            social.color.slice(3, 5),
+                            16
+                          )}, ${parseInt(social.color.slice(5, 7), 16)}, 0.1)`;
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 0 transparent";
+                        }
+                      }}
+                    >
+                      <social.icon
+                        className="text-2xl sm:text-3xl text-center transition-colors duration-500"
+                        style={{
+                          color:
+                            window.innerWidth <= 640 ? social.color : "#ffffff", // موبایل: رنگ اصلی، دسکتاپ: سفید (تا hover)
+                        }}
+                        onMouseEnter={(e) => {
+                          if (window.innerWidth > 640) {
+                            e.currentTarget.style.color = social.color;
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (window.innerWidth > 640) {
+                            e.currentTarget.style.color = "#ffffff";
+                          }
+                        }}
+                      />
+                    </a>
+                  ))}
                 </div>
               </div>
             </div>
@@ -906,7 +948,10 @@ export default function Footer() {
                 <span>All rights reserved.</span>
               </div>
               <div className="mt-3 md:mt-0 md:ml-6 text-sm">
-                <Link href="/policy#cookie-settings" className="text-gray-400 hover:text-[#fe9a00] font-semibold">
+                <Link
+                  href="/policy#cookie-settings"
+                  className="text-gray-400 hover:text-[#fe9a00] font-semibold"
+                >
                   Cookie settings
                 </Link>
               </div>

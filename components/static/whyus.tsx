@@ -5,129 +5,127 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import {
   FiShield,
-  FiClock,
   FiTruck,
-  FiMapPin,
+  FiGlobe,
   FiCheckCircle,
   FiArrowRight,
+  FiPhone,
 } from "react-icons/fi";
-import { FaPoundSign } from "react-icons/fa";
+import { FaPoundSign, FaLeaf } from "react-icons/fa";
 import { MdSupportAgent } from "react-icons/md";
 import Image from "next/image";
+import Link from "next/link";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-const whyUsData = [
+const whyChooseUsData = [
   {
     id: 1,
-    icon: FaPoundSign,
-    title: "Our Prices",
-    shortDesc: "Best value in £",
+    icon: FiTruck,
+    title: "Expert in Work",
+    shortDesc: "Long & short-term rentals",
     description:
-      "Wide range of prices to fit every budget. Transparent pricing with no hidden charges.",
+      "We are expert in long-term and short-term business van rental with a modern fleet of over 50 vehicles.",
     color: "#fe9a00",
   },
   {
     id: 2,
-    icon: FiTruck,
-    title: "Expert in Work",
-    shortDesc: "10+ years of experience",
+    icon: FiGlobe,
+    title: "Licenses",
+    shortDesc: "UK & EU accepted",
     description:
-      "Specialists in long-term and short-term business van rental with 50+ modern vehicles.",
+      "We do accept full UK and EU driving licences with a fast and simple verification process.",
     color: "#fe9a00",
   },
   {
     id: 3,
-    icon: FiClock,
-    title: "24/7 Availability",
-    shortDesc: "Always here for you",
-    description:
-      "Book anytime, pickup anytime. Round-the-clock support for all your needs.",
-    color: "#fe9a00",
-  },
-  {
-    id: 4,
     icon: FiShield,
     title: "Best Guarantee",
     shortDesc: "100% secure booking",
     description:
-      "Your rental reservation is fully guaranteed with comprehensive insurance coverage.",
+      "The rental reservation you make with us is 100% guaranteed with full insurance coverage.",
+    color: "#fe9a00",
+  },
+  {
+    id: 4,
+    icon: FaPoundSign,
+    title: "Our Prices",
+    shortDesc: "Fit every budget",
+    description:
+      "The vans we offer have a wide range of prices, and we have vans that fit every budget. No hidden fees.",
     color: "#fe9a00",
   },
   {
     id: 5,
-    icon: MdSupportAgent,
-    title: "UK/EU licences",
-    shortDesc: "Easy verification",
+    icon: FaLeaf,
+    title: "Clean Air Standard",
+    shortDesc: "Eco-friendly fleet",
     description:
-      "We accept full UK and EU driving licences with quick verification process.",
+      "As part of our commitment to the environment, all our vans meet EU6 emission standards.",
     color: "#fe9a00",
   },
   {
     id: 6,
-    icon: FiMapPin,
-    title: "Clean Air Standard",
-    shortDesc: "Eco-friendly fleet",
+    icon: MdSupportAgent,
+    title: "Easy Service Delivery",
+    shortDesc: "Friendly & professional",
     description:
-      "All our vans meet EU6 emission standards. Committed to environmental protection.",
+      "In addition to providing full business insurance to B2B clients, we provide very friendly and easy service.",
     color: "#fe9a00",
   },
 ];
 
-export default function WhyUs() {
+export default function WhyChooseUs() {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
-  const [activeCard, setActiveCard] = useState<number | null>(null);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      // Header animation
+      // Title animation
       gsap.fromTo(
-        ".why-us-header",
-        { opacity: 0, y: -50 },
+        titleRef.current,
+        { opacity: 0, y: 60 },
         {
           opacity: 1,
           y: 0,
-          duration: 1,
-          ease: "power3.out",
+          duration: 1.2,
+          ease: "power4.out",
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: "top 80%",
+            start: "top 75%",
             toggleActions: "play none none reverse",
-            once: true,
           },
         }
       );
 
-      // Cards stagger animation
-      cardsRef.current.forEach((card, index) => {
-        if (!card) return;
-
-        gsap.fromTo(
-          card,
-          {
-            opacity: 0,
-            y: 80,
-            scale: 0.9,
+      // Cards animation - stagger
+      gsap.fromTo(
+        cardsRef.current,
+        {
+          opacity: 0,
+          y: 80,
+          scale: 0.95,
+        },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.9,
+          ease: "power3.out",
+          stagger: {
+            amount: 0.6,
+            from: "start",
           },
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.8,
-            ease: "power3.out",
-            scrollTrigger: {
-              trigger: card,
-              start: "top 90%",
-              toggleActions: "play none none reverse",
-              once: true,
-            },
-            delay: index * 0.15,
-          }
-        );
-      });
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 70%",
+            toggleActions: "play none none reverse",
+          },
+        }
+      );
     }, sectionRef);
 
     return () => ctx.revert();
@@ -136,117 +134,79 @@ export default function WhyUs() {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full min-h-screen py-20   overflow-hidden"
+      className="relative py-16 md:py-24 lg:py-32 overflow-hidden bg-[#0f172b]"
     >
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0">
-        {/* Replace with your actual image */}
-        <div className="absolute inset-0 bg-[#0f172b]">
-          {/* Placeholder for background image */}
-          <div className="absolute inset-0 opacity-50">
-            <Image
-              src="/assets/images/van.png"
-              alt="Van Background"
-              fill
-              className="object-cover"
-              priority
-            />
-          </div>
-        </div>
-
-        {/* Gradient Overlays */}
-        <div className="absolute inset-0 bg-linear-to-b from-[#0f172b]/95 via-[#0f172b]/80 to-[#0f172b]/95"></div>
-         
-
-        {/* Animated Gradient Orbs */}
-        <div className="absolute top-0 left-0 w-full h-full">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#fe9a00]/20 rounded-full blur-3xl animate-pulse-slow"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#fe9a00]/20 rounded-full blur-3xl animate-pulse-slower"></div>
-        </div>
-      </div>
-
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="why-us-header text-center mb-16 lg:mb-24">
-          <h2 className="text-2xl   lg:text-7xl   font-black text-white mb-6 leading-tight">
-            Your Trusted Partner for
-            <br />
-            <span
-              className="bg-linear-to-r from-[#fe9a00] via-[#ff8800] to-[#fe9a00] bg-clip-text text-transparent animate-gradient"
-              style={{
-                backgroundSize: "200% auto",
-              }}
-            >
-              Van Hire in London
+        <div className="text-center mb-12 lg:mb-20">
+          <h2
+            ref={titleRef}
+            className="text-3xl   md:text-6xl  font-black text-white md:leading-tight"
+          >
+            Why Choose
+            <span className="block mt-2">
+              <span className="bg-linear-to-r from-amber-400 via-orange-500 to-amber-400 bg-clip-text text-transparent animate-shimmer">
+                Success Van Hire
+              </span>
             </span>
           </h2>
-
-          <p className="text-gray-300 text-lg sm:text-xl lg:text-2xl max-w-4xl mx-auto leading-relaxed">
-            We combine reliability, affordability, and exceptional service to
-            make your van rental experience seamless
+          <p className="mt-2 text-sm sm:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            Trusted by thousands of businesses and individuals across London for
+            reliable, affordable, and hassle-free van rental.
           </p>
         </div>
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 lg:gap-8">
-          {whyUsData.map((item, index) => (
+        {/* Cards Grid - Responsive */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
+          {whyChooseUsData.map((item, index) => (
             <div
               key={item.id}
               ref={(el) => {
                 cardsRef.current[index] = el;
               }}
-              onMouseEnter={() => setActiveCard(index)}
-              onMouseLeave={() => setActiveCard(null)}
-              className="group"
+              className="group relative"
             >
-              <WhyUsCard item={item} isActive={activeCard === index} />
+              <WhyChooseUsCard item={item} />
             </div>
           ))}
         </div>
 
-        {/* Bottom CTA */}
-        <div className="mt-20 text-center">
-          <div
-            className="inline-block p-8 lg:p-12 rounded-3xl backdrop-blur-xl border border-white/20 shadow-2xl"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(254, 154, 0, 0.1), rgba(15, 23, 43, 0.5))",
-            }}
-          >
-            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-4">
-              Ready to Get Started?
+        {/* CTA Section */}
+        <div className="mt-20 lg:mt-28 text-center">
+          <div className="inline-block p-8 lg:p-12 rounded-3xl bg-linear-to-br from-amber-500/10 to-orange-600/10 backdrop-blur-xl border border-amber-500/20 shadow-2xl">
+            <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-6">
+              Ready to Hire Your Van?
             </h3>
-            <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
-              Book your van today and experience the Success Van Hire difference
+            <p className="text-gray-300 text-lg mb-10 max-w-2xl mx-auto">
+              Get instant booking and the best rates in London
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+              <Link
                 href="/reservation"
-                className="group/btn relative px-10 py-5 rounded-2xl font-bold text-lg text-white overflow-hidden transition-all duration-300 hover:scale-105 shadow-2xl"
-                style={{
-                  background: "linear-gradient(135deg, #fe9a00, #d97900)",
-                  boxShadow: "0 20px 60px rgba(254, 154, 0, 0.4)",
-                }}
+                className="group relative px-10 py-5 bg-linear-to-r from-amber-500 to-orange-600 text-white font-bold text-lg rounded-2xl overflow-hidden shadow-2xl transition-all duration-500 hover:scale-105 hover:shadow-amber-500/50"
               >
                 <span className="relative z-10 flex items-center gap-3">
-                  Reserve Your Van
-                  <FiArrowRight className="text-2xl group-hover/btn:translate-x-2 transition-transform duration-300" />
+                  Book Now
+                  <FiArrowRight className="text-2xl group-hover:translate-x-2 transition-transform" />
                 </span>
-                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000"></div>
-              </a>
+                <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              </Link>
+
               <a
                 href="tel:+442030111198"
-                className="px-10 py-5 rounded-2xl font-bold text-lg text-white border-2 border-[#fe9a00]/50 hover:bg-[#fe9a00]/10 transition-all duration-300"
+                className="flex items-center gap-3 px-10 py-5 border-2 border-amber-500/50 text-white font-bold text-lg rounded-2xl transition-all duration-300 hover:bg-amber-500/10"
               >
-                Call: +44 20 3011 1198
+                <FiPhone className="text-xl" />
+                +44 20 3011 1198
               </a>
             </div>
           </div>
         </div>
       </div>
 
-      <style jsx>{`
-        @keyframes gradient {
+      {/* Global Styles */}
+      <style jsx global>{`
+        @keyframes shimmer {
           0% {
             background-position: 0% 50%;
           }
@@ -257,137 +217,54 @@ export default function WhyUs() {
             background-position: 0% 50%;
           }
         }
-
-        .animate-gradient {
-          animation: gradient 3s ease infinite;
+        .animate-shimmer {
+          animation: shimmer 4s ease-in-out infinite;
         }
-
-        @keyframes pulse-slow {
-          0%,
-          100% {
-            opacity: 0.4;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.6;
-            transform: scale(1.1);
-          }
+        .delay-1000 {
+          animation-delay: 1s;
         }
-
-        @keyframes pulse-slower {
-          0%,
-          100% {
-            opacity: 0.3;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.5;
-            transform: scale(1.15);
-          }
-        }
-
-        .animate-pulse-slow {
-          animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        .animate-pulse-slower {
-          animation: pulse-slower 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .delay-500 {
+          animation-delay: 0.5s;
         }
       `}</style>
     </section>
   );
 }
 
-function WhyUsCard({ item, isActive }: { item: any; isActive: boolean }) {
+function WhyChooseUsCard({ item }: { item: any }) {
   const Icon = item.icon;
 
   return (
-    <div className="relative h-full group/card">
-      {/* Glow Effect */}
-      <div
-        className={`absolute -inset-1 rounded-3xl transition-opacity duration-500 blur-xl ${
-          isActive ? "opacity-100" : "opacity-0"
-        }`}
-        style={{
-          background: `radial-gradient(circle at center, ${item.color}60, transparent 70%)`,
-        }}
-      ></div>
+    <div className="relative h-full bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 overflow-hidden transition-all duration-500 group-hover:border-amber-500/40 group-hover:bg-white/8 group-hover:scale-105">
+      {/* Hover glow */}
+      <div className="absolute -inset-1 bg-linear-to-br from-amber-500/20 to-transparent rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 -z-10" />
 
-      {/* Card */}
-      <div
-        className={`relative h-full rounded-3xl backdrop-blur-2xl border transition-all duration-500 overflow-hidden ${
-          isActive ? "scale-105 border-[#fe9a00]/60" : "border-white/10"
-        }`}
-        style={{
-          background: isActive
-            ? "rgba(254, 154, 0, 0.08)"
-            : "rgba(255, 255, 255, 0.03)",
-        }}
-      >
-        {/* Shine Effect on Hover */}
-        <div className="absolute inset-0 bg-linear-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-700"></div>
-
-        {/* Content */}
-        <div className="relative p-3 lg:p-10">
-          {/* Icon Container */}
-          <div className="md:mb-8 mb-4 relative">
-            <div
-              className={`w-12 h-12 lg:w-20 lg:h-20 rounded-2xl bg-linear-to-br from-[#fe9a00] to-[#d97900] flex items-center justify-center shadow-2xl transition-all duration-500 ${
-                isActive ? "scale-110 rotate-6" : "group-hover/card:scale-105"
-              }`}
-              style={{
-                boxShadow: isActive
-                  ? `0 20px 60px ${item.color}60`
-                  : `0 10px 40px ${item.color}40`,
-              }}
-            >
-              <Icon className="text-2xl lg:text-3xl text-white" />
-            </div>
-
-            {/* Floating Dot */}
-            <div
-              className="absolute hidden  -top-2 -right-2 w-6 h-6 rounded-full bg-[#fe9a00] md:flex items-center justify-center"
-              style={{
-                boxShadow: "0 0 20px rgba(254, 154, 0, 0.8)",
-              }}
-            >
-              <FiCheckCircle className="text-white text-sm" />
-            </div>
+      <div className="p-6 lg:p-8">
+        {/* Icon */}
+        <div className="mb-6 relative inline-block">
+          <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+            <Icon className="text-3xl lg:text-4xl text-white" />
           </div>
-
-          {/* Title */}
-          <h3 className="text-base lg:text-2xl font-black text-white mb-3 leading-tight">
-            {item.title}
-          </h3>
-
-          {/* Short Description */}
-          <p className="text-[#fe9a00] text-xs md:text-sm font-bold mb-4">
-            {item.shortDesc}
-          </p>
-
-          {/* Divider */}
-          <div
-            className="h-px mb-6 rounded-full transition-all duration-500"
-            style={{
-              background: isActive
-                ? `linear-gradient(90deg, ${item.color}, transparent)`
-                : "linear-gradient(90deg, rgba(255,255,255,0.2), transparent)",
-            }}
-          ></div>
-
-          {/* Description */}
-          <p className="text-gray-300 text-xs md:text-sm  leading-relaxed mb-6">
-            {item.description}
-          </p>
+          <div className="absolute -top-2 -right-2 w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/50">
+            <FiCheckCircle className="text-white text-lg" />
+          </div>
         </div>
 
-        {/* Decorative Corner */}
-        <div
-          className="absolute -bottom-20 -right-20 w-60 h-60 rounded-full blur-3xl opacity-0 group-hover/card:opacity-30 transition-opacity duration-700 pointer-events-none"
-          style={{
-            background: `radial-gradient(circle, ${item.color}, transparent)`,
-          }}
-        ></div>
+        {/* Title & Short Desc */}
+        <h3 className="text-xl lg:text-2xl font-black text-white mb-2">
+          {item.title}
+        </h3>
+        <p className="text-amber-400 font-bold text-sm lg:text-base mb-4">
+          {item.shortDesc}
+        </p>
+
+        {/* Divider */}
+        <div className="h-px bg-linear-to-r from-amber-500/50 to-transparent mb-6" />
+
+        {/* Description */}
+        <p className="text-gray-300 text-sm lg:text-base leading-relaxed">
+          {item.description}
+        </p>
       </div>
     </div>
   );

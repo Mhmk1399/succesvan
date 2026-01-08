@@ -200,6 +200,13 @@ export default function HeroSection() {
         rotation: 3,
         scale: 0.9,
       });
+      gsap.to("h2", {
+        opacity: 1,
+        y: 0,
+        duration: 1,
+        ease: "power3.out",
+        delay: 0.3,
+      });
 
       tl.to(
         vanImageRef.current,
@@ -354,62 +361,41 @@ export default function HeroSection() {
   const handleNext = () => changeVan("next");
   const handlePrev = () => changeVan("prev");
 
-  const handleDotClick = (index: number) => {
-    if (index === currentIndex || isAnimatingRef.current) return;
-
-    stopAutoPlay();
-
-    const exitTl = gsap.timeline({
-      onComplete: () => {
-        setCurrentIndex(index);
-        updateVanData(index);
-        animateVanEntrance();
-        startAutoPlay();
-      },
-    });
-
-    if (vanImageRef.current) {
-      exitTl.to(vanImageRef.current, {
-        x: -1400,
-        opacity: 0,
-        rotation: -3,
-        scale: 0.9,
-        duration: 0.6,
-        ease: "power3.in",
-      });
-    }
-
-    if (vanContentRef.current) {
-      exitTl.to(vanContentRef.current, { opacity: 0, duration: 0.15 }, "-=0.3");
-    }
-
-    if (glowRef.current && shadowRef.current) {
-      exitTl.to(
-        [
-          glowRef.current,
-          shadowRef.current,
-          roadLinesRef.current,
-          particlesRef.current,
-        ],
-        { opacity: 0, duration: 0.3 },
-        "-=0.4"
-      );
-    }
-  };
-
   const currentVan = vansData[currentIndex];
 
   return (
     <section
       ref={heroRef}
-      className="relative min-h-screen w-full overflow-hidden bg-[#0f172b]"
+      className="relative min-h-screen w-full  bg-[#0f172b]"
       onMouseEnter={stopAutoPlay}
       onMouseLeave={startAutoPlay}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Section Title - Most Popular Vans */}
+      <div className="absolute -top-20 md:top-4 left-0 right-0 z-20 pointer-events-none mb-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+          <h2 className="text-center font-black tracking-tight text-white opacity-0 translate-y-8">
+            <span className="block text-3xl   md:text-5xl  ">
+              Most Popular Vans
+            </span>
+            <span className="block text-xl   md:text-3xl   mt-1 sm:mt-2">
+              in{" "}
+              <span
+                className="inline-block bg-linear-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent"
+                style={{
+                  textShadow: "0 0 20px rgba(254, 154, 0, 0.5)",
+                }}
+              >
+                Success Van Hire
+              </span>
+            </span>
+            {/* زیرخط تزئینی با glow */}
+          </h2>
+        </div>
+      </div>
       {/* Enhanced Background */}
-      <div className="hero-background absolute inset-0 opacity-30">
+      <div className="hero-background overflow-hidden absolute inset-0 opacity-30">
         <div className="absolute top-1/4 left-1/4 w-125 h-125 bg-amber-500/15 rounded-full blur-3xl animate-pulse-slow"></div>
         <div className="absolute bottom-1/4 right-1/4 w-125 h-125 bg-orange-500/15 rounded-full blur-3xl animate-pulse-slower"></div>
 
@@ -418,7 +404,7 @@ export default function HeroSection() {
       </div>
 
       {/* Main Content */}
-      <div className="relative h-screen flex items-center justify-center">
+      <div className="relative h-screen overflow-hidden flex items-center justify-center ">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center">
             {/* LEFT SIDE - Text Content */}
@@ -426,7 +412,7 @@ export default function HeroSection() {
               <div ref={vanContentRef} className="space-y-2 md:space-y-4">
                 {/* Van Name */}
                 <div>
-                  <h2 className="text-3xl lg:text-5xl  font-black text-white leading-tight tracking-tight">
+                  <h2 className="text-2xl lg:text-4xl  font-black text-white leading-tight tracking-tight">
                     {currentVan.name}
                   </h2>
                   <div
@@ -447,7 +433,7 @@ export default function HeroSection() {
                 </p>
 
                 {/* Description */}
-                <p className="text-gray-400 text-sm   lg:text-base leading-relaxed max-w-xl">
+                <p className="text-gray-400 text-xs   lg:text-sm leading-relaxed max-w-xl">
                   {currentVan.description}
                 </p>
 
@@ -456,7 +442,7 @@ export default function HeroSection() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-2 sm:hidden">
                   <div className="relative">
                     <div className="text-gray-500 text-[10px] font-semibold mb-1 tracking-wide uppercase">
-                      Starting from 
+                      Starting from
                     </div>
                     <div className="flex items-baseline">
                       <span className="text-4xl   lg:text-5xl font-black text-white">
@@ -621,8 +607,6 @@ export default function HeroSection() {
                       priority
                       quality={100}
                     />
-
-                  
                   </div>
                 </div>
 
@@ -643,7 +627,7 @@ export default function HeroSection() {
       {/* Navigation Buttons with Glassmorphism */}
       <button
         onClick={handlePrev}
-        className="absolute left-3 sm:left-6 cursor-pointer lg:left-8 top-1/4 md:top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex items-center justify-center  rounded-full text-white  hover:border-transparent transition-all duration-300 group hover:scale-110 active:scale-95 shadow-xl"
+        className="absolute left-3 sm:left-6 cursor-pointer lg:left-8 top-1/5 md:top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex items-center justify-center  rounded-full text-white  hover:border-transparent transition-all duration-300 group hover:scale-110 active:scale-95 shadow-xl"
         aria-label="Previous van"
       >
         <HiArrowLeft className="text-lg sm:text-xl lg:text-2xl group-hover:scale-110 transition-transform duration-300" />
@@ -651,7 +635,7 @@ export default function HeroSection() {
 
       <button
         onClick={handleNext}
-        className="absolute right-3 sm:right-6 cursor-pointer lg:right-8 top-1/4 md:top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex items-center justify-center  rounded-full text-white  hover:border-transparent transition-all duration-300 group hover:scale-110 active:scale-95 shadow-xl"
+        className="absolute right-3 sm:right-6 cursor-pointer lg:right-8 top-1/5 md:top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 lg:w-14 lg:h-14 flex items-center justify-center  rounded-full text-white  hover:border-transparent transition-all duration-300 group hover:scale-110 active:scale-95 shadow-xl"
         aria-label="Next van"
       >
         <HiArrowRight className="text-lg sm:text-xl lg:text-2xl group-hover:scale-110 transition-transform duration-300" />

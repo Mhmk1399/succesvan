@@ -140,7 +140,7 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full bg-[#0f172b] py-20 z-10"
+      className="relative w-full bg-[#0f172b] pt-20 pb-40 md:pb-25  z-10"
     >
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -2357,9 +2357,9 @@ function CategoryCard({
               e.stopPropagation();
               onView();
             }}
-            className="px-5 py-3 bg-linear-to-r flex gap-1 items-center  from-[#fe9a00] to-[#ff8800]
+            className="px-5 py-3 bg-linear-to-r flex gap-1 text-sm items-center  from-[#fe9a00] to-[#ff8800]
                hover:from-[#ff8800] hover:to-[#fe9a00]
-               text-black font-semibold rounded-xl shadow-lg
+               text-black font-bold rounded-xl shadow-lg
                hover:shadow-[#fe9a00]/50 transform hover:scale-105
                transition-all duration-300"
           >

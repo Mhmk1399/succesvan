@@ -282,11 +282,11 @@ export default function Navbar() {
               {/* Logo - Desktop */}
               <Link href="/" className="hidden md:block">
                 <Image
-                  src="/assets/images/logo.png"
+                  src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
                   alt="SuccessVan Logo"
-                  width={100}
-                  height={60}
-                  className="h-10 w-auto hover:scale-105 transition-transform duration-200"
+                  width={300}
+                  height={100}
+                  className="h-20 w-auto hover:scale-105 transition-transform duration-200"
                   priority
                 />
               </Link>
@@ -295,11 +295,11 @@ export default function Navbar() {
             {/* Center Logo - Mobile */}
             <Link href="/" className="md:hidden">
               <Image
-                src="/assets/images/logo.png"
+                src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
                 alt="SuccessVan Logo"
                 width={90}
                 height={55}
-                className="h-8 hover:scale-105 transition-transform duration-200"
+                className="h-18 hover:scale-105 transition-transform duration-200"
                 priority
               />
             </Link>
