@@ -1,185 +1,582 @@
 "use client";
-
-import { use } from "react";
-import { blogPosts } from "@/components/global/blogListing";
-import { FiCalendar, FiUser, FiArrowLeft, FiShare2 } from "react-icons/fi";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import styled from "styled-components";
+import DOMPurify from "dompurify"; // added for sanitization
 
-export default function BlogDetail({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
-  const post = blogPosts.find((p) => p.slug === slug);
 
-  if (!post) {
+interface BlogDetailData {
+  _id: string;
+  title: string;
+  subtitle?: string;
+  content: string;
+  image: string;
+  imageAlt?: string;
+  createdAt: string;
+  author?: string;
+  readTime?: number;
+}
+
+// Next.js 15+ page component props structure with Promise params
+interface PageProps {
+  params: Promise<{
+    id: string;
+  }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+// Internal component props
+interface BlogDetailProps {
+  isMobile: boolean;
+}
+
+// Styled components based on blogdetaillg.json settings
+const SectionBlogDetail = styled.div<{
+  $data: BlogDetailSection;
+  $isMobile?: boolean;
+}>`
+  padding-top: ${(props) => props.$data?.setting?.paddingTop || 10}px;
+  padding-bottom: ${(props) => props.$data?.setting?.paddingBottom || 10}px;
+  padding-left: ${(props) => props.$data?.setting?.paddingLeft || 30}px;
+  padding-right: ${(props) => props.$data?.setting?.paddingRight || 30}px;
+  margin-top: ${(props) => props.$data?.setting?.marginTop || 0}px;
+  margin-bottom: ${(props) => props.$data?.setting?.marginBottom || 0}px;
+  background-color: ${(props) =>
+    props.$data?.setting?.backgroundColor || "#ffffff"};
+
+  .blog-title {
+    color: ${(props) => props.$data?.setting?.titleColor || "#1A1A1A"};
+    font-size: ${(props) =>
+      props.$isMobile
+        ? Math.max(
+            18,
+            parseInt(props.$data?.setting?.titleFontSize || "36") * 0.6
+          )
+        : props.$data?.setting?.titleFontSize || 36}px;
+    font-weight: bold;
+    margin-bottom: 16px;
+
+    @media (max-width: 768px) {
+      font-size: ${(props) =>
+        Math.max(
+          16,
+          parseInt(props.$data?.setting?.titleFontSize || "36") * 0.5
+        )}px;
+    }
+  }
+
+  .blog-content {
+    color: ${(props) => props.$data?.setting?.contentColor || "#2C2C2C"};
+    font-size: ${(props) =>
+      props.$isMobile
+        ? Math.max(
+            14,
+            parseInt(props.$data?.setting?.contentFontSize || "18") * 0.8
+          )
+        : props.$data?.setting?.contentFontSize || 18}px;
+    line-height: 1.8;
+    margin-top: 24px;
+
+    img {
+      max-width: 1000px;
+      height: 500px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin: 16px auto;
+      display: block;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 768px) {
+      font-size: ${(props) =>
+        Math.max(
+          12,
+          parseInt(props.$data?.setting?.contentFontSize || "18") * 0.7
+        )}px;
+
+      img {
+        margin: 12px auto;
+        border-radius: 6px;
+      }
+    }
+  }
+
+  .blog-meta {
+    color: ${(props) => props.$data?.setting?.metaColor || "#666666"};
+    font-size: ${(props) =>
+      props.$isMobile
+        ? Math.max(
+            12,
+            parseInt(props.$data?.setting?.metaFontSize || "14") * 0.9
+          )
+        : props.$data?.setting?.metaFontSize || 14}px;
+    margin-bottom: 20px;
+
+    @media (max-width: 768px) {
+      font-size: ${(props) =>
+        Math.max(
+          10,
+          parseInt(props.$data?.setting?.metaFontSize || "14") * 0.8
+        )}px;
+    }
+  }
+`;
+
+const CoverImageContainer = styled.div<{
+  $data: BlogDetailSection;
+  $isMobile?: boolean;
+}>`
+  width: ${(props) =>
+    props.$isMobile
+      ? Math.min(300, parseInt(props.$data?.setting?.coverImageWidth || "600"))
+      : props.$data?.setting?.coverImageWidth || 600}px;
+  height: ${(props) =>
+    props.$isMobile
+      ? Math.min(200, parseInt(props.$data?.setting?.coverImageHeight || "400"))
+      : props.$data?.setting?.coverImageHeight || 400}px;
+  position: relative;
+  border-radius: ${(props) => props.$data?.setting?.imageRadius || 10}px;
+  overflow: hidden;
+  margin: 0 auto 24px auto;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+
+  /* Apply animations using CSS filters and properties that don't affect positioning */
+  ${(props) => {
+    const animation = props.$data.setting.animation;
+    if (!animation) return "";
+
+    const { type, animation: animConfig } = animation;
+    const selector = type === "hover" ? "&:hover" : "&:active";
+
+    // Generate animation CSS based on type
+    if (animConfig.type === "pulse") {
+      return `
+        ${selector} {
+          animation: blogImagePulse ${animConfig.duration} ${
+        animConfig.timing
+      } ${animConfig.delay || "0s"} ${animConfig.iterationCount || "1"};
+        }
+        
+        @keyframes blogImagePulse {
+          0%, 100% { 
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% { 
+            transform: scale(1.05);
+            opacity: 0.8;
+          }
+        }
+      `;
+    } else if (animConfig.type === "ping") {
+      return `
+        ${selector} {
+          animation: blogImagePing ${animConfig.duration} ${
+        animConfig.timing
+      } ${animConfig.delay || "0s"} ${animConfig.iterationCount || "1"};
+        }
+        
+        @keyframes blogImagePing {
+          0% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          75%, 100% {
+            transform: scale(1.1);
+            opacity: 0;
+          }
+        }
+      `;
+    } else if (animConfig.type === "bgOpacity") {
+      return `
+        ${selector} {
+          animation: blogImageBgOpacity ${animConfig.duration} ${
+        animConfig.timing
+      } ${animConfig.delay || "0s"} ${animConfig.iterationCount || "1"};
+        }
+        
+        @keyframes blogImageBgOpacity {
+          0%, 100% { 
+            opacity: 1;
+          }
+          50% { 
+            opacity: 0.7;
+          }
+        }
+      `;
+    } else if (animConfig.type === "scaleup") {
+      return `
+        ${selector} {
+          animation: blogImageScaleup ${animConfig.duration} ${
+        animConfig.timing
+      } ${animConfig.delay || "0s"} ${animConfig.iterationCount || "1"};
+        }
+        
+        @keyframes blogImageScaleup {
+          0% {
+            transform: scale(1);
+          }
+          100% {
+            transform: scale(1.1);
+          }
+        }
+      `;
+    } else if (animConfig.type === "scaledown") {
+      return `
+        ${selector} {
+          animation: blogImageScaledown ${animConfig.duration} ${
+        animConfig.timing
+      } ${animConfig.delay || "0s"} ${animConfig.iterationCount || "1"};
+        }
+        
+        @keyframes blogImageScaledown {
+          0% {
+            transform: scale(1);
+          }
+          100% {
+            transform: scale(0.95);
+          }
+        }
+      `;
+    }
+
+    return "";
+  }}
+
+  @media (max-width: 768px) {
+    width: ${(props) =>
+      Math.min(
+        280,
+        parseInt(props.$data?.setting?.coverImageWidth || "600")
+      )}px;
+    height: ${(props) =>
+      Math.min(
+        180,
+        parseInt(props.$data?.setting?.coverImageHeight || "400")
+      )}px;
+  }
+`;
+
+// ====== REPLACED: Robust multi-pass decoder (handles JSON-style escapes, unicode escapes, &amp; double-encoded entities) ======
+const tryJsonUnwrap = (s: string, maxTries = 3): string => {
+  let cur = s;
+  for (let i = 0; i < maxTries; i++) {
+    if (typeof cur !== "string") break;
+    try {
+      const parsed = JSON.parse(cur);
+      // if parsing yields a string, unwrap one level and continue trying
+      if (typeof parsed === "string" && parsed !== cur) {
+        cur = parsed;
+        continue;
+      } else {
+        // either parsed to non-string or same string -> stop
+        break;
+      }
+    } catch {
+      break;
+    }
+  }
+  return cur;
+};
+
+const unescapeJsonOnce = (str: string) => {
+  if (!str) return str;
+  return str
+    .replace(/\\u([\dA-Fa-f]{4})/g, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16))
+    )
+    .replace(/\\\\/g, "\\") // \\ -> \
+    .replace(/\\"/g, '"') // \" -> "
+    .replace(/\\'/g, "'") // \' -> '
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t")
+    .replace(/\\f/g, "\f")
+    .replace(/\\b/g, "\b")
+    .replace(/\\\//g, "/");
+};
+
+const decodeHtmlEntitiesOnce = (str: string) => {
+  if (typeof window === "undefined") return str;
+  const txt = document.createElement("textarea");
+  // Using innerHTML on a textarea decodes named & numeric entities
+  txt.innerHTML = str;
+  return txt.value;
+};
+
+const robustDecode = (input: string, maxPasses = 8): string => {
+  if (!input) return "";
+
+  // Ensure we are working with a string
+  let cur = String(input);
+
+  // Try to unwrap JSON-string-wrapping a few times first (e.g. "\"<p>..</p>\"")
+  cur = tryJsonUnwrap(cur, 4);
+
+  for (let i = 0; i < maxPasses; i++) {
+    const prev = cur;
+
+    // 1) Unescape common JSON backslash sequences once per pass
+    cur = unescapeJsonOnce(cur);
+
+    // 2) Decode HTML entities once per pass
+    cur = decodeHtmlEntitiesOnce(cur);
+
+    // if stable, stop early
+    if (cur === prev) break;
+  }
+
+  return cur;
+};
+// ====================================================================================================================
+
+const BlogDetailContent: React.FC<BlogDetailProps & { blogId: string }> = ({
+  isMobile,
+  blogId,
+}) => {
+  const [blog, setBlog] = useState<BlogDetailData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [sectionData, setSectionData] = useState<BlogDetailSection | null>(
+    null
+  );
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchLayoutData = async (activeMode: string) => {
+    try {
+      const response = await fetch("/api/layout-jason", {
+        method: "GET",
+        headers: {
+          selectedRoute: "blogsdetail",
+          activeMode: activeMode,
+        },
+      });
+
+      if (!response.ok) {
+        console.log(`Failed to fetch layout data: ${response.status}`);
+      }
+
+      const layoutData = await response.json();
+
+      return layoutData;
+    } catch (error) {
+      console.log("Error fetching layout data:", error);
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    const fetchBlogDetail = async () => {
+      try {
+        const response = await fetch(`/api/blog/${blogId}`);
+        if (!response.ok) {
+          console.log("Failed to fetch blog details");
+        }
+        const data = await response.json();
+
+        setBlog(data.blog);
+        setLoading(false);
+      } catch (error) {
+        console.log("Error fetching blog details:", error);
+        setLoading(false);
+      }
+    };
+
+    if (blogId) {
+      fetchBlogDetail();
+    }
+  }, [blogId]);
+
+  useEffect(() => {
+    const handleLayoutFetch = async () => {
+      const activeMode = isMobile ? "sm" : "lg";
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const layoutData = await fetchLayoutData(activeMode);
+
+        if (layoutData && layoutData.sections && layoutData.sections.children) {
+          const blogDetailSection = layoutData.sections.children.sections.find(
+            (section: Section) => section.type === "BlogDetail"
+          ) as BlogDetailSection;
+          setSectionData(blogDetailSection);
+
+          if (layoutData.sections.children.metaData) {
+            document.title = layoutData.sections.children.metaData.title;
+            const metaDescription = document.querySelector(
+              'meta[name="description"]'
+            );
+            if (metaDescription) {
+              metaDescription.setAttribute(
+                "content",
+                layoutData.sections.children.metaData.description
+              );
+            }
+          }
+        }
+      } catch (error) {
+        console.log("Error loading page data:", error);
+        setError("خطا در بارگذاری صفحه");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    handleLayoutFetch();
+  }, [isMobile]);
+
+  if (isLoading || loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-[#0f172b] via-slate-900 to-[#0f172b] flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-black text-white mb-4">
-            Post Not Found
-          </h1>
-          <Link
-            href="/blog"
-            className="inline-block px-6 py-3 rounded-xl bg-[#fe9a00] text-white font-bold hover:scale-105 transition-transform duration-300"
-          >
-            Back to Blog
-          </Link>
-        </div>
-      </div>
+      <>
+        <main>
+          <div className="flex justify-center items-center h-screen">
+            <div className="flex flex-row gap-2">
+              <div className="w-4 h-4 rounded-full bg-blue-700 animate-bounce"></div>
+              <div className="w-4 h-4 rounded-full bg-blue-700 animate-bounce [animation-delay:-.3s]"></div>
+              <div className="w-4 h-4 rounded-full bg-blue-700 animate-bounce [animation-delay:-.5s]"></div>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <main>
+          <div className="flex justify-center items-center h-screen">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-red-600 mb-4">
+                خطا در بارگذاری صفحه
+              </h1>
+              <p className="text-gray-600">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                دوباره تلاش کنید
+              </button>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (!blog || !sectionData) {
+    return (
+      <>
+        <main>
+          <div className="flex justify-center items-center h-screen">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-gray-600 mb-4">
+                بلاگ مورد نظر یافت نشد
+              </h1>
+            </div>
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-[#0f172b] via-slate-900 to-[#0f172b]">
-      {/* Hero Image */}
-      <div className="relative h-96 lg:h-125 overflow-hidden">
-        <Image
-          src={post.image}
-          alt={post.title}
-          fill
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-linear-to-b from-black/40 to-black/80"></div>
-
-        {/* Back Button */}
-        <Link
-          href="/blog"
-          className="absolute top-6 left-6 z-10 flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all duration-300"
+    <>
+      <main>
+        <SectionBlogDetail
+          $data={sectionData}
+          $isMobile={isMobile}
+          className={`transition-all duration-150 ease-in-out relative`}
         >
-          <FiArrowLeft />
-          Back
-        </Link>
-      </div>
+          <CoverImageContainer $data={sectionData} $isMobile={isMobile}>
+            <Image
+              src={
+                sectionData.setting.coverImage ||
+                blog.image ||
+                "/assets/images/pro2.jpg"
+              }
+              alt={blog.title}
+              fill
+              className="object-cover"
+              priority
+            />
+          </CoverImageContainer>
 
-      {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        {/* Header */}
-        <div className="mb-8">
-          <span className="inline-block px-3 py-1 rounded-full bg-[#fe9a00]/30 text-[#fe9a00] text-xs font-bold mb-4">
-            {post.category}
-          </span>
-          <h1 className="text-4xl lg:text-5xl font-black text-white mb-6 leading-tight">
-            {post.title}
+          <h1 className="blog-title text-right">
+            {blog.title || "عنوان بلاگ"}
           </h1>
 
-          {/* Meta Info */}
-          <div className="flex flex-wrap items-center gap-6 text-gray-400 pb-6 border-b border-white/10">
-            <div className="flex items-center gap-2">
-              <FiCalendar className="text-[#fe9a00]" />
-              {post.date}
-            </div>
-            <div className="flex items-center gap-2">
-              <FiUser className="text-[#fe9a00]" />
-              {post.author}
-            </div>
-            <div className="flex items-center gap-2">
-              {post.readTime} min read
-            </div>
-            <button className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300">
-              <FiShare2 className="text-[#fe9a00]" />
-              Share
-            </button>
+          <div className="blog-meta text-right">
+            <br />
+            <span>
+              تاریخ انتشار:
+              {blog.createdAt &&
+                new Intl.DateTimeFormat("fa-IR", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  calendar: "persian",
+                }).format(new Date(blog.createdAt))}
+            </span>
+            {blog.readTime && (
+              <span> • زمان مطالعه: {blog.readTime} دقیقه</span>
+            )}
           </div>
-        </div>
 
-        {/* Body Content */}
-        <div className="prose prose-invert max-w-none">
-          <div className="text-gray-300 leading-relaxed space-y-6">
-            <p className="text-lg">{post.excerpt}</p>
-
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-8 my-8">
-              <h2 className="text-2xl font-bold text-white mb-4">
-                Introduction
-              </h2>
-              <p>
-                This is where the full blog content would be displayed. You can
-                add rich text formatting, images, and more detailed information
-                about the topic.
-              </p>
-            </div>
-
-            <h2 className="text-2xl font-bold text-white mt-8 mb-4">
-              Key Points
-            </h2>
-            <ul className="space-y-3 text-gray-300">
-              <li className="flex gap-3">
-                <span className="text-[#fe9a00] font-bold">•</span>
-                <span>First key point about the topic</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-[#fe9a00] font-bold">•</span>
-                <span>Second key point about the topic</span>
-              </li>
-              <li className="flex gap-3">
-                <span className="text-[#fe9a00] font-bold">•</span>
-                <span>Third key point about the topic</span>
-              </li>
-            </ul>
-
-            <div className="bg-[#fe9a00]/10 border border-[#fe9a00]/30 rounded-2xl p-8 my-8">
-              <p className="text-[#fe9a00] font-semibold mb-2">💡 Pro Tip</p>
-              <p>
-                This is a highlighted tip or important information related to
-                the blog post content.
-              </p>
-            </div>
-
-            <h2 className="text-2xl font-bold text-white mt-8 mb-4">
-              Conclusion
-            </h2>
-            <p>
-              Wrap up the blog post with a conclusion that summarizes the key
-              takeaways and encourages reader engagement.
-            </p>
-          </div>
-        </div>
-
-        {/* CTA */}
-        <div className="mt-12 pt-8 border-t border-white/10">
-          <div className="bg-linear-to-r from-[#fe9a00]/20 to-transparent rounded-2xl p-8">
-            <h3 className="text-2xl font-bold text-white mb-4">
-              Ready to book your van?
-            </h3>
-            <p className="text-gray-300 mb-6">
-              Apply the tips from this article to your next move.
-            </p>
-            <Link
-              href="/reservation"
-              className="inline-block px-8 py-3 rounded-xl bg-[#fe9a00] text-white font-bold hover:scale-105 transition-transform duration-300 shadow-lg shadow-[#fe9a00]/50"
-            >
-              Browse Vans
-            </Link>
-          </div>
-        </div>
-
-        {/* Related Posts */}
-        <div className="mt-16 pt-12 border-t border-white/10">
-          <h3 className="text-2xl font-bold text-white mb-8">
-            Related Articles
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {blogPosts
-              .filter((p) => p.id !== post.id && p.category === post.category)
-              .slice(0, 2)
-              .map((relatedPost) => (
-                <Link
-                  key={relatedPost.id}
-                  href={`/blog/${relatedPost.slug}`}
-                  className="group p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-[#fe9a00]/50 transition-all duration-300"
-                >
-                  <h4 className="text-lg font-bold text-white group-hover:text-[#fe9a00] transition-colors duration-300 mb-2">
-                    {relatedPost.title}
-                  </h4>
-                  <p className="text-sm text-gray-400 mb-4">
-                    {relatedPost.excerpt}
-                  </p>
-                  <span className="text-xs text-[#fe9a00] font-semibold">
-                    Read More →
-                  </span>
-                </Link>
-              ))}
-          </div>
-        </div>
-      </div>
-    </div>
+          <div
+            className="blog-content text-right"
+            dangerouslySetInnerHTML={{
+              __html: blog.content
+                ? DOMPurify.sanitize(robustDecode(blog.content))
+                : "محتوای بلاگ در اینجا نمایش داده میشود...",
+            }}
+          />
+        </SectionBlogDetail>
+      </main>
+    </>
   );
+};
+
+// Main page component that Next.js expects
+export default function BlogDetailPage({ params }: PageProps) {
+  const [isMobile, setIsMobile] = useState(false);
+  const [blogId, setBlogId] = useState<string>("");
+
+  useEffect(() => {
+    // Resolve the params Promise to get the actual id
+    const resolveParams = async () => {
+      const resolvedParams = await params;
+      setBlogId(resolvedParams.id);
+    };
+
+    resolveParams();
+  }, [params]);
+
+  useEffect(() => {
+    // Determine if mobile based on screen width
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Initial setup
+    handleResize();
+
+    // Add event listener for window resize
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup event listener
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Don't render until we have the blogId
+  if (!blogId) {
+    return <div>در حال بارگذاری...</div>;
+  }
+
+  // Pass the required props to the internal component
+  return <BlogDetailContent isMobile={isMobile} blogId={blogId} />;
 }

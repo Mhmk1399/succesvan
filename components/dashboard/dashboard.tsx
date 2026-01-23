@@ -45,10 +45,10 @@ import { Category, MenuItem } from "@/types/type";
 import DiscountManagement from "./DiscountManagement";
 import CustomSelect from "../ui/CustomSelect";
 import { showToast } from "@/lib/toast";
+import AddPostBlog from "./addBlog";
 import TicketsManagement from "./TicketsManagement";
-import ReservationForm from "@/components/global/ReservationForm";
 import ReservationModal from "@/components/global/ReservationModal";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiFileText } from "react-icons/fi";
 
 const menuItems: MenuItem[] = [
   {
@@ -134,6 +134,12 @@ const menuItems: MenuItem[] = [
     label: "Tickets",
     icon: <FiMessageSquare />,
     color: "from-emerald-500 to-emerald-600",
+  },
+  {
+    id: "blogs",
+    label: "Blogs",
+    icon: <FiFileText />,
+    color: "from-violet-500 to-violet-600",
   },
 ];
 
@@ -420,6 +426,7 @@ export default function Dashboard() {
           {activeTab === "announcements" && <AnnouncementManagement />}
           {activeTab === "reports" && <ReportsManagement />}
           {activeTab === "tickets" && <TicketsManagement />}
+          {activeTab === "blogs" && <AddPostBlog />}
         </div>
       </main>
 
