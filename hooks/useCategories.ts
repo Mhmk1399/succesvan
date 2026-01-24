@@ -10,6 +10,9 @@ export default function useCategories(status = "active") {
   const { data, error, isValidating, mutate } = useSWR(
     `/api/categories?status=${status}`,
     fetcher,
+
+
+    
     { revalidateOnFocus: false }
   );
 
