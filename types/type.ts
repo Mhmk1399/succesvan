@@ -247,7 +247,7 @@ export interface CustomSelectProps {
 
 // Testimonial -------------------------------------------------------------------------------
 export interface Testimonial {
-  _id: number;
+  id: number;
   name: string;
   role?: string;
   company?: string;
