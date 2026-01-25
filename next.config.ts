@@ -15,7 +15,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  /* config options here */
+  experimental: {
+    optimizePackageImports: ["react-icons"],
+  },
+  compress: true,
+  poweredByHeader: false,
 };
 
 export default nextConfig;
