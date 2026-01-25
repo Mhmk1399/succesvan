@@ -300,9 +300,9 @@ function CarouselLayout({
               </div>
 
               <div>
-                <h4 className="text-white font-black text-sm md:text-xl">
+                <h3 className="text-white font-black text-sm md:text-xl">
                   {current.name}
-                </h4>
+                </h3>
                 {current.location && (
                   <p className="text-gray-400 text-xs md:text-sm">
                     {current.location}
@@ -483,9 +483,9 @@ function TestimonialCard({
           </div>
 
           <div>
-            <h4 className="text-white font-bold text-base">
+            <h3 className="text-white font-bold text-base">
               {testimonial.name}
-            </h4>
+            </h3>
             {testimonial.location && (
               <p className="text-gray-400 text-sm">{testimonial.location}</p>
             )}

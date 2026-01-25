@@ -284,8 +284,8 @@ export default function Navbar() {
                 <Image
                   src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
                   alt="SuccessVan Logo"
-                  width={300}
-                  height={100}
+                  width={200}
+                  height={200}
                   className="h-20 w-auto hover:scale-105 transition-transform duration-200"
                   priority
                 />
@@ -297,8 +297,8 @@ export default function Navbar() {
               <Image
                 src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
                 alt="SuccessVan Logo"
-                width={90}
-                height={55}
+                width={200}
+                height={200}
                 className="h-18 hover:scale-105 transition-transform duration-200"
                 priority
               />

@@ -650,8 +650,8 @@ export default function Footer() {
               <Image
                 src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
                 alt="Success Van Hire"
-                width={500}
-                height={500}
+                width={200}
+                height={200}
                 className="h-30 md:h-40 w-auto group-hover:scale-110 transition-transform duration-500 drop-shadow-2xl"
                 priority
               />

@@ -1,12 +1,14 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/global/Navbar";
 import Footer from "@/components/global/footer";
 import FloatingActionMenu from "@/components/ui/FloatingActionMenu";
-  import AnnouncementBar from "@/components/global/AnnouncementBar";
+import AnnouncementBar from "@/components/global/AnnouncementBar";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/context/AuthContext";
 import MobileAppPrompt from "@/components/ui/MobileAppPrompt";
+import { StructuredData } from "@/components/global/StructuredData";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -18,6 +20,41 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+export const metadata: Metadata = {
+  title: "SuccessVan - Van Hire & Rental in London | Last Minute Bookings",
+  description: "Premium van hire and rental services in North West London. Book your van today with SuccessVan - serving Cricklewood, Golders Green, Hampstead, Hendon, Mill Hill, Wembley and more.",
+  keywords: "van hire London, van rental, last minute van hire, North West London, Cricklewood, Golders Green, Hampstead, Hendon, Mill Hill, Wembley",
+  authors: [{ name: "SuccessVan" }],
+  creator: "SuccessVan",
+  publisher: "SuccessVan",
+  robots: "index, follow",
+  openGraph: {
+    type: "website",
+    locale: "en_GB",
+    url: "https://successvan.co.uk",
+    siteName: "SuccessVan",
+    title: "SuccessVan - Van Hire & Rental in London",
+    description: "Premium van hire and rental services in North West London",
+    images: [
+      {
+        url: "https://successvan.co.uk/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "SuccessVan - Van Hire London",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SuccessVan - Van Hire & Rental in London",
+    description: "Premium van hire and rental services in North West London",
+    images: ["https://successvan.co.uk/og-image.jpg"],
+  },
+  alternates: {
+    canonical: "https://successvan.co.uk",
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -25,6 +62,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <StructuredData />
+      </head>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased custom-scrollbar`}
       >
