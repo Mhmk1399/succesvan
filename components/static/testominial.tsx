@@ -12,7 +12,8 @@ import { Testimonial, TestimonialsProps } from "@/types/type";
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
-
+ 
+// assas
 export default function Testimonials({
   testimonials,
   layout = "carousel",
