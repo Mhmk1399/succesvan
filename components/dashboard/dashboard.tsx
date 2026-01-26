@@ -49,7 +49,7 @@ import AddPostBlog from "./addBlog";
 import TicketsManagement from "./TicketsManagement";
 import ReservationModal from "../../components/global/ReservationModal";
 import { FiPlus, FiFileText } from "react-icons/fi";
-import ReservationForm from "../../succesvan/components/global/ReservationForm";
+import ReservationForm from "../../components/global/ReservationForm";
 
 const menuItems: MenuItem[] = [
   {

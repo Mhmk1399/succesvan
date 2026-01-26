@@ -40,7 +40,7 @@ export default function Testimonials({
           );
           if (approved.length > 0) {
             setDisplayTestimonials(
-              approved.map((t: Testimonial) => ({
+              approved.map((t: any) => ({
                 id: t._id,
                 name: t.name,
                 message: t.message,
@@ -373,7 +373,7 @@ function GridLayout({ testimonials, showRating, accentColor }: any) {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
       {testimonials.map((testimonial: Testimonial) => (
         <TestimonialCard
-          key={testimonial._id}
+          key={testimonial.id}
           testimonial={testimonial}
           showRating={showRating}
           accentColor={accentColor}
@@ -388,7 +388,7 @@ function MasonryLayout({ testimonials, showRating, accentColor }: any) {
   return (
     <div className="columns-1 md:columns-2 lg:columns-3 gap-6 lg:gap-8 space-y-6 lg:space-y-8">
       {testimonials.map((testimonial: Testimonial) => (
-        <div key={testimonial._id} className="break-inside-avoid">
+        <div key={testimonial.id} className="break-inside-avoid">
           <TestimonialCard
             testimonial={testimonial}
             showRating={showRating}
