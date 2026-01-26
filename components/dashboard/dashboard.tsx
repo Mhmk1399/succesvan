@@ -27,9 +27,9 @@ import {
   FiVolume2,
   FiUsers,
 } from "react-icons/fi";
-import { useStats } from "@/hooks/useStats";
-import { useRecentReservations } from "@/hooks/useRecentReservations";
-import { useFleetStatus } from "@/hooks/useFleetStatus";
+import { useStats } from "../../hooks/useStats";
+import { useRecentReservations } from "../../hooks/useRecentReservations";
+import { useFleetStatus } from "../../hooks/useFleetStatus";
 import OfficesContent from "./CreateOfficeForm";
 import VehiclesContent from "./CreateVehicleForm";
 import CategoriesContent from "./CreateCategoryForm";
@@ -41,14 +41,15 @@ import TestimonialsManagement from "./TestimonialsManagement";
 import ContactsManagement from "./ContactsManagement";
 import AnnouncementManagement from "./AnnouncementManagement";
 import ReportsManagement from "./ReportsManagement";
-import { Category, MenuItem } from "@/types/type";
+import { Category, MenuItem } from "../../types/type";
 import DiscountManagement from "./DiscountManagement";
 import CustomSelect from "../ui/CustomSelect";
-import { showToast } from "@/lib/toast";
+import { showToast } from "../../lib/toast";
 import AddPostBlog from "./addBlog";
 import TicketsManagement from "./TicketsManagement";
-import ReservationModal from "@/components/global/ReservationModal";
+import ReservationModal from "../../components/global/ReservationModal";
 import { FiPlus, FiFileText } from "react-icons/fi";
+import ReservationForm from "../../succesvan/components/global/ReservationForm";
 
 const menuItems: MenuItem[] = [
   {

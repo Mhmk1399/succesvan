@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import connect from "@/lib/data";
-import Blog from "@/models/blogs";
+import connect from "../../../../lib/data";
+import Blog from "../../../../model/blogs";
 import Jwt, { JwtPayload } from "jsonwebtoken";
 
 interface CustomJwtPayload extends JwtPayload {

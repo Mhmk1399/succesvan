@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import connect from "@/lib/data";
-import blogs from "@/model/blogs";
+import connect from "../../../lib/data";
+import blogs from "../../../model/blogs";
 import Jwt, { JwtPayload } from "jsonwebtoken";
 import mongoose from "mongoose";
 interface CustomJwtPayload extends JwtPayload {
@@ -49,8 +49,8 @@ export const GET = async (req: NextRequest) => {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const blogs = await Blog.find({ storeId: storeId });
-    return NextResponse.json({ blogs }, { status: 200 });
+    const allBlogs = await blogs.find({ storeId: storeId });
+    return NextResponse.json({ blogs: allBlogs }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       { message: "Error logging in", error },
@@ -88,7 +88,7 @@ export const DELETE = async (req: NextRequest) => {
   console.log(blogId);
   console.log(sotreId);
 
-  await Blog.findByIdAndDelete({ _id: id });
+  await blogs.findByIdAndDelete({ _id: id });
   return new NextResponse(
     JSON.stringify({ message: "Blog deleted successfully" }),
     { status: 200 }
@@ -126,7 +126,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const updatedBlog = await Blog.findByIdAndUpdate(
+    const updatedBlog = await blogs.findByIdAndUpdate(
       id,
       { ...body, storeId: sotreId },
       { new: true }

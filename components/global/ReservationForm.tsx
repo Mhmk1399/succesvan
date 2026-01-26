@@ -14,15 +14,15 @@ import {
   FiUser,
   FiMessageSquare,
 } from "react-icons/fi";
-import { showToast } from "@/lib/toast";
-import { Office, Category, Type } from "@/types/type";
-import CustomSelect from "@/components/ui/CustomSelect";
-import { generateTimeSlots } from "@/utils/timeSlots";
-import TimeSelect from "@/components/ui/TimeSelect";
-import { useVoiceRecording } from "@/hooks/useVoiceRecording";
-import VoiceConfirmationModal from "@/components/global/VoiceConfirmationModal";
-import ConversationalModal from "@/components/global/ConversationalModal";
-import FastAgentModal from "@/components/global/FastAgentModal";
+import { showToast } from "../../lib/toast";
+import { Office, Category, Type } from "../../types/type";
+import CustomSelect from "../../components/ui/CustomSelect";
+import { generateTimeSlots } from "../../utils/timeSlots";
+import TimeSelect from "../../components/ui/TimeSelect";
+import { useVoiceRecording } from "../../hooks/useVoiceRecording";
+import VoiceConfirmationModal from "../../components/global/VoiceConfirmationModal";
+import ConversationalModal from "../../components/global/ConversationalModal";
+import FastAgentModal from "../../components/global/FastAgentModal";
 import { FiCpu } from "react-icons/fi";
 import { datePickerStyles } from "./DatePickerStyles";
 import {
@@ -38,7 +38,7 @@ import {
   SpecialDay,
   TimeSlotInfo,
   ExtensionTimes,
-} from "@/types/reservation-form";
+} from "../../types/reservation-form";
 
 export default function ReservationForm({
   isModal = false,
