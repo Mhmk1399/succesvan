@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import { ReservationContent } from "@/components/static/reservationContainer";
+import Script from "next/script";
+import { ReservationPageSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title: "Van Reservation - Success Van Hire | Book Your Van Online London",
@@ -18,6 +20,15 @@ export const metadata: Metadata = {
 export default function ReservationPage() {
   return (
     <div>
+      {/* ✅ Schema.org JSON-LD */}
+      <Script
+        id="reservation-page-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(ReservationPageSchema),
+        }}
+      />
       <ReservationContent />
     </div>
   );

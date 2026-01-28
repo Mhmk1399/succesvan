@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 export default function VanHireCricklewood() {
   return (
     <div>
+      
       <CricklewoodVanHire />
     </div>
   );

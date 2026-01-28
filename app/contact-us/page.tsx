@@ -1,7 +1,8 @@
 import { Metadata } from "next";
-import us from "@/components/static/contactUs";
 import FAQComponent from "@/components/static/fAQSection";
 import Contact from "@/components/static/contactUs";
+import Script from "next/script";
+import { contactSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title: "Contact Us - Success Van Hire | Get in Touch for Van Rental London",
@@ -111,6 +112,15 @@ export default function ContactUs() {
   ];
   return (
     <>
+      {/* ✅ Schema.org JSON-LD */}
+      <Script
+        id="contact-us-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(contactSchema),
+        }}
+      />
       <Contact />
       <FAQComponent
         title="Frequently Asked Questions"

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { FiX, FiCalendar, FiClock } from "react-icons/fi";
+import { FiX, FiCalendar, FiClock, FiEye, FiPlus } from "react-icons/fi";
 import { showToast } from "@/lib/toast";
 import DynamicTableView from "./DynamicTableView";
+import ReservationDetailsModal from "./ReservationDetailsModal";
 import { Reservation } from "@/types/type";
 import CustomSelect from "@/components/ui/CustomSelect";
 import { DateRange, Range } from "react-date-range";
@@ -13,6 +14,8 @@ import { generateTimeSlots } from "@/utils/timeSlots";
 import AddOnsModal from "@/components/global/AddOnsModal";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import ReservationModal from "../../components/global/ReservationModal";
+import ReservationForm from "../../components/global/ReservationForm";
 
 type MutateFn = () => Promise<void>;
 
@@ -59,12 +62,17 @@ export default function ReservationsManagement() {
   const [startDateReservedSlots, setStartDateReservedSlots] = useState<any[]>(
     []
   );
+   const [showCreateReservation, setShowCreateReservation] = useState(false);
+  const [showReservationModal, setShowReservationModal] = useState(false);
   const [endDateReservedSlots, setEndDateReservedSlots] = useState<any[]>([]);
   const [showAddOnsModal, setShowAddOnsModal] = useState(false);
   const [addOns, setAddOns] = useState<any[]>([]);
   const [selectedAddOns, setSelectedAddOns] = useState<
     { addOn: string; quantity: number; selectedTierIndex?: number }[]
   >([]);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedReservationForDetails, setSelectedReservationForDetails] =
+    useState<Reservation | null>(null);
 
   const selectedCategory = useMemo(() => {
     return categories.find((c) => c._id === editCategory);
@@ -678,6 +686,62 @@ export default function ReservationsManagement() {
 
   return (
     <div className="space-y-6">
+ <div className="flex justify-between items-center">
+        <h3 className="text-lg font-bold text-white">Quick Actions</h3>
+        <button
+          onClick={() => setShowCreateReservation(true)}
+          className="flex items-center gap-2 px-5 py-3 bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#e68a00] hover:to-[#e67700] text-white font-bold rounded-lg transition-all text-sm shadow-lg hover:shadow-2xl hover:scale-105"
+        >
+          <FiPlus className="text-lg" />
+          Create Reservation
+        </button>
+      </div>
+      {/* Create Reservation Form Modal */}
+      {showCreateReservation && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-9999"
+            onClick={() => setShowCreateReservation(false)}
+          />
+          <div className="fixed inset-0 z-10000 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="relative bg-[#0f172b] rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto border border-white/10">
+              <div className="sticky top-0 bg-[#0f172b] border-b border-white/10 px-6 py-4 flex items-center justify-between z-10">
+                <h2 className="text-xl font-bold text-white">
+                  Create New Reservation
+                </h2>
+                <button
+                  onClick={() => setShowCreateReservation(false)}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <FiX className="text-white text-xl" />
+                </button>
+              </div>
+              <div className="p-6">
+                <ReservationForm
+                  isModal={true}
+                  onClose={() => setShowCreateReservation(false)}
+                  onBookNow={() => {
+                    setShowCreateReservation(false);
+                    setTimeout(() => setShowReservationModal(true), 100);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Reservation Modal (Steps 2-4) */}
+      {showReservationModal && (
+        <ReservationModal
+          isAdminMode={true}
+          onClose={() => {
+            setShowReservationModal(false);
+            sessionStorage.removeItem("rentalDetails");
+            window.location.reload();
+          }}
+        />
+      )}
       <DynamicTableView<Reservation>
         apiEndpoint="/api/reservations"
         filters={[
@@ -852,10 +916,27 @@ export default function ReservationsManagement() {
               );
             },
           },
+          {
+            key: "_id",
+            label: "view",
+            render: (value: any, row: any) => (
+              <button
+                onClick={() => {
+                  setSelectedReservationForDetails(row);
+                  setDetailsModalOpen(true);
+                }}
+                className="p-2 hover:bg-[#fe9a00]/20 rounded-lg transition-colors text-[#fe9a00] hover:text-[#fe9a00]"
+                title="View Details"
+              >
+                <FiEye className="text-lg" />
+              </button>
+            ),
+          },
         ]}
         onEdit={handleViewDetails}
         onMutate={(mutate) => (mutateRef.current = mutate)}
         hideDelete={true}
+        hideViewBtn={true}
         hiddenColumns={["driverAge"] as (keyof Reservation)[]}
       />
       {/* <DynamicTableView<Reservation>
@@ -1586,6 +1667,16 @@ export default function ReservationsManagement() {
           </div>
         </div>
       )}
+
+      {/* Reservation Details Modal */}
+      <ReservationDetailsModal
+        reservation={selectedReservationForDetails}
+        isOpen={detailsModalOpen}
+        onClose={() => {
+          setDetailsModalOpen(false);
+          setSelectedReservationForDetails(null);
+        }}
+      />
     </div>
   );
 }

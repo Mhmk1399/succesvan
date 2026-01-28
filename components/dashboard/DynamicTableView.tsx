@@ -44,6 +44,7 @@ export default function DynamicTableView<
   onMutate,
   itemsPerPage = 15,
   hideDelete = false,
+  hideViewBtn = false,
   hiddenColumns = [],
   filters = [],
 }: DynamicTableViewProps<T>) {
@@ -522,24 +523,25 @@ export default function DynamicTableView<
                       </td>
                     );
                   })}
-                  <td className="px-3 py-2 flex gap-2">
-                    <button
-                      onClick={() => {
-                        setViewingItem(item);
-                        setIsViewOpen(true);
-                      }}
-                      className="p-2 hover:bg-green-500/20 cursor-pointer rounded transition-colors tooltip"
-                      data-tooltip="View"
-                    >
-                      <FiEye className="text-yellow-400" />
-                    </button>
+                  <td className="px-3 py-2 justify-center flex gap-2">
+                    {!hideViewBtn && (
+                      <button
+                        onClick={() => {
+                          setViewingItem(item);
+                          setIsViewOpen(true);
+                        }}
+                        className="p-2 hover:bg-green-500/20 cursor-pointer rounded transition-colors tooltip"
+                       >
+                        <FiEye className="text-yellow-400" />
+                      </button>
+                    )}
                     {onEdit && (
                       <button
                         onClick={() => onEdit(item)}
-                        className="p-2 hover:bg-blue-500/20 rounded cursor-pointer transition-colors tooltip"
+                        className="p-2 hover:bg-blue-500/20 mt-2 rounded cursor-pointer transition-colors tooltip"
                         data-tooltip="Edit"
                       >
-                        <FiEdit2 className="text-blue-400" />
+                        <FiEdit2 className="text-blue-400 mt-2" />
                       </button>
                     )}
                     {onDuplicate && (

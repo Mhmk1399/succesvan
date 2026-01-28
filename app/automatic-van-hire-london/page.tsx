@@ -1,21 +1,36 @@
+import Script from "next/script";
 import { Metadata } from "next";
 import AutomaticVanHire from "@/components/static/automaticvanHire";
+import { automaticVanHireSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title: "Automatic Van Hire London - Success Van Hire | Easy Drive Vans",
-  description: "Rent automatic vans in London with Success Van Hire. Easy-to-drive automatic transmission vans perfect for stress-free moving and deliveries. Book today!",
-  keywords: "automatic van hire london, automatic van rental, easy drive vans london, automatic transmission van hire, success van hire automatic",
+  description:
+    "Rent automatic vans in London with Success Van Hire. Easy-to-drive automatic transmission vans perfect for stress-free moving and deliveries.",
+  keywords:
+    "automatic van hire london, automatic van rental, easy drive vans london, automatic transmission van hire, success van hire automatic",
   openGraph: {
     title: "Automatic Van Hire London - Easy Drive Van Rental",
-    description: "Stress-free van rental with automatic transmission. Perfect for comfortable driving in London traffic.",
+    description:
+      "Stress-free van rental with automatic transmission. Perfect for comfortable driving in London traffic.",
     type: "website",
   },
 };
 
 export default function AutomaticVanHirePage() {
   return (
-    <div>
+    <>
+      {/* ✅ Service Schema */}
+      <Script
+        id="automatic-van-hire-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(automaticVanHireSchema),
+        }}
+      />
+
       <AutomaticVanHire />
-    </div>
+    </>
   );
 }

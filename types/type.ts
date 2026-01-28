@@ -220,6 +220,7 @@ export interface DynamicTableViewProps<T> {
   onDuplicate?: (item: T) => void;
   onStatusToggle?: (item: T) => void;
   hiddenColumns?: (keyof T)[];
+  hideViewBtn?: boolean;
   filters?: Array<{
     key: string;
     label: string;
@@ -256,6 +257,7 @@ export interface Testimonial {
   image?: string;
   date?: string;
   location?: string;
+  link?: string;
 }
 
 export interface TestimonialsProps {

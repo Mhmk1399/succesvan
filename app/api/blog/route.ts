@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import connect from "../../../lib/data";
-import blogs from "../../../model/blogs";
+import connect from "@/lib/data";
+import Blog from "@/model/blogs";
 import Jwt, { JwtPayload } from "jsonwebtoken";
 import mongoose from "mongoose";
 interface CustomJwtPayload extends JwtPayload {
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
       console.log("POST_ERROR", "Database connection failed");
       return new NextResponse("Database connection error", { status: 500 });
     }
-    const newBlog = new blogs(BlogData);
+    const newBlog = new Blog(BlogData);
     console.log(newBlog);
 
     await newBlog.save();
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   } catch (error) {
     return NextResponse.json(
       { message: "Error logging in", error },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -37,27 +37,16 @@ export const GET = async (req: NextRequest) => {
   }
 
   try {
-    const token = req.headers.get("Authorization")?.split(" ")[1];
-    if (!token) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-    const decodedToken = Jwt.decode(token) as CustomJwtPayload;
-    console.log(decodedToken);
-
-    const storeId = decodedToken.storeId;
-    if (!storeId) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-
-    const allBlogs = await blogs.find({ storeId: storeId });
-    return NextResponse.json({ blogs: allBlogs }, { status: 200 });
+    const blogs = await Blog.find();
+    return NextResponse.json({ blogs }, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       { message: "Error logging in", error },
-      { status: 500 }
+      { status: 500 },
     );
   }
 };
+
 export const DELETE = async (req: NextRequest) => {
   const id = req.headers.get("id");
 
@@ -88,10 +77,10 @@ export const DELETE = async (req: NextRequest) => {
   console.log(blogId);
   console.log(sotreId);
 
-  await blogs.findByIdAndDelete({ _id: id });
+  await Blog.findByIdAndDelete({ _id: id });
   return new NextResponse(
     JSON.stringify({ message: "Blog deleted successfully" }),
-    { status: 200 }
+    { status: 200 },
   );
 };
 
@@ -105,7 +94,7 @@ export async function PATCH(req: NextRequest) {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return NextResponse.json(
       { message: "Invalid blog ID format" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -126,10 +115,11 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const updatedBlog = await blogs.findByIdAndUpdate(
+    const updatedBlog = await Blog.findByIdAndUpdate(
       id,
       { ...body, storeId: sotreId },
-      { new: true }
+
+      { new: true },
     );
 
     if (!updatedBlog) {
@@ -141,7 +131,7 @@ export async function PATCH(req: NextRequest) {
     console.log("PATCH_ERROR", id, error);
     return NextResponse.json(
       { message: "Error updating blog" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -9,12 +9,16 @@ export async function PATCH(
 ) {
   try {
     await connect();
-    const { status } = await req.json();
+    const { status, link } = await req.json();
     const { id } = await params;
+
+    const updateData: any = {};
+    if (status !== undefined) updateData.status = status;
+    if (link !== undefined) updateData.link = link;
 
     const testimonial = await Testimonial.findByIdAndUpdate(
       id,
-      { status },
+      updateData,
       { new: true }
     );
 

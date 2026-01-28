@@ -12,6 +12,7 @@ interface Testimonial {
   message: string;
   rating: number;
   status: "pending" | "approved" | "rejected";
+  link?: string;
   createdAt: Date;
 }
 type MutateFn = () => Promise<void>;
@@ -22,9 +23,11 @@ export default function TestimonialsManagement() {
     useState<Testimonial | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingLink, setEditingLink] = useState("");
 
   const handleViewDetails = (item: Testimonial) => {
     setSelectedTestimonial(item);
+    setEditingLink(item.link || "");
     setIsDetailOpen(true);
   };
 
@@ -44,6 +47,31 @@ export default function TestimonialsManagement() {
 
       showToast.success("Status updated successfully!");
       setIsDetailOpen(false);
+      if (mutateRef.current) mutateRef.current();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      showToast.error(message || "Update failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleLinkSave = async () => {
+    if (!selectedTestimonial) return;
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(`/api/testimonials/${selectedTestimonial._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ link: editingLink }),
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Update failed");
+
+      setSelectedTestimonial({ ...selectedTestimonial, link: editingLink });
+      showToast.success("Link updated successfully!");
       if (mutateRef.current) mutateRef.current();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -145,6 +173,37 @@ export default function TestimonialsManagement() {
               <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                 <h3 className="text-white font-semibold mb-3">Message</h3>
                 <p className="text-gray-300">{selectedTestimonial.message}</p>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                <h3 className="text-white font-semibold mb-3">Link (Source)</h3>
+                <div className="space-y-3">
+                  <input
+                    type="url"
+                    placeholder="Enter the page or source URL where this testimonial came from"
+                    value={editingLink}
+                    onChange={(e) => setEditingLink(e.target.value)}
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] disabled:opacity-50"
+                  />
+                  {editingLink && (
+                    <a
+                      href={editingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-[#fe9a00] hover:text-[#ff8c00] text-sm font-semibold transition-colors"
+                    >
+                      Visit Link →
+                    </a>
+                  )}
+                  <button
+                    onClick={handleLinkSave}
+                    disabled={isSubmitting}
+                    className="w-full px-4 py-2 bg-[#fe9a00] hover:bg-[#ff8c00] text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Saving..." : "Save Link"}
+                  </button>
+                </div>
               </div>
 
               <div className="bg-white/5 border border-white/10 rounded-xl p-4">

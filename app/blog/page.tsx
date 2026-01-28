@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import BlogListing from "@/components/global/blogListing";
+import Script from "next/script";
+import { blogSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title: "Blog - Success Van Hire | Van Rental Tips & Guides London",
@@ -16,5 +18,18 @@ export const metadata: Metadata = {
 };
 
 export default function Blog() {
-  return <BlogListing showFilters={true} />;
+  return (
+    <>
+      {/* ✅ Schema.org JSON-LD */}
+      <Script
+        id="blog-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(blogSchema),
+        }}
+      />
+      <BlogListing />
+    </>
+  );
 }

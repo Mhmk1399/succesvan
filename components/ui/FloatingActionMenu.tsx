@@ -1,20 +1,33 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { FiPhone, FiX, FiSend, FiLoader } from "react-icons/fi";
+import { useState, useRef, useEffect, useCallback } from "react";
+import {
+  FiPhone,
+  FiX,
+  FiSend,
+  FiLoader,
+  FiMessageCircle,
+} from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import { BsRobot } from "react-icons/bs";
+import { HiSparkles } from "react-icons/hi2";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
+const CHATBOT_DISMISSED_KEY = "chatbot_popup_dismissed";
+
 export default function FloatingActionMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [showSmallPopup, setShowSmallPopup] = useState(false);
+  const [popupAnimated, setPopupAnimated] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -35,6 +48,8 @@ export default function FloatingActionMenu() {
       onClick: () => {
         setIsChatOpen(true);
         setIsOpen(false);
+        setShowSmallPopup(false);
+        setPopupAnimated(false);
       },
       label: "AI Assistant",
     },
@@ -54,11 +69,87 @@ export default function FloatingActionMenu() {
     },
   ];
 
+  // Set client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Check if popup was dismissed
+  const isDismissed = useCallback(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(CHATBOT_DISMISSED_KEY) === "true";
+  }, []);
+
+  // Handle scroll for small popup
+  useEffect(() => {
+    if (!isClient) return;
+
+    const handleScroll = () => {
+      // Don't show if dismissed or chat is open
+      if (isDismissed() || isChatOpen) {
+        setShowSmallPopup(false);
+        setPopupAnimated(false);
+        return;
+      }
+
+      // Show popup when scrolled 200px or more
+      if (window.scrollY >= 200) {
+        if (!showSmallPopup) {
+          setShowSmallPopup(true);
+          // Delay animation for smooth entrance
+          setTimeout(() => {
+            setPopupAnimated(true);
+          }, 50);
+        }
+      } else {
+        // Optional: hide when scrolling back up
+        // setShowSmallPopup(false);
+        // setPopupAnimated(false);
+      }
+    };
+
+    // Check initial scroll position
+    handleScroll();
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [isClient, isChatOpen, isDismissed, showSmallPopup]);
+
+  // Reset popup state when pathname changes
+  useEffect(() => {
+    if (!isClient) return;
+
+    setShowSmallPopup(false);
+    setPopupAnimated(false);
+
+    // Re-check after navigation
+    const timer = setTimeout(() => {
+      if (!isDismissed() && !isChatOpen && window.scrollY >= 200) {
+        setShowSmallPopup(true);
+        setTimeout(() => setPopupAnimated(true), 50);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [pathname, isClient, isDismissed, isChatOpen]);
+
+  // Hide small popup when chat is open
+  useEffect(() => {
+    if (isChatOpen) {
+      setShowSmallPopup(false);
+      setPopupAnimated(false);
+    }
+  }, [isChatOpen]);
+
+  // Scroll to bottom of messages
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // NEW: Lock background scroll when chat is open
+  // Lock background scroll when chat is open
   useEffect(() => {
     if (isChatOpen) {
       document.body.style.overflow = "hidden";
@@ -70,6 +161,23 @@ export default function FloatingActionMenu() {
       document.body.style.overflow = "";
     };
   }, [isChatOpen]);
+
+  const handleDismissPopup = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setShowSmallPopup(false);
+    setPopupAnimated(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CHATBOT_DISMISSED_KEY, "true");
+    }
+  };
+
+  const handlePopupClick = () => {
+    setShowSmallPopup(false);
+    setPopupAnimated(false);
+    setIsChatOpen(true);
+    setIsOpen(false);
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -124,7 +232,213 @@ export default function FloatingActionMenu() {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Small Chatbot Popup - Responsive Design */}
+      {isClient && showSmallPopup && !isChatOpen && (
+        <div
+          className={`fixed bottom-4 right-4    z-100 cursor-pointer transition-all duration-500 ease-out ${
+            popupAnimated
+              ? "translate-y-0 opacity-100 scale-100"
+              : "translate-y-8 opacity-0 scale-95"
+          }`}
+          onClick={handlePopupClick}
+        >
+          {/* Main Container */}
+          <div className="relative group">
+            {/* Mobile Design */}
+            <div className="sm:hidden relative flex flex-col gap-3 p-4 bg-linear-to-br from-white via-white/98 to-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/70 w-72 hover:shadow-[0_20px_50px_rgba(254,154,0,0.2)] transition-all duration-500">
+              {/* Close Button */}
+              <button
+                onClick={handleDismissPopup}
+                className="absolute -top-2.5 -right-2.5 w-6 h-6 bg-white hover:bg-red-50 rounded-full flex items-center justify-center shadow-lg border border-gray-200 hover:border-red-300 z-20 transition-all"
+              >
+                <FiX className="w-3 h-3 text-gray-600 hover:text-red-500" />
+              </button>
+
+              {/* Avatar Section - Mobile */}
+              <div className="relative flex justify-center">
+                <div className="relative w-16 h-16 rounded-full bg-linear-to-br from-[#fe9a00] via-[#ff8800] to-[#ff6b00] p-0.5 shadow-lg">
+                  <div className="absolute -inset-2 bg-linear-to-r from-[#fe9a00]/30 to-[#ff6b00]/30 rounded-full blur-md" />
+                  <div className="relative w-full h-full rounded-full bg-white overflow-hidden">
+                    <Image
+                      src="/assets/images/bot.jpeg"
+                      alt="Niki Assistant"
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-md flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Text Content - Mobile */}
+              <div className="text-center space-y-2">
+                <div className="flex items-center justify-center gap-1">
+                  <HiSparkles className="w-3.5 h-3.5 text-[#fe9a00] animate-pulse" />
+                  <span className="text-[11px] font-bold text-[#fe9a00] uppercase tracking-wide">
+                    I'm Niki
+                  </span>
+                </div>
+                <p className="text-gray-800 text-sm font-semibold">
+                  Hi! Need help?
+                </p>
+                <p className="text-gray-600 text-xs leading-relaxed">
+                  Ask me about vans, pricing, locations, or make a booking!
+                </p>
+              </div>
+
+              {/* Quick Features - Mobile */}
+              <div className="flex gap-2 justify-center flex-wrap">
+                <span className="px-2.5 py-1 bg-[#fe9a00]/10 border border-[#fe9a00]/30 rounded-full text-[10px] font-semibold text-gray-700">
+                  🚐 Vans
+                </span>
+                <span className="px-2.5 py-1 bg-[#fe9a00]/10 border border-[#fe9a00]/30 rounded-full text-[10px] font-semibold text-gray-700">
+                  💰 Pricing
+                </span>
+                <span className="px-2.5 py-1 bg-[#fe9a00]/10 border border-[#fe9a00]/30 rounded-full text-[10px] font-semibold text-gray-700">
+                  📍 Locations
+                </span>
+              </div>
+
+              {/* CTA Button - Mobile */}
+              <button
+                onClick={handlePopupClick}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-linear-to-r from-[#fe9a00] to-[#ff8800] rounded-lg shadow-lg hover:shadow-xl transition-all font-bold text-white text-sm active:scale-95"
+              >
+                <FiMessageCircle className="w-4 h-4" />
+                Chat Now
+              </button>
+
+              {/* Status - Mobile */}
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-gray-600">
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                <span>Online • 30s response</span>
+              </div>
+            </div>
+
+            {/* Desktop Design */}
+            <div className="hidden sm:flex sm:flex-col gap-4 p-5 lg:p-6 bg-white backdrop-blur-lg rounded-3xl shadow-2xl border border-white/60 hover:shadow-[0_20px_60px_rgba(254,154,0,0.3)] transition-all duration-500 hover:scale-[1.02] w-80 lg:w-96">
+              {/* Close Button - Desktop */}
+              <button
+                onClick={handleDismissPopup}
+                className="absolute -top-2 -right-2 w-7 h-7 bg-white hover:bg-red-50 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg border border-gray-200 hover:border-red-300 hover:rotate-90 z-20"
+              >
+                <FiX className="w-3.5 h-3.5 text-gray-500 hover:text-red-500 transition-colors" />
+              </button>
+
+              {/* Top Section: Avatar + Text - Desktop */}
+              <div className="flex items-start gap-4">
+                {/* Avatar - Desktop */}
+                <div className="relative shrink-0">
+                  <div className="absolute -inset-2 bg-linear-to-r from-[#fe9a00] to-[#ff6b00] rounded-full opacity-50 animate-pulse blur-sm" />
+                  <div className="relative w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-linear-to-br from-[#fe9a00] via-[#ff8800] to-[#ff6b00] p-1 shadow-xl">
+                    <div className="w-full h-full rounded-full bg-white overflow-hidden">
+                      <Image
+                        src="/assets/images/bot.jpeg"
+                        alt="Niki Assistant"
+                        width={96}
+                        height={96}
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    </div>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 bg-emerald-500 rounded-full border-[3px] border-white shadow-lg flex items-center justify-center">
+                      <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Text - Desktop */}
+                <div className="flex flex-col gap-2 flex-1 pt-1">
+                  <div className="flex items-center gap-1.5">
+                    <HiSparkles className="w-4 h-4 text-[#fe9a00] animate-pulse shrink-0" />
+                    <span className="text-xs font-bold text-[#fe9a00] uppercase tracking-wider">
+                      I'm Niki
+                    </span>
+                  </div>
+                  <p className="text-gray-800 text-base font-semibold leading-snug">
+                    Hi! Need help? 👋
+                  </p>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    I'm your Success Van Hire AI assistant. Ask me anything
+                    about our vans, pricing, or bookings!
+                  </p>
+                </div>
+              </div>
+
+              {/* Divider - Desktop */}
+              <div className="h-px bg-linear-to-r from-[#fe9a00]/20 via-[#fe9a00]/50 to-[#fe9a00]/20" />
+
+              {/* Bottom Section: Features - Desktop */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  What I can help with:
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-[#fe9a00]/5 border border-[#fe9a00]/20 hover:border-[#fe9a00]/40 transition-colors hover:bg-[#fe9a00]/10">
+                    <div className="w-2 h-2 bg-[#fe9a00] rounded-full" />
+                    <span className="text-xs text-gray-700 font-medium">
+                      Van Details
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-[#fe9a00]/5 border border-[#fe9a00]/20 hover:border-[#fe9a00]/40 transition-colors hover:bg-[#fe9a00]/10">
+                    <div className="w-2 h-2 bg-[#fe9a00] rounded-full" />
+                    <span className="text-xs text-gray-700 font-medium">
+                      Pricing
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-[#fe9a00]/5 border border-[#fe9a00]/20 hover:border-[#fe9a00]/40 transition-colors hover:bg-[#fe9a00]/10">
+                    <div className="w-2 h-2 bg-[#fe9a00] rounded-full" />
+                    <span className="text-xs text-gray-700 font-medium">
+                      Locations
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-[#fe9a00]/5 border border-[#fe9a00]/20 hover:border-[#fe9a00]/40 transition-colors hover:bg-[#fe9a00]/10">
+                    <div className="w-2 h-2 bg-[#fe9a00] rounded-full" />
+                    <span className="text-xs text-gray-700 font-medium">
+                      Bookings
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA Button - Desktop */}
+              <button
+                onClick={handlePopupClick}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-linear-to-r from-[#fe9a00] to-[#ff8800] rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-semibold text-white"
+              >
+                <FiMessageCircle className="w-4 h-4" />
+                <span>Start Chat Now</span>
+              </button>
+
+              {/* Status Info - Desktop */}
+              <div className="flex items-center justify-center gap-2 text-xs text-gray-600">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span>Online • Average response 30s</span>
+              </div>
+            </div>
+
+            {/* Floating Particles */}
+            <div className="absolute -top-4 left-10 w-2 h-2 bg-[#fe9a00] rounded-full opacity-60 animate-bounce hidden sm:block" />
+            <div
+              className="absolute -bottom-3 right-20 w-1.5 h-1.5 bg-[#ff6b00] rounded-full opacity-70 animate-bounce hidden sm:block"
+              style={{ animationDelay: "0.2s" }}
+            />
+            <div
+              className="absolute top-1/2 -left-3 w-1.5 h-1.5 bg-[#fe9a00] rounded-full opacity-50 animate-bounce hidden sm:block"
+              style={{ animationDelay: "0.4s" }}
+            />
+          </div>
+
+          {/* Speech Bubble Tail - Desktop */}
+          <div className="absolute -bottom-2 right-12 w-5 h-5 overflow-hidden hidden sm:block">
+            <div className="absolute w-5 h-5 bg-white/90 backdrop-blur-xl border-r border-b border-white/60 transform rotate-45 -translate-y-2.5 shadow-lg" />
+          </div>
+        </div>
+      )}
+
+      {/* Backdrop for Floating Menu */}
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm transition-opacity duration-300"
@@ -155,12 +469,11 @@ export default function FloatingActionMenu() {
                     onClick={item.onClick}
                     onMouseEnter={() => setHoveredItem(item.id)}
                     onMouseLeave={() => setHoveredItem(null)}
-                    className={`group relative w-12 h-12 bg-[#860a89] rounded-2xl flex items-center justify-center 
+                    className="group relative w-12 h-12 bg-[#860a89] rounded-2xl flex items-center justify-center 
                                shadow-2xl transition-all duration-300 hover:scale-110 
-                               hover:shadow-[0_0_30px_rgba(254,154,0,0.4)]`}
+                               hover:shadow-[0_0_30px_rgba(254,154,0,0.4)]"
                   >
                     <Icon className="w-7 h-7 text-white drop-shadow-md" />
-                    {/* Ripple effect */}
                     <span
                       className="absolute inset-0 rounded-2xl bg-white opacity-0 
                                      group-hover:opacity-20 group-hover:scale-150 
@@ -176,7 +489,7 @@ export default function FloatingActionMenu() {
                     }
                     onMouseEnter={() => setHoveredItem(item.id)}
                     onMouseLeave={() => setHoveredItem(null)}
-                    className={`group relative w-12 h-12  ${
+                    className={`group relative w-12 h-12 ${
                       item.id === "whatsapp" ? "bg-[#25D366]" : "bg-[#0891b2]"
                     } rounded-2xl flex items-center justify-center 
                                shadow-2xl transition-all duration-300 hover:scale-110 
@@ -196,8 +509,7 @@ export default function FloatingActionMenu() {
                   <div
                     className="absolute right-full mr-4 px-4 py-2 bg-black/80 backdrop-blur-md 
                                text-white text-sm font-medium rounded-xl shadow-xl 
-                               whitespace-nowrap pointer-events-none 
-                               animate-in fade-in slide-in-from-right-2 duration-200"
+                               whitespace-nowrap pointer-events-none"
                   >
                     {item.label}
                     <div
@@ -218,7 +530,6 @@ export default function FloatingActionMenu() {
                        shadow-2xl transition-all duration-500 hover:scale-110 
                        hover:shadow-[0_0_40px_rgba(254,154,0,0.6)]"
           >
-            {/* Icons Crossfade */}
             <div
               className={`absolute transition-all duration-500 ${
                 isOpen
@@ -238,7 +549,6 @@ export default function FloatingActionMenu() {
               <FiX className="w-6 h-6 text-white drop-shadow-lg" />
             </div>
 
-            {/* Glow Ring */}
             <span
               className="absolute inset-0 rounded-2xl bg-white opacity-0 
                              group-hover:opacity-30 group-hover:scale-150 
@@ -251,132 +561,229 @@ export default function FloatingActionMenu() {
       {/* AI Chat Modal */}
       {isChatOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop with blur */}
           <div
-            className="fixed inset-0 z-9999 bg-black/70 backdrop-blur-md"
+            className="fixed inset-0 z-9999 bg-black/60"
             onClick={() => setIsChatOpen(false)}
           />
 
-          {/* Centered Chat Window */}
-          <div className="fixed inset-0 z-10000 flex items-center justify-center p-4 md:p-6">
-            <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl h-[85vh] max-h-[90vh] flex flex-col bg-linear-to-br from-slate-900/95 to-[#0f172b]/95 rounded-3xl shadow-2xl border border-white/20 backdrop-blur-xl overflow-hidden">
-              {/* Header */}
-              <div className="bg-linear-to-r from-[#fe9a00]/20 to-[#ff8800]/20 border-b border-white/10 p-4 md:p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 md:gap-4">
-                    <div className="relative">
-                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-linear-to-br from-[#fe9a00] to-[#ff8800] flex items-center justify-center shadow-xl">
-                        <BsRobot className="w-5 h-5 md:w-7 md:h-7 text-white" />
-                      </div>
-                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 md:w-4 md:h-4 bg-green-400 rounded-full border-2 md:border-4 border-slate-900 animate-pulse shadow-lg" />
-                    </div>
-                    <div>
-                      <h3 className="text-white font-bold text-base md:text-lg">
-                        AI Assistant
-                      </h3>
-                      <p className="text-green-400 text-xs md:text-sm font-medium">
-                        Online • Ready to help
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setIsChatOpen(false)}
-                    className="p-2 md:p-3 rounded-xl hover:bg-white/10 transition-all text-gray-300 hover:text-white"
-                  >
-                    <FiX className="w-5 h-5 md:w-6 md:h-6" />
-                  </button>
-                </div>
-              </div>
+          {/* Chat Window */}
+          <div className="fixed inset-0 z-10000 flex items-center justify-center p-3 sm:p-4 md:p-6">
+            {/* Main Container with Glow Effect */}
+            <div className="relative w-full max-w-md sm:max-w-lg lg:max-w-xl h-[90vh] sm:h-[85vh] max-h-175">
+              {/* Animated Glow Background */}
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 md:space-y-5 scrollbar-thin scrollbar-thumb-white/10">
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-start gap-3 md:gap-4 ${
-                      message.role === "user" ? "flex-row-reverse" : "flex-row"
-                    }`}
-                  >
-                    {/* Avatar */}
+              {/* Glass Card */}
+              <div className="relative h-full flex flex-col bg-white/10 backdrop-blur-2xl rounded-[28px] shadow-[0_32px_64px_rgba(0,0,0,0.4)] border border-white/20 overflow-hidden">
+                {/* Decorative Top linear */}
+                <div className="absolute top-0 left-0 right-0 h-32 bg-linear-to-b from-[#fe9a00]/10 to-transparent pointer-events-none" />
+
+                {/* Header */}
+                <div className="relative z-10 border-b border-white/10 p-4 sm:p-5">
+                  {/* Glass Header Background */}
+                  <div className="absolute inset-0 bg-linear-to-r from-white/5 to-white/10 backdrop-blur-md" />
+
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      {/* Avatar with Glow Ring */}
+                      <div className="relative">
+                        {/* Pulsing Glow */}
+                        <div className="absolute -inset-1.5 bg-linear-to-r from-[#fe9a00] to-[#ff6b00] rounded-full opacity-50 blur-md animate-pulse" />
+
+                        {/* Avatar Container */}
+                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-linear-to-br from-[#fe9a00] via-[#ff8800] to-[#ff6b00] p-0.5 shadow-xl">
+                          <div className="w-full h-full rounded-full bg-white/90 overflow-hidden">
+                            <Image
+                              src="/assets/images/bot.jpeg"
+                              alt="AI Assistant"
+                              width={56}
+                              height={56}
+                              className="w-full h-full object-cover rounded-full"
+                            />
+                          </div>
+
+                          {/* Online Status */}
+                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-5 sm:h-5 bg-emerald-500 rounded-full border-[3px] border-slate-900 shadow-lg flex items-center justify-center">
+                            <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Title */}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-white font-bold text-base sm:text-lg">
+                            I'm Niki
+                          </h3>
+                          <HiSparkles className="w-4 h-4 text-[#fe9a00] animate-pulse" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                          <p className="text-emerald-400 text-xs sm:text-sm font-medium">
+                            Online
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Close Button */}
+                    <button
+                      onClick={() => setIsChatOpen(false)}
+                      className="p-2.5 sm:p-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/30 transition-all duration-300 text-gray-200 hover:text-white hover:rotate-90"
+                    >
+                      <FiX className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Messages Area */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 sm:space-y-5 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                  {/* Decorative Background Pattern */}
+                  <div className="absolute inset-0 opacity-5 pointer-events-none">
+                    <div className="absolute top-20 left-10 w-32 h-32 bg-[#fe9a00] rounded-full blur-3xl" />
+                    <div className="absolute bottom-40 right-10 w-40 h-40 bg-[#ff6b00] rounded-full blur-3xl" />
+                  </div>
+
+                  {messages.map((message, index) => (
                     <div
-                      className={`w-9 h-9 md:w-10 md:h-10 rounded-2xl shrink-0 flex items-center justify-center ${
+                      key={index}
+                      className={`relative flex items-end gap-2 sm:gap-3 ${
                         message.role === "user"
-                          ? "bg-linear-to-br from-[#fe9a00] to-[#ff8800]"
-                          : "bg-linear-to-br from-slate-700 to-slate-800"
+                          ? "flex-row-reverse"
+                          : "flex-row"
                       }`}
                     >
-                      {message.role === "user" ? (
-                        <span className="text-white font-bold text-xs md:text-sm">
-                          You
+                      {/* Avatar */}
+                      <div
+                        className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl shrink-0 flex items-center justify-center shadow-lg ${
+                          message.role === "user"
+                            ? "bg-linear-to-br from-[#fe9a00] to-[#ff8800]"
+                            : "bg-linear-to-br from-slate-600 to-slate-700 border border-white/10"
+                        }`}
+                      >
+                        {message.role === "user" ? (
+                          <span className="text-white font-bold text-xs">
+                            U
+                          </span>
+                        ) : (
+                          <BsRobot className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />
+                        )}
+                      </div>
+
+                      {/* Message Bubble */}
+                      <div
+                        className={`relative max-w-[80%] sm:max-w-[75%] rounded-2xl px-4 py-3 shadow-lg ${
+                          message.role === "user"
+                            ? "bg-linear-to-r from-[#fe9a00] to-[#ff8800] text-white rounded-br-sm"
+                            : "bg-white/10 backdrop-blur-md text-gray-100 border border-white/10 rounded-bl-sm"
+                        }`}
+                      >
+                        {/* Glass Shine Effect for Assistant Messages */}
+                        {message.role === "assistant" && (
+                          <div className="absolute inset-0 rounded-2xl rounded-bl-sm bg-linear-to-br from-white/10 to-transparent pointer-events-none" />
+                        )}
+
+                        <p className="relative text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
+                          {message.content}
+                        </p>
+
+                        {/* Timestamp (optional) */}
+                        <span
+                          className={`block text-[10px] mt-1.5 ${
+                            message.role === "user"
+                              ? "text-white/60"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          Just now
                         </span>
-                      ) : (
-                        <BsRobot className="w-5 h-5 md:w-6 md:h-6 text-orange-400" />
-                      )}
-                    </div>
-
-                    {/* Bubble */}
-                    <div
-                      className={`max-w-[85%] rounded-3xl px-4 md:px-5 py-3 md:py-4 shadow-lg ${
-                        message.role === "user"
-                          ? "bg-linear-to-r from-[#fe9a00] to-[#ff8800] text-white rounded-tr-none"
-                          : "bg-white/5 backdrop-blur-sm text-gray-100 border border-white/10 rounded-tl-none"
-                      }`}
-                    >
-                      <p className="text-sm md:text-base leading-relaxed whitespace-pre-wrap">
-                        {message.content}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-
-                {/* Typing Indicator */}
-                {isLoading && (
-                  <div className="flex items-start gap-3 md:gap-4">
-                    <div className="w-9 h-9 md:w-10 md:h-10 rounded-2xl bg-linear-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-                      <BsRobot className="w-5 h-5 md:w-6 md:h-6 text-orange-400" />
-                    </div>
-                    <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl rounded-tl-none px-4 md:px-5 py-3 md:py-4 shadow-lg">
-                      <div className="flex gap-1 md:gap-2">
-                        <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                        <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                        <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
                       </div>
                     </div>
-                  </div>
-                )}
+                  ))}
 
-                <div ref={chatEndRef} />
-              </div>
+                  {/* Typing Indicator */}
+                  {isLoading && (
+                    <div className="flex items-end gap-2 sm:gap-3">
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-linear-to-br from-slate-600 to-slate-700 border border-white/10 flex items-center justify-center shadow-lg">
+                        <BsRobot className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl rounded-bl-sm px-5 py-4 shadow-lg">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-              {/* Input */}
-              <div className="p-4 md:p-5 border-t border-white/10 bg-linear-to-t from-slate-900/50 to-transparent">
-                <div className="flex items-center gap-2 md:gap-3 bg-white/5 backdrop-blur-md border border-white/20 rounded-2xl px-3 md:px-4 py-2.5 md:py-3 focus-within:border-[#fe9a00] focus-within:ring-2 md:focus-within:ring-4 focus-within:ring-[#fe9a00]/20 transition-all duration-300">
-                  <input
-                    type="text"
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                    placeholder="Ask about vans, pricing, locations..."
-                    disabled={isLoading}
-                    className="flex-1 bg-transparent text-base placeholder-gray-500 outline-none font-medium"
-                  />
-                  <button
-                    onClick={handleSendMessage}
-                    disabled={!inputMessage.trim() || isLoading}
-                    className="p-2.5 md:p-3 rounded-xl bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105  shrink-0"
-                  >
-                    {isLoading ? (
-                      <FiLoader className="w-4 h-4 md:w-5 md:h-5 text-white animate-spin" />
-                    ) : (
-                      <FiSend className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                    )}
-                  </button>
+                  <div ref={chatEndRef} />
                 </div>
+
+                {/* Input Area */}
+                <div className="relative z-10 p-4 sm:p-5">
+                  {/* Glass Background */}
+                  <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent backdrop-blur-md" />
+
+                  {/* Quick Actions (Optional) */}
+                  <div className="relative flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide">
+                    {["Pricing", "Locations", "Book a Van", "Contact"].map(
+                      (action) => (
+                        <button
+                          key={action}
+                          onClick={() => setInputMessage(action)}
+                          className="px-3 py-1.5 bg-white/5 hover:bg-white/15 border border-white/10 hover:border-[#fe9a00]/50 rounded-full text-xs text-gray-300 hover:text-white transition-all duration-300 whitespace-nowrap"
+                        >
+                          {action}
+                        </button>
+                      ),
+                    )}
+                  </div>
+
+                  {/* Input Container */}
+                  <div className="relative">
+                    {/* Input Glow on Focus */}
+                    <div className="absolute -inset-0.5 bg-linear-to-r from-[#fe9a00] to-[#ff6b00] rounded-2xl opacity-0 blur-sm transition-opacity duration-300 focus-within:opacity-50" />
+
+                    <div className="relative flex items-center gap-2 sm:gap-3 bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 focus-within:border-[#fe9a00]/50 focus-within:bg-white/10 transition-all duration-300">
+                      {/* Input Field */}
+                      <input
+                        type="text"
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage();
+                          }
+                        }}
+                        placeholder="Type your message..."
+                        disabled={isLoading}
+                        className="flex-1 bg-transparent text-white text-sm sm:text-base placeholder-gray-400 outline-none font-medium min-w-0"
+                      />
+
+                      {/* Send Button */}
+                      <button
+                        onClick={handleSendMessage}
+                        disabled={!inputMessage.trim() || isLoading}
+                        className="relative p-2.5 sm:p-3 rounded-xl bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-[0_0_20px_rgba(254,154,0,0.4)] transform hover:scale-105 active:scale-95 shrink-0 group"
+                      >
+                        {/* Button Glow */}
+                        <div className="absolute inset-0 rounded-xl bg-linear-to-r from-[#fe9a00] to-[#ff6b00] opacity-0 group-hover:opacity-50 blur-md transition-opacity duration-300" />
+
+                        {isLoading ? (
+                          <FiLoader className="relative w-4 h-4 sm:w-5 sm:h-5 text-white animate-spin" />
+                        ) : (
+                          <FiSend className="relative w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Decorative Corner Elements */}
+                <div className="absolute top-4 right-16 w-20 h-20 bg-[#fe9a00]/10 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute bottom-20 left-4 w-16 h-16 bg-[#ff6b00]/10 rounded-full blur-2xl pointer-events-none" />
               </div>
             </div>
           </div>

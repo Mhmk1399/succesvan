@@ -1,926 +1,1319 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Link from "@tiptap/extension-link";
+import LinkExtension from "@tiptap/extension-link";
 import { Color } from "@tiptap/extension-color";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
-import BulletList from "@tiptap/extension-bullet-list";
-import OrderedList from "@tiptap/extension-ordered-list";
-import Heading from "@tiptap/extension-heading";
-import { CustomEditor } from "@/types/editor";
-import Image from "@tiptap/extension-image";
-import { TextSelection } from "prosemirror-state";
-// import { Blog, ImageFile } from "@/types/type";
-// import ImageSelectorModal from "./ImageSelectorModal";
-// import { AIBlogGenerator } from "./AIBlogGenerator";
-import toast from "react-hot-toast";
-import { 
-  FiImage, 
-  FiX, 
-  FiInfo, 
-  FiCheckCircle, 
-  FiPenTool, 
-  FiPlus, 
-  FiMinus, 
-  FiBold, 
-  FiItalic, 
-  FiLink, 
-  FiUnderline, 
-  FiType, 
-  FiDroplet, 
-  FiAlignLeft, 
-  FiAlignCenter, 
-  FiAlignRight, 
-  FiList, 
-  FiHash, 
-  FiAlertCircle 
+import Underline from "@tiptap/extension-underline";
+
+import {
+  FiCpu,
+  FiGlobe,
+  FiImage,
+  FiLink,
+  FiList,
+  FiAlignLeft,
+  FiAlignCenter,
+  FiAlignRight,
+  FiCode,
+  FiSave,
+  FiTrash2,
+  FiPlus,
+  FiCopy,
+  FiRefreshCw,
+  FiExternalLink,
+  FiBold,
+  FiItalic,
+  FiDroplet,
+  FiLayout,
+  FiX,
+  FiType,
+  FiChevronDown,
+  FiChevronUp,
+  FiMove,
+  FiUnderline,
+  FiEdit3,
+  FiCheck,
+  FiTag,
+  FiHash,
 } from "react-icons/fi";
- interface Blog {
-  _id: string;
-  title: string;
-  content: string;
-  description: string;
+
+// --- 1. TYPES ---
+interface Anchor {
+  id: string;
+  keyword: string;
+  url: string;
+}
+
+interface HeadingItem {
+  id: string;
+  level: number;
+  text: string;
+  isCollapsed?: boolean;
+}
+
+interface ImageItem {
+  id: string;
+  url: string;
+  alt: string;
+}
+
+interface BlogPostData {
+  topic: string;
   seoTitle: string;
-  image: string;
-  secondImage:string;
-  tags:[string]
+  seoDescription: string;
+  tags: string[];
+  headings: HeadingItem[];
+  images: ImageItem[];
+  anchors: Anchor[];
+  content: { [headingId: string]: string };
+  summary: string;
+  compiledHtml: string;
 }
-interface ImageFile {
-  _id: string;
-  fileName: string;
-  fileUrl: string;
-  fileType: string;
-  fileSize: number;
-}
-const MenuButton = ({
-  onClick,
-  active,
-  children,
+
+// --- 2. COLOR PICKER COMPONENT ---
+const ColorPicker = ({
+  isOpen,
+  onClose,
+  onSelect,
+  title,
+  colors,
 }: {
-  onClick: () => void;
-  active?: boolean;
-  children: React.ReactNode;
-}) => (
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (color: string) => void;
+  title: string;
+  colors: string[];
+}) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      ref={ref}
+      className="absolute top-full left-0 mt-2 p-3 bg-[#0f172b] border border-slate-700 rounded-xl shadow-2xl z-50 min-w-[200px] animate-in fade-in zoom-in-95 duration-150"
+    >
+      <p className="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-wider">
+        {title}
+      </p>
+      <div className="grid grid-cols-6 gap-1.5">
+        {colors.map((color) => (
+          <button
+            key={color}
+            onClick={() => {
+              onSelect(color);
+              onClose();
+            }}
+            className="w-7 h-7 rounded-md border-2 border-transparent hover:border-white hover:scale-110 transition-all shadow-sm"
+            style={{ backgroundColor: color }}
+            title={color}
+          />
+        ))}
+      </div>
+      <button
+        onClick={() => {
+          onSelect("");
+          onClose();
+        }}
+        className="mt-2 w-full text-xs text-slate-400 hover:text-white py-1 border border-dashed border-slate-700 rounded-md"
+      >
+        Remove Color
+      </button>
+    </div>
+  );
+};
+
+// --- 3. FONT SIZE SELECTOR ---
+const FontSizeSelector = ({
+  isOpen,
+  onClose,
+  onSelect,
+  currentSize,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (size: string) => void;
+  currentSize?: string;
+}) => {
+  const sizes = [
+    { label: "Small", value: "12px", class: "text-xs" },
+    { label: "Normal", value: "14px", class: "text-sm" },
+    { label: "Medium", value: "16px", class: "text-base" },
+    { label: "Large", value: "18px", class: "text-lg" },
+    { label: "XL", value: "20px", class: "text-xl" },
+    { label: "2XL", value: "24px", class: "text-2xl" },
+  ];
+
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      ref={ref}
+      className="absolute top-full left-0 mt-2 p-2 bg-[#0f172b] border border-slate-700 rounded-xl shadow-2xl z-50 min-w-[140px] animate-in fade-in zoom-in-95 duration-150"
+    >
+      <p className="text-xs text-slate-400 font-semibold mb-2 uppercase tracking-wider px-2">
+        Font Size
+      </p>
+      {sizes.map((size) => (
+        <button
+          key={size.value}
+          onClick={() => {
+            onSelect(size.value);
+            onClose();
+          }}
+          className={`w-full text-left px-3 py-1.5 rounded-md text-sm hover:bg-slate-800 transition-colors flex items-center justify-between ${
+            currentSize === size.value
+              ? "bg-[#fe9a00]/20 text-[#fe9a00]"
+              : "text-slate-300"
+          }`}
+        >
+          <span className={size.class}>{size.label}</span>
+          <span className="text-[10px] text-slate-500 font-mono">
+            {size.value}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// --- 4. ENHANCED TIPTAP EDITOR ---
+const EditorToolbarButton = ({
+  onClick,
+  isActive,
+  children,
+  title,
+  disabled,
+}: any) => (
   <button
-    aria-label="addblog"
     type="button"
     onClick={onClick}
-    className={`p-1.5 sm:p-2 rounded-lg text-sm transition-all duration-200 ${
-      active
-        ? "bg-[#fe9a00] text-white shadow-sm"
-        : "hover:bg-white/10 text-white"
-    }`}
+    title={title}
+    disabled={disabled}
+    className={`p-2 rounded-lg text-sm transition-all duration-200 ${
+      isActive
+        ? "bg-[#fe9a00] text-white shadow-md shadow-orange-500/20"
+        : "text-slate-400 hover:bg-slate-700 hover:text-white"
+    } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
   >
     {children}
   </button>
 );
 
-const ColorPickerDropdown = ({
-  isOpen,
-  onClose,
-  onColorSelect,
+const TiptapEditor = ({
+  content,
+  onChange,
+  placeholder,
 }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onColorSelect: (color: string) => void;
+  content: string;
+  onChange: (html: string) => void;
+  placeholder?: string;
 }) => {
-  const colors = [
-    "#000000",
-    "#434343",
-    "#666666",
-    "#999999",
-    "#b7b7b7",
-    "#cccccc",
-    "#d9d9d9",
-    "#efefef",
-    "#f3f3f3",
+  const [showTextColor, setShowTextColor] = useState(false);
+  const [showBgColor, setShowBgColor] = useState(false);
+  const [showFontSize, setShowFontSize] = useState(false);
+
+  const textColors = [
     "#ffffff",
-    "#980000",
-    "#ff0000",
-    "#ff9900",
-    "#ffff00",
-    "#00ff00",
-    "#00ffff",
-    "#4a86e8",
-    "#0000ff",
-    "#9900ff",
-    "#ff00ff",
+    "#f8fafc",
+    "#94a3b8",
+    "#64748b",
+    "#475569",
+    "#ef4444",
+    "#f97316",
+    "#fe9a00",
+    "#eab308",
+    "#22c55e",
+    "#14b8a6",
+    "#06b6d4",
+    "#3b82f6",
+    "#6366f1",
+    "#a855f7",
+    "#ec4899",
+    "#f43f5e",
+    "#000000",
+    "#1e293b",
+    "#0f172a",
   ];
 
-  if (!isOpen) return null;
-
-  return (
-    <div className="absolute mt-1 p-2 backdrop-blur-sm rounded-lg shadow-lg border border-white/10 z-50 w-44 bg-[#0f172b]">
-      <div className="grid grid-cols-10 gap-1">
-        {colors.map((color) => (
-          <button
-            key={color}
-            aria-label="color"
-            className="w-5 h-5 rounded border border-white/10 hover:scale-110 transition-transform"
-            style={{ backgroundColor: color }}
-            onClick={() => {
-              onColorSelect(color);
-              onClose();
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-export default function AddPostBlog() {
-  const searchParams = useSearchParams();
-  const editId = searchParams.get("edit");
-  const isEditMode = !!editId;
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [seoTitle, setSeoTitle] = useState("");
-  const [images, setImages] = useState<string[]>([]);
-  const [isImageSelectorOpen, setIsImageSelectorOpen] = useState(false);
-  const [showSeoTips, setShowSeoTips] = useState(false);
-  const [showTextColorPicker, setShowTextColorPicker] = useState(false);
-  const [showBgColorPicker, setShowBgColorPicker] = useState(false);
-  const [wordCount, setWordCount] = useState(0);
-  const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [errors, setErrors] = useState({
-    seoTitle: "",
-    description: "",
-    title: "",
-    content: "",
-  });
-  const [uploading, setUploading] = useState(false);
-
-  const handleAddTag = () => {
-    if (tags.length >= 3) {
-      toast.error("شما فقط میتوانید ۳ برچسب اضافه کنید");
-      return;
-    }
-
-    if (tagInput.trim()) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput("");
-    }
-  };
-
-  const isWithinSingleBlock = (editor: CustomEditor) => {
-    const { $from, $to } = editor.state.selection;
-    return $from.sameParent($to);
-  };
-
-  const isolateSelectionToOwnBlock = (editor: CustomEditor) => {
-    const { state, view } = editor;
-    const { from, to, empty, $from } = state.selection;
-
-    if (empty) return false;
-    if (!isWithinSingleBlock(editor)) return false;
-    if (from === $from.start() && to === $from.end()) return false;
-
-    let tr = state.tr;
-    tr = tr.split(to);
-    const mappedFrom = tr.mapping.map(from);
-    tr = tr.split(mappedFrom);
-    view.dispatch(tr);
-
-    const middlePos = tr.mapping.map(from) + 1;
-    const $pos = view.state.doc.resolve(
-      Math.min(middlePos, view.state.doc.content.size)
-    );
-    view.dispatch(view.state.tr.setSelection(TextSelection.near($pos)));
-
-    return true;
-  };
-
-  const toggleHeadingOnSelection = (
-    editor: CustomEditor,
-    level: 1 | 2 | 3 | 4 | 5 | 6
-  ) => {
-    if (!editor.state.selection.empty && isWithinSingleBlock(editor)) {
-      isolateSelectionToOwnBlock(editor);
-    }
-    editor.chain().focus().toggleHeading({ level }).run();
-  };
-
-  const handleFileUpload = async (file: File) => {
-    if (images.length >= 5) {
-      toast.error("Maximum 5 images allowed");
-      return;
-    }
-    setUploading(true);
-    try {
-      const formDataUpload = new FormData();
-      formDataUpload.append("file", file);
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formDataUpload,
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setImages((prev) => [...prev, data.url]);
-      toast.success("Image uploaded successfully!");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      toast.error(message || "Upload failed");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const validateForm = () => {
-    let isValid = true;
-    const newErrors = {
-      seoTitle: "",
-      description: "",
-      title: "",
-      content: "",
-    };
-
-    if (!seoTitle.trim()) {
-      newErrors.seoTitle = "عنوان سئو الزامی است";
-      isValid = false;
-    }
-
-    if (!description.trim()) {
-      newErrors.description = "توضیحات کوتاه الزامی است";
-      isValid = false;
-    }
-
-    if (!title.trim()) {
-      newErrors.title = "عنوان بلاگ الزامی است";
-      isValid = false;
-    }
-
-    if (!editor?.getText().trim()) {
-      newErrors.content = "محتوای بلاگ الزامی است";
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
+  const bgColors = [
+    "#fef08a",
+    "#fde047",
+    "#facc15",
+    "#fcd34d",
+    "#fbbf24",
+    "#fed7aa",
+    "#fdba74",
+    "#fb923c",
+    "#bbf7d0",
+    "#86efac",
+    "#6ee7b7",
+    "#99f6e4",
+    "#67e8f9",
+    "#7dd3fc",
+    "#93c5fd",
+    "#c4b5fd",
+    "#d8b4fe",
+    "#f5d0fe",
+    "#fbcfe8",
+    "#fecdd3",
+  ];
 
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit.configure({
-        paragraph: { HTMLAttributes: { dir: "auto" } },
-        bulletList: false,
-        orderedList: false,
-        heading: false,
-      }),
-      Heading.configure({
-        levels: [1, 2, 3, 4, 5, 6],
-        HTMLAttributes: {
-          dir: "auto",
-        },
-      }),
-      BulletList.configure({
-        keepMarks: true,
-        HTMLAttributes: { class: "list-disc ml-4" },
-      }),
-      OrderedList.configure({
-        keepMarks: true,
-        HTMLAttributes: { class: "list-decimal ml-4" },
-      }),
+      StarterKit,
       TextStyle,
       Color,
+      Underline,
       Highlight.configure({ multicolor: true }),
-      Link.configure({
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      LinkExtension.configure({
         openOnClick: false,
-        HTMLAttributes: {
-          class: "text-blue-400 underline hover:text-blue-300",
-        },
-      }),
-      TextAlign.configure({
-        types: ["heading", "paragraph"],
-        alignments: ["left", "center", "right"],
-        defaultAlignment: "left",
-      }),
-      Image.configure({
-        HTMLAttributes: {
-          class: "w-full h-64 object-cover rounded-lg my-4",
-        },
+        HTMLAttributes: { class: "text-[#fe9a00] underline cursor-pointer" },
       }),
     ],
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm sm:prose-base max-w-none focus:outline-none min-h-[150px] sm:min-h-[200px] rtl [&_h1]:text-2xl sm:[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-white [&_h2]:text-xl sm:[&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-white [&_h3]:text-lg sm:[&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-white [&_h4]:text-base sm:[&_h4]:text-lg [&_h4]:font-bold [&_h4]:text-white [&_h5]:text-sm sm:[&_h5]:text-base [&_h5]:font-bold [&_h5]:text-white [&_h6]:text-xs sm:[&_h6]:text-sm [&_h6]:font-bold [&_h6]:text-white prose-p:text-white prose-strong:text-white prose-a:text-blue-400 hover:prose-a:text-blue-300",
+          "prose prose-invert max-w-none focus:outline-none min-h-[180px] text-sm text-slate-300 leading-relaxed",
       },
     },
-    onUpdate: ({ editor }: { editor: CustomEditor }) => {
-      const text = editor.getText();
-      const words: string[] = text
-        .trim()
-        .split(/\s+/)
-        .filter((word: string) => word !== "");
-      setWordCount(words.length);
+    content: content,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
     },
-  }) as CustomEditor;
+  });
 
   useEffect(() => {
-    if (isEditMode && editId && editor) {
-      fetchBlogData();
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
     }
-  }, [isEditMode, editId, editor]);
+  }, [content, editor]);
 
-  const fetchBlogData = async () => {
-    try {
-      const response = await fetch("/api/blog");
-      const blogs = await response.json();
-      const blog = blogs.find((b: Blog) => b._id === editId);
-
-      if (blog) {
-        setTitle(blog.title);
-        setDescription(blog.description);
-        setSeoTitle(blog.seoTitle);
-        setImages([blog.image, blog.secondImage].filter(Boolean));
-        setTags(blog.tags || []);
-
-        setTimeout(() => {
-          if (editor && blog.content) {
-            editor.commands.setContent(blog.content);
-          }
-        }, 100);
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("خطا در بارگذاری بلاگ");
-    }
-  };
+  if (!editor) return null;
 
   const setLink = () => {
-    const previousUrl = editor?.getAttributes("link").href;
-    const url = window.prompt("URL", previousUrl);
-
+    const previousUrl = editor.getAttributes("link").href;
+    const url = window.prompt("Enter URL:", previousUrl);
     if (url === null) return;
     if (url === "") {
-      editor?.chain().focus().unsetLink().run();
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
-    editor?.chain().focus().setLink({ href: url }).run();
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) {
-      return;
+  return (
+    <div className="bg-[#1e293b] border border-slate-700 rounded-xl overflow-hidden shadow-lg">
+      {/* Enhanced Toolbar */}
+      <div className="bg-[#0f172b] border-b border-slate-700 p-2 flex flex-wrap gap-1 items-center">
+        {/* Typography Group */}
+        <div className="flex gap-0.5 border-r border-slate-700 pr-2 mr-1">
+          <EditorToolbarButton
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            isActive={editor.isActive("bold")}
+            title="Bold (Ctrl+B)"
+          >
+            <FiBold size={14} />
+          </EditorToolbarButton>
+          <EditorToolbarButton
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            isActive={editor.isActive("italic")}
+            title="Italic (Ctrl+I)"
+          >
+            <FiItalic size={14} />
+          </EditorToolbarButton>
+          <EditorToolbarButton
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            isActive={editor.isActive("underline")}
+            title="Underline (Ctrl+U)"
+          >
+            <FiUnderline size={14} />
+          </EditorToolbarButton>
+        </div>
+
+        {/* Font Size */}
+        <div className="relative border-r border-slate-700 pr-2 mr-1">
+          <EditorToolbarButton
+            onClick={() => setShowFontSize(!showFontSize)}
+            isActive={showFontSize}
+            title="Font Size"
+          >
+            <FiType size={14} />
+          </EditorToolbarButton>
+          <FontSizeSelector
+            isOpen={showFontSize}
+            onClose={() => setShowFontSize(false)}
+            onSelect={(size) => {
+              if (size) {
+                editor
+                  .chain()
+                  .focus()
+                  .setMark("textStyle", { fontSize: size })
+                  .run();
+              }
+            }}
+          />
+        </div>
+
+        {/* Text & Background Color */}
+        <div className="flex gap-0.5 border-r border-slate-700 pr-2 mr-1">
+          <div className="relative">
+            <EditorToolbarButton
+              onClick={() => setShowTextColor(!showTextColor)}
+              isActive={showTextColor}
+              title="Text Color"
+            >
+              <div className="flex flex-col items-center">
+                <span className="font-bold text-xs">A</span>
+                <div
+                  className="w-4 h-1 rounded-full mt-0.5"
+                  style={{
+                    backgroundColor:
+                      editor.getAttributes("textStyle").color || "#fe9a00",
+                  }}
+                />
+              </div>
+            </EditorToolbarButton>
+            <ColorPicker
+              isOpen={showTextColor}
+              onClose={() => setShowTextColor(false)}
+              onSelect={(color) => {
+                if (color) {
+                  editor.chain().focus().setColor(color).run();
+                } else {
+                  editor.chain().focus().unsetColor().run();
+                }
+              }}
+              title="Text Color"
+              colors={textColors}
+            />
+          </div>
+
+          <div className="relative">
+            <EditorToolbarButton
+              onClick={() => setShowBgColor(!showBgColor)}
+              isActive={editor.isActive("highlight")}
+              title="Highlight Color"
+            >
+              <FiDroplet size={14} />
+            </EditorToolbarButton>
+            <ColorPicker
+              isOpen={showBgColor}
+              onClose={() => setShowBgColor(false)}
+              onSelect={(color) => {
+                if (color) {
+                  editor.chain().focus().setHighlight({ color }).run();
+                } else {
+                  editor.chain().focus().unsetHighlight().run();
+                }
+              }}
+              title="Highlight Color"
+              colors={bgColors}
+            />
+          </div>
+        </div>
+
+        {/* Alignment */}
+        <div className="flex gap-0.5 border-r border-slate-700 pr-2 mr-1">
+          <EditorToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign("left").run()}
+            isActive={editor.isActive({ textAlign: "left" })}
+            title="Align Left"
+          >
+            <FiAlignLeft size={14} />
+          </EditorToolbarButton>
+          <EditorToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign("center").run()}
+            isActive={editor.isActive({ textAlign: "center" })}
+            title="Align Center"
+          >
+            <FiAlignCenter size={14} />
+          </EditorToolbarButton>
+          <EditorToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign("right").run()}
+            isActive={editor.isActive({ textAlign: "right" })}
+            title="Align Right"
+          >
+            <FiAlignRight size={14} />
+          </EditorToolbarButton>
+        </div>
+
+        {/* Link */}
+        <div className="flex gap-0.5">
+          <EditorToolbarButton
+            onClick={setLink}
+            isActive={editor.isActive("link")}
+            title="Add Link"
+          >
+            <FiLink size={14} />
+          </EditorToolbarButton>
+        </div>
+      </div>
+
+      {/* Editor Content */}
+      <div
+        className="p-4 cursor-text bg-[#1e293b] min-h-[180px]"
+        onClick={() => editor.chain().focus().run()}
+      >
+        <EditorContent editor={editor} />
+      </div>
+
+      {/* Status Bar */}
+      <div className="bg-[#0f172b] border-t border-slate-700 px-3 py-1.5 flex justify-between items-center">
+        <span className="text-[10px] text-slate-500">
+          {editor.storage.characterCount?.characters?.() || 0} characters
+        </span>
+        <div className="flex gap-2">
+          <span className="text-[10px] text-slate-600">Rich Text Editor</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- 5. UI ATOMS ---
+const Card = ({
+  title,
+  number,
+  icon,
+  children,
+  className = "",
+  collapsible = false,
+  defaultCollapsed = false,
+}: any) => {
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+
+  return (
+    <div
+      className={`bg-[#0f172b] border border-slate-800 rounded-xl overflow-hidden group hover:border-[#fe9a00]/30 transition-all duration-300 ${className}`}
+    >
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[#fe9a00]/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+
+      <div
+        className={`flex items-center gap-3 p-4 border-b border-slate-800/50 ${collapsible ? "cursor-pointer hover:bg-slate-800/30" : ""}`}
+        onClick={() => collapsible && setIsCollapsed(!isCollapsed)}
+      >
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#fe9a00]/10 text-[#fe9a00]">
+          {icon}
+        </div>
+        <h3 className="text-base font-semibold text-white tracking-wide flex-1">
+          <span className="text-[#fe9a00] mr-2">{number}.</span>
+          {title}
+        </h3>
+        {collapsible && (
+          <button className="text-slate-400 hover:text-white transition-colors">
+            {isCollapsed ? <FiChevronDown /> : <FiChevronUp />}
+          </button>
+        )}
+      </div>
+
+      {!isCollapsed && <div className="p-5 relative z-10">{children}</div>}
+    </div>
+  );
+};
+
+const Label = ({
+  children,
+  optional,
+}: {
+  children: React.ReactNode;
+  optional?: boolean;
+}) => (
+  <label className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+    {children}
+    {optional && (
+      <span className="text-slate-600 font-normal normal-case">(optional)</span>
+    )}
+  </label>
+);
+
+const Input = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+  <input
+    {...props}
+    className={`w-full bg-[#1e293b] border border-slate-700 rounded-lg px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all ${props.className || ""}`}
+  />
+);
+
+const TextArea = (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+  <textarea
+    {...props}
+    className="w-full bg-[#1e293b] border border-slate-700 rounded-lg px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all resize-y min-h-[100px]"
+  />
+);
+
+const Button = ({
+  variant = "primary",
+  isLoading,
+  icon,
+  children,
+  onClick,
+  className = "",
+  size = "md",
+}: any) => {
+  const baseStyle =
+    "flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
+  const sizes = {
+    sm: "px-3 py-1.5 text-xs",
+    md: "px-5 py-2.5 text-sm",
+    lg: "px-6 py-3 text-base",
+  };
+  const variants = {
+    primary:
+      "bg-[#fe9a00] hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20",
+    secondary:
+      "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700",
+    ghost:
+      "bg-transparent hover:bg-slate-800 text-slate-400 hover:text-[#fe9a00]",
+    danger:
+      "bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30",
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={isLoading}
+      className={`${baseStyle} ${sizes[size as keyof typeof sizes]} ${variants[variant as keyof typeof variants]} ${className}`}
+    >
+      {isLoading ? <FiRefreshCw className="animate-spin" /> : icon}
+      {children}
+    </button>
+  );
+};
+
+// --- 6. TAG COMPONENT WITH DELETE ---
+const Tag = ({ text, onDelete }: { text: string; onDelete: () => void }) => (
+  <span className="inline-flex items-center gap-1.5 bg-[#fe9a00]/10 text-[#fe9a00] text-xs font-medium px-3 py-1.5 rounded-full border border-[#fe9a00]/20 group hover:bg-[#fe9a00]/20 transition-all">
+    <FiHash size={10} />
+    {text}
+    <button
+      onClick={onDelete}
+      className="ml-1 p-0.5 rounded-full hover:bg-red-500/20 hover:text-red-400 transition-colors"
+      title="Remove tag"
+    >
+      <FiX size={12} />
+    </button>
+  </span>
+);
+
+// --- 7. SECTION ITEM COMPONENT ---
+const SectionItem = ({
+  heading,
+  index,
+  content,
+  onHeadingChange,
+  onLevelChange,
+  onContentChange,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
+}: {
+  heading: HeadingItem;
+  index: number;
+  content: string;
+  onHeadingChange: (text: string) => void;
+  onLevelChange: (level: number) => void;
+  onContentChange: (html: string) => void;
+  onDelete: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isFirst: boolean;
+  isLast: boolean;
+}) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  return (
+    <div className="relative group bg-[#1e293b]/50 rounded-xl border border-slate-700 hover:border-[#fe9a00]/30 transition-all overflow-hidden">
+      {/* Section Header */}
+      <div className="flex items-center gap-2 p-3 bg-[#0f172b]/50 border-b border-slate-700">
+        {/* Move Controls */}
+        <div className="flex flex-col gap-0.5">
+          <button
+            onClick={onMoveUp}
+            disabled={isFirst}
+            className="text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed p-0.5"
+            title="Move up"
+          >
+            <FiChevronUp size={12} />
+          </button>
+          <button
+            onClick={onMoveDown}
+            disabled={isLast}
+            className="text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed p-0.5"
+            title="Move down"
+          >
+            <FiChevronDown size={12} />
+          </button>
+        </div>
+
+        {/* Section Number */}
+        <div className="w-7 h-7 rounded-lg bg-[#fe9a00]/10 text-[#fe9a00] flex items-center justify-center text-xs font-bold">
+          {index + 1}
+        </div>
+
+        {/* Heading Level Selector */}
+        <select
+          className="bg-[#0f172b] border border-slate-700 rounded-lg text-xs text-[#fe9a00] font-bold px-2 py-1.5 focus:outline-none focus:border-[#fe9a00]"
+          value={heading.level}
+          onChange={(e) => onLevelChange(parseInt(e.target.value))}
+        >
+          {[2, 3, 4, 5, 6].map((n) => (
+            <option key={n} value={n}>
+              H{n}
+            </option>
+          ))}
+        </select>
+
+        {/* Heading Input */}
+        <input
+          value={heading.text}
+          onChange={(e) => onHeadingChange(e.target.value)}
+          placeholder="Enter section heading..."
+          className="flex-1 bg-transparent border-0 text-white font-semibold placeholder-slate-500 focus:outline-none text-sm"
+        />
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+            title={isCollapsed ? "Expand" : "Collapse"}
+          >
+            {isCollapsed ? (
+              <FiChevronDown size={14} />
+            ) : (
+              <FiChevronUp size={14} />
+            )}
+          </button>
+          <button
+            onClick={onDelete}
+            className="p-1.5 rounded-md text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+            title="Delete section"
+          >
+            <FiTrash2 size={14} />
+          </button>
+        </div>
+      </div>
+
+      {/* Section Content */}
+      {!isCollapsed && (
+        <div className="p-4">
+          <Label>Section Content</Label>
+          <TiptapEditor content={content} onChange={onContentChange} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- 8. MAIN BUILDER COMPONENT ---
+export default function AIBlogBuilder() {
+  const [loading, setLoading] = useState(false);
+  const [tagInput, setTagInput] = useState("");
+
+  const [data, setData] = useState<BlogPostData>({
+    topic: "",
+    seoTitle: "",
+    seoDescription: "",
+    tags: [],
+    headings: [
+      { id: "h-1", level: 2, text: "" },
+      { id: "h-2", level: 2, text: "" },
+    ],
+    images: [],
+    anchors: [],
+    content: {},
+    summary: "",
+    compiledHtml: "",
+  });
+
+  // --- HTML COMPILER ---
+  const compileContent = useCallback(() => {
+    let html = `<article class="blog-post">\n`;
+
+    if (data.seoTitle) {
+      html += `  <h1 class="text-4xl font-bold mb-4 text-slate-900 dark:text-white">${data.seoTitle}</h1>\n`;
     }
 
-    const content = editor?.getHTML();
-    const storeId = localStorage.getItem("storeId");
+    if (data.images.length > 0) {
+      html += `  <figure class="my-6">\n    <img src="${data.images[0].url}" alt="${data.images[0].alt}" class="w-full rounded-xl shadow-lg" />\n  </figure>\n`;
+    }
 
-    try {
-      const blogData = {
-        id: isEditMode ? editId : crypto.randomUUID(),
-        title,
-        description,
-        content,
-        seoTitle,
-        authorId: "1",
-        storeId: storeId,
-        image: images[0] || "",
-        secondImage: images[1] || "",
-        tags,
-        readTime: Math.ceil(wordCount / 200),
-      };
+    if (data.summary) {
+      html += `  <div class="bg-slate-100 dark:bg-slate-800 p-6 rounded-lg my-8 italic border-l-4 border-orange-500 text-slate-700 dark:text-slate-300">\n    <p><strong>Summary:</strong> ${data.summary}</p>\n  </div>\n\n`;
+    }
 
-      const response = await fetch("/api/blog", {
-        method: isEditMode ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(blogData),
+    data.headings.forEach((heading, index) => {
+      if (!heading.text) return;
+
+      const tag = `h${heading.level}`;
+      const sizeClass =
+        heading.level === 2
+          ? "text-2xl"
+          : heading.level === 3
+            ? "text-xl"
+            : "text-lg";
+      html += `  <${tag} id="${heading.text.toLowerCase().replace(/[^a-z0-9]+/g, "-")}" class="font-bold mt-8 mb-4 text-slate-900 dark:text-white ${sizeClass}">${heading.text}</${tag}>\n`;
+
+      let sectionContent = data.content[heading.id] || "<p></p>";
+
+      data.anchors.forEach((anchor) => {
+        if (anchor.keyword && anchor.url) {
+          const regex = new RegExp(`\\b${anchor.keyword}\\b`, "gi");
+          sectionContent = sectionContent.replace(
+            regex,
+            `<a href="${anchor.url}" class="text-[#fe9a00] hover:underline" target="_blank">${anchor.keyword}</a>`,
+          );
+        }
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to save blog");
-      }
+      html += `  <div class="mb-6 leading-relaxed text-slate-700 dark:text-slate-300 rich-text">${sectionContent}</div>\n`;
 
-      if (!isEditMode) {
-        setTitle("");
-        setDescription("");
-        setSeoTitle("");
-        setImages([]);
-        setTags([]);
-        editor?.commands.clearContent();
+      const imageIndex = index + 1;
+      if (data.images[imageIndex]) {
+        html += `  <figure class="my-6">\n    <img src="${data.images[imageIndex].url}" alt="${data.images[imageIndex].alt}" class="w-full rounded-lg shadow-sm" />\n    <figcaption class="text-center text-xs text-slate-500 mt-2">${data.images[imageIndex].alt}</figcaption>\n  </figure>\n`;
       }
+    });
 
-      toast.success(
-        isEditMode ? "بلاگ با موفقیت بروزرسانی شد" : "وبلاگ با موفقیت ایجاد شد"
-      );
-    } catch (error) {
-      console.log("Error saving blog:", error);
-      toast.error("خطا در ذخیره بلاگ");
+    html += `</article>`;
+    setData((prev) => ({ ...prev, compiledHtml: html }));
+  }, [
+    data.seoTitle,
+    data.images,
+    data.summary,
+    data.headings,
+    data.content,
+    data.anchors,
+  ]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => compileContent(), 800);
+    return () => clearTimeout(timer);
+  }, [compileContent]);
+
+  // --- HANDLERS ---
+  const handleAddTag = () => {
+    if (tagInput.trim() && !data.tags.includes(tagInput.trim())) {
+      setData({ ...data, tags: [...data.tags, tagInput.trim()] });
+      setTagInput("");
+    }
+  };
+
+  const handleRemoveTag = (index: number) => {
+    setData({ ...data, tags: data.tags.filter((_, i) => i !== index) });
+  };
+
+  const handleMoveSection = (index: number, direction: "up" | "down") => {
+    const newHeadings = [...data.headings];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+    if (targetIndex < 0 || targetIndex >= newHeadings.length) return;
+
+    [newHeadings[index], newHeadings[targetIndex]] = [
+      newHeadings[targetIndex],
+      newHeadings[index],
+    ];
+    setData({ ...data, headings: newHeadings });
+  };
+
+  const handleAIGenerate = async () => {
+    if (!data.topic) return toast.error("Please enter a topic first");
+    setLoading(true);
+
+    try {
+      await new Promise((r) => setTimeout(r, 2000));
+
+      const mockAI = {
+        seoTitle: `Mastering ${data.topic}: A Comprehensive Guide`,
+        seoDescription: `Learn everything about ${data.topic}. We cover strategies, tools, and best practices.`,
+        tags: [data.topic, "Guide", "Tutorial", "2024"],
+        headings: [
+          { id: "h-1", level: 2, text: "Introduction" },
+          { id: "h-2", level: 2, text: "Core Concepts" },
+          { id: "h-3", level: 3, text: "Advanced Techniques" },
+          { id: "h-4", level: 2, text: "Conclusion" },
+        ],
+        content: {
+          "h-1": `<p><strong>${data.topic}</strong> is rapidly changing the landscape. It allows for <span style="background-color: #fef08a; color: black;">unprecedented growth</span> and efficiency.</p>`,
+          "h-2": `<p>To understand this fully, we must look at the data. Studies show a <strong style="color: #fe9a00;">50% increase</strong> in productivity.</p><ul><li>Factor A - Innovation</li><li>Factor B - Scalability</li></ul>`,
+          "h-3": `<p>For the experts, try integrating with <a href="#">existing APIs</a> to maximize leverage and efficiency.</p>`,
+          "h-4": `<p>In summary, ${data.topic} is essential for modern success. Start implementing today!</p>`,
+        },
+        summary: `In short, ${data.topic} is essential for modern success. This guide covered all the fundamentals you need to get started.`,
+        anchors: [
+          { id: "a1", keyword: "growth", url: "https://example.com/growth" },
+          {
+            id: "a2",
+            keyword: "productivity",
+            url: "https://example.com/productivity",
+          },
+        ],
+        images: [
+          {
+            id: "i1",
+            url: "https://placehold.co/800x400/fe9a00/ffffff?text=Hero+Image",
+            alt: "Hero Banner",
+          },
+          {
+            id: "i2",
+            url: "https://placehold.co/800x400/1e293b/ffffff?text=Chart",
+            alt: "Data Chart",
+          },
+        ],
+      };
+
+      setData((prev) => ({ ...prev, ...mockAI }));
+      toast.success("Blog Generated!");
+    } catch (e) {
+      toast.error("Generation Failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      <style jsx>{`
-        .fade-in {
-          animation: fadeIn 0.3s ease-in;
-        }
+    <div className="min-h-screen bg-[#0f172b] text-slate-200 pb-20 font-sans">
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: "#1e293b",
+            color: "#fff",
+            border: "1px solid #334155",
+          },
+        }}
+      />
 
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .slide-in-right {
-          animation: slideInRight 0.3s ease-out;
-        }
-
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        .scale-in {
-          animation: scaleIn 0.2s ease-out;
-        }
-
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      `}</style>
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 md:py-12 mt-20 bg-[#0f172b] min-h-screen">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center text-white">
-          {isEditMode ? "ویرایش بلاگ" : "افزودن بلاگ جدید"}
-        </h2>
-
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-4 sm:space-y-6"
-          dir="rtl"
-        >
-          {/* SEO Section */}
-          <div className="backdrop-blur-sm rounded-lg  sm:rounded-xl p-4 sm:p-6 border border-white/10 shadow-sm bg-white/5">
-            <div className="relative">
-              <h3
-                className="text-lg sm:text-xl font-semibold text-white mb-4 flex items-center justify-start gap-2"
-                onMouseEnter={() => setShowSeoTips(true)}
-                onMouseLeave={() => setShowSeoTips(false)}
-              >
-                بخش سئو
-                <FiInfo className="cursor-help text-gray-400 hover:text-gray-300 transition-colors text-sm" />
-              </h3>
-
-              {showSeoTips && (
-                <span className="fade-in absolute z-10 bg-[#0f172b] rounded-lg shadow-xl p-4 right-0 mt-1 text-xs sm:text-sm text-white w-64 sm:w-auto border border-white/10">
-                  <ul className="text-right space-y-1.5 sm:space-y-2">
-                    <li className="flex items-center gap-2">
-                      <FiCheckCircle className="text-gray-400" />
-                      عنوان سئو باید کوتاه و گویا باشد
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <FiCheckCircle className="text-gray-400" />
-                      از کلمات کلیدی مرتبط استفاده کنید
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <FiCheckCircle className="text-gray-400" />
-                      توضیحات کوتاه را در 160 کاراکتر بنویسید
-                    </li>
-                  </ul>
-                </span>
-              )}
+      {/* HEADER */}
+      <header className="fixed top-0 z-50 w-full bg-[#0f172b]/95 backdrop-blur-xl border-b border-slate-800">
+        <div className="max-w-[1800px] mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#fe9a00] to-orange-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-orange-500/30">
+              AI
             </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-white mb-1.5">
-                  عنوان سئو
-                </label>
-                <input
-                  type="text"
-                  value={seoTitle}
-                  onChange={(e) => setSeoTitle(e.target.value)}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg border border-white/10 bg-white/5 text-white outline-none focus:ring-2 focus:ring-[#fe9a00] focus:border-transparent transition-all placeholder-gray-400"
-                  placeholder="عنوان سئو را وارد کنید..."
-                />
-                {errors.seoTitle && (
-                  <p className="text-red-400 text-xs sm:text-sm mt-1.5 flex items-center gap-1.5">
-                    <FiAlertCircle />
-                    {errors.seoTitle}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white mb-1.5">
-                  توضیحات کوتاه
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg border border-white/10 bg-white/5 text-white outline-none focus:ring-2 focus:ring-[#fe9a00] focus:border-transparent transition-all min-h-[80px] sm:min-h-[100px] placeholder-gray-400"
-                  placeholder="توضیحات کوتاه را وارد کنید..."
-                />
-                {errors.description && (
-                  <p className="text-red-400 text-xs sm:text-sm mt-1.5 flex items-center gap-1.5">
-                    <FiAlertCircle />
-                    {errors.description}
-                  </p>
-                )}
-              </div>
-
-              {/* Tags Section */}
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-white">
-                  برچسب‌ها (حداکثر 3)
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyPress={(e) =>
-                      e.key === "Enter" && (e.preventDefault(), handleAddTag())
-                    }
-                    className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base rounded-lg border border-white/10 bg-white/5 text-white outline-none focus:ring-2 focus:ring-[#fe9a00] focus:border-transparent transition-all placeholder-gray-400"
-                    placeholder="برچسبها را وارد کنید..."
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddTag}
-                    className="bg-[#fe9a00] text-white px-4 sm:px-6 rounded-lg hover:bg-orange-600 transition-colors"
-                  >
-                    <FiPlus className="text-sm" />
-                  </button>
-                </div>
-
-                {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="scale-in bg-white/10 text-white px-3 py-1.5 rounded-full flex items-center gap-2 text-xs sm:text-sm font-medium border border-white/10"
-                      >
-                        {tag}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setTags(tags.filter((_, i) => i !== index))
-                          }
-                          className="hover:text-red-400 transition-colors"
-                        >
-                          <FiMinus className="text-xs" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <div>
+              <h1 className="text-lg font-bold text-white tracking-tight">
+                Blog<span className="text-[#fe9a00]">Architect</span> Pro
+              </h1>
+              <p className="text-[10px] text-slate-500 -mt-0.5">
+                AI-Powered Content Builder
+              </p>
             </div>
           </div>
-
-          {/* Images Section */}
-          <div className="backdrop-blur-sm rounded-lg sm:rounded-xl p-4 sm:p-6 border border-white/10 shadow-sm bg-white/5">
-            <label className="  mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-white flex items-center gap-2">
-              <FiImage className="text-gray-400" />
-              تصاویر بلاگ (حداکثر 5 تصویر)
-            </label>
-
-            <label
-              className={`relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-xl cursor-pointer transition-all overflow-hidden ${
-                uploading
-                  ? "border-[#fe9a00] bg-[#fe9a00]/10"
-                  : images.length >= 5
-                  ? "border-white/20 bg-white/5 cursor-not-allowed"
-                  : "border-white/10 hover:border-[#fe9a00] hover:bg-white/5"
-              }`}
-              onDragOver={(e) => e.preventDefault()}
-              onDragEnter={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (images.length >= 5 || uploading) return;
-                const file = e.dataTransfer.files[0];
-                if (file && file.type.startsWith("image/")) {
-                  handleFileUpload(file);
-                }
+          <div className="flex gap-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setData({
+                  topic: "",
+                  seoTitle: "",
+                  seoDescription: "",
+                  tags: [],
+                  headings: [{ id: "h-1", level: 2, text: "" }],
+                  images: [],
+                  anchors: [],
+                  content: {},
+                  summary: "",
+                  compiledHtml: "",
+                });
+                toast.success("Reset complete!");
               }}
             >
-              {uploading ? (
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-12 h-12 border-4 border-[#fe9a00]/30 border-t-[#fe9a00] rounded-full animate-spin"></div>
-                  <p className="text-white font-semibold">Uploading Image...</p>
-                </div>
-              ) : images.length >= 5 ? (
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
-                    <FiImage className="text-gray-400 text-3xl" />
-                  </div>
-                  <p className="text-gray-400 font-medium">Maximum 5 images reached</p>
-                </div>
-              ) : (
-                <>
-                  <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-4">
-                    <FiImage className="text-gray-400 text-3xl" />
-                  </div>
-                  <p className="text-white font-medium">Drag & drop or click to upload image</p>
-                  <p className="text-gray-400 text-sm mt-1">JPG, PNG, WebP, GIF, AVIF ({images.length}/5)</p>
-                </>
-              )}
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                onChange={(e) =>
-                  e.target.files?.[0] &&
-                  !uploading &&
-                  images.length < 5 &&
-                  handleFileUpload(e.target.files[0])
-                }
-                disabled={uploading || images.length >= 5}
-              />
-            </label>
+              Reset All
+            </Button>
+            <Button icon={<FiSave size={14} />} size="sm">
+              Save Draft
+            </Button>
+          </div>
+        </div>
+      </header>
 
-            {images.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mt-4">
-                {images.map((image, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={image}
-                      alt={`تصویر ${index + 1}`}
-                      className="w-full h-20 sm:h-24 object-cover rounded-lg border border-white/10"
+      <main className="pt-24 px-6 max-w-[1800px] mx-auto grid grid-cols-12 gap-6">
+        {/* LEFT SIDEBAR */}
+        <div className="col-span-12 lg:col-span-3 space-y-5">
+          <div className="sticky top-24 space-y-5">
+            {/* AI Generator */}
+            <Card title="AI Generator" number={0} icon={<FiCpu size={16} />}>
+              <Label>Topic Prompt</Label>
+              <textarea
+                value={data.topic}
+                onChange={(e) => setData({ ...data, topic: e.target.value })}
+                className="w-full h-28 bg-[#1e293b] border border-slate-700 rounded-lg p-3 text-white focus:border-[#fe9a00] focus:outline-none mb-4 resize-none text-sm"
+                placeholder="e.g. The benefits of Meditation for mental health..."
+              />
+              <Button
+                onClick={handleAIGenerate}
+                isLoading={loading}
+                className="w-full"
+                icon={<FiCpu size={14} />}
+              >
+                Generate Content
+              </Button>
+            </Card>
+
+            {/* SEO Settings */}
+            <Card title="SEO Settings" number={1} icon={<FiGlobe size={16} />}>
+              <div className="space-y-4">
+                <div>
+                  <Label>SEO Title</Label>
+                  <Input
+                    value={data.seoTitle}
+                    onChange={(e) =>
+                      setData({ ...data, seoTitle: e.target.value })
+                    }
+                    placeholder="Main page title..."
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    {data.seoTitle.length}/60 characters
+                  </p>
+                </div>
+                <div>
+                  <Label>Meta Description</Label>
+                  <TextArea
+                    value={data.seoDescription}
+                    onChange={(e) =>
+                      setData({ ...data, seoDescription: e.target.value })
+                    }
+                    placeholder="Brief description for search engines..."
+                    rows={3}
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    {data.seoDescription.length}/160 characters
+                  </p>
+                </div>
+
+                {/* Enhanced Tags Section */}
+                <div>
+                  <Label>Tags</Label>
+                  <div className="flex gap-2 mb-3">
+                    <Input
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      placeholder="Add tag..."
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                      className="flex-1"
                     />
-                    <div className="absolute top-1 right-1 bg-[#fe9a00] text-white text-xs px-2 py-0.5 rounded">
-                      {index === 0 ? "اصلی" : index + 1}
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleAddTag}
+                      icon={<FiPlus size={12} />}
+                    />
+                  </div>
+
+                  {data.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {data.tags.map((tag, i) => (
+                        <Tag
+                          key={i}
+                          text={tag}
+                          onDelete={() => handleRemoveTag(i)}
+                        />
+                      ))}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setImages((prev) => prev.filter((_, i) => i !== index))
-                      }
-                      className="absolute top-1 left-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-all"
-                    >
-                      <FiX />
-                    </button>
+                  ) : (
+                    <p className="text-xs text-slate-600 italic">
+                      No tags added yet
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        {/* CENTER: EDITORS */}
+        <div className="col-span-12 lg:col-span-5 space-y-5">
+          {/* Structure & Content */}
+          <Card title="Content Sections" number={2} icon={<FiList size={16} />}>
+            <div className="space-y-4">
+              {data.headings.map((h, i) => (
+                <SectionItem
+                  key={h.id}
+                  heading={h}
+                  index={i}
+                  content={data.content[h.id] || ""}
+                  onHeadingChange={(text) => {
+                    const next = [...data.headings];
+                    next[i].text = text;
+                    setData({ ...data, headings: next });
+                  }}
+                  onLevelChange={(level) => {
+                    const next = [...data.headings];
+                    next[i].level = level;
+                    setData({ ...data, headings: next });
+                  }}
+                  onContentChange={(html) => {
+                    setData((prev) => ({
+                      ...prev,
+                      content: { ...prev.content, [h.id]: html },
+                    }));
+                  }}
+                  onDelete={() => {
+                    const nextH = data.headings.filter((_, idx) => idx !== i);
+                    setData({ ...data, headings: nextH });
+                  }}
+                  onMoveUp={() => handleMoveSection(i, "up")}
+                  onMoveDown={() => handleMoveSection(i, "down")}
+                  isFirst={i === 0}
+                  isLast={i === data.headings.length - 1}
+                />
+              ))}
+
+              <Button
+                variant="secondary"
+                className="w-full border-dashed border-2"
+                icon={<FiPlus size={14} />}
+                onClick={() => {
+                  setData({
+                    ...data,
+                    headings: [
+                      ...data.headings,
+                      { id: `h-${Date.now()}`, level: 2, text: "" },
+                    ],
+                  });
+                }}
+              >
+                Add New Section
+              </Button>
+            </div>
+          </Card>
+
+          {/* Images & Auto-Links Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Images */}
+            <Card number={3} title="Images" icon={<FiImage size={16} />}>
+              <div className="space-y-3">
+                {data.images.map((img, i) => (
+                  <div
+                    key={img.id}
+                    className="relative group rounded-lg overflow-hidden border border-slate-700"
+                  >
+                    <img
+                      src={img.url}
+                      alt={img.alt}
+                      className="h-24 w-full object-cover opacity-70 group-hover:opacity-100 transition-opacity"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() =>
+                          setData({
+                            ...data,
+                            images: data.images.filter((_, idx) => idx !== i),
+                          })
+                        }
+                        className="absolute top-2 right-2 text-red-400 bg-black/50 rounded-full p-1.5 hover:bg-red-500/20"
+                      >
+                        <FiTrash2 size={12} />
+                      </button>
+                      {i === 0 && (
+                        <span className="absolute bottom-2 left-2 bg-[#fe9a00] text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                          Featured
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
+                <label className="h-20 rounded-lg border-2 border-dashed border-slate-700 hover:border-[#fe9a00] hover:bg-[#fe9a00]/5 flex items-center justify-center cursor-pointer text-slate-500 hover:text-[#fe9a00] transition-all">
+                  <FiPlus size={18} />
+                  <span className="text-xs ml-2">Upload Image</span>
+                  <input type="file" className="hidden" accept="image/*" />
+                </label>
               </div>
-            )}
-          </div>
+            </Card>
 
-          {/* Title Section */}
-          <div className="backdrop-blur-sm rounded-lg sm:rounded-xl p-4 sm:p-6 border border-white/10 shadow-sm bg-white/5">
-            <label className="  text-sm font-medium text-white mb-1.5 flex items-center gap-2">
-              <FiPenTool className="text-gray-400 text-sm" />
-              عنوان بلاگ
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg border border-white/10 bg-white/5 text-white outline-none focus:ring-2 focus:ring-[#fe9a00] focus:border-transparent transition-all placeholder-gray-400"
-              placeholder="عنوان اصلی بلاگ را وارد کنید..."
-            />
-            {errors.title && (
-              <p className="text-red-400 text-xs sm:text-sm mt-1.5 flex items-center gap-1.5">
-                <FiAlertCircle />
-                {errors.title}
-              </p>
-            )}
-          </div>
-
-          {/* Content Section */}
-          <div className="bg-white/5 rounded-lg sm:rounded-xl p-4 sm:p-6 border border-white/10 shadow-sm">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-0 mb-3">
-              <label className="block text-sm font-medium text-white">
-                محتوای بلاگ
-              </label>
-              {/* <AIBlogGenerator
-                blogData={{
-                  title,
-                  seoTitle,
-                  description,
-                }}
-                onBlogGenerated={(content) => {
-                  editor?.commands.setContent(content);
-                }}
-              /> */}
-            </div>
-
-            <div className="border border-white/10 rounded-lg overflow-hidden">
-              <div className="bg-white/10 p-2 border-b border-white/10 flex flex-wrap gap-1 sm:gap-1.5">
-                <MenuButton
-                  onClick={() => editor?.chain().focus().toggleBold().run()}
-                  active={editor?.isActive("bold")}
-                >
-                  <FiBold />
-                </MenuButton>
-
-                <MenuButton
-                  onClick={() => editor?.chain().focus().toggleItalic().run()}
-                  active={editor?.isActive("italic")}
-                >
-                  <FiItalic />
-                </MenuButton>
-
-                <MenuButton onClick={setLink} active={editor?.isActive("link")}>
-                  <FiLink />
-                </MenuButton>
-
-                <MenuButton
-                  onClick={() => editor?.chain().focus().unsetLink().run()}
-                  active={false}
-                >
-                  <FiUnderline />
-                </MenuButton>
-
-                <MenuButton
-                  onClick={() => editor && toggleHeadingOnSelection(editor, 1)}
-                  active={editor?.isActive("heading", { level: 1 })}
-                >
-                  H1
-                </MenuButton>
-
-                <MenuButton
-                  onClick={() => editor && toggleHeadingOnSelection(editor, 2)}
-                  active={editor?.isActive("heading", { level: 2 })}
-                >
-                  H2
-                </MenuButton>
-
-                <MenuButton
-                  onClick={() => editor && toggleHeadingOnSelection(editor, 3)}
-                  active={editor?.isActive("heading", { level: 3 })}
-                >
-                  H3
-                </MenuButton>
-
-                <MenuButton
-                  onClick={() => editor && toggleHeadingOnSelection(editor, 4)}
-                  active={editor?.isActive("heading", { level: 4 })}
-                >
-                  H4
-                </MenuButton>
-
-                <MenuButton
-                  onClick={() => editor && toggleHeadingOnSelection(editor, 5)}
-                  active={editor?.isActive("heading", { level: 5 })}
-                >
-                  H5
-                </MenuButton>
-
-                <div className="relative">
-                  <MenuButton
-                    onClick={() => setShowTextColorPicker(!showTextColorPicker)}
-                    active={showTextColorPicker}
-                  >
-                    <FiType />
-                  </MenuButton>
-                  <ColorPickerDropdown
-                    isOpen={showTextColorPicker}
-                    onClose={() => setShowTextColorPicker(false)}
-                    onColorSelect={(color) =>
-                      editor?.chain().focus().setColor(color).run()
-                    }
-                  />
-                </div>
-
-                <div className="relative">
-                  <MenuButton
-                    onClick={() => setShowBgColorPicker(!showBgColorPicker)}
-                    active={showBgColorPicker}
-                  >
-                    <FiDroplet />
-                  </MenuButton>
-                  <ColorPickerDropdown
-                    isOpen={showBgColorPicker}
-                    onClose={() => setShowBgColorPicker(false)}
-                    onColorSelect={(color) =>
-                      editor?.chain().focus().setHighlight({ color }).run()
-                    }
-                  />
-                </div>
-
-                <MenuButton
-                  onClick={() =>
-                    editor?.chain().focus().setTextAlign("left").run()
-                  }
-                  active={editor?.isActive({ textAlign: "left" })}
-                >
-                  <FiAlignLeft />
-                </MenuButton>
-
-                <MenuButton
-                  onClick={() =>
-                    editor?.chain().focus().setTextAlign("center").run()
-                  }
-                  active={editor?.isActive({ textAlign: "center" })}
-                >
-                  <FiAlignCenter />
-                </MenuButton>
-
-                <MenuButton
-                  onClick={() =>
-                    editor?.chain().focus().setTextAlign("right").run()
-                  }
-                  active={editor?.isActive({ textAlign: "right" })}
-                >
-                  <FiAlignRight />
-                </MenuButton>
-
-                <MenuButton
-                  onClick={() =>
-                    editor?.chain().focus().toggleBulletList().run()
-                  }
-                  active={editor?.isActive("bulletList")}
-                >
-                  <FiList />
-                </MenuButton>
-
-                <MenuButton
-                  onClick={() =>
-                    editor?.chain().focus().toggleOrderedList().run()
-                  }
-                  active={editor?.isActive("orderedList")}
-                >
-                  <FiHash />
-                </MenuButton>
-
-                {images.length > 0 && (
-                  <select
-                    onChange={async (e) => {
-                      if (!e.target.value) return;
-                      const imageUrl = e.target.value;
-                      const imageIndex = images.indexOf(imageUrl);
-
-                      editor
-                        ?.chain()
-                        .focus()
-                        .setImage({
-                          src: imageUrl,
-                          alt: `تصویر ${imageIndex + 1}`,
-                        })
-                        .run();
-
-                      e.target.value = "";
-                    }}
-                    className="px-2 py-1.5 text-xs sm:text-sm border border-white/10 rounded-lg backdrop-blur-sm text-white bg-white/5"
-                  >
-                    <option value="">درج تصویر</option>
-                    {images.map((image, index) => (
-                      <option key={index} value={image}>
-                        تصویر {index + 1} {index === 0 ? "(اصلی)" : ""}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              <div className="p-3 sm:p-4 backdrop-blur-sm">
-                <EditorContent editor={editor} />
-                {errors.content && (
-                  <p className="text-red-400 text-xs sm:text-sm mt-2">
-                    {errors.content}
+            {/* Auto-Links */}
+            <Card number={4} title="Auto-Links" icon={<FiLink size={16} />}>
+              <div className="space-y-2">
+                {data.anchors.length === 0 && (
+                  <p className="text-xs text-slate-600 italic text-center py-4">
+                    No auto-links configured
                   </p>
                 )}
+                {data.anchors.map((a, i) => (
+                  <div
+                    key={a.id}
+                    className="bg-[#1e293b] p-3 rounded-lg border border-slate-700 group"
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <input
+                        value={a.keyword}
+                        onChange={(e) => {
+                          const newAnchors = [...data.anchors];
+                          newAnchors[i].keyword = e.target.value;
+                          setData({ ...data, anchors: newAnchors });
+                        }}
+                        className="bg-transparent text-sm font-semibold text-white focus:outline-none w-full"
+                        placeholder="Keyword"
+                      />
+                      <button
+                        onClick={() =>
+                          setData({
+                            ...data,
+                            anchors: data.anchors.filter((_, idx) => idx !== i),
+                          })
+                        }
+                        className="text-slate-500 hover:text-red-400 ml-2"
+                      >
+                        <FiX size={14} />
+                      </button>
+                    </div>
+                    <input
+                      value={a.url}
+                      onChange={(e) => {
+                        const newAnchors = [...data.anchors];
+                        newAnchors[i].url = e.target.value;
+                        setData({ ...data, anchors: newAnchors });
+                      }}
+                      className="bg-transparent text-xs text-[#fe9a00] focus:outline-none w-full truncate"
+                      placeholder="https://..."
+                    />
+                  </div>
+                ))}
+                <button
+                  onClick={() =>
+                    setData({
+                      ...data,
+                      anchors: [
+                        ...data.anchors,
+                        { id: `a-${Date.now()}`, keyword: "", url: "" },
+                      ],
+                    })
+                  }
+                  className="w-full text-xs text-[#fe9a00] hover:text-orange-400 py-2 border border-dashed border-slate-700 rounded-lg hover:border-[#fe9a00] transition-colors"
+                >
+                  + Add Auto-Link Rule
+                </button>
+              </div>
+            </Card>
+          </div>
+
+          {/* Summary */}
+          <Card number={5} title="Summary" icon={<FiLayout size={16} />}>
+            <TextArea
+              value={data.summary}
+              onChange={(e) => setData({ ...data, summary: e.target.value })}
+              placeholder="Write a compelling summary of your blog post..."
+              rows={4}
+            />
+          </Card>
+        </div>
+
+        {/* RIGHT: PREVIEW */}
+        <div className="col-span-12 lg:col-span-4 space-y-5">
+          <div className="sticky top-24">
+            <div className="bg-white rounded-2xl overflow-hidden shadow-2xl shadow-black/40 flex flex-col h-[85vh] border border-slate-200">
+              {/* Browser Chrome */}
+              <div className="bg-slate-100 border-b border-slate-200 p-3 flex items-center justify-between">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-400" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                  <div className="w-3 h-3 rounded-full bg-green-400" />
+                </div>
+                <div className="bg-white px-4 py-1.5 rounded-lg text-xs text-slate-500 flex items-center gap-2 shadow-sm border border-slate-200 font-mono">
+                  <FiExternalLink size={12} />
+                  <span className="text-slate-400">blog/</span>
+                  <span className="text-slate-700">
+                    {data.seoTitle
+                      ? data.seoTitle
+                          .toLowerCase()
+                          .replace(/\s+/g, "-")
+                          .slice(0, 20)
+                      : "preview"}
+                  </span>
+                </div>
               </div>
 
-              <div className="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-400 bg-white/5 border-t border-white/10">
-                تعداد کلمات: {wordCount}
+              {/* Content Preview */}
+              <div className="flex-1 overflow-y-auto p-8 bg-white text-slate-900">
+                {data.compiledHtml ? (
+                  <div
+                    className="prose prose-slate max-w-none 
+                      prose-headings:font-bold prose-headings:text-slate-900 
+                      prose-a:text-[#fe9a00] prose-a:no-underline hover:prose-a:underline 
+                      prose-img:rounded-xl prose-img:shadow-lg
+                      prose-strong:text-slate-900
+                      prose-ul:list-disc prose-ol:list-decimal
+                    "
+                    dangerouslySetInnerHTML={{ __html: data.compiledHtml }}
+                  />
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4">
+                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
+                      <FiCode size={28} className="text-slate-400" />
+                    </div>
+                    <p className="text-slate-500">
+                      Start writing to see preview...
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Actions */}
+              <div className="bg-[#0f172b] p-4 flex items-center justify-between border-t border-slate-800">
+                <div className="flex items-center gap-3 text-xs text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <FiCode size={12} />
+                    {data.compiledHtml.length.toLocaleString()} chars
+                  </span>
+                  <span className="text-slate-600">|</span>
+                  <span>
+                    {data.headings.filter((h) => h.text).length} sections
+                  </span>
+                </div>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(data.compiledHtml);
+                    toast.success("HTML copied to clipboard!");
+                  }}
+                  icon={<FiCopy size={12} />}
+                >
+                  Copy HTML
+                </Button>
               </div>
             </div>
           </div>
-
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              className="bg-[#fe9a00] text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg hover:bg-orange-600 transition-all font-medium shadow-sm hover:shadow-md text-sm sm:text-base"
-            >
-              {isEditMode ? "بروزرسانی بلاگ" : "انتشار بلاگ"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </>
+        </div>
+      </main>
+    </div>
   );
 }

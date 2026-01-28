@@ -46,6 +46,7 @@ export default function Testimonials({
                 name: t.name,
                 message: t.message,
                 rating: t.rating,
+                link: t.link,
               }))
             );
           }
@@ -309,6 +310,16 @@ function CarouselLayout({
                     {current.location}
                   </p>
                 )}
+                {current.link && (
+                  <a
+                    href={current.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-2 px-3 py-1 bg-[#fe9a00]/20 border border-[#fe9a00] rounded-lg text-xs md:text-sm text-[#fe9a00] hover:bg-[#fe9a00]/30 transition-all duration-300 font-semibold"
+                  >
+                    View Source →
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -489,6 +500,16 @@ function TestimonialCard({
             </h3>
             {testimonial.location && (
               <p className="text-gray-400 text-sm">{testimonial.location}</p>
+            )}
+            {testimonial.link && (
+              <a
+                href={testimonial.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-2 px-2 py-1 bg-[#fe9a00]/20 border border-[#fe9a00] rounded text-xs text-[#fe9a00] hover:bg-[#fe9a00]/30 transition-all duration-300 font-semibold"
+              >
+                Source →
+              </a>
             )}
           </div>
         </div>

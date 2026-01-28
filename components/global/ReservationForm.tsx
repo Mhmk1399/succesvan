@@ -72,13 +72,33 @@ export default function ReservationForm({
   // Fast AI Agent modal state (quick 1-minute booking)
   const [showFastAgentModal, setShowFastAgentModal] = useState<boolean>(false);
 
+  // Initialize with undefined to avoid hydration mismatch
   const [dateRange, setDateRange] = useState<Range[]>([
     {
-      startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      startDate: undefined,
+      endDate: undefined,
       key: "selection",
     },
   ]);
+
+  // Set dates on client-side only to avoid hydration mismatch
+  useEffect(() => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 2);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    const dayAfter = new Date(tomorrow);
+    dayAfter.setDate(dayAfter.getDate() + 1);
+    
+    setDateRange([
+      {
+        startDate: tomorrow,
+        endDate: dayAfter,
+        key: "selection",
+      },
+    ]);
+  }, []);
 
   const [formData, setFormData] = useState<FormData>({
     office: "",
@@ -731,7 +751,7 @@ export default function ReservationForm({
                 isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
               } ${!formData.office || !formData.type ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              {dateRange[0].startDate && dateRange[0].endDate
+              {dateRange[0]?.startDate && dateRange[0]?.endDate
                 ? `${formatDate(dateRange[0].startDate)} - ${formatDate(
                     dateRange[0].endDate
                   )}`
@@ -1012,7 +1032,7 @@ export default function ReservationForm({
               !formData.office || !formData.type ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
-            {dateRange[0].startDate && dateRange[0].endDate
+            {dateRange[0]?.startDate && dateRange[0]?.endDate
               ? `${formatDate(dateRange[0].startDate)} - ${formatDate(
                   dateRange[0].endDate
                 )}`

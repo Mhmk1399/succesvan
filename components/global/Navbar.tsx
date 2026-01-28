@@ -129,7 +129,7 @@ export default function Navbar() {
       gsap.fromTo(
         navRef.current,
         { opacity: 0 },
-        { duration: 0.4, opacity: 1, ease: "power2.out" }
+        { duration: 0.4, opacity: 1, ease: "power2.out" },
       );
     }
   }, []);
@@ -283,10 +283,10 @@ export default function Navbar() {
               <Link href="/" className="hidden md:block">
                 <Image
                   src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
-                  alt="SuccessVan Logo"
+                  alt="Success Van Hire"
                   width={200}
                   height={200}
-                  className="h-20 w-auto hover:scale-105 transition-transform duration-200"
+                  className=" md:h-24 w-auto group-hover:scale-110 transition-transform duration-500 drop-shadow-2xl"
                   priority
                 />
               </Link>
@@ -294,14 +294,14 @@ export default function Navbar() {
 
             {/* Center Logo - Mobile */}
             <Link href="/" className="md:hidden">
-              <Image
-                src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
-                alt="SuccessVan Logo"
-                width={200}
-                height={200}
-                className="h-18 hover:scale-105 transition-transform duration-200"
-                priority
-              />
+          <Image
+                  src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
+                  alt="Success Van Hire"
+                  width={200}
+                  height={200}
+                  className=" md:h-24 w-auto group-hover:scale-110 transition-transform duration-500 drop-shadow-2xl"
+                  priority
+                />
             </Link>
 
             {/* Right Section */}
@@ -454,7 +454,7 @@ export default function Navbar() {
                     <button
                       onClick={() =>
                         setActiveDropdown(
-                          activeDropdown === item.label ? null : item.label
+                          activeDropdown === item.label ? null : item.label,
                         )
                       }
                       aria-label={`Toggle ${item.label} submenu`}

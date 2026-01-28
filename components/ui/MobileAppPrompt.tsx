@@ -31,8 +31,8 @@ export default function MobileAppPrompt() {
         const model = parts.find(
           (p) =>
             !/Android|Linux|Windows|iPhone|iPad|iPod|CPU|Mac OS X|Win32/i.test(
-              p
-            )
+              p,
+            ),
         );
         name = model || parts[parts.length - 1] || platform;
       } else {
@@ -60,14 +60,14 @@ export default function MobileAppPrompt() {
         gsap.fromTo(
           overlayRef.current,
           { opacity: 0 },
-          { opacity: 1, duration: 0.3 }
+          { opacity: 1, duration: 0.3 },
         );
       }
       if (modalRef.current) {
         gsap.fromTo(
           modalRef.current,
           { y: 600, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" }
+          { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
         );
       }
     });
@@ -159,7 +159,7 @@ export default function MobileAppPrompt() {
               </h3>
             </div>
             <button
-              onClick={() => onClose(false)}
+              onClick={() => onClose(true)}
               className="text-white/60 hover:text-white"
               aria-label="Close"
             >

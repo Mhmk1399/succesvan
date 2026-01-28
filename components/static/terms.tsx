@@ -1,3 +1,4 @@
+ 
 "use client";
 
 import { useRef, useEffect, useState } from "react";
@@ -12,6 +13,7 @@ import {
   FiDollarSign,
   FiTruck,
   FiAlertTriangle,
+  FiKey,
 } from "react-icons/fi";
 import { BsCheckCircleFill } from "react-icons/bs";
 import Link from "next/link";
@@ -49,7 +51,7 @@ const termsData: TermSection[] = [
       {
         id: "1.3",
         content:
-          "The hirer must be at least 23 years old and hold a valid full driving licences for a minimum of 2 years.",
+          "The hirer must be at least 23 years old to drive our vans, 25 years old for our Minibuses and hold a valid full driving licence for a minimum of 2 years, our maximum age is 80 years old.",
       },
     ],
   },
@@ -66,11 +68,16 @@ const termsData: TermSection[] = [
       {
         id: "2.2",
         content:
-          "A security deposit of £250 will be held during the rental period and refunded 10 to 12 working days after return of the vehicle in acceptable condition.",
+          "A security deposit will be held during the rental period and refunded 12 to 14 working days after return of the vehicle in acceptable condition.",
       },
       {
         id: "2.3",
         content: "Payment can be made by credit/debit card or bank transfer.",
+      },
+      {
+        id: "2.4",
+        content:
+          "Security deposit is £250 for the normal panel vans and £350 for Luton, Tipper, Refrigerator and Minibuses.",
       },
     ],
   },
@@ -162,6 +169,16 @@ const termsData: TermSection[] = [
       {
         id: "6.3",
         content: "Insurance does not cover personal belongings or damage.",
+      },
+      {
+        id: "6.4",
+        content:
+          "Damage caused to the vehicle by driver due to the driver negligent, will not covered by insurance.",
+      },
+      {
+        id: "6.5",
+        content:
+          "In case of damage or broken to locks, if the cost to repair is lower than the insurance excess, then repair will be done outside insurance.",
       },
     ],
   },
@@ -273,7 +290,7 @@ const termsData: TermSection[] = [
       {
         id: "12.1",
         content:
-          "Requests to extend the hire period must be made at least 12 hours before the original return date and are subject to vehicle availability and approval by the Successvanhire.",
+          "Requests to extend the hire period must be made at least 12 hours before the original return date and are subject to vehicle availability and approval by the Success van hire.",
       },
       {
         id: "12.2",
@@ -359,7 +376,7 @@ const termsData: TermSection[] = [
       {
         id: "15.3",
         content:
-          "Theft or vandalism must be reported immediately to the police and a crime reference number must be provided to the company.",
+          "Theft or vandalism must be reported immediately to the police, and a crime reference number must be provided to the company.",
       },
       {
         id: "15.4",
@@ -397,7 +414,7 @@ const termsData: TermSection[] = [
   },
   {
     id: 17,
-    icon: FiAlertCircle,
+    icon: FiKey,
     title: "Lost or Damaged Keys",
     subsections: [
       {
@@ -454,7 +471,7 @@ const termsData: TermSection[] = [
       {
         id: "18.6",
         content:
-          "Optional Windscreen Protection: The hirer may choose to purchase windscreen protection for £10 per day, which covers repair of chips and reduces the replacement cost liability to £250 excess. This must be added at the time of booking or prior to vehicle collection.",
+          "Optional Windscreen Protection: The hirer may choose to purchase windscreen protection for £10 per day, which covers repair of chips and reduces the replacement cost liability to £150 excess. This must be added at the time of booking or prior to vehicle collection.",
       },
     ],
   },
@@ -666,7 +683,7 @@ export default function TermsAndConditions() {
               <div className="mt-6 pt-6 border-t border-white/10">
                 <p className="text-gray-400 text-sm">
                   <strong className="text-white">Last Updated:</strong> January
-                  2025
+                  2026
                   <br />
                   <strong className="text-white">Document Version:</strong> 1.0
                 </p>
@@ -738,3 +755,4 @@ export default function TermsAndConditions() {
     </section>
   );
 }
+ 

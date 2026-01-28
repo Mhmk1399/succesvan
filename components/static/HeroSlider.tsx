@@ -19,7 +19,7 @@ const vansData = [
     name: "Luton With Tail-Lift",
     tagline: "Ford Transit High Roof With TAIL-LIFT or Similar",
     description: `Luton van with tail lift ideal for moving heavy or bulky items. Spacious cargo area, hydraulic lift for easy loading, flexible hire options, well-maintained vehicles, and affordable rates for home moves, deliveries, or business transport in London.`,
-    image: "https://vhsbuckets3.s3.eu-north-1.amazonaws.com/images/1-min.png",
+    image: "https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/louton.png",
     price: "£115",
     features: [
       { icon: BsGear, label: "Gear : Manual & Automatic" },
@@ -36,7 +36,8 @@ const vansData = [
     tagline: "Ford Transit or Similar",
     description: `
 Comfortable 14-seater minibus perfect for group travel, events, tours, or corporate transport. Spacious interior, modern safety features, flexible rental periods, competitive pricing, and reliable performance for both short and long journeys across London.`,
-    image: "https://vhsbuckets3.s3.eu-north-1.amazonaws.com/images/2-min.png",
+    image:
+      "https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/14seater.png",
     price: "£175",
     features: [
       { icon: BsGear, label: "Gear : Manual & Automatic" },
@@ -53,7 +54,8 @@ Comfortable 14-seater minibus perfect for group travel, events, tours, or corpor
     tagline: "Ford Transit Custom or Similar",
     description: `
 Compact and fuel-efficient short wheelbase van designed for city driving. Easy to maneuver and park, yet spacious enough for deliveries or small moves. Ideal for businesses or individuals needing a reliable, cost-effective transport solution.`,
-    image: "https://vhsbuckets3.s3.eu-north-1.amazonaws.com/images/3-min.png",
+    image:
+      "https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/shortee.png",
     price: "£60",
     features: [
       { icon: BsGear, label: "Gear : Manual & Automatic" },
@@ -218,7 +220,7 @@ export default function HeroSection() {
           duration: 0.8,
           ease: "power3.out",
         },
-        0
+        0,
       );
     }
 
@@ -227,7 +229,7 @@ export default function HeroSection() {
         glowRef.current,
         { opacity: 0, scale: 0.4 },
         { opacity: 0.7, scale: 1, duration: 0.6, ease: "power2.out" },
-        "-=0.5"
+        "-=0.5",
       );
     }
 
@@ -236,7 +238,7 @@ export default function HeroSection() {
         shadowRef.current,
         { opacity: 0, scaleX: 0.6 },
         { opacity: 0.5, scaleX: 1, duration: 0.6, ease: "power2.out" },
-        "-=0.6"
+        "-=0.6",
       );
     }
 
@@ -245,7 +247,7 @@ export default function HeroSection() {
         roadLinesRef.current,
         { opacity: 0, y: 20 },
         { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" },
-        "-=0.5"
+        "-=0.5",
       );
     }
 
@@ -254,7 +256,7 @@ export default function HeroSection() {
         particlesRef.current,
         { opacity: 0 },
         { opacity: 1, duration: 0.3 },
-        "-=0.4"
+        "-=0.4",
       );
     }
 
@@ -263,7 +265,7 @@ export default function HeroSection() {
         vanContentRef.current,
         { opacity: 0 },
         { opacity: 1, duration: 0.15, ease: "power2.out" },
-        "-=0.3"
+        "-=0.3",
       );
     }
   };
@@ -302,7 +304,7 @@ export default function HeroSection() {
       exitTl.to(
         vanContentRef.current,
         { opacity: 0, duration: 0.15, ease: "power2.in" },
-        "-=0.3"
+        "-=0.3",
       );
     }
 
@@ -315,7 +317,7 @@ export default function HeroSection() {
           particlesRef.current,
         ],
         { opacity: 0, duration: 0.3, ease: "power2.in" },
-        "-=0.4"
+        "-=0.4",
       );
     }
   };

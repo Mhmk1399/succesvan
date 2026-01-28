@@ -218,8 +218,8 @@ export default function TicketsManagement() {
                   </div>
                 </div>
                 <p className="text-gray-400 text-sm mb-2 truncate">
-                  {ticket.userId.name} {ticket.userId.lastName} •{" "}
-                  {ticket.userId.email}
+                  {ticket?.userId?.name} {ticket?.userId?.lastName} •{" "}
+                  {ticket?.userId?.email}
                 </p>
                 <p
                   className="text-gray-300 text-sm mb-3 overflow-hidden"
@@ -312,7 +312,7 @@ export default function TicketsManagement() {
                   {selectedTicket.priority}
                 </span>
                 <span className="text-gray-400 text-sm">
-                  {selectedTicket.userId.name} {selectedTicket.userId.lastName}
+                  {selectedTicket?.userId?.name} {selectedTicket?.userId?.lastName}
                 </span>
               </div>
             </div>
@@ -323,14 +323,14 @@ export default function TicketsManagement() {
                   <div
                     key={index}
                     className={`flex ${
-                      message.sender === selectedTicket.userId._id
+                      message.sender === selectedTicket?.userId?._id
                         ? "justify-start"
                         : "justify-end"
                     }`}
                   >
                     <div
                       className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        message.sender === selectedTicket.userId._id
+                        message.sender === selectedTicket?.userId?._id
                           ? "bg-gray-700 text-white"
                           : "bg-[#fe9a00] text-black"
                       }`}

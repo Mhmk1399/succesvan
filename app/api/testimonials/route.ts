@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     await connect();
-    const { name, email, message, rating } = await req.json();
+    const { name, email, message, rating, link } = await req.json();
 
     if (!name || !email || !message) {
       return errorResponse("All fields are required", 400);
@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
       message,
       rating: rating || 5,
       status: "pending",
+      link: link || "",
     });
 
     return successResponse(testimonial, 201);

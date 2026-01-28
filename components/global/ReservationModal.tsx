@@ -790,9 +790,7 @@ export default function ReservationModal({
           startDate: new Date(`${formData.startDate}T${formData.startTime}`),
           endDate: new Date(`${formData.endDate}T${formData.endTime}`),
           totalPrice:
-            (finalPrice || priceCalc?.totalPrice || 0) +
-            addOnsCost +
-            (selectedCategory?.deposit || 0),
+            (finalPrice || priceCalc?.totalPrice || 0) ,
           driverAge: formData.driverAge,
           messege: "",
           status: "pending",

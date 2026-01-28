@@ -8,7 +8,7 @@ import AnnouncementBar from "@/components/global/AnnouncementBar";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/context/AuthContext";
 import MobileAppPrompt from "@/components/ui/MobileAppPrompt";
-import { StructuredData } from "@/components/global/StructuredData";
+import CanonicalUrl from "@/components/global/CanonicalUrl";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -22,8 +22,10 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "SuccessVan - Van Hire & Rental in London | Last Minute Bookings",
-  description: "Premium van hire and rental services in North West London. Book your van today with SuccessVan - serving Cricklewood, Golders Green, Hampstead, Hendon, Mill Hill, Wembley and more.",
-  keywords: "van hire London, van rental, last minute van hire, North West London, Cricklewood, Golders Green, Hampstead, Hendon, Mill Hill, Wembley",
+  description:
+    "Premium van hire and rental services in North West London. Book your van today with SuccessVan - serving Cricklewood, Golders Green, Hampstead, Hendon, Mill Hill, Wembley and more.",
+  keywords:
+    "van hire London, van rental, last minute van hire, North West London, Cricklewood, Golders Green, Hampstead, Hendon, Mill Hill, Wembley",
   authors: [{ name: "SuccessVan" }],
   creator: "SuccessVan",
   publisher: "SuccessVan",
@@ -31,13 +33,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_GB",
-    url: "https://successvan.co.uk",
+    url: "https://successvanhire.co.uk/",
     siteName: "SuccessVan",
     title: "SuccessVan - Van Hire & Rental in London",
     description: "Premium van hire and rental services in North West London",
     images: [
       {
-        url: "https://successvan.co.uk/og-image.jpg",
+        url: "https://successvanhire.co.uk/android-chrome-192x192.png",
         width: 1200,
         height: 630,
         alt: "SuccessVan - Van Hire London",
@@ -48,10 +50,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "SuccessVan - Van Hire & Rental in London",
     description: "Premium van hire and rental services in North West London",
-    images: ["https://successvan.co.uk/og-image.jpg"],
-  },
-  alternates: {
-    canonical: "https://successvan.co.uk",
+    images: ["https://successvanhire.co.uk/android-chrome-192x192.png"],
   },
 };
 
@@ -63,7 +62,24 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <StructuredData />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/apple-touch-icon.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/favicon-32x32.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/favicon-16x16.png"
+        />
+        <link rel="manifest" href="/site.webmanifest"></link>
       </head>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased custom-scrollbar`}
@@ -71,10 +87,11 @@ export default function RootLayout({
         <AuthProvider>
           <AnnouncementBar />
           <Navbar />
+          <CanonicalUrl />
           <Toaster position="bottom-center" />
           <MobileAppPrompt />
 
-           {children}
+          {children}
           <Footer />
           <FloatingActionMenu />
         </AuthProvider>

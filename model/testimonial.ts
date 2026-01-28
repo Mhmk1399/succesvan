@@ -8,6 +8,7 @@ export interface ITestimonial extends Document {
   status: "pending" | "approved" | "rejected";
   createdAt: Date;
   updatedAt: Date;
+  link?: string;
 }
 
 const testimonialSchema = new Schema<ITestimonial>(
@@ -39,8 +40,11 @@ const testimonialSchema = new Schema<ITestimonial>(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    link: {
+      type: String,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.models.Testimonial ||

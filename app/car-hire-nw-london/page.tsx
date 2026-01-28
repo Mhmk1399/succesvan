@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import NWLondonCarHire from "@/components/static/areas/NWLondonCarHire";
+import Script from "next/script";
+import { carHireNwLondonSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title:
@@ -19,6 +21,15 @@ export const metadata: Metadata = {
 export default function CarHireNWLondon() {
   return (
     <div>
+       {/* ✅ Schema.org JSON-LD */}
+      <Script
+        id="car-hire-nw-london-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(carHireNwLondonSchema),
+        }}
+      />
       <NWLondonCarHire />
     </div>
   );
