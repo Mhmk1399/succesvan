@@ -1838,7 +1838,11 @@ const RichTextEditor = ({
 
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+      console.log('🔄 RichTextEditor updating content:', { 
+        newLength: content?.length || 0, 
+        currentLength: editor.getHTML().length 
+      });
+      editor.commands.setContent(content || '');
     }
   }, [content, editor]);
 
@@ -2760,6 +2764,15 @@ const ContentSection = ({
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  // Log when heading content changes
+  useEffect(() => {
+    console.log(`📝 ContentSection ${index} received heading:`, {
+      id: heading.id,
+      text: heading.text,
+      contentLength: heading.content?.length || 0
+    });
+  }, [heading.id, heading.content, index, heading.text]);
+
   const handleInsertMedia = (type: "image" | "video" | "all") => {
     onOpenMediaPicker(type, (media) => {
       const html =
@@ -3187,32 +3200,83 @@ export default function AIBlogBuilder() {
   };
 
   const handleStepDataUpdate = (updates: Partial<StepGeneratorData>) => {
+    console.log('📥 [handleStepDataUpdate] Received updates:', JSON.stringify({
+      hasHeadings: !!updates.headings,
+      headingsCount: updates.headings?.length,
+      hasSummary: !!updates.summary,
+      hasConclusion: !!updates.conclusion,
+      hasFAQs: !!updates.faqs,
+    }));
+    
     // Create new objects to ensure React detects changes
     const updatedData = { ...data };
     
     if (updates.headings) {
-      // Merge headings by ID to preserve user edits while updating AI content
-      const updatedHeadings = [...data.headings];
-      
-      updates.headings.forEach(newHeading => {
-        const existingIndex = updatedHeadings.findIndex(h => h.id === newHeading.id);
-        
-        if (existingIndex !== -1) {
-          // Update existing heading by ID
-          updatedHeadings[existingIndex] = { 
-            ...updatedHeadings[existingIndex],
-            ...newHeading,
-            // Force new object reference
-            content: newHeading.content || updatedHeadings[existingIndex].content
-          };
-        } else {
-          // New heading, add it
-          updatedHeadings.push({ ...newHeading });
+      console.log('🔄 [handleStepDataUpdate] Processing headings update');
+      console.log('   Current data.headings count:', data.headings.length);
+      console.log('   Current data.headings:', data.headings.map(h => ({ 
+        id: h.id, 
+        text: h.text?.substring(0, 30), 
+        contentLength: h.content?.length || 0 
+      })));
+      console.log('   Incoming headings:', updates.headings.map(h => ({ 
+        id: h.id, 
+        text: h.text?.substring(0, 30), 
+        contentLength: h.content?.length || 0 
+      })));
+
+      // Check if this is initial headings generation (all headings have no content yet)
+      // or if it's a content update (some headings have content)
+      const isInitialHeadingsGeneration = updates.headings.every(h => !h.content || h.content === '');
+      const hasContentUpdate = updates.headings.some(h => h.content && h.content !== '');
+
+      if (isInitialHeadingsGeneration) {
+        // REPLACE all headings with new structure
+        console.log('📝 [handleStepDataUpdate] Initial headings generation - REPLACING all headings');
+        updatedData.headings = updates.headings.map(h => ({ ...h }));
+      } else if (hasContentUpdate) {
+        // MERGE content into existing headings by ID
+        console.log('📝 [handleStepDataUpdate] Content update - MERGING by ID');
+        if (!updates.headings.length ) {
+          console.log('   ⚠️ No existing headings found, adding all incoming headings');
+          updatedData.headings = updates.headings.map(h => ({ ...h }));
         }
-      });
+        const updatedHeadings = data.headings.map(existingHeading => {
+          const incomingHeading = updates.headings.find(h => h.id === existingHeading.id);
+          
+          if (incomingHeading) {
+            console.log(`   ✅ Matched heading ID: ${existingHeading.id}`);
+            // Create a completely new object to break React reference
+            return {
+              id: incomingHeading.id,
+              level: incomingHeading.level,
+              text: incomingHeading.text,
+              content: incomingHeading.content || existingHeading.content
+            };
+          }
+          
+          return existingHeading;
+        });
+        
+        // Add any new headings that weren't in the existing array
+        updates.headings.forEach(newHeading => {
+          if (!updatedHeadings.find(h => h.id === newHeading.id)) {
+            console.log(`   ➕ Adding new heading ID: ${newHeading.id}`);
+            updatedHeadings.push({ ...newHeading });
+          }
+        });
+        
+        updatedData.headings = updatedHeadings;
+      } else {
+        // Default: just update the headings
+        updatedData.headings = updates.headings.map(h => ({ ...h }));
+      }
       
-      updatedData.headings = updatedHeadings;
-      console.log('🔄 Headings updated:', updatedHeadings.map(h => ({ id: h.id, text: h.text, hasContent: !!h.content })));
+      console.log('📦 [handleStepDataUpdate] Final headings after update:', updatedData.headings.map(h => ({ 
+        id: h.id, 
+        text: h.text?.substring(0, 30), 
+        contentLength: h.content?.length || 0 
+      })));
     }
     
     if (updates.summary !== undefined) updatedData.summary = updates.summary;
@@ -3225,6 +3289,7 @@ export default function AIBlogBuilder() {
     if (updates.author) updatedData.author = updates.author;
     if (updates.anchors) updatedData.anchors = [...updates.anchors];
     
+    console.log('💾 Setting new data state');
     setData(updatedData);
     
     // Show toast for newly added content

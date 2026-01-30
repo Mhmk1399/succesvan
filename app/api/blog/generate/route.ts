@@ -264,6 +264,10 @@ export async function POST(request: NextRequest) {
         }
 
         console.log(`📝 [Step Generator] Generating content for heading ${headingIndex}`);
+        console.log(`   Topic: ${blog.content.topic}`);
+        console.log(`   Heading text: ${blog.content.headings[headingIndex]?.text}`);
+        console.log(`   Heading level: ${blog.content.headings[headingIndex]?.level}`);
+        console.log(`   Focus keyword: ${blog.seo.focusKeyword}`);
 
         const heading = blog.content.headings[headingIndex];
         const content = await generateSectionContent(
@@ -273,26 +277,55 @@ export async function POST(request: NextRequest) {
           blog.seo.focusKeyword
         );
 
+        console.log(`🔍 [Step Generator] Generated content length: ${content?.length || 0} characters`);
+        console.log(`🔍 [Step Generator] Content preview: ${content?.substring(0, 100)}...`);
+
+        // Mark the nested document as modified to ensure Mongoose saves it
+        blog.markModified('content.headings');
         blog.content.headings[headingIndex].content = content;
         blog.generationProgress.currentHeadingIndex = headingIndex;
         blog.generationProgress.currentStep = "content";
+        blog.markModified('content.headings');
+        
+        console.log(`💾 [Step Generator] Saving to database...`);
+        console.log(`   Heading ${headingIndex} content length before save: ${blog.content.headings[headingIndex].content?.length || 0}`);
+        console.log(`   Is content truthy: ${!!blog.content.headings[headingIndex].content}`);
+        console.log(`   Content type: ${typeof blog.content.headings[headingIndex].content}`);
+        
         await blog.save();
-
+        
+        // Verify save by refetching
+        const savedBlog = await Blog.findById(blogId);
         console.log(`✅ [Step Generator] Content generated for heading ${headingIndex}`);
+        console.log(`   Verified content length in DB: ${savedBlog.content.headings[headingIndex].content?.length || 0}`);
+        console.log(`   Verified content exists: ${!!savedBlog.content.headings[headingIndex].content}`);
 
-        return NextResponse.json({
+        const responseData = {
           success: true,
           mode: "step",
           blogId: blog._id,
           step: "content",
           headingIndex,
           data: {
-            heading: blog.content.headings[headingIndex],
+            heading: savedBlog.content.headings[headingIndex],
           },
           message: `Content generated for: ${heading.text}`,
-          isLastHeading: headingIndex === blog.content.headings.length - 1,
-          nextStep: headingIndex === blog.content.headings.length - 1 ? "summary" : "content"
+          isLastHeading: headingIndex === savedBlog.content.headings.length - 1,
+          nextStep: headingIndex === savedBlog.content.headings.length - 1 ? "summary" : "content"
+        };
+
+        console.log(`📤 [Step Generator] Returning response:`, {
+          ...responseData,
+          data: {
+            heading: {
+              id: responseData.data.heading.id,
+              text: responseData.data.heading.text,
+              contentLength: responseData.data.heading.content?.length || 0
+            }
+          }
         });
+
+        return NextResponse.json(responseData);
       }
 
       // --------------------------------------------------------------------
@@ -321,6 +354,11 @@ export async function POST(request: NextRequest) {
         await blog.save();
 
         console.log(`✅ [Step Generator] Content approved for heading ${headingIndex}`);
+        console.log(`📤 [Step Generator] Returning heading data: ${JSON.stringify({ 
+          id: blog.content.headings[headingIndex].id, 
+          text: blog.content.headings[headingIndex].text, 
+          contentLength: blog.content.headings[headingIndex].content?.length || 0 
+        })}`);
 
         const isLastHeading = headingIndex === blog.content.headings.length - 1;
 
@@ -329,6 +367,9 @@ export async function POST(request: NextRequest) {
           mode: "step",
           blogId: blog._id,
           step: "content",
+          data: {
+            heading: blog.content.headings[headingIndex],
+          },
           message: `Content approved for heading ${headingIndex + 1}`,
           isLastHeading,
           nextStep: isLastHeading ? "summary" : "content",

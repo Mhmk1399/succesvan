@@ -287,13 +287,37 @@ export default function StepByStepBlogGenerator({
         additionalData.headingIndex = currentHeadingIndex;
       }
       
+      console.log('🚀 [StepGenerator] Approve clicked:', {
+        currentStep,
+        currentHeadingIndex,
+        blogId,
+        additionalData
+      });
+      
       const result = await callStepAPI(currentStep, "approve", additionalData);
+      
+      console.log('📥 [StepGenerator] API Response:', {
+        step: currentStep,
+        hasData: !!result.data,
+        dataKeys: result.data ? Object.keys(result.data) : [],
+        isLastHeading: result.isLastHeading
+      });
 
       // Update parent component with new data
       if (result.data) {
         const updateData: Partial<StepGeneratorData> = {};
 
         if (currentStep === "headings" && result.data.headings) {
+          console.log('📋 [StepGenerator] Processing headings approval:', {
+            headingsCount: result.data.headings.length,
+            headings: result.data.headings.map((h: any) => ({
+              id: h.id,
+              text: h.text,
+              level: h.level,
+              hasContent: !!h.content
+            }))
+          });
+          
           updateData.headings = result.data.headings;
           updateData.seoTitle = result.data.seoTitle || result.data.suggestedTitle;
           updateData.focusKeyword = result.data.focusKeyword;
@@ -305,9 +329,28 @@ export default function StepByStepBlogGenerator({
             headings: result.data.headings 
           });
         } else if (currentStep === "content" && result.data.heading) {
+          console.log('✍️ [StepGenerator] Processing content approval:', {
+            headingIndex: currentHeadingIndex,
+            headingId: result.data.heading.id,
+            headingText: result.data.heading.text,
+            contentLength: result.data.heading.content?.length || 0,
+            allHeadingsCount: allHeadings.length
+          });
+          
           // Update the specific heading in allHeadings array
           const updatedHeadings = [...allHeadings];
           updatedHeadings[currentHeadingIndex] = result.data.heading;
+          
+          console.log('📊 [StepGenerator] Updated headings array:', {
+            totalHeadings: updatedHeadings.length,
+            headings: updatedHeadings.map((h, i) => ({
+              index: i,
+              id: h.id,
+              text: h.text,
+              contentLength: h.content?.length || 0
+            }))
+          });
+          
           setAllHeadings(updatedHeadings);
           // Send updated headings to parent immediately
           updateData.headings = updatedHeadings;
@@ -324,7 +367,19 @@ export default function StepByStepBlogGenerator({
           updateData.anchors = result.data.anchors;
         }
 
+        console.log('📤 [StepGenerator] Calling onDataUpdate with:', {
+          updateDataKeys: Object.keys(updateData),
+          headingsCount: updateData.headings?.length,
+          headingsData: updateData.headings?.map(h => ({
+            id: h.id,
+            text: h.text,
+            contentLength: h.content?.length || 0
+          }))
+        });
+        
         onDataUpdate(updateData);
+        
+        console.log('✅ [StepGenerator] onDataUpdate called successfully');
       }
 
       // Update progress
