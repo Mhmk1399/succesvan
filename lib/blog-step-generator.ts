@@ -138,14 +138,23 @@ export async function generateSummary(
   const systemPrompt = `You are an expert blog writer. Write an engaging introduction/summary.
 
 Requirements:
-- 120-150 words
-- Hook the reader immediately
+- 120-180 words
+- Hook the reader immediately with a question or intriguing statement
 - Clearly state what the article covers
-- Include focus keyword: "${focusKeyword}"
-- HTML format with proper tags
+- Include focus keyword: "${focusKeyword}" naturally
+- Use proper HTML tags: <p>, <strong>, <em>
+- Write 2-3 short paragraphs maximum
 - Conversational but professional tone
 
-Return ONLY the HTML content.`;
+IMPORTANT:
+- Return ONLY the HTML content (no \`\`\`html wrapper)
+- Do NOT include <!DOCTYPE>, <html>, <head>, <body>, or <title> tags
+- Start directly with <p> tags
+- End with closing </p> tag
+
+Example:
+<p>Have you ever wondered about...? In this comprehensive guide, we'll explore <strong>keyword</strong>.</p>
+<p>Whether you're new or experienced, this article covers everything you need to know...</p>`;
 
   const userPrompt = `Write an introduction for a blog post titled: "${title}"
 
@@ -162,9 +171,20 @@ Make it compelling and encourage readers to continue.`;
     temperature: 0.7,
   });
 
-  const summary = completion.choices[0].message.content || "";
+  let summary = completion.choices[0].message.content || "";
 
-  console.log(`✅ [Step Generator] Summary generated`);
+  // Clean up any markdown wrappers or document tags
+  summary = summary.replace(/```html\n?/g, '');
+  summary = summary.replace(/```\n?/g, '');
+  summary = summary.replace(/<!DOCTYPE[^>]*>/gi, '');
+  summary = summary.replace(/<\/?html[^>]*>/gi, '');
+  summary = summary.replace(/<\/?head[^>]*>/gi, '');
+  summary = summary.replace(/<\/?body[^>]*>/gi, '');
+  summary = summary.replace(/<title>[^<]*<\/title>/gi, '');
+  summary = summary.replace(/<meta[^>]*>/gi, '');
+  summary = summary.trim();
+
+  console.log(`✅ [Step Generator] Summary generated (${summary.length} chars)`);
 
   return summary;
 }
@@ -191,13 +211,24 @@ export async function generateConclusion(
 
 Requirements:
 - 120-150 words
-- Summarize key takeaways
-- Include call-to-action or next steps
+- Summarize key takeaways from the article
+- Include call-to-action or next steps for readers
 - End on inspiring or actionable note
-- Include focus keyword: "${focusKeyword}"
-- HTML format with proper tags
+- Include focus keyword: "${focusKeyword}" naturally
+- Use proper HTML tags: <p>, <strong>, <em>
+- Write 2-3 short paragraphs
+- Professional and motivating tone
 
-Return ONLY the HTML content.`;
+IMPORTANT:
+- Return ONLY the HTML content (no \`\`\`html wrapper)
+- Do NOT include heading tags (<h1>, <h2>, etc.)
+- Do NOT include <!DOCTYPE>, <html>, <head>, <body> tags
+- Start directly with <p> tags
+- End with closing </p> tag
+
+Example output:
+<p>As we've explored throughout this guide, <strong>keyword</strong> is essential for success. The key takeaways are clear...</p>
+<p>Now it's your turn to take action. Start by implementing these strategies and watch your results improve.</p>`;
 
   const userPrompt = `Write a conclusion for: "${title}"
 
@@ -215,9 +246,21 @@ Make it memorable and actionable.`;
     temperature: 0.7,
   });
 
-  const conclusion = completion.choices[0].message.content || "";
+  let conclusion = completion.choices[0].message.content || "";
 
-  console.log(`✅ [Step Generator] Conclusion generated`);
+  // Clean up any markdown wrappers, heading tags, or document structure
+  conclusion = conclusion.replace(/```html\n?/g, '');
+  conclusion = conclusion.replace(/```\n?/g, '');
+  conclusion = conclusion.replace(/<!DOCTYPE[^>]*>/gi, '');
+  conclusion = conclusion.replace(/<\/?html[^>]*>/gi, '');
+  conclusion = conclusion.replace(/<\/?head[^>]*>/gi, '');
+  conclusion = conclusion.replace(/<\/?body[^>]*>/gi, '');
+  conclusion = conclusion.replace(/<title>[^<]*<\/title>/gi, '');
+  conclusion = conclusion.replace(/<meta[^>]*>/gi, '');
+  conclusion = conclusion.replace(/<\/?h[1-6][^>]*>/gi, ''); // Remove any heading tags
+  conclusion = conclusion.trim();
+
+  console.log(`✅ [Step Generator] Conclusion generated (${conclusion.length} chars)`);
 
   return conclusion;
 }

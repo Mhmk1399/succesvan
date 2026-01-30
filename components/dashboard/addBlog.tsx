@@ -1837,12 +1837,23 @@ const RichTextEditor = ({
   });
 
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      console.log('🔄 RichTextEditor updating content:', { 
-        newLength: content?.length || 0, 
-        currentLength: editor.getHTML().length 
-      });
-      editor.commands.setContent(content || '');
+    if (editor) {
+      const currentContent = editor.getHTML();
+      const newContent = content || '';
+      
+      // More robust comparison - trim and compare
+      const currentTrimmed = currentContent.trim();
+      const newTrimmed = newContent.trim();
+      
+      if (currentTrimmed !== newTrimmed) {
+        console.log('🔄 RichTextEditor updating content:', { 
+          newLength: newTrimmed.length, 
+          currentLength: currentTrimmed.length,
+          newPreview: newTrimmed.substring(0, 100),
+          currentPreview: currentTrimmed.substring(0, 100)
+        });
+        editor.commands.setContent(newContent);
+      }
     }
   }, [content, editor]);
 
@@ -3279,8 +3290,26 @@ export default function AIBlogBuilder() {
       })));
     }
     
-    if (updates.summary !== undefined) updatedData.summary = updates.summary;
-    if (updates.conclusion !== undefined) updatedData.conclusion = updates.conclusion;
+    if (updates.summary !== undefined) {
+      console.log('📝 [handleStepDataUpdate] Updating summary:', {
+        hasUpdate: !!updates.summary,
+        updateLength: updates.summary?.length || 0,
+        currentLength: data.summary?.length || 0,
+        preview: updates.summary?.substring(0, 100)
+      });
+      updatedData.summary = updates.summary;
+    }
+    
+    if (updates.conclusion !== undefined) {
+      console.log('📝 [handleStepDataUpdate] Updating conclusion:', {
+        hasUpdate: !!updates.conclusion,
+        updateLength: updates.conclusion?.length || 0,
+        currentLength: data.conclusion?.length || 0,
+        preview: updates.conclusion?.substring(0, 100)
+      });
+      updatedData.conclusion = updates.conclusion;
+    }
+    
     if (updates.faqs) updatedData.faqs = [...updates.faqs];
     if (updates.seoTitle) updatedData.seoTitle = updates.seoTitle;
     if (updates.focusKeyword) updatedData.focusKeyword = updates.focusKeyword;
