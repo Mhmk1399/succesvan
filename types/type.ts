@@ -214,6 +214,8 @@ export interface DynamicTableViewProps<T> {
     render?: (value: any, item?: T) => React.ReactNode;
   }[];
   onEdit?: (item: T) => void;
+  /** Optional additional class(es) to apply to the edit button (e.g. "mt-2") */
+  editButtonClass?: string;
   onMutate?: (mutate: () => Promise<any>) => void;
   itemsPerPage?: number;
   hideDelete?: boolean;

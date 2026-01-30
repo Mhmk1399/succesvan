@@ -12,9 +12,10 @@ export async function GET(
   try {
     await connect();
     const { id } = await params;
+    console.log(id,"iddd")
     const office = await Office.findById(id).populate([
       { path: "vehicles.vehicle", model: Vehicle },
-      { path: "categories", model: Category, populate: { path: "type" } },
+      { path: "categories", model: Category },
     ]);
     if (!office) return errorResponse("Office not found", 404);
     return successResponse(office);

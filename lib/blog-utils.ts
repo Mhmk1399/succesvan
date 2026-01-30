@@ -1,3 +1,80 @@
+/**
+ * Shared Blog Generation Utilities
+ * 
+ * Common functions and configurations used by both:
+ * - blog-generator.ts (full generation)
+ * - blog-step-generator.ts (step-by-step generation)
+ */
+
+import OpenAI from "openai";
+
+// ============================================================================
+// OPENAI CLIENT
+// ============================================================================
+
+export const openai = new OpenAI({
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+});
+
+// ============================================================================
+// ID GENERATION
+// ============================================================================
+
+/**
+ * Generate a unique ID with timestamp and random suffix
+ * @returns Unique identifier string
+ */
+export const generateId = (): string =>
+  `id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+// ============================================================================
+// DATE UTILITIES
+// ============================================================================
+
+/**
+ * Get current year for SEO title generation
+ * @returns Current year as number
+ */
+export const getCurrentYear = (): number => {
+  return new Date().getFullYear();
+};
+
+// ============================================================================
+// TEXT UTILITIES (Blog generation)
+// ============================================================================
+
+/**
+ * Calculate reading time based on word count (200 words/minute)
+ * @param text - Text content to analyze
+ * @returns Reading time in minutes
+ */
+export const calculateReadingTime = (text: string): number => {
+  const words = text.trim().split(/\s+/).length;
+  return Math.max(1, Math.ceil(words / 200));
+};
+
+/**
+ * Strip HTML tags from text
+ * @param html - HTML string
+ * @returns Plain text without HTML tags
+ */
+export const stripHtml = (html: string): string => {
+  return html.replace(/<[^>]*>/g, "");
+};
+
+/**
+ * Count words in text
+ * @param text - Text to count words in
+ * @returns Number of words
+ */
+export const countWords = (text: string): number => {
+  return text.trim().split(/\s+/).filter(w => w.length > 0).length;
+};
+
+// ============================================================================
+// SLUG & URL UTILITIES (Legacy blog utilities)
+// ============================================================================
+
 // Helper function to generate slug from title
 export const generateSlug = (title: string): string => {
   return title

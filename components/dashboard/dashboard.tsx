@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+
 import { useState, useEffect } from "react";
 import {
   FiHome,
@@ -156,7 +158,7 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   useEffect(() => {
     const userData = localStorage.getItem("user");
     if (userData) {
@@ -216,16 +218,28 @@ export default function Dashboard() {
       >
         {/* Logo */}
         <div
-          className={`h-14 flex items-center border-b border-white/5 ${
+          className={`h-17.25 flex items-center border-b   border-white/5 ${
             sidebarCollapsed ? "justify-center px-2" : "px-4"
           }`}
         >
           {sidebarCollapsed ? (
-            <span className="text-xl font-black text-[#fe9a00]">S</span>
+            <Image
+              src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
+              alt="SuccessVan"
+              width={50}
+              height={28}
+              className="object-contain mr-3 mt-2"
+            />
           ) : (
-            <h1 className="text-lg font-black text-white">
-              Success<span className="text-[#fe9a00]">Van</span>
-            </h1>
+            <div className="flex items-center justify-center  ml-8 mt-4">
+              <Image
+                src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
+                alt="SuccessVan"
+                width={120}
+                height={36}
+                className="object-cover"
+              />
+            </div>
           )}
         </div>
 
@@ -237,7 +251,7 @@ export default function Dashboard() {
                 onClick={() => {
                   handleTabChange(item.id);
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 mb-0.5
+                className={`w-full flex items-center cursor-pointer gap-3 px-3 py-2 rounded-lg transition-all duration-200 mb-1
                   ${
                     activeTab === item.id
                       ? "bg-[#fe9a00] text-white"
@@ -273,89 +287,6 @@ export default function Dashboard() {
             <FiChevronLeft size={16} />
           )}
         </button>
-
-        {/* User Section */}
-        <div
-          className={`border-t border-white/5 p-3 ${
-            sidebarCollapsed ? "flex flex-col items-center gap-2" : ""
-          }`}
-        >
-          {sidebarCollapsed ? (
-            <>
-              <div className="relative group">
-                <div className="w-9 h-9 rounded-lg bg-[#fe9a00]/20 flex items-center justify-center">
-                  <FiUser className="text-[#fe9a00] text-sm" />
-                </div>
-                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1.5 bg-[#1f2937] text-white text-xs font-medium rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg border border-white/10">
-                  {user?.name} {user?.lastName}
-                </div>
-              </div>
-              <div className="relative group">
-                <button
-                  onClick={handleLogout}
-                  className="w-9 h-9 rounded-lg bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors"
-                >
-                  <FiLogOut className="text-red-400 text-sm" />
-                </button>
-                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1.5 bg-[#1f2937] text-white text-xs font-medium rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg border border-white/10">
-                  Logout
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-[#fe9a00]/20 flex items-center justify-center  shrink-0">
-                <FiUser className="text-[#fe9a00] text-sm" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-semibold truncate">
-                  {user?.name} {user?.lastName}
-                </p>
-                <p className="text-gray-500 text-xs capitalize">{user?.role}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-colors  shrink-0"
-                title="Logout"
-              >
-                <FiLogOut className="text-red-400 text-sm" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Visit Site Button */}
-        <div
-          className={`p-3 border-t border-white/5 ${
-            sidebarCollapsed ? "flex justify-center" : ""
-          }`}
-        >
-          {sidebarCollapsed ? (
-            <div className="relative group">
-              <Link
-                href="/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-9 h-9 bg-[#fe9a00] hover:bg-[#e68a00] rounded-lg flex items-center justify-center transition-colors"
-              >
-                <FiExternalLink className="text-white text-sm" />
-              </Link>
-              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2.5 py-1.5 bg-[#1f2937] text-white text-xs font-medium rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg border border-white/10">
-                Visit Site
-              </div>
-            </div>
-          ) : (
-            <Link
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-[#fe9a00] hover:bg-[#e68a00] text-white rounded-lg transition-colors font-semibold text-sm"
-            >
-              <FiExternalLink className="text-sm" />
-              <span>Visit Site</span>
-            </Link>
-          )}
-        </div>
       </aside>
 
       {/* Main Content */}
@@ -375,7 +306,7 @@ export default function Dashboard() {
             </button>
 
             <div className="min-w-0 flex-1">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2 flex-wrap">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <span className="truncate">
                   {menuItems.find((item) => item.id === activeTab)?.label}
                 </span>
@@ -394,16 +325,35 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3">
             <Link
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-semibold rounded-lg transition-colors text-sm"
+              className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-semibold rounded-lg transition-colors text-sm"
             >
               <span>Visit Site</span>
               <FiExternalLink size={14} />
             </Link>
+
+            <div className="flex items-center gap-3 md:bg-white/5 rounded-lg md:px-3 py-1">
+              <div className=" flex flex-col text-right mr-2 min-w-0">
+                <span className="text-white text-xs md:text-sm font-semibold truncate">
+                  {user?.name}  
+                </span>
+                <span className="text-gray-400 text-[10px] md:text-xs truncate">
+                  {user?.role}
+                </span>
+              </div>
+
+              <button
+                onClick={() => setIsLogoutModalOpen(true)}
+                title="Logout"
+                className="p-2 rounded-md hover:bg-white/10 transition"
+              >
+                <FiLogOut className="text-red-400" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -436,6 +386,35 @@ export default function Dashboard() {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+      {isLogoutModalOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#111827] rounded-xl border border-white/10 w-full max-w-sm p-5 shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-2">
+              Confirm Logout
+            </h3>
+            <p className="text-sm text-gray-400 mb-4">
+              Are you sure you want to log out?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setIsLogoutModalOpen(false)}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setIsLogoutModalOpen(false);
+                  handleLogout();
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -446,7 +425,7 @@ interface DashboardContentProps {
 interface Reservation {
   _id: string;
   category: Category;
-  selectedGear?: "manual" | "automatic"; // اختیاری، چون ممکنه نباشه
+  selectedGear?: "manual" | "automatic";
   startDate: string;
   totalPrice: number;
   vehicle?: {
@@ -477,7 +456,6 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>("");
   const [availableVehicles, setAvailableVehicles] = useState<any[]>([]);
   const [assigning, setAssigning] = useState(false);
- 
 
   const statCards = [
     {
@@ -528,7 +506,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
 
   const handleCompleteReservation = async (
     reservationId: string,
-    currentVehicleId?: string
+    currentVehicleId?: string,
   ) => {
     if (!reservationId) {
       showToast.error("Invalid reservation");
@@ -590,7 +568,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ available: false }),
-        }
+        },
       );
 
       if (!vehicleUpdateRes.ok) {
@@ -609,7 +587,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
             vehicle: selectedVehicleId,
             status: "delivered",
           }),
-        }
+        },
       );
 
       if (!reservationUpdateRes.ok) {
@@ -622,7 +600,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
         });
 
         showToast.error(
-          errorData.message || "Failed to assign vehicle to reservation"
+          errorData.message || "Failed to assign vehicle to reservation",
         );
         setAssigning(false);
         return;
@@ -646,7 +624,6 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
   return (
     <div className="space-y-5">
       {/* Quick Actions */}
-     
 
       {/* Stats Cards - Compact Design */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -712,7 +689,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                       veh.category?._id === res.category._id &&
                       res.selectedGear &&
                       veh.gear?.availableTypes?.some(
-                        (g: any) => g.gearType === res.selectedGear
+                        (g: any) => g.gearType === res.selectedGear,
                       )
                     );
                   });
@@ -723,7 +700,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                       return (
                         veh.available && veh.category?._id === res.category._id
                       );
-                    }
+                    },
                   );
 
                   return (
@@ -907,12 +884,12 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                         res.status === "confirmed"
                           ? "bg-green-500/20 text-green-400"
                           : res.status === "pending"
-                          ? "bg-yellow-500/20 text-yellow-400"
-                          : res.status === "delivered"
-                          ? "bg-purple-500/20 text-purple-400"
-                          : res.status === "completed"
-                          ? "bg-blue-500/20 text-blue-400"
-                          : "bg-gray-500/20 text-gray-400"
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : res.status === "delivered"
+                              ? "bg-purple-500/20 text-purple-400"
+                              : res.status === "completed"
+                                ? "bg-blue-500/20 text-blue-400"
+                                : "bg-gray-500/20 text-gray-400"
                       }`}
                     >
                       {res.status === "delivered" ? "collected" : res.status}
@@ -985,7 +962,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
 
                 {(() => {
                   const currentRes = todayActivity.pickups.find(
-                    (r: any) => r._id === selectedReservationId
+                    (r: any) => r._id === selectedReservationId,
                   );
 
                   if (!currentRes) return null;
@@ -993,7 +970,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                   const categoryVehicles = availableVehicles.filter(
                     (veh: any) =>
                       veh.available &&
-                      veh.category?._id === currentRes.category._id
+                      veh.category?._id === currentRes.category._id,
                   );
 
                   const requestedGear = currentRes.selectedGear;
@@ -1017,7 +994,7 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                           const vehicleGears = veh.gear?.availableTypes || [];
                           const hasMatchingGear = requestedGear
                             ? vehicleGears.some(
-                                (g: any) => g.gearType === requestedGear
+                                (g: any) => g.gearType === requestedGear,
                               )
                             : true;
 
@@ -1048,8 +1025,8 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
                         categoryVehicles.length > 0 &&
                         !categoryVehicles.some((v) =>
                           v.gear?.availableTypes?.some(
-                            (g: any) => g.gearType === requestedGear
-                          )
+                            (g: any) => g.gearType === requestedGear,
+                          ),
                         ) && (
                           <p className="text-center text-red-400 text-sm mt-4 font-medium">
                             ⚠️ No vehicle with requested {requestedGear} gearbox
@@ -1098,7 +1075,6 @@ function DashboardContent({ handleTabChange }: DashboardContentProps) {
           </div>
         </div>
       )}
-
     </div>
   );
 }

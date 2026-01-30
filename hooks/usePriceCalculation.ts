@@ -69,14 +69,26 @@ export function usePriceCalculation(
       return;
     }
 
-    // Calculate full days and extra hours
-    // If extra hours > 6, count as 1 additional day
-    let totalDays = Math.floor(billableHours / 24);
-    let extraHours = billableHours % 24;
+    // Calculate total days based on user's pricing rules:
+    // - Reservations less than 24 hours count as 1 day
+    // - Reservations over 6 hours but spanning multiple days count extra hours > 6 as 1 full day
+    let totalDays: number;
+    let extraHours: number;
     
-    if (extraHours > 6) {
-      totalDays += 1;
+    if (billableHours < 24) {
+      // Less than 24 hours counts as 1 day
+      totalDays = 1;
       extraHours = 0;
+    } else {
+      // More than 24 hours: full days + check extra hours
+      totalDays = Math.floor(billableHours / 24);
+      extraHours = billableHours % 24;
+      
+      // If extra hours > 6, count as 1 additional day
+      if (extraHours > 6) {
+        totalDays += 1;
+        extraHours = 0;
+      }
     }
 
     // Find the appropriate pricing tier based on days

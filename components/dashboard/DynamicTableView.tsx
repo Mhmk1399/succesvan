@@ -39,6 +39,7 @@ export default function DynamicTableView<
   title,
   columns,
   onEdit,
+  editButtonClass = "",
   onDuplicate,
   onStatusToggle,
   onMutate,
@@ -477,7 +478,7 @@ export default function DynamicTableView<
               {visibleColumns.map((col, colIdx) => (
                 <th
                   key={`${colIdx}-${String(col.key)}`}
-                  className="px-3 py-4 text-left text-white font-bold"
+                  className="px-3 py-4 text-sm text-left text-white font-extrabold"
                 >
                   {col.label}
                 </th>
@@ -523,7 +524,7 @@ export default function DynamicTableView<
                       </td>
                     );
                   })}
-                  <td className="px-3 py-2 justify-center flex gap-2">
+                  <td className="px-3 py-2 justify-center items-center flex gap-2">
                     {!hideViewBtn && (
                       <button
                         onClick={() => {
@@ -538,10 +539,10 @@ export default function DynamicTableView<
                     {onEdit && (
                       <button
                         onClick={() => onEdit(item)}
-                        className="p-2 hover:bg-blue-500/20 mt-2 rounded cursor-pointer transition-colors tooltip"
+                        className={`p-2 hover:bg-blue-500/20 rounded cursor-pointer transition-colors tooltip ${editButtonClass}`}
                         data-tooltip="Edit"
                       >
-                        <FiEdit2 className="text-blue-400 mt-2" />
+                        <FiEdit2 className="text-blue-400" />
                       </button>
                     )}
                     {onDuplicate && (

@@ -744,6 +744,7 @@ export default function ReservationsManagement() {
       )}
       <DynamicTableView<Reservation>
         apiEndpoint="/api/reservations"
+        editButtonClass="mt-2"
         filters={[
           {
             key: "user",
@@ -751,6 +752,7 @@ export default function ReservationsManagement() {
             type: "select",
             options: users.map((user) => ({ _id: user._id, name: user.name })),
           },
+
           { key: "phone", label: "Phone Number", type: "text" },
           {
             key: "category",
