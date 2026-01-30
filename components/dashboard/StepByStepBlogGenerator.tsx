@@ -241,7 +241,21 @@ export default function StepByStepBlogGenerator({
       
       // Content step requires headingIndex
       if (currentStep === "content") {
+        // Check if we've already generated all headings
+        if (allHeadings.length > 0 && currentHeadingIndex >= allHeadings.length) {
+          console.log(`⚠️ All headings (${allHeadings.length}) already have content generated`);
+          toast.error(`All content generated! Moving to summary step...`);
+          // Move to summary step
+          const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
+          if (currentIndex < STEPS.length - 1) {
+            const nextStep = STEPS[currentIndex + 1].key;
+            setCurrentStep(nextStep);
+            setGeneratedData(null);
+          }
+          return;
+        }
         additionalData.headingIndex = currentHeadingIndex;
+        console.log(`🎯 Generating content for heading index ${currentHeadingIndex} of ${allHeadings.length}`);
       }
       
       const result = await callStepAPI(currentStep, "generate", additionalData);
@@ -392,19 +406,23 @@ export default function StepByStepBlogGenerator({
           newProgress.contentApproved[currentHeadingIndex] = true;
         }
         
-        // Check if this was the last heading
-        if (result.isLastHeading) {
+        // Check if this was the last heading OR if we've gone through all headings
+        const isLastHeading = result.isLastHeading || currentHeadingIndex >= allHeadings.length - 1;
+        
+        if (isLastHeading) {
           // All headings done, move to next step
+          console.log(`✅ All ${allHeadings.length} headings completed. Moving to summary step...`);
           const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
           const nextStep = STEPS[currentIndex + 1].key;
           setCurrentStep(nextStep);
           newProgress.currentStep = nextStep;
           setCurrentHeadingIndex(0); // Reset for potential future use
           setGeneratedData(null);
-          toast.success("All content generated! Moving to next step...");
+          toast.success("All content generated! Moving to summary step...");
         } else {
           // Move to next heading
           const nextIndex = currentHeadingIndex + 1;
+          console.log(`➡️ Moving from heading ${currentHeadingIndex} to ${nextIndex}`);
           setCurrentHeadingIndex(nextIndex);
           newProgress.currentHeadingIndex = nextIndex;
           setGeneratedData(null); // Clear so user needs to generate next heading
@@ -431,9 +449,15 @@ export default function StepByStepBlogGenerator({
           const nextStep = STEPS[currentIndex + 1].key;
           setCurrentStep(nextStep);
           newProgress.currentStep = nextStep;
-          // Only clear generated data if NOT moving from headings to content
-          // (we need to keep headings data for content step)
-          if (!(currentStep === "headings" && nextStep === "content")) {
+          
+          // When moving from headings to content, ensure we start at heading 0
+          if (currentStep === "headings" && nextStep === "content") {
+            setCurrentHeadingIndex(0);
+            newProgress.currentHeadingIndex = 0;
+            setGeneratedData(null); // Clear generated data so user needs to generate content for heading 0
+            console.log(`🎯 Starting content generation at heading index 0 of ${allHeadings.length}`);
+          } else {
+            // For other transitions, clear generated data
             setGeneratedData(null);
           }
           toast.success("Moving to next step...");

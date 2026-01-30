@@ -189,6 +189,8 @@ export async function POST(request: NextRequest) {
         await blog.save();
 
         console.log(`✅ [Step Generator] Headings approved for: ${blogId}`);
+        console.log(`   Total headings in database: ${blog.content.headings.length}`);
+        console.log(`   Heading levels: ${blog.content.headings.map((h: any) => `${h.text} (L${h.level})`).join(', ')}`);
 
         return NextResponse.json({
           success: true,
@@ -197,7 +199,7 @@ export async function POST(request: NextRequest) {
           step: "images",
           message: "Headings approved. Ready for image generation.",
           data: {
-            headings: blog.content.headings.filter((h: any) => h.level <= 2),
+            headings: blog.content.headings, // Return ALL headings, not filtered
           },
           nextStep: "images"
         });
@@ -256,15 +258,23 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        if (headingIndex >= blog.content.headings.length) {
+        // Validate heading index is within range
+        if (headingIndex < 0 || headingIndex >= blog.content.headings.length) {
+          console.log(`❌ [Step Generator] Invalid heading index ${headingIndex}. Total headings: ${blog.content.headings.length}`);
           return NextResponse.json(
-            { success: false, error: "Invalid heading index" },
+            { 
+              success: false, 
+              error: `Invalid heading index ${headingIndex}. Valid range: 0-${blog.content.headings.length - 1}`,
+              totalHeadings: blog.content.headings.length
+            },
             { status: 400 }
           );
         }
 
         console.log(`📝 [Step Generator] Generating content for heading ${headingIndex}`);
         console.log(`   Topic: ${blog.content.topic}`);
+        console.log(`   Total headings: ${blog.content.headings.length}`);
+        console.log(`   Progress: ${headingIndex + 1}/${blog.content.headings.length}`);
         console.log(`   Heading text: ${blog.content.headings[headingIndex]?.text}`);
         console.log(`   Heading level: ${blog.content.headings[headingIndex]?.level}`);
         console.log(`   Focus keyword: ${blog.seo.focusKeyword}`);
@@ -558,6 +568,9 @@ export async function POST(request: NextRequest) {
         }
 
         console.log(`❓ [Step Generator] Generating FAQs`);
+        console.log(`   Topic: ${blog.content.topic}`);
+        console.log(`   Focus keyword: ${blog.seo.focusKeyword}`);
+        console.log(`   Total headings: ${blog.content.headings.length}`);
 
         const faqs = await generateFAQs(
           blog.content.topic,
@@ -571,6 +584,7 @@ export async function POST(request: NextRequest) {
         await blog.save();
 
         console.log(`✅ [Step Generator] FAQs generated: ${faqs.length} items`);
+        console.log(`   FAQ items: ${JSON.stringify(faqs.map((f: any) => ({ question: f.question?.substring(0, 50), answerLength: f.answer?.length })))}`);
 
         return NextResponse.json({
           success: true,
@@ -638,6 +652,10 @@ export async function POST(request: NextRequest) {
         }
 
         console.log(`🔍 [Step Generator] Generating SEO metadata`);
+        console.log(`   Topic: ${blog.content.topic}`);
+        console.log(`   SEO Title: ${blog.seo.seoTitle}`);
+        console.log(`   Total headings: ${blog.content.headings.length}`);
+        console.log(`   Total FAQs: ${blog.content.faqs?.length || 0}`);
 
         const seoData = await generateSEOMetadata(
           blog.content.topic,
@@ -652,13 +670,22 @@ export async function POST(request: NextRequest) {
         await blog.save();
 
         console.log(`✅ [Step Generator] SEO metadata generated`);
+        console.log(`   SEO Description length: ${seoData.seoDescription?.length || 0}`);
+        console.log(`   Tags: ${seoData.tags?.length || 0}`);
+        console.log(`   Anchors: ${seoData.anchors?.length || 0}`);
+        console.log(`   Author: ${seoData.author || 'none'}`);
 
         return NextResponse.json({
           success: true,
           mode: "step",
           blogId: blog._id,
           step: "seo",
-          data: { seo: seoData },
+          data: { 
+            seoDescription: seoData.seoDescription,
+            tags: seoData.tags,
+            author: seoData.author,
+            anchors: seoData.anchors
+          },
           message: "SEO metadata generated. Please review and approve or regenerate.",
           nextStep: "completed"
         });
