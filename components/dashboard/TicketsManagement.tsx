@@ -1,7 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { FiMessageSquare, FiX } from "react-icons/fi";
+import { useState, useEffect, useRef } from "react";
+import {
+  FiMessageSquare,
+  FiX,
+  FiSend,
+  FiClock,
+  FiUser,
+  FiMail,
+  FiAlertCircle,
+  FiCheckCircle,
+  FiLoader,
+  FiInbox,
+  FiFilter,
+  FiChevronRight,
+} from "react-icons/fi";
+import { HiOutlineTicket } from "react-icons/hi";
+import { IoSparkles } from "react-icons/io5";
 import CustomSelect from "@/components/ui/CustomSelect";
 import { showToast } from "@/lib/toast";
 
@@ -35,10 +50,28 @@ export default function TicketsManagement() {
   const [replyMessage, setReplyMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchTickets();
   }, []);
+
+  useEffect(() => {
+    if (isDetailOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isDetailOpen]);
+
+  useEffect(() => {
+    if (isDetailOpen && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [isDetailOpen, selectedTicket?.messages]);
 
   const fetchTickets = async () => {
     try {
@@ -88,7 +121,7 @@ export default function TicketsManagement() {
         const data = await response.json();
         setSelectedTicket(data.data);
         setReplyMessage("");
-        fetchTickets(); // Refresh the list
+        fetchTickets();
         showToast.success("Reply sent successfully");
       } else {
         showToast.error("Failed to send reply");
@@ -124,248 +157,571 @@ export default function TicketsManagement() {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusConfig = (status: string) => {
     switch (status) {
       case "open":
-        return "bg-red-100 text-red-800";
+        return {
+          bg: "bg-red-500/20",
+          border: "border-red-500/30",
+          text: "text-red-400",
+          icon: <FiAlertCircle className="w-3 h-3" />,
+          glow: "shadow-red-500/20",
+        };
       case "in-progress":
-        return "bg-yellow-100 text-yellow-800";
+        return {
+          bg: "bg-amber-500/20",
+          border: "border-amber-500/30",
+          text: "text-amber-400",
+          icon: <FiLoader className="w-3 h-3 animate-spin" />,
+          glow: "shadow-amber-500/20",
+        };
       case "resolved":
-        return "bg-green-100 text-green-800";
+        return {
+          bg: "bg-emerald-500/20",
+          border: "border-emerald-500/30",
+          text: "text-emerald-400",
+          icon: <FiCheckCircle className="w-3 h-3" />,
+          glow: "shadow-emerald-500/20",
+        };
       case "closed":
-        return "bg-gray-100  text-gray-800";
+        return {
+          bg: "bg-slate-500/20",
+          border: "border-slate-500/30",
+          text: "text-slate-400",
+          icon: <FiX className="w-3 h-3" />,
+          glow: "shadow-slate-500/20",
+        };
       default:
-        return "bg-gray-100  text-gray-800";
+        return {
+          bg: "bg-slate-500/20",
+          border: "border-slate-500/30",
+          text: "text-slate-400",
+          icon: null,
+          glow: "",
+        };
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityConfig = (priority: string) => {
     switch (priority) {
       case "urgent":
-        return "bg-red-100 text-red-800";
+        return {
+          bg: "bg-linear-to-r from-red-500/30 to-orange-500/30",
+          border: "border-red-500/40",
+          text: "text-red-300",
+          pulse: true,
+        };
       case "high":
-        return "bg-orange-100 text-orange-800";
+        return {
+          bg: "bg-linear-to-r from-orange-500/30 to-amber-500/30",
+          border: "border-orange-500/40",
+          text: "text-orange-300",
+          pulse: false,
+        };
       case "medium":
-        return "bg-yellow-100 text-yellow-800";
+        return {
+          bg: "bg-linear-to-r from-yellow-500/30 to-lime-500/30",
+          border: "border-yellow-500/40",
+          text: "text-yellow-300",
+          pulse: false,
+        };
       case "low":
-        return "bg-green-100 text-green-800";
+        return {
+          bg: "bg-linear-to-r from-green-500/30 to-emerald-500/30",
+          border: "border-green-500/40",
+          text: "text-green-300",
+          pulse: false,
+        };
       default:
-        return "bg-gray-100 text-gray-800";
+        return {
+          bg: "bg-slate-500/20",
+          border: "border-slate-500/30",
+          text: "text-slate-400",
+          pulse: false,
+        };
     }
   };
 
   const filteredTickets = tickets.filter(
-    (ticket) => filterStatus === "all" || ticket.status === filterStatus
+    (ticket) => filterStatus === "all" || ticket.status === filterStatus,
   );
 
-  if (loading) {
+  const ticketStats = {
+    total: tickets.length,
+    open: tickets.filter((t) => t.status === "open").length,
+    inProgress: tickets.filter((t) => t.status === "in-progress").length,
+    resolved: tickets.filter((t) => t.status === "resolved").length,
+  };
+
+  if (loading)
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#fe9a00]"></div>
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className="w-12 h-12 border-4 border-[#fe9a00]/30 border-t-[#fe9a00] rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-300 text-lg font-semibold">
+          Loading tickets...
+        </p>
+        <p className="text-gray-500 text-sm mt-2">Please wait</p>
       </div>
     );
-  }
 
   return (
-    <div className="space-y-6 md:mx-30  ">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-          <FiMessageSquare className="text-[#fe9a00]" />
-          Ticket Management
-        </h2>
-        <div className="flex items-center gap-4 md:min-w-40">
-          <CustomSelect
-            value={filterStatus}
-            onChange={setFilterStatus}
-            options={[
-              { _id: "all", name: "All Status" },
-              { _id: "open", name: "Open" },
-              { _id: "in-progress", name: "In Progress" },
-              { _id: "resolved", name: "Resolved" },
-              { _id: "closed", name: "Closed" },
-            ]}
-          />
-        </div>
-      </div>
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Header Section */}
+      <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-white/10 via-white/5 to-transparent backdrop-blur-xl border border-white/10 p-6 lg:pb-20 shadow-2xl">
+        {/* Background decoration */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-linear-to-br from-[#fe9a00]/20 to-orange-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-linear-to-tr from-purple-500/10 to-pink-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
 
-      <div className="grid gap-4">
-        {filteredTickets.map((ticket) => (
-          <div
-            key={ticket._id}
-            className="bg-gray-800  rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center   gap-2 mb-2">
-                  <h3 className="text-lg font-semibold text-white truncate   min-w-0">
-                    {ticket.subject}
-                  </h3>
-                  <div className="flex gap-1">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(
-                        ticket.status
-                      )}`}
-                    >
-                      {ticket.status}
-                    </span>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getPriorityColor(
-                        ticket.priority
-                      )}`}
-                    >
-                      {ticket.priority}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-gray-400 text-sm mb-2 truncate">
-                  {ticket?.userId?.name} {ticket?.userId?.lastName} •{" "}
-                  {ticket?.userId?.email}
-                </p>
-                <p
-                  className="text-gray-300 text-sm mb-3 overflow-hidden"
-                  style={{
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical" as const,
-                    lineHeight: "1.25rem",
-                    maxHeight: "2.5rem",
-                  }}
-                >
-                  {ticket.messages.length > 0
-                    ? ticket.messages[ticket.messages.length - 1].content
-                    : "No messages yet"}
-                </p>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                  <span className="whitespace-nowrap">
-                    Created: {new Date(ticket.createdAt).toLocaleDateString()}
-                  </span>
-                  <span className="whitespace-nowrap">
-                    Updated: {new Date(ticket.updatedAt).toLocaleDateString()}
-                  </span>
-                  <span className="whitespace-nowrap">
-                    {ticket.messages.length} messages
-                  </span>
+        <div className="relative z-99999">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            {/* Title & Icon */}
+            <div className="flex items-center gap-4">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-linear-to-r from-[#fe9a00] to-orange-600 rounded-2xl blur-lg opacity-50 group-hover:opacity-70 transition-opacity"></div>
+                <div className="relative w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-linear-to-br from-[#fe9a00] to-orange-600 flex items-center justify-center shadow-lg shadow-[#fe9a00]/30">
+                  <HiOutlineTicket className="w-7 h-7 lg:w-8 lg:h-8 text-white" />
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 min-w-0">
-                <button
-                  onClick={() => handleViewTicket(ticket)}
-                  className="px-3 py-3 bg-[#fe9a00] text-black rounded-md hover:bg-[#e8890b] transition-colors text-sm font-medium whitespace-nowrap"
-                >
-                  View
-                </button>
-                <div className="flex items-center gap-4 md:min-w-30">
-                  <CustomSelect
-                    value={ticket.status}
-                    onChange={(value) => handleStatusChange(ticket._id, value)}
-                    options={[
-                      { _id: "open", name: "Open" },
-                      { _id: "in-progress", name: "In Progress" },
-                      { _id: "resolved", name: "Resolved" },
-                      { _id: "closed", name: "Closed" },
-                    ]}
-                    placeholder="Select status"
-                  />
-                </div>
+              <div>
+                <h2 className="text-2xl lg:text-3xl font-bold text-white flex items-center gap-2">
+                  Ticket Management
+                  <IoSparkles className="w-5 h-5 text-[#fe9a00]" />
+                </h2>
+                <p className="text-white/50 text-sm lg:text-base mt-1">
+                  Manage and respond to customer support tickets
+                </p>
+              </div>
+            </div>
+
+            {/* Filter */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
+                <FiFilter className="w-4 h-4 text-[#fe9a00]" />
+                <span className="text-white/60 text-sm hidden sm:inline">
+                  Filter:
+                </span>
+              </div>
+              <div className="relative z-20">
+                <CustomSelect
+                  value={filterStatus}
+                  onChange={setFilterStatus}
+                  options={[
+                    { _id: "all", name: "All Status" },
+                    { _id: "open", name: "Open" },
+                    { _id: "in-progress", name: "In Progress" },
+                    { _id: "resolved", name: "Resolved" },
+                    { _id: "closed", name: "Closed" },
+                  ]}
+                />
               </div>
             </div>
           </div>
-        ))}
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mt-12">
+            {[
+              {
+                label: "Total",
+                value: ticketStats.total,
+                color: "from-blue-500 to-cyan-500",
+                bg: "bg-blue-500/10",
+              },
+              {
+                label: "Open",
+                value: ticketStats.open,
+                color: "from-red-500 to-orange-500",
+                bg: "bg-red-500/10",
+              },
+              {
+                label: "In Progress",
+                value: ticketStats.inProgress,
+                color: "from-amber-500 to-yellow-500",
+                bg: "bg-amber-500/10",
+              },
+              {
+                label: "Resolved",
+                value: ticketStats.resolved,
+                color: "from-emerald-500 to-green-500",
+                bg: "bg-emerald-500/10",
+              },
+            ].map((stat, index) => (
+              <div
+                key={index}
+                className={`relative overflow-hidden rounded-2xl ${stat.bg} backdrop-blur-sm border border-white/10 p-4 group hover:border-white/20 transition-all duration-300`}
+              >
+                <div
+                  className={`absolute top-0 right-0 w-20 h-20 bg-linear-to-br ${stat.color} opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity`}
+                ></div>
+                <p className="text-white/50 text-xs lg:text-sm font-medium">
+                  {stat.label}
+                </p>
+                <p
+                  className={`text-2xl lg:text-3xl font-bold bg-linear-to-r ${stat.color} bg-clip-text text-transparent mt-1`}
+                >
+                  {stat.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
+      {/* Tickets List */}
+      <div className="space-y-4">
+        {filteredTickets.map((ticket, index) => {
+          const statusConfig = getStatusConfig(ticket.status);
+          const priorityConfig = getPriorityConfig(ticket.priority);
+
+          return (
+            <div
+              key={ticket._id}
+              className="group relative overflow-y-auto rounded-2xl bg-linear-to-br from-white/8 via-white/5 to-transparent backdrop-blur-xl border border-white/10 hover:border-white/20 transition-all duration-500 hover:shadow-xl hover:shadow-black/20"
+              style={{
+                animationDelay: `${index * 50}ms`,
+              }}
+            >
+              {/* Hover glow effect */}
+              <div className="absolute inset-0 bg-linear-to-r from-[#fe9a00]/0 via-[#fe9a00]/5 to-[#fe9a00]/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+              {/* Priority indicator line */}
+              <div
+                className={`absolute left-0 top-0 bottom-0 w-1 ${priorityConfig.bg} ${
+                  priorityConfig.pulse ? "animate-pulse" : ""
+                }`}
+              ></div>
+
+              <div className="relative p-5 lg:p-6">
+                <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-6">
+                  {/* Main Content */}
+                  <div className="flex-1 min-w-0 space-y-3">
+                    {/* Title & Badges */}
+                    <div className="flex flex-wrap items-start gap-2">
+                      <h3 className="text-lg lg:text-xl font-semibold text-white group-hover:text-[#fe9a00] transition-colors duration-300 flex-1 min-w-0">
+                        {ticket.subject}
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {/* Status Badge */}
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${statusConfig.bg} ${statusConfig.border} ${statusConfig.text} border shadow-lg ${statusConfig.glow}`}
+                        >
+                          {statusConfig.icon}
+                          <span className="capitalize">{ticket.status}</span>
+                        </span>
+                        {/* Priority Badge */}
+                        <span
+                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${priorityConfig.bg} ${priorityConfig.border} ${priorityConfig.text} border capitalize`}
+                        >
+                          {ticket.priority}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* User Info */}
+                    <div className="flex flex-wrap items-center gap-3 text-sm">
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
+                        <FiUser className="w-3.5 h-3.5 text-[#fe9a00]" />
+                        <span className="text-white/70">
+                          {ticket?.userId?.name} {ticket?.userId?.lastName}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/5">
+                        <FiMail className="w-3.5 h-3.5 text-[#fe9a00]" />
+                        <span className="text-white/60 truncate max-w-50">
+                          {ticket?.userId?.email}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Last Message Preview */}
+                    <div className="relative p-4 rounded-xl bg-white/3 border border-white/5">
+                      <div className="absolute top-3 left-3 w-2 h-2 rounded-full bg-[#fe9a00]/50"></div>
+                      <p className="text-white/60 text-sm pl-4 line-clamp-2 leading-relaxed">
+                        {ticket.messages.length > 0
+                          ? ticket.messages[ticket.messages.length - 1].content
+                          : "No messages yet"}
+                      </p>
+                    </div>
+
+                    {/* Meta Info */}
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-white/40">
+                      <div className="flex items-center gap-1.5">
+                        <FiClock className="w-3.5 h-3.5" />
+                        <span>
+                          Created:{" "}
+                          {new Date(ticket.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <FiClock className="w-3.5 h-3.5" />
+                        <span>
+                          Updated:{" "}
+                          {new Date(ticket.updatedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <FiMessageSquare className="w-3.5 h-3.5" />
+                        <span>{ticket.messages.length} messages</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-row lg:flex-col items-stretch gap-3 lg:min-w-45">
+                    <div className="relative z-20">
+                      <CustomSelect
+                        value={ticket.status}
+                        onChange={(value) =>
+                          handleStatusChange(ticket._id, value)
+                        }
+                        options={[
+                          { _id: "open", name: "Open" },
+                          { _id: "in-progress", name: "In Progress" },
+                          { _id: "resolved", name: "Resolved" },
+                          { _id: "closed", name: "Closed" },
+                        ]}
+                        placeholder="Update status"
+                      />
+                    </div>
+                    <button
+                      onClick={() => handleViewTicket(ticket)}
+                      className="flex-1 lg:flex-none group/btn relative overflow-hidden px-5 py-3 rounded-xl bg-linear-to-r from-[#fe9a00] to-orange-600 text-white font-semibold text-sm shadow-lg shadow-[#fe9a00]/20 hover:shadow-[#fe9a00]/40 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      <span className="relative z-10 flex items-center justify-center gap-2">
+                        View Ticket
+                        <FiChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                      </span>
+                      <div className="absolute inset-0 bg-linear-to-r from-orange-600 to-[#fe9a00] opacity-0 group-hover/btn:opacity-100 transition-opacity"></div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Empty State */}
       {filteredTickets.length === 0 && (
-        <div className="text-center py-12">
-          <FiMessageSquare className="mx-auto h-12 w-12 text-gray-600 mb-4" />
-          <p className="text-gray-400">No tickets found</p>
+        <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-white/8 via-white/5 to-transparent backdrop-blur-xl border border-white/10 p-12 lg:p-16">
+          <div className="absolute inset-0 bg-linear-to-br from-[#fe9a00]/5 to-purple-500/5"></div>
+          <div className="relative text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-linear-to-br from-white/10 to-white/5 border border-white/10 mb-6">
+              <FiInbox className="w-10 h-10 text-white/30" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">
+              No tickets found
+            </h3>
+            <p className="text-white/50 max-w-sm mx-auto">
+              {filterStatus === "all"
+                ? "There are no support tickets at the moment."
+                : `No tickets with "${filterStatus}" status.`}
+            </p>
+          </div>
         </div>
       )}
 
       {/* Ticket Detail Modal */}
       {isDetailOpen && selectedTicket && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-md  flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-700">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-white">
-                  {selectedTicket.subject}
-                </h3>
-                <button
-                  onClick={() => setIsDetailOpen(false)}
-                  className="text-gray-400 hover:text-white"
-                >
-                  <FiX size={24} />
-                </button>
-              </div>
-              <div className="flex items-center gap-4 mt-4">
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                    selectedTicket.status
-                  )}`}
-                >
-                  {selectedTicket.status}
-                </span>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(
-                    selectedTicket.priority
-                  )}`}
-                >
-                  {selectedTicket.priority}
-                </span>
-                <span className="text-gray-400 text-sm">
-                  {selectedTicket?.userId?.name} {selectedTicket?.userId?.lastName}
-                </span>
-              </div>
-            </div>
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-9999"
+            onClick={() => setIsDetailOpen(false)}
+          />
 
-            <div className="p-6 max-h-96 overflow-y-auto">
-              <div className="space-y-4">
-                {selectedTicket.messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${
-                      message.sender === selectedTicket?.userId?._id
-                        ? "justify-start"
-                        : "justify-end"
-                    }`}
-                  >
+          {/* Modal */}
+          <div className="fixed inset-0 lg:inset-4 lg:top-1/2 lg:-translate-y-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:max-w-3xl lg:w-full lg:min-h-[85vh] z-10000 flex flex-col lg:rounded-3xl overflow-hidden">
+            <div className="relative flex flex-col h-full overflow-hidden lg:rounded-3xl bg-linear-to-br from-slate-900/95 via-slate-800/95 to-slate-900/95 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-black/50">
+              {/* Modal Header */}
+              <div className="relative shrink-0 p-6 border-b border-white/10">
+                {/* Background decoration */}
+                <div className="absolute top-0 right-0 w-48 h-48 bg-linear-to-br from-[#fe9a00]/20 to-orange-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+
+                <div className="relative">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#fe9a00] to-orange-600 flex items-center justify-center shadow-lg shadow-[#fe9a00]/30">
+                          <HiOutlineTicket className="w-5 h-5 text-white" />
+                        </div>
+                        <h3 className="text-xl lg:text-2xl font-bold text-white truncate">
+                          {selectedTicket.subject}
+                        </h3>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        {/* Status */}
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
+                            getStatusConfig(selectedTicket.status).bg
+                          } ${getStatusConfig(selectedTicket.status).border} ${
+                            getStatusConfig(selectedTicket.status).text
+                          } border`}
+                        >
+                          {getStatusConfig(selectedTicket.status).icon}
+                          <span className="capitalize">
+                            {selectedTicket.status}
+                          </span>
+                        </span>
+                        {/* Priority */}
+                        <span
+                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+                            getPriorityConfig(selectedTicket.priority).bg
+                          } ${
+                            getPriorityConfig(selectedTicket.priority).border
+                          } ${
+                            getPriorityConfig(selectedTicket.priority).text
+                          } border capitalize`}
+                        >
+                          {selectedTicket.priority}
+                        </span>
+                        {/* User */}
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                          <FiUser className="w-3.5 h-3.5 text-[#fe9a00]" />
+                          <span className="text-white/70 text-sm">
+                            {selectedTicket?.userId?.name}{" "}
+                            {selectedTicket?.userId?.lastName}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setIsDetailOpen(false)}
+                      className="shrink-0 w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 flex items-center justify-center text-white/60 hover:text-white transition-all duration-300 hover:rotate-90"
+                    >
+                      <FiX className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Messages Container */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                {selectedTicket.messages.map((message, index) => {
+                  const isUser = message.sender === selectedTicket?.userId?._id;
+
+                  return (
                     <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                        message.sender === selectedTicket?.userId?._id
-                          ? "bg-gray-700 text-white"
-                          : "bg-[#fe9a00] text-black"
+                      key={index}
+                      className={`flex ${
+                        isUser ? "justify-start" : "justify-end"
                       }`}
                     >
-                      <p className="text-sm">{message.content}</p>
-                      <p className="text-xs opacity-70 mt-1">
-                        {new Date(message.timestamp).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                      <div
+                        className={`group relative max-w-[85%] lg:max-w-[70%] ${
+                          isUser ? "order-1" : "order-2"
+                        }`}
+                      >
+                        {/* Message bubble */}
+                        <div
+                          className={`relative p-4 rounded-2xl ${
+                            isUser
+                              ? "bg-white/8 border border-white/10 rounded-tl-sm"
+                              : "bg-linear-to-br from-[#fe9a00] to-orange-600 rounded-tr-sm shadow-lg shadow-[#fe9a00]/20"
+                          }`}
+                        >
+                          {/* Sender label */}
+                          <div
+                            className={`text-xs font-medium mb-2 ${
+                              isUser ? "text-[#fe9a00]" : "text-white/80"
+                            }`}
+                          >
+                            {isUser ? "Customer" : "Support Team"}
+                          </div>
 
-            <div className="p-6 border-t border-gray-700">
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={replyMessage}
-                  onChange={(e) => setReplyMessage(e.target.value)}
-                  placeholder="Type your reply..."
-                  className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#fe9a00]"
-                  onKeyPress={(e) => e.key === "Enter" && handleSendReply()}
-                />
-                <button
-                  onClick={handleSendReply}
-                  disabled={!replyMessage.trim() || isSubmitting}
-                  className="px-2 md:px-6 py-2 bg-[#fe9a00] text-black rounded-lg hover:bg-[#e8890b] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
-                >
-                  {isSubmitting ? "Sending..." : "Send"}
-                </button>
+                          {/* Message content */}
+                          <p
+                            className={`text-sm leading-relaxed ${
+                              isUser ? "text-white/80" : "text-white"
+                            }`}
+                          >
+                            {message.content}
+                          </p>
+
+                          {/* Timestamp */}
+                          <div
+                            className={`flex items-center gap-1 mt-2 text-xs ${
+                              isUser ? "text-white/40" : "text-white/60"
+                            }`}
+                          >
+                            <FiClock className="w-3 h-3" />
+                            {new Date(message.timestamp).toLocaleString()}
+                          </div>
+                        </div>
+
+                        {/* Avatar indicator */}
+                        <div
+                          className={`absolute -bottom-2 ${
+                            isUser ? "-left-2" : "-right-2"
+                          } w-6 h-6 rounded-full ${
+                            isUser
+                              ? "bg-white/10 border border-white/20"
+                              : "bg-linear-to-br from-[#fe9a00] to-orange-600"
+                          } flex items-center justify-center`}
+                        >
+                          {isUser ? (
+                            <FiUser className="w-3 h-3 text-white/60" />
+                          ) : (
+                            <HiOutlineTicket className="w-3 h-3 text-white" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Reply Input */}
+              <div className="shrink-0 p-6 border-t border-white/10 bg-linear-to-t from-black/20 to-transparent">
+                <div className="flex items-end gap-3">
+                  <div className="flex-1 relative">
+                    <textarea
+                      value={replyMessage}
+                      onChange={(e) => setReplyMessage(e.target.value)}
+                      placeholder="Type your reply..."
+                      rows={1}
+                      className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:border-[#fe9a00]/50 focus:ring-2 focus:ring-[#fe9a00]/20 resize-none transition-all duration-300 scrollbar-thin scrollbar-thumb-white/10"
+                      style={{ minHeight: "56px", maxHeight: "120px" }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendReply();
+                        }
+                      }}
+                      onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = "56px";
+                        target.style.height = `${Math.min(
+                          target.scrollHeight,
+                          120,
+                        )}px`;
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleSendReply}
+                    disabled={!replyMessage.trim() || isSubmitting}
+                    className="shrink-0 group relative w-14 h-14 rounded-2xl bg-linear-to-r from-[#fe9a00] to-orange-600 text-white shadow-lg shadow-[#fe9a00]/30 hover:shadow-[#fe9a00]/50 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none"
+                  >
+                    <span className="relative z-10 flex items-center justify-center">
+                      {isSubmitting ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <FiSend className="w-5 h-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                      )}
+                    </span>
+                    <div className="absolute inset-0 rounded-2xl bg-linear-to-r from-orange-600 to-[#fe9a00] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  </button>
+                </div>
+
+               
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

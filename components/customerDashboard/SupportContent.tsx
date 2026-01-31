@@ -35,7 +35,18 @@ export default function SupportContent() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+
   useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const parsedUser = JSON.parse(user);
+        setCurrentUser(parsedUser._id);
+      } catch (e) {
+        console.log("Error parsing user", e);
+      }
+    }
     fetchTickets();
   }, []);
 
@@ -122,7 +133,7 @@ export default function SupportContent() {
         const data = await response.json();
         setSelectedTicket(data.data);
         setTickets(
-          tickets.map((t) => (t._id === data.data._id ? data.data : t))
+          tickets.map((t) => (t._id === data.data._id ? data.data : t)),
         );
         setReplyMessage("");
         showToast.success("Reply sent successfully");
@@ -208,14 +219,14 @@ export default function SupportContent() {
                   </h3>
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      ticket.status
+                      ticket.status,
                     )}`}
                   >
                     {ticket.status}
                   </span>
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(
-                      ticket.priority
+                      ticket.priority,
                     )}`}
                   >
                     {ticket.priority}
@@ -370,14 +381,14 @@ export default function SupportContent() {
               <div className="flex items-center gap-4 mt-4">
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                    selectedTicket.status
+                    selectedTicket.status,
                   )}`}
                 >
                   {selectedTicket.status}
                 </span>
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(
-                    selectedTicket.priority
+                    selectedTicket.priority,
                   )}`}
                 >
                   {selectedTicket.priority}
@@ -388,8 +399,7 @@ export default function SupportContent() {
             <div className="p-6 max-h-96 overflow-y-auto">
               <div className="space-y-4">
                 {selectedTicket.messages.map((message, index) => {
-                  const user = JSON.parse(localStorage.getItem("user") || "{}");
-                  const isOwnMessage = message.sender === user._id;
+                  const isOwnMessage = message.sender === currentUser;
 
                   return (
                     <div

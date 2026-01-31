@@ -407,7 +407,7 @@ export default function VehiclesContent() {
                 placeholder="Select Status"
               />
               <label className="text-gray-400 text-sm mb-2 block">
-                Gear Types
+                Gearbox
               </label>
               <div className="space-y-2">
                 {["automatic", "manual"].map((type) => (
@@ -618,7 +618,7 @@ export default function VehiclesContent() {
           },
           {
             key: "gear" as any,
-            label: "Gear Types",
+            label: "Gearbox",
             render: (value) =>
               value?.availableTypes?.map((t: any) => t.gearType).join(", ") ||
               "-",

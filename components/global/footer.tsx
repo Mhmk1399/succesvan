@@ -312,7 +312,7 @@ export default function Footer() {
                   and updates.
                 </p>
 
-                <div className="grid grid-cols-5 sm:grid-cols-5 items-center justify-center gap-4 md:gap-10 max-w-md mx-auto">
+                <div className="grid grid-cols-5 sm:grid-cols-5 items-center justify-center gap-4.5 md:gap-10 max-w-md mx-auto">
                   {socialLinks.map((social) => (
                     <a
                       key={social.name}

@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { FiUsers, FiPackage, FiCheckCircle } from "react-icons/fi";
+import { FiUsers, FiCheckCircle } from "react-icons/fi";
 import { BsFuelPump } from "react-icons/bs";
-
-const ACCENT = "#fe9a00";
+import { MdDoorSliding } from "react-icons/md";
 
 interface VanCardProps {
   van: {
@@ -14,7 +13,7 @@ interface VanCardProps {
     image: string;
     seats: number;
     fuel: string;
-    cargo: string;
+    doors: number;
     expert: string;
     pricingTiers: { minDays: number; maxDays: number; pricePerDay: number }[];
     extrahoursRate: number;
@@ -76,7 +75,9 @@ export default function VanCard({
             <h4 className="text-sm font-black text-white line-clamp-1">
               {van.name}
             </h4>
-            <p className="text-gray-400 text-xs mb-2 line-clamp-1">{van.expert}</p>
+            <p className="text-gray-400 text-xs mb-2 line-clamp-1">
+              {van.expert}
+            </p>
 
             {/* Specs */}
             <div className="flex gap-1 flex-wrap">
@@ -93,9 +94,9 @@ export default function VanCard({
                 </span>
               </div>
               <div className="px-1.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center gap-0.5">
-                <FiPackage className="text-[#fe9a00] text-[10px]" />
+                <MdDoorSliding className="text-[#fe9a00] text-[10px]" />
                 <span className="text-white text-[10px] font-semibold">
-                  {van.cargo}
+                  {van.doors}
                 </span>
               </div>
             </div>
@@ -105,7 +106,9 @@ export default function VanCard({
           <div>
             {calculatedPrice ? (
               <>
-                {(van as any).selloffer && (van as any).selloffer > 0 && originalPrice ? (
+                {(van as any).selloffer &&
+                (van as any).selloffer > 0 &&
+                originalPrice ? (
                   <>
                     <div className="flex items-baseline gap-1 mb-0.5">
                       <span className="text-xs font-bold text-gray-400 line-through">
@@ -122,7 +125,10 @@ export default function VanCard({
                 ) : (
                   <div className="flex items-baseline gap-1">
                     <span className="text-lg font-black text-[#37cf6f]">
-                     <span className="font-medium text-gray-400 text-xs">cost:</span> £{calculatedPrice}
+                      <span className="font-medium text-gray-400 text-xs">
+                        cost:
+                      </span>{" "}
+                      £{calculatedPrice}
                     </span>
                   </div>
                 )}
@@ -139,7 +145,11 @@ export default function VanCard({
                         £{van.pricingTiers[0]?.pricePerDay}
                       </span>
                       <span className="text-lg font-black text-[#37cf6f]">
-                        £{(van.pricingTiers[0]?.pricePerDay * (1 - (van as any).selloffer / 100)).toFixed(2)}
+                        £
+                        {(
+                          van.pricingTiers[0]?.pricePerDay *
+                          (1 - (van as any).selloffer / 100)
+                        ).toFixed(2)}
                       </span>
                       <span className="text-gray-300 text-xs font-semibold">
                         /day

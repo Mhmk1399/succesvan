@@ -41,8 +41,7 @@ interface Category {
   seats: number;
   doors: number;
   fuel: string;
-  cargo: string;
-  expert: string;
+   expert: string;
   selloffer?: number;
   gear: {
     availableTypes: ("manual" | "automatic")[];
@@ -213,7 +212,23 @@ export default function ReservationModal({
     const totalHours = Math.floor(totalMinutes / 60);
     const remainingMinutes = totalMinutes % 60;
     const billableHours = remainingMinutes > 15 ? totalHours + 1 : totalHours;
-    return Math.floor(billableHours / 24); // Use floor to match totalDays calculation
+
+    // New rules: <24 hours counts as 1 day. For >=24h, extra hours >6 count as an additional day.
+    if (billableHours <= 0) return 0;
+    let totalDays: number;
+    let extraHours: number;
+    if (billableHours < 24) {
+      totalDays = 1;
+      extraHours = 0;
+    } else {
+      totalDays = Math.floor(billableHours / 24);
+      extraHours = billableHours % 24;
+      if (extraHours > 6) {
+        totalDays += 1;
+        extraHours = 0;
+      }
+    }
+    return totalDays;
   }, [
     formData.startDate,
     formData.startTime,
@@ -259,8 +274,24 @@ export default function ReservationModal({
     const remainingMinutes = totalMinutes % 60;
     const billableHours = remainingMinutes > 15 ? totalHours + 1 : totalHours;
     if (billableHours <= 0) return null;
-    const totalDays = Math.floor(billableHours / 24);
-    const extraHours = billableHours % 24;
+
+    // Align with usePriceCalculation rules:
+    // - <24h counts as 1 day
+    // - For >=24h, extra hours >6 count as an extra full day
+    let totalDays: number;
+    let extraHours: number;
+    if (billableHours < 24) {
+      totalDays = 1;
+      extraHours = 0;
+    } else {
+      totalDays = Math.floor(billableHours / 24);
+      extraHours = billableHours % 24;
+      if (extraHours > 6) {
+        totalDays += 1;
+        extraHours = 0;
+      }
+    }
+
     const tier =
       cat.pricingTiers.find(
         (t) => totalDays >= t.minDays && totalDays <= t.maxDays
@@ -275,22 +306,19 @@ export default function ReservationModal({
     const extraHoursPrice = extraHours * (cat.extrahoursRate || 0);
     const originalTotalPrice = originalDaysPrice + extraHoursPrice;
     const totalPrice = daysPrice + extraHoursPrice;
+
+    // Breakdown formatted like usePriceCalculation
     let breakdown = "";
     if (totalDays > 0 && extraHours > 0) {
-      breakdown = `${totalDays} day${
-        totalDays > 1 ? "s" : ""
-      } (£${pricePerDay.toFixed(2)}/day) + ${extraHours}h (£${(
+      breakdown = `(${totalDays} day${totalDays > 1 ? 's' : ''} × £${pricePerDay.toFixed(2)}) + (${extraHours}h × £${(
         cat.extrahoursRate || 0
-      ).toFixed(2)}/hr) = £${totalPrice.toFixed(2)}`;
+      ).toFixed(2)}) = £${totalPrice.toFixed(2)}`;
     } else if (totalDays > 0) {
-      breakdown = `${totalDays} day${
-        totalDays > 1 ? "s" : ""
-      } (£${pricePerDay.toFixed(2)}/day) = £${totalPrice.toFixed(2)}`;
+      breakdown = `(${totalDays} day${totalDays > 1 ? 's' : ''} × £${pricePerDay.toFixed(2)}) = £${totalPrice.toFixed(2)}`;
     } else {
-      breakdown = `${extraHours}h (£${(cat.extrahoursRate || 0).toFixed(
-        2
-      )}/hr) = £${totalPrice.toFixed(2)}`;
+      breakdown = `(${extraHours}h × £${(cat.extrahoursRate || 0).toFixed(2)}) = £${totalPrice.toFixed(2)}`;
     }
+
     return {
       totalPrice: parseFloat(totalPrice.toFixed(2)),
       originalTotalPrice: parseFloat(originalTotalPrice.toFixed(2)),

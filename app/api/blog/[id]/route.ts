@@ -8,18 +8,19 @@ import connect from "@/lib/data";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  console.log("📖 [Blog API] Fetching blog:", params.id);
+  const resolvedParams = await params;
+  console.log("📖 [Blog API] Fetching blog:", resolvedParams.id);
 
   try {
     await connect();
 
     // Try to find by MongoDB ID first, then by slug
-    let blog = await Blog.findById(params.id);
+    let blog = await Blog.findById(resolvedParams.id);
     
     if (!blog) {
-      blog = await Blog.findOne({ slug: params.id });
+      blog = await Blog.findOne({ slug: resolvedParams.id });
     }
 
     if (!blog) {
@@ -59,16 +60,17 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  console.log("🔧 [Blog API] Patching blog:", params.id);
+  const resolvedParams = await params;
+  console.log("🔧 [Blog API] Patching blog:", resolvedParams.id);
 
   try {
     await connect();
 
     const body = await request.json();
     
-    const blog = await Blog.findById(params.id);
+    const blog = await Blog.findById(resolvedParams.id);
 
     if (!blog) {
       return NextResponse.json(

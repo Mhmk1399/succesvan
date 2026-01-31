@@ -3462,7 +3462,7 @@ export default function AIBlogBuilder() {
       />
 
       {/* Header */}
-      <header className="fixed top-16 z-40 w-full max-w-7xl bg-[#0f172b]/10 backdrop-blur-3xl rounded-lg border-b border-slate-800">
+      <header className="fixed top-16 z-40 w-full max-w-7xl bg-[#0f172b]/10 backdrop-blur-3xl rounded-2xl border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="hidden sm:block">
@@ -3506,9 +3506,9 @@ export default function AIBlogBuilder() {
       </header>
 
       <main className="pt-20 px-4 max-w-7xl mx-auto grid grid-cols-12 gap-5">
-        {/* LEFT SIDEBAR */}
-        <div className="col-span-12 lg:col-span-3 space-y-4">
-          <div className="lg:sticky lg:top-20 space-y-4">
+        {/* LEFT SIDEBAR - With independent scrollbar */}
+        <div className="col-span-12 lg:col-span-3 h-[calc(100vh-5rem)] overflow-hidden">
+          <div className="h-full overflow-y-auto pr-2 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
             {/* Topic Input - Shared by both modes */}
             <Card title="Blog Topic" icon={<FiCpu size={16} />}>
               <div className="space-y-2">
@@ -3599,8 +3599,9 @@ export default function AIBlogBuilder() {
           </div>
         </div>
 
-        {/* MAIN CONTENT */}
-        <div className="col-span-12 lg:col-span-9 space-y-4">
+        {/* MAIN CONTENT - With independent scrollbar */}
+        <div className="col-span-12 lg:col-span-9 h-[calc(100vh-5rem)] overflow-hidden">
+          <div className="h-full overflow-y-auto pl-2 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           <div className="flex gap-1 p-1 bg-slate-800/50 rounded-lg">
             {(["content", "seo", "media"] as const).map((tab) => {
               const isComplete = getTabStatus(tab);
@@ -3973,6 +3974,7 @@ export default function AIBlogBuilder() {
               )}
             </Card>
           )}
+          </div>
         </div>
       </main>
 

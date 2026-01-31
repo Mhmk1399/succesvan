@@ -49,7 +49,7 @@ import CustomSelect from "../ui/CustomSelect";
 import { showToast } from "../../lib/toast";
 import AddPostBlog from "./addBlog";
 import TicketsManagement from "./TicketsManagement";
-import { FiPlus, FiFileText } from "react-icons/fi";
+import { FiFileText } from "react-icons/fi";
 
 const menuItems: MenuItem[] = [
   {
@@ -138,7 +138,7 @@ const menuItems: MenuItem[] = [
   },
   {
     id: "blogs",
-    label: "Blogs",
+    label: "Add Blog",
     icon: <FiFileText />,
     color: "from-violet-500 to-violet-600",
   },
@@ -159,6 +159,7 @@ export default function Dashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
   useEffect(() => {
     const userData = localStorage.getItem("user");
     if (userData) {
@@ -254,7 +255,7 @@ export default function Dashboard() {
                 className={`w-full flex items-center cursor-pointer gap-3 px-3 py-2 rounded-lg transition-all duration-200 mb-1
                   ${
                     activeTab === item.id
-                      ? "bg-[#fe9a00] text-white"
+                      ? "bg-[#fe9a00] text-white "
                       : "text-gray-400 hover:text-white hover:bg-white/5"
                   }
                   ${sidebarCollapsed ? "justify-center" : ""}`}
@@ -267,7 +268,11 @@ export default function Dashboard() {
                   {item.icon}
                 </span>
                 {!sidebarCollapsed && (
-                  <span className="font-medium text-sm truncate">
+                  <span
+                    className={`${
+                      activeTab === item.id ? "font-bold" : "font-medium"
+                    } text-sm truncate`}
+                  >
                     {item.label}
                   </span>
                 )}
@@ -339,7 +344,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-3 md:bg-white/5 rounded-lg md:px-3 py-1">
               <div className=" flex flex-col text-right mr-2 min-w-0">
                 <span className="text-white text-xs md:text-sm font-semibold truncate">
-                  {user?.name}  
+                  {user?.name}
                 </span>
                 <span className="text-gray-400 text-[10px] md:text-xs truncate">
                   {user?.role}

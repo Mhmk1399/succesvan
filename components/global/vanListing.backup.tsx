@@ -53,7 +53,6 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format } from "date-fns";
 import Link from "next/link";
-import { FaArrowRight } from "react-icons/fa";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -74,12 +73,11 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const [isLoading, setIsLoading] = useState(vans.length === 0);
-
+  const [detailsCategory, setDetailsCategory] = useState<Category | null>(null);
   const [categories, setCategories] = useState<Category[]>(vans as Category[]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null
+    null,
   );
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   useEffect(() => {
     if (vans.length > 0) {
@@ -129,7 +127,7 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
               once: true,
             },
             delay: index * 0.1,
-          }
+          },
         );
       });
     }, sectionRef);
@@ -177,8 +175,7 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
                     category={category}
                     onView={() => setSelectedCategory(category)}
                     onDetails={() => {
-                      setSelectedCategory(category);
-                      setShowDetailsModal(true);
+                      setDetailsCategory(category); // Use separate state
                     }}
                   />
                 </div>
@@ -200,15 +197,15 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
       </div>
 
       {/* Details Modal */}
-      {showDetailsModal && selectedCategory && (
+      {detailsCategory && (
         <CategoryDetailsModal
-          category={selectedCategory}
-          onClose={() => setShowDetailsModal(false)}
+          category={detailsCategory}
+          onClose={() => setDetailsCategory(null)}
         />
       )}
 
       {/* Reservation Panel */}
-      {selectedCategory && !showDetailsModal && (
+      {selectedCategory && (
         <ReservationPanelPortal
           van={selectedCategory}
           onClose={() => setSelectedCategory(null)}
@@ -236,7 +233,7 @@ function ReservationPanelPortal({
 
   return createPortal(
     <ReservationPanel van={van} onClose={onClose} />,
-    document.body
+    document.body,
   );
 }
 
@@ -249,7 +246,7 @@ function ReservationPanel({
 }) {
   const [step, setStep] = useState<"auth" | "details">("auth");
   const [authStep, setAuthStep] = useState<"phone" | "code" | "register">(
-    "phone"
+    "phone",
   );
   const [formData, setFormData] = useState({
     name: "",
@@ -340,7 +337,7 @@ function ReservationPanel({
       ? (van as any)?.gear?.automaticExtraCost || 0
       : 0,
     addOnsCost,
-    (van as any)?.selloffer || 0
+    (van as any)?.selloffer || 0,
   );
 
   const priceCalc = useMemo(() => {
@@ -351,7 +348,7 @@ function ReservationPanel({
     return {
       ...basePriceCalc,
       totalPrice: parseFloat(
-        (basePriceCalc.totalPrice - discountAmount).toFixed(2)
+        (basePriceCalc.totalPrice - discountAmount).toFixed(2),
       ),
       discountAmount,
     };
@@ -409,7 +406,7 @@ function ReservationPanel({
       "saturday",
     ][date.getDay()];
     const workingDay = office.workingTime?.find(
-      (w: any) => w.day === dayName && w.isOpen
+      (w: any) => w.day === dayName && w.isOpen,
     );
     if (workingDay?.pickupExtension) {
       const [pickupHour, pickupMin] = formData.pickupTime
@@ -461,7 +458,7 @@ function ReservationPanel({
       "saturday",
     ][date.getDay()];
     const workingDay = office.workingTime?.find(
-      (w: any) => w.day === dayName && w.isOpen
+      (w: any) => w.day === dayName && w.isOpen,
     );
     if (workingDay?.returnExtension) {
       const [returnHour, returnMin] = formData.returnTime
@@ -515,7 +512,7 @@ function ReservationPanel({
       if (!data.success) throw new Error("Invalid discount code");
       const discounts = data.data.data || data.data;
       const discount = discounts.find(
-        (d: any) => d.code.toUpperCase() === discountCode.toUpperCase()
+        (d: any) => d.code.toUpperCase() === discountCode.toUpperCase(),
       );
       if (!discount) throw new Error("Invalid discount code");
       const now = new Date();
@@ -598,7 +595,7 @@ function ReservationPanel({
     ][date.getDay()];
 
     const specialDay = office.specialDays?.find(
-      (sd: any) => sd.month === month && sd.day === day
+      (sd: any) => sd.month === month && sd.day === day,
     );
     let start = "00:00",
       end = "23:59";
@@ -608,7 +605,7 @@ function ReservationPanel({
       end = specialDay.endTime || "23:59";
     } else {
       const workingDay = office.workingTime?.find(
-        (w: any) => w.day === dayName && w.isOpen
+        (w: any) => w.day === dayName && w.isOpen,
       );
       if (workingDay) {
         start = workingDay.startTime || "00:00";
@@ -621,19 +618,19 @@ function ReservationPanel({
             0,
             startHour * 60 +
               startMin -
-              workingDay.pickupExtension.hoursBefore * 60
+              workingDay.pickupExtension.hoursBefore * 60,
           );
           const extendedEndMinutes = Math.min(
             1439,
-            endHour * 60 + endMin + workingDay.pickupExtension.hoursAfter * 60
+            endHour * 60 + endMin + workingDay.pickupExtension.hoursAfter * 60,
           );
           start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(
             2,
-            "0"
+            "0",
           )}:${String(extendedStartMinutes % 60).padStart(2, "0")}`;
           end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(
             2,
-            "0"
+            "0",
           )}:${String(extendedEndMinutes % 60).padStart(2, "0")}`;
         }
       }
@@ -661,7 +658,7 @@ function ReservationPanel({
     ][date.getDay()];
 
     const specialDay = office.specialDays?.find(
-      (sd: any) => sd.month === month && sd.day === day
+      (sd: any) => sd.month === month && sd.day === day,
     );
     let start = "00:00",
       end = "23:59";
@@ -671,7 +668,7 @@ function ReservationPanel({
       end = specialDay.endTime || "23:59";
     } else {
       const workingDay = office.workingTime?.find(
-        (w: any) => w.day === dayName && w.isOpen
+        (w: any) => w.day === dayName && w.isOpen,
       );
       if (workingDay) {
         start = workingDay.startTime || "00:00";
@@ -684,19 +681,19 @@ function ReservationPanel({
             0,
             startHour * 60 +
               startMin -
-              workingDay.returnExtension.hoursBefore * 60
+              workingDay.returnExtension.hoursBefore * 60,
           );
           const extendedEndMinutes = Math.min(
             1439,
-            endHour * 60 + endMin + workingDay.returnExtension.hoursAfter * 60
+            endHour * 60 + endMin + workingDay.returnExtension.hoursAfter * 60,
           );
           start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(
             2,
-            "0"
+            "0",
           )}:${String(extendedStartMinutes % 60).padStart(2, "0")}`;
           end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(
             2,
-            "0"
+            "0",
           )}:${String(extendedEndMinutes % 60).padStart(2, "0")}`;
         }
       }
@@ -709,11 +706,11 @@ function ReservationPanel({
     if (formData.office && dateRange[0].startDate) {
       const date = dateRange[0].startDate;
       const startDate = `${date.getFullYear()}-${String(
-        date.getMonth() + 1
+        date.getMonth() + 1,
       ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       setStartDateReservedSlots([]);
       fetch(
-        `/api/reservations/by-office?office=${formData.office}&startDate=${startDate}&type=start`
+        `/api/reservations/by-office?office=${formData.office}&startDate=${startDate}&type=start`,
       )
         .then((res) => res.json())
         .then((data) => {
@@ -727,11 +724,11 @@ function ReservationPanel({
     if (formData.office && dateRange[0].endDate) {
       const date = dateRange[0].endDate;
       const endDate = `${date.getFullYear()}-${String(
-        date.getMonth() + 1
+        date.getMonth() + 1,
       ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       setEndDateReservedSlots([]);
       fetch(
-        `/api/reservations/by-office?office=${formData.office}&endDate=${endDate}&type=end`
+        `/api/reservations/by-office?office=${formData.office}&endDate=${endDate}&type=end`,
       )
         .then((res) => res.json())
         .then((data) => {
@@ -808,7 +805,7 @@ function ReservationPanel({
   }, [formData.pickupDate, formData.returnDate]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value, type } = e.target;
     const newValue =
@@ -975,10 +972,10 @@ function ReservationPanel({
       }
 
       const pickupDateTime = new Date(
-        `${formData.pickupDate}T${formData.pickupTime}:00`
+        `${formData.pickupDate}T${formData.pickupTime}:00`,
       );
       const returnDateTime = new Date(
-        `${formData.returnDate}T${formData.returnTime}:00`
+        `${formData.returnDate}T${formData.returnTime}:00`,
       );
 
       const payload = {
@@ -1065,7 +1062,7 @@ function ReservationPanel({
     ][date.getDay()];
 
     const specialDay = office.specialDays?.find(
-      (sd) => sd.month === month && sd.day === day
+      (sd) => sd.month === month && sd.day === day,
     );
     if (specialDay && !specialDay.isOpen) return true;
 
@@ -1408,9 +1405,7 @@ function ReservationPanel({
                       placeholder="London"
                     />
                     {errors.city && (
-                      <p className="text-red-400 text-xs mt-1">
-                        {errors.city}
-                      </p>
+                      <p className="text-red-400 text-xs mt-1">{errors.city}</p>
                     )}
                   </div>
                 </div>
@@ -1558,7 +1553,7 @@ function ReservationPanel({
                       {dateRange[0].startDate && dateRange[0].endDate
                         ? `${format(
                             dateRange[0].startDate,
-                            "MMM dd"
+                            "MMM dd",
                           )} - ${format(dateRange[0].endDate, "MMM dd, yyyy")}`
                         : "Select dates"}
                     </button>
@@ -1572,11 +1567,11 @@ function ReservationPanel({
                               ...prev,
                               pickupDate: format(
                                 item.selection.startDate!,
-                                "yyyy-MM-dd"
+                                "yyyy-MM-dd",
                               ),
                               returnDate: format(
                                 item.selection.endDate!,
-                                "yyyy-MM-dd"
+                                "yyyy-MM-dd",
                               ),
                             }));
                           }}
@@ -1626,7 +1621,7 @@ function ReservationPanel({
                           "saturday",
                         ][date.getDay()];
                         const workingDay = office?.workingTime?.find(
-                          (w: any) => w.day === dayName && w.isOpen
+                          (w: any) => w.day === dayName && w.isOpen,
                         );
                         const extensionTimes = workingDay?.pickupExtension
                           ? {
@@ -1674,7 +1669,7 @@ function ReservationPanel({
                           "saturday",
                         ][date.getDay()];
                         const workingDay = office?.workingTime?.find(
-                          (w: any) => w.day === dayName && w.isOpen
+                          (w: any) => w.day === dayName && w.isOpen,
                         );
                         const extensionTimes = workingDay?.returnExtension
                           ? {
@@ -1857,8 +1852,8 @@ function ReservationPanel({
                       ? "5"
                       : "4"
                     : (van as any)?.gear?.availableTypes?.length > 1
-                    ? "4"
-                    : "3"}
+                      ? "4"
+                      : "3"}
                 </div>
                 Discount Code
               </h3>
@@ -1928,8 +1923,8 @@ function ReservationPanel({
                       ? "5"
                       : "4"
                     : (van as any)?.gear?.availableTypes?.length > 1
-                    ? "4"
-                    : "3"}
+                      ? "4"
+                      : "3"}
                 </div>
                 Cost Summary
               </h3>
@@ -2380,7 +2375,7 @@ function CategoryDetailsModal({
   onClose: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<"dimensions" | "purpose">(
-    "dimensions"
+    "dimensions",
   );
 
   return (
