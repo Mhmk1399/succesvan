@@ -401,18 +401,12 @@ export async function generateSEOMetadata(
 
 Requirements:
 - Meta description: 140-155 characters, compelling, includes main keyword
-- Tags: 7-10 relevant, searchable tags
-- Anchors: 5-7 keywords that would benefit from internal linking (return keyword only, URL will be auto-generated)
+- Tags: 7-10 relevant, searchable tags (mix of broad and specific terms)
 
 Return JSON:
 {
   "seoDescription": "Meta description text",
-  "tags": ["tag1", "tag2", ...],
-  "anchors": [
-    {
-      "keyword": "keyword phrase"
-    }
-  ]
+  "tags": ["tag1", "tag2", ...]
 }
 
 Return ONLY valid JSON.`;
@@ -453,21 +447,15 @@ Make it SEO-optimized and compelling.`;
     result.author = 'admin';
   }
 
-  // Add IDs and URLs to anchors
-  if (result.anchors) {
-    result.anchors = result.anchors.map((a: any, index: number) => ({
-      id: a.id || `anchor-${index + 1}`,
-      keyword: a.keyword,
-      url: a.url || '#' // Default to # if not provided
-    }));
-  }
-
   // Set publish date to now
   result.publishDate = new Date();
 
+  // Initialize empty anchors array (will be populated by anchor generator)
+  result.anchors = [];
+
   console.log(`✅ [Step Generator] SEO metadata generated`);
   console.log(`   - Tags: ${result.tags?.length || 0}`);
-  console.log(`   - Anchors: ${result.anchors?.length || 0}`);
+  console.log(`   - Description: ${result.seoDescription?.length || 0} chars`);
 
   return result;
 }

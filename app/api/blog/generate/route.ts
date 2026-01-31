@@ -14,6 +14,7 @@ import {
   calculateReadingTime,
   slugify
 } from "@/lib/blog-compiler";
+import { generateAnchorURLs } from "@/lib/anchor-generator";
 import Blog from "@/model/blogs";
 import connect from "@/lib/data";
 
@@ -642,7 +643,17 @@ export async function POST(request: NextRequest) {
           blog.content.faqs
         );
         blog.content.compiledHtml = compiledHtml;
+        
+        // Calculate word count and reading time
+        const wordCount = calculateWordCount(compiledHtml);
+        const readingTime = calculateReadingTime(wordCount);
+        blog.wordCount = wordCount;
+        blog.readingTime = readingTime;
+        
         console.log(`✅ [Step Generator] Compiled HTML: ${compiledHtml.length} characters`);
+        console.log(`📊 [Step Generator] Calculated metrics:`);
+        console.log(`   Word count: ${wordCount}`);
+        console.log(`   Reading time: ${readingTime} min`);
 
         await blog.save();
 
@@ -699,6 +710,30 @@ export async function POST(request: NextRequest) {
         const canonicalUrl = `/${slugify(blog.seo.seoTitle)}`;
         seoData.canonicalUrl = canonicalUrl;
 
+        // Generate optimized anchor URLs using AI (internal + external)
+        console.log(`🔗 [Step Generator] Generating intelligent anchor links...`);
+        try {
+          // Extract some content context for better anchor generation
+          const contentPreview = blog.content.headings
+            .map((h: any) => h.content || '')
+            .join(' ')
+            .replace(/<[^>]*>/g, ' ')
+            .substring(0, 1000);
+
+          const generatedAnchors = await generateAnchorURLs(
+            [], // No initial anchors, let AI generate them
+            blog.content.topic,
+            blog.seo.focusKeyword,
+            contentPreview
+          );
+          
+          seoData.anchors = generatedAnchors;
+          console.log(`   Generated ${generatedAnchors.length} anchor links`);
+        } catch (error) {
+          console.error(`   ⚠️ Anchor generation failed:`, error);
+          seoData.anchors = []; // Fallback to empty array
+        }
+
         blog.seo = { ...blog.seo, ...seoData };
         blog.generationProgress.currentStep = "seo";
         blog.generationProgress.seoApproved = false;
@@ -708,6 +743,7 @@ export async function POST(request: NextRequest) {
         console.log(`   SEO Description length: ${seoData.seoDescription?.length || 0}`);
         console.log(`   Tags: ${seoData.tags?.length || 0}`);
         console.log(`   Anchors: ${seoData.anchors?.length || 0}`);
+        console.log(`   Anchor URLs: ${seoData.anchors?.filter((a: any) => a.url !== '#').length || 0} valid`);
         console.log(`   Author: ${seoData.author || 'none'}`);
         console.log(`   Canonical URL: ${canonicalUrl}`);
 

@@ -75,6 +75,7 @@ export interface StepGeneratorData {
   author: string;
   publishDate: string;
   headings: HeadingItem[];
+  canonicalUrl: string;
   summary: string;
   conclusion: string;
   faqs: FAQItem[];

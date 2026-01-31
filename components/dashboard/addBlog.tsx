@@ -1839,18 +1839,18 @@ const RichTextEditor = ({
   useEffect(() => {
     if (editor) {
       const currentContent = editor.getHTML();
-      const newContent = content || '';
-      
+      const newContent = content || "";
+
       // More robust comparison - trim and compare
       const currentTrimmed = currentContent.trim();
       const newTrimmed = newContent.trim();
-      
+
       if (currentTrimmed !== newTrimmed) {
-        console.log('🔄 RichTextEditor updating content:', { 
-          newLength: newTrimmed.length, 
+        console.log("🔄 RichTextEditor updating content:", {
+          newLength: newTrimmed.length,
           currentLength: currentTrimmed.length,
           newPreview: newTrimmed.substring(0, 100),
-          currentPreview: currentTrimmed.substring(0, 100)
+          currentPreview: currentTrimmed.substring(0, 100),
         });
         editor.commands.setContent(newContent);
       }
@@ -2780,7 +2780,7 @@ const ContentSection = ({
     console.log(`📝 ContentSection ${index} received heading:`, {
       id: heading.id,
       text: heading.text,
-      contentLength: heading.content?.length || 0
+      contentLength: heading.content?.length || 0,
     });
   }, [heading.id, heading.content, index, heading.text]);
 
@@ -3211,50 +3211,76 @@ export default function AIBlogBuilder() {
   };
 
   const handleStepDataUpdate = (updates: Partial<StepGeneratorData>) => {
-    console.log('📥 [handleStepDataUpdate] Received updates:', JSON.stringify({
-      hasHeadings: !!updates.headings,
-      headingsCount: updates.headings?.length,
-      hasSummary: !!updates.summary,
-      hasConclusion: !!updates.conclusion,
-      hasFAQs: !!updates.faqs,
-    }));
-    
+    console.log(
+      "📥 [handleStepDataUpdate] Received updates:",
+      JSON.stringify({
+        hasHeadings: !!updates.headings,
+        headingsCount: updates.headings?.length,
+        hasSummary: !!updates.summary,
+        hasConclusion: !!updates.conclusion,
+        hasFAQs: !!updates.faqs,
+      }),
+    );
+
     // Create new objects to ensure React detects changes
     const updatedData = { ...data };
-    
+
     if (updates.headings) {
-      console.log('🔄 [handleStepDataUpdate] Processing headings update');
-      console.log('   Current data.headings count:', data.headings.length);
-      console.log('   Current data.headings:', data.headings.map(h => ({ 
-        id: h.id, 
-        text: h.text?.substring(0, 30), 
-        contentLength: h.content?.length || 0 
-      })));
-      console.log('   Incoming headings:', updates.headings.map(h => ({ 
-        id: h.id, 
-        text: h.text?.substring(0, 30), 
-        contentLength: h.content?.length || 0 
-      })));
+      console.log("🔄 [handleStepDataUpdate] Processing headings update");
+      console.log("   Current data.headings count:", data.headings.length);
+      console.log(
+        "   Current data.headings:",
+        data.headings.map((h) => ({
+          id: h.id,
+          text: h.text?.substring(0, 30),
+          contentLength: h.content?.length || 0,
+        })),
+      );
+      console.log(
+        "   Incoming headings:",
+        updates.headings.map((h) => ({
+          id: h.id,
+          text: h.text?.substring(0, 30),
+          contentLength: h.content?.length || 0,
+        })),
+      );
 
       // Check if this is initial headings generation (all headings have no content yet)
       // or if it's a content update (some headings have content)
-      const isInitialHeadingsGeneration = updates.headings.every(h => !h.content || h.content === '');
-      const hasContentUpdate = updates.headings.some(h => h.content && h.content !== '');
+      const isInitialHeadingsGeneration = updates.headings.every(
+        (h) => !h.content || h.content === "",
+      );
+      const hasContentUpdate = updates.headings.some(
+        (h) => h.content && h.content !== "",
+      );
 
       if (isInitialHeadingsGeneration) {
         // REPLACE all headings with new structure
-        console.log('📝 [handleStepDataUpdate] Initial headings generation - REPLACING all headings');
-        updatedData.headings = updates.headings.map(h => ({ ...h }));
+        console.log(
+          "📝 [handleStepDataUpdate] Initial headings generation - REPLACING all headings",
+        );
+        updatedData.headings = updates.headings.map((h) => ({ ...h }));
       } else if (hasContentUpdate) {
         // MERGE content into existing headings by ID
-        console.log('📝 [handleStepDataUpdate] Content update - MERGING by ID');
-        if (!updates.headings.length ) {
-          console.log('   ⚠️ No existing headings found, adding all incoming headings');
-          updatedData.headings = updates.headings.map(h => ({ ...h }));
+        console.log("📝 [handleStepDataUpdate] Content update - MERGING by ID");
+        if (!updates.headings.length) {
+          console.log(
+            "   ⚠️ No existing headings found, adding all incoming headings",
+          );
+          updatedData.headings = updates.headings.map((h) => ({ ...h }));
         }
-        const updatedHeadings = data.headings.map(existingHeading => {
-          const incomingHeading = updates.headings.find(h => h.id === existingHeading.id);
-          
+        const updatedHeadings = data.headings.map((existingHeading) => {
+          if (!updates.headings) {
+            console.log(
+              `   ⚠️ Existing heading missing ID, skipping:`,
+              existingHeading,
+            );
+            return existingHeading;
+          }
+          const incomingHeading = updates.headings.find(
+            (h) => h.id === existingHeading.id,
+          );
+
           if (incomingHeading) {
             console.log(`   ✅ Matched heading ID: ${existingHeading.id}`);
             // Create a completely new object to break React reference
@@ -3262,94 +3288,164 @@ export default function AIBlogBuilder() {
               id: incomingHeading.id,
               level: incomingHeading.level,
               text: incomingHeading.text,
-              content: incomingHeading.content || existingHeading.content
+              content: incomingHeading.content || existingHeading.content,
             };
           }
-          
+
           return existingHeading;
         });
-        
+
         // Add any new headings that weren't in the existing array
-        updates.headings.forEach(newHeading => {
-          if (!updatedHeadings.find(h => h.id === newHeading.id)) {
+        updates.headings.forEach((newHeading) => {
+          if (!updatedHeadings.find((h) => h.id === newHeading.id)) {
             console.log(`   ➕ Adding new heading ID: ${newHeading.id}`);
             updatedHeadings.push({ ...newHeading });
           }
         });
-        
+
         updatedData.headings = updatedHeadings;
       } else {
         // Default: just update the headings
-        updatedData.headings = updates.headings.map(h => ({ ...h }));
+        updatedData.headings = updates.headings.map((h) => ({ ...h }));
       }
-      
-      console.log('📦 [handleStepDataUpdate] Final headings after update:', updatedData.headings.map(h => ({ 
-        id: h.id, 
-        text: h.text?.substring(0, 30), 
-        contentLength: h.content?.length || 0 
-      })));
+
+      console.log(
+        "📦 [handleStepDataUpdate] Final headings after update:",
+        updatedData.headings.map((h) => ({
+          id: h.id,
+          text: h.text?.substring(0, 30),
+          contentLength: h.content?.length || 0,
+        })),
+      );
     }
-    
+
     if (updates.summary !== undefined) {
-      console.log('📝 [handleStepDataUpdate] Updating summary:', {
+      console.log("📝 [handleStepDataUpdate] Updating summary:", {
         hasUpdate: !!updates.summary,
         updateLength: updates.summary?.length || 0,
         currentLength: data.summary?.length || 0,
-        preview: updates.summary?.substring(0, 100)
+        preview: updates.summary?.substring(0, 100),
       });
       updatedData.summary = updates.summary;
     }
-    
+
     if (updates.conclusion !== undefined) {
-      console.log('📝 [handleStepDataUpdate] Updating conclusion:', {
+      console.log("📝 [handleStepDataUpdate] Updating conclusion:", {
         hasUpdate: !!updates.conclusion,
         updateLength: updates.conclusion?.length || 0,
         currentLength: data.conclusion?.length || 0,
-        preview: updates.conclusion?.substring(0, 100)
+        preview: updates.conclusion?.substring(0, 100),
       });
       updatedData.conclusion = updates.conclusion;
     }
-    
+
     if (updates.faqs) updatedData.faqs = [...updates.faqs];
     if (updates.seoTitle) updatedData.seoTitle = updates.seoTitle;
     if (updates.focusKeyword) updatedData.focusKeyword = updates.focusKeyword;
-    if (updates.seoDescription) updatedData.seoDescription = updates.seoDescription;
+    if (updates.seoDescription)
+      updatedData.seoDescription = updates.seoDescription;
+    if (updates.canonicalUrl) updatedData.canonicalUrl = updates.canonicalUrl;
     if (updates.tags) updatedData.tags = [...updates.tags];
     if (updates.author) updatedData.author = updates.author;
+    if (updates.publishDate) updatedData.publishDate = updates.publishDate;
     if (updates.anchors) updatedData.anchors = [...updates.anchors];
-    
-    console.log('💾 Setting new data state');
-    console.log('   Summary length:', updatedData.summary?.length || 0);
-    console.log('   Conclusion length:', updatedData.conclusion?.length || 0);
-    console.log('   Summary preview:', updatedData.summary?.substring(0, 80));
-    console.log('   Conclusion preview:', updatedData.conclusion?.substring(0, 80));
+
+    console.log("💾 Setting new data state");
+    console.log("   Summary length:", updatedData.summary?.length || 0);
+    console.log("   Conclusion length:", updatedData.conclusion?.length || 0);
+    console.log("   Summary preview:", updatedData.summary?.substring(0, 80));
+    console.log(
+      "   Conclusion preview:",
+      updatedData.conclusion?.substring(0, 80),
+    );
+    console.log(
+      "   SEO Description:",
+      updatedData.seoDescription?.substring(0, 50),
+    );
+    console.log("   Tags:", updatedData.tags?.length || 0);
+    console.log("   Anchors:", updatedData.anchors?.length || 0);
     setData(updatedData);
-    
+
     // Show toast for newly added content
     if (updates.headings) {
-      const newHeadingsWithContent = updates.headings.filter(h => h.content).length;
-      const oldHeadingsWithContent = data.headings.filter(h => h.content).length;
+      const newHeadingsWithContent = updates.headings.filter(
+        (h) => h.content,
+      ).length;
+      const oldHeadingsWithContent = data.headings.filter(
+        (h) => h.content,
+      ).length;
       if (newHeadingsWithContent > oldHeadingsWithContent) {
-        toast.success('✅ Content updated in editor!');
+        toast.success("✅ Content updated in editor!");
       }
     }
-    
+
     if (updates.summary && updates.summary !== data.summary) {
-      toast.success('Summary added!');
+      toast.success("Summary added!");
     }
-    
+
     if (updates.conclusion && updates.conclusion !== data.conclusion) {
-      toast.success('Conclusion added!');
+      toast.success("Conclusion added!");
     }
-    
+
     if (updates.faqs && updates.faqs !== data.faqs) {
-      toast.success('FAQs added!');
+      toast.success("FAQs added!");
+    }
+
+    if (
+      updates.seoDescription &&
+      updates.seoDescription !== data.seoDescription
+    ) {
+      toast.success("SEO metadata updated!");
+    }
+
+    if (updates.tags && updates.tags.length > data.tags.length) {
+      toast.success("Tags updated!");
+    }
+
+    if (updates.anchors && updates.anchors.length > data.anchors.length) {
+      toast.success("Anchor links updated!");
     }
   };
 
   const handleStepGenerationComplete = () => {
     toast.success("🎉 All sections generated! You can now edit and save.");
     setGenerationMode("full"); // Switch to normal editing mode
+  };
+
+  // Check if tabs are complete
+  const isContentTabComplete = useMemo(() => {
+    return (
+      data.seoTitle?.length > 0 &&
+      data.summary?.length > 0 &&
+      data.headings.some((h) => h.content?.length > 0) &&
+      data.conclusion?.length > 0
+    );
+  }, [data.seoTitle, data.summary, data.headings, data.conclusion]);
+
+  const isSeoTabComplete = useMemo(() => {
+    return (
+      data.seoDescription?.length > 0 &&
+      data.focusKeyword?.length > 0 &&
+      data.author?.length > 0 &&
+      data.tags.length > 0
+    );
+  }, [data.seoDescription, data.focusKeyword, data.author, data.tags]);
+
+  const isMediaTabComplete = useMemo(() => {
+    return data.mediaLibrary.length > 0;
+  }, [data.mediaLibrary]);
+
+  const getTabStatus = (tab: "content" | "seo" | "media") => {
+    switch (tab) {
+      case "content":
+        return isContentTabComplete;
+      case "seo":
+        return isSeoTabComplete;
+      case "media":
+        return isMediaTabComplete;
+      default:
+        return false;
+    }
   };
 
   return (
@@ -3464,7 +3560,9 @@ export default function AIBlogBuilder() {
               <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <FiZap size={16} className="text-[#fe9a00]" />
-                  <h3 className="text-sm font-bold text-white">Full Generation</h3>
+                  <h3 className="text-sm font-bold text-white">
+                    Full Generation
+                  </h3>
                 </div>
                 <p className="text-xs text-slate-400 mb-4">
                   Generate entire blog at once with one click
@@ -3504,22 +3602,30 @@ export default function AIBlogBuilder() {
         {/* MAIN CONTENT */}
         <div className="col-span-12 lg:col-span-9 space-y-4">
           <div className="flex gap-1 p-1 bg-slate-800/50 rounded-lg">
-            {(["content", "seo", "media"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2 px-3 rounded-md text-sm font-medium flex items-center justify-center gap-1.5 ${
-                  activeTab === tab
-                    ? "bg-[#fe9a00] text-white shadow-lg"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                {tab === "content" && <FiEdit3 size={14} />}
-                {tab === "seo" && <FiTarget size={14} />}
-                {tab === "media" && <FiImage size={14} />}
-                <span className="capitalize">{tab}</span>
-              </button>
-            ))}
+            {(["content", "seo", "media"] as const).map((tab) => {
+              const isComplete = getTabStatus(tab);
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium flex items-center justify-center gap-1.5 transition-all ${
+                    activeTab === tab
+                      ? isComplete
+                        ? "bg-green-600 text-white shadow-lg"
+                        : "bg-[#fe9a00] text-white shadow-lg"
+                      : isComplete
+                        ? "bg-green-600/20 text-green-400 hover:bg-green-600/30"
+                        : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  {tab === "content" && <FiEdit3 size={14} />}
+                  {tab === "seo" && <FiTarget size={14} />}
+                  {tab === "media" && <FiImage size={14} />}
+                  <span className="capitalize">{tab}</span>
+                  {isComplete && <FiCheckCircle size={12} />}
+                </button>
+              );
+            })}
           </div>
 
           {activeTab === "content" && (
@@ -3543,7 +3649,10 @@ export default function AIBlogBuilder() {
                   key={`summary-${data.summary?.length || 0}`}
                   content={data.summary || ""}
                   onChange={(html) => {
-                    console.log('✏️ Summary editor onChange:', html?.substring(0, 100));
+                    console.log(
+                      "✏️ Summary editor onChange:",
+                      html?.substring(0, 100),
+                    );
                     setData({ ...data, summary: html });
                   }}
                   placeholder="Write a compelling summary..."
@@ -3603,7 +3712,10 @@ export default function AIBlogBuilder() {
                   key={`conclusion-${data.conclusion?.length || 0}`}
                   content={data.conclusion || ""}
                   onChange={(html) => {
-                    console.log('✏️ Conclusion editor onChange:', html?.substring(0, 100));
+                    console.log(
+                      "✏️ Conclusion editor onChange:",
+                      html?.substring(0, 100),
+                    );
                     setData({ ...data, conclusion: html });
                   }}
                   placeholder="Write a strong conclusion..."
@@ -3653,6 +3765,19 @@ export default function AIBlogBuilder() {
                         setData({ ...data, focusKeyword: e.target.value })
                       }
                       placeholder="Main keyword..."
+                    />
+                  </div>
+                  <div>
+                    <Label hint="Auto-generated from title">
+                      Canonical URL
+                    </Label>
+                    <Input
+                      value={data.canonicalUrl || ""}
+                      onChange={(e) =>
+                        setData({ ...data, canonicalUrl: e.target.value })
+                      }
+                      placeholder="/blog-post-url"
+                      className="text-xs"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
