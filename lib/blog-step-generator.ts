@@ -275,37 +275,71 @@ export async function generateFAQs(
   headings: any[]
 ): Promise<any[]> {
   console.log(`❓ [Step Generator] Generating FAQs`);
+  console.log(`   Total headings with content: ${headings.filter(h => h.content).length}`);
 
+  // Extract main topics from H2 headings
   const mainTopics = headings
     .filter(h => h.level === 2)
     .map(h => h.text)
     .join(", ");
 
-  const systemPrompt = `You are an expert at creating helpful FAQs. Generate common questions and answers.
+  // Extract full content from all headings to provide context
+  const fullContent = headings
+    .filter(h => h.content)
+    .map(h => {
+      // Strip HTML tags for cleaner context
+      const cleanContent = h.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      return `${h.text}: ${cleanContent}`;
+    })
+    .join('\n\n');
+
+  // Limit content length to avoid token limits (keep first 3000 chars)
+  const contentContext = fullContent.length > 3000 
+    ? fullContent.substring(0, 3000) + '...' 
+    : fullContent;
+
+  console.log(`   Content context length: ${contentContext.length} characters`);
+
+  const systemPrompt = `You are an expert at creating helpful, relevant FAQs based on actual blog content. Generate questions that readers would commonly ask after reading the article.
 
 Requirements:
-- Generate 5-7 FAQ pairs
-- Questions should be common queries about the topic
-- Answers should be clear and concise (50-80 words)
-- Include focus keyword "${focusKeyword}" naturally where relevant
-- Plain text for both questions and answers
+- Generate exactly 5-9 FAQ pairs (minimum 5, maximum 9)
+- Questions should be directly related to the content provided
+- Cover different aspects: basics, how-to, benefits, common concerns, best practices
+- Answers should be clear, concise, and informative (50-100 words each)
+- Include focus keyword "${focusKeyword}" naturally in 2-3 FAQs
+- Use plain text for both questions and answers (no HTML)
+- Questions should sound natural and conversational
+- Answers should provide value and actionable information
 
-Return JSON array:
-[
-  {
-    "id": "unique-id",
-    "question": "Question text?",
-    "answer": "Answer text."
-  }
-]
+Question types to consider:
+- "What is/are...?" (definition questions)
+- "How do I/can I...?" (practical how-to questions)  
+- "Why should I...?" (benefit-focused questions)
+- "When is the best time to...?" (timing questions)
+- "What are the common mistakes/challenges with...?" (problem-solving)
 
-Return ONLY valid JSON array.`;
+Return JSON object with "faqs" array:
+{
+  "faqs": [
+    {
+      "id": "faq-1",
+      "question": "Question text ending with?",
+      "answer": "Detailed answer providing value and insights."
+    }
+  ]
+}
 
-  const userPrompt = `Generate FAQs for a blog about: ${topic}
+IMPORTANT: Return ONLY valid JSON. No additional text or explanation.`;
+
+  const userPrompt = `Generate 5-9 FAQs for a blog about: "${topic}"
 
 Main sections covered: ${mainTopics}
 
-Focus on questions readers would commonly ask.`;
+Blog content summary:
+${contentContext}
+
+Create FAQs that directly address information in the content above. Make questions specific and answers helpful.`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -329,12 +363,22 @@ Focus on questions readers would commonly ask.`;
     faqsArray = result.faq;
   }
   
-  const faqs = faqsArray.map((faq: any) => ({
+  // Ensure we have at least 5 FAQs and at most 9
+  if (faqsArray.length < 5) {
+    console.warn(`⚠️ Only ${faqsArray.length} FAQs generated, expected minimum 5`);
+  }
+  if (faqsArray.length > 9) {
+    console.warn(`⚠️ ${faqsArray.length} FAQs generated, limiting to 9`);
+    faqsArray = faqsArray.slice(0, 9);
+  }
+  
+  const faqs = faqsArray.map((faq: any, index: number) => ({
     ...faq,
-    id: faq.id || generateId()
+    id: faq.id || `faq-${index + 1}`
   }));
 
   console.log(`✅ [Step Generator] Generated ${faqs.length} FAQs`);
+  console.log(`   Questions: ${faqs.map((f: any) => f.question.substring(0, 50)).join(', ')}`);
 
   return faqs;
 }

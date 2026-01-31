@@ -629,12 +629,15 @@ export async function POST(request: NextRequest) {
         await blog.save();
 
         console.log(`✅ [Step Generator] FAQs approved`);
+        console.log(`   Total FAQs: ${blog.content.faqs?.length || 0}`);
+        console.log(`   FAQ preview: ${JSON.stringify(blog.content.faqs?.map((f: any) => f.question?.substring(0, 40)) || [])}`);
 
         return NextResponse.json({
           success: true,
           mode: "step",
           blogId: blog._id,
           step: "seo",
+          data: { faqs: blog.content.faqs },
           message: "FAQs approved. Ready for SEO metadata generation.",
           nextStep: "seo"
         });
