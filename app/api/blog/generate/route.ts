@@ -8,6 +8,12 @@ import {
   generateFAQs,
   generateSEOMetadata,
 } from "@/lib/blog-step-generator";
+import {
+  compileFullBlogHTML,
+  calculateWordCount,
+  calculateReadingTime,
+  slugify
+} from "@/lib/blog-compiler";
 import Blog from "@/model/blogs";
 import connect from "@/lib/data";
 
@@ -626,6 +632,18 @@ export async function POST(request: NextRequest) {
 
         blog.generationProgress.faqApproved = true;
         blog.generationProgress.currentStep = "seo";
+
+        // Generate compiledHTML from all content parts
+        console.log(`📝 [Step Generator] Compiling full blog HTML...`);
+        const compiledHtml = compileFullBlogHTML(
+          blog.content.headings,
+          blog.content.summary,
+          blog.content.conclusion,
+          blog.content.faqs
+        );
+        blog.content.compiledHtml = compiledHtml;
+        console.log(`✅ [Step Generator] Compiled HTML: ${compiledHtml.length} characters`);
+
         await blog.save();
 
         console.log(`✅ [Step Generator] FAQs approved`);
@@ -672,8 +690,14 @@ export async function POST(request: NextRequest) {
           blog.content.topic,
           blog.seo.seoTitle,
           blog.content.headings,
-          blog.content.faqs
+          blog.content.faqs,
+          blog.content.summary,
+          blog.content.conclusion
         );
+
+        // Generate canonical URL from SEO title
+        const canonicalUrl = `/${slugify(blog.seo.seoTitle)}`;
+        seoData.canonicalUrl = canonicalUrl;
 
         blog.seo = { ...blog.seo, ...seoData };
         blog.generationProgress.currentStep = "seo";
@@ -685,6 +709,7 @@ export async function POST(request: NextRequest) {
         console.log(`   Tags: ${seoData.tags?.length || 0}`);
         console.log(`   Anchors: ${seoData.anchors?.length || 0}`);
         console.log(`   Author: ${seoData.author || 'none'}`);
+        console.log(`   Canonical URL: ${canonicalUrl}`);
 
         return NextResponse.json({
           success: true,
@@ -724,8 +749,23 @@ export async function POST(request: NextRequest) {
         blog.generationProgress.seoApproved = true;
         blog.generationProgress.currentStep = "completed";
 
-        // Compile final HTML
-        blog.content.compiledHtml = compileHTML(blog);
+        // Calculate word count and reading time
+        if (blog.content.compiledHtml) {
+          const wordCount = calculateWordCount(blog.content.compiledHtml);
+          const readingTime = calculateReadingTime(wordCount);
+          
+          blog.wordCount = wordCount;
+          blog.readingTime = readingTime;
+
+          console.log(`📊 [Step Generator] Calculated metrics:`);
+          console.log(`   Word count: ${wordCount}`);
+          console.log(`   Reading time: ${readingTime} min`);
+        }
+
+        // Compile final HTML (in case it wasn't done earlier)
+        if (!blog.content.compiledHtml) {
+          blog.content.compiledHtml = compileHTML(blog);
+        }
 
         await blog.save();
 

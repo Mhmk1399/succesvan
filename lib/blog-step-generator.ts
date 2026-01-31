@@ -391,7 +391,9 @@ export async function generateSEOMetadata(
   topic: string,
   title: string,
   headings: any[],
-  faqs: any[]
+  faqs: any[],
+  summary?: string,
+  conclusion?: string
 ): Promise<any> {
   console.log(`🔍 [Step Generator] Generating SEO metadata`);
 
@@ -400,19 +402,15 @@ export async function generateSEOMetadata(
 Requirements:
 - Meta description: 140-155 characters, compelling, includes main keyword
 - Tags: 7-10 relevant, searchable tags
-- Author: "Content Team" or similar
-- Anchors: 5-7 keywords that would benefit from internal linking
+- Anchors: 5-7 keywords that would benefit from internal linking (return keyword only, URL will be auto-generated)
 
 Return JSON:
 {
   "seoDescription": "Meta description text",
   "tags": ["tag1", "tag2", ...],
-  "author": "Author name",
   "anchors": [
     {
-      "id": "unique-id",
-      "keyword": "keyword phrase",
-      "url": ""
+      "keyword": "keyword phrase"
     }
   ]
 }
@@ -425,10 +423,16 @@ Return ONLY valid JSON.`;
     .map(h => h.text)
     .join(", ");
 
+  // Extract summary and conclusion text for context
+  const summaryText = summary ? summary.replace(/<[^>]*>/g, ' ').substring(0, 200) : '';
+  const conclusionText = conclusion ? conclusion.replace(/<[^>]*>/g, ' ').substring(0, 200) : '';
+
   const userPrompt = `Generate SEO metadata for: "${title}"
 
 Topic: ${topic}
 Main sections: ${mainTopics}
+${summaryText ? `\nSummary: ${summaryText}` : ''}
+${conclusionText ? `\nConclusion: ${conclusionText}` : ''}
 
 Make it SEO-optimized and compelling.`;
 
@@ -444,12 +448,17 @@ Make it SEO-optimized and compelling.`;
 
   const result = JSON.parse(completion.choices[0].message.content || "{}");
 
-  // Add IDs to anchors
+  // Set default author
+  if (!result.author) {
+    result.author = 'admin';
+  }
+
+  // Add IDs and URLs to anchors
   if (result.anchors) {
-    result.anchors = result.anchors.map((a: any) => ({
-      ...a,
-      id: a.id || generateId(),
-      url: a.url || ""
+    result.anchors = result.anchors.map((a: any, index: number) => ({
+      id: a.id || `anchor-${index + 1}`,
+      keyword: a.keyword,
+      url: a.url || '#' // Default to # if not provided
     }));
   }
 
