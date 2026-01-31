@@ -3319,6 +3319,10 @@ export default function AIBlogBuilder() {
     if (updates.anchors) updatedData.anchors = [...updates.anchors];
     
     console.log('💾 Setting new data state');
+    console.log('   Summary length:', updatedData.summary?.length || 0);
+    console.log('   Conclusion length:', updatedData.conclusion?.length || 0);
+    console.log('   Summary preview:', updatedData.summary?.substring(0, 80));
+    console.log('   Conclusion preview:', updatedData.conclusion?.substring(0, 80));
     setData(updatedData);
     
     // Show toast for newly added content
@@ -3536,12 +3540,19 @@ export default function AIBlogBuilder() {
 
               <Card title="Summary" number="2" icon={<FiBookOpen size={16} />}>
                 <RichTextEditor
+                  key={`summary-${data.summary?.length || 0}`}
                   content={data.summary || ""}
-                  onChange={(html) => setData({ ...data, summary: html })}
+                  onChange={(html) => {
+                    console.log('✏️ Summary editor onChange:', html?.substring(0, 100));
+                    setData({ ...data, summary: html });
+                  }}
                   placeholder="Write a compelling summary..."
                   minHeight="80px"
                   showFullToolbar={false}
                 />
+                <div className="text-[10px] text-slate-500 mt-1">
+                  {stripHtml(data.summary || "").length} characters
+                </div>
               </Card>
 
               <Card
@@ -3589,11 +3600,18 @@ export default function AIBlogBuilder() {
 
               <Card title="Conclusion" number="4" icon={<FiTarget size={16} />}>
                 <RichTextEditor
+                  key={`conclusion-${data.conclusion?.length || 0}`}
                   content={data.conclusion || ""}
-                  onChange={(html) => setData({ ...data, conclusion: html })}
+                  onChange={(html) => {
+                    console.log('✏️ Conclusion editor onChange:', html?.substring(0, 100));
+                    setData({ ...data, conclusion: html });
+                  }}
                   placeholder="Write a strong conclusion..."
                   minHeight="100px"
                 />
+                <div className="text-[10px] text-slate-500 mt-1">
+                  {stripHtml(data.conclusion || "").length} characters
+                </div>
               </Card>
 
               <Card

@@ -456,12 +456,16 @@ export async function POST(request: NextRequest) {
         await blog.save();
 
         console.log(`✅ [Step Generator] Summary approved`);
+        console.log(`   Summary length: ${blog.content.summary?.length || 0}`);
 
         return NextResponse.json({
           success: true,
           mode: "step",
           blogId: blog._id,
           step: "conclusion",
+          data: {
+            summary: blog.content.summary
+          },
           message: "Summary approved. Ready for conclusion generation.",
           nextStep: "conclusion"
         });
@@ -537,12 +541,16 @@ export async function POST(request: NextRequest) {
         await blog.save();
 
         console.log(`✅ [Step Generator] Conclusion approved`);
+        console.log(`   Conclusion length: ${blog.content.conclusion?.length || 0}`);
 
         return NextResponse.json({
           success: true,
           mode: "step",
           blogId: blog._id,
           step: "faq",
+          data: {
+            conclusion: blog.content.conclusion
+          },
           message: "Conclusion approved. Ready for FAQ generation.",
           nextStep: "faq"
         });
