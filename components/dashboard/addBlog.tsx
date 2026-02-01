@@ -7,7 +7,6 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import toast, { Toaster } from "react-hot-toast";
 import { useEditor, EditorContent, Extension } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import LinkExtension from "@tiptap/extension-link";
@@ -88,7 +87,9 @@ import {
   FiCheckSquare,
   FiGrid,
   FiSmile,
+  FiArrowLeft,
 } from "react-icons/fi";
+import { showToast } from "@/lib/toast";
 
 // ============================================================================
 // CUSTOM FONT SIZE EXTENSION
@@ -344,7 +345,7 @@ const TableControls = ({
       .insertTable({ rows, cols, withHeaderRow: true })
       .run();
     onClose();
-    toast.success("Table inserted!");
+    showToast.success("Table inserted!");
   };
 
   const isInTable = editor.isActive("table");
@@ -394,7 +395,7 @@ const TableControls = ({
           <button
             onClick={() => {
               editor.chain().focus().addColumnBefore().run();
-              toast.success("Column added");
+              showToast.success("Column added");
             }}
             className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded"
           >
@@ -403,7 +404,7 @@ const TableControls = ({
           <button
             onClick={() => {
               editor.chain().focus().addColumnAfter().run();
-              toast.success("Column added");
+              showToast.success("Column added");
             }}
             className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded"
           >
@@ -412,7 +413,7 @@ const TableControls = ({
           <button
             onClick={() => {
               editor.chain().focus().addRowBefore().run();
-              toast.success("Row added");
+              showToast.success("Row added");
             }}
             className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded"
           >
@@ -421,7 +422,7 @@ const TableControls = ({
           <button
             onClick={() => {
               editor.chain().focus().addRowAfter().run();
-              toast.success("Row added");
+              showToast.success("Row added");
             }}
             className="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded"
           >
@@ -431,7 +432,7 @@ const TableControls = ({
           <button
             onClick={() => {
               editor.chain().focus().deleteColumn().run();
-              toast.success("Column deleted");
+              showToast.success("Column deleted");
             }}
             className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-slate-800 rounded"
           >
@@ -440,7 +441,7 @@ const TableControls = ({
           <button
             onClick={() => {
               editor.chain().focus().deleteRow().run();
-              toast.success("Row deleted");
+              showToast.success("Row deleted");
             }}
             className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-slate-800 rounded"
           >
@@ -450,7 +451,7 @@ const TableControls = ({
             onClick={() => {
               editor.chain().focus().deleteTable().run();
               onClose();
-              toast.success("Table deleted");
+              showToast.success("Table deleted");
             }}
             className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-slate-800 rounded"
           >
@@ -470,6 +471,7 @@ interface MediaItem {
   id: string;
   type: "image" | "video";
   url: string;
+  s3Key?: string;
   alt: string;
   caption?: string;
   filename?: string;
@@ -1445,7 +1447,7 @@ const PreviewModal = ({
           <button
             onClick={() => {
               navigator.clipboard.writeText(html);
-              toast.success("Copied!");
+              showToast.success("Copied!");
             }}
             className="px-4 py-2 bg-[#fe9a00] text-white rounded-lg text-sm flex items-center gap-2"
           >
@@ -1670,6 +1672,12 @@ const RichTextEditor = ({
   const [selectedText, setSelectedText] = useState("");
   const [showMediaMenu, setShowMediaMenu] = useState(false);
 
+  // ✅ این ref کلید حل مشکله: می‌فهمیم آخرین "محتوای بیرونی" چی بوده
+  const lastExternal = useRef<string>(content || "");
+
+  // ✅ این ref کمک می‌کنه بفهمیم آپدیت از خود ادیتور بوده یا از بیرون (AI / load)
+  const applyingExternal = useRef(false);
+
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -1686,7 +1694,6 @@ const RichTextEditor = ({
       InlineTextAlign,
       Color,
       Underline,
-      // Ensure Subscript extension is included
       Subscript,
       Superscript,
       Highlight.configure({ multicolor: true }),
@@ -1707,9 +1714,7 @@ const RichTextEditor = ({
       OrderedList.configure({
         HTMLAttributes: { class: "list-decimal ml-6 space-y-1" },
       }),
-      TaskList.configure({
-        HTMLAttributes: { class: "task-list" },
-      }),
+      TaskList.configure({ HTMLAttributes: { class: "task-list" } }),
       TaskItem.configure({
         HTMLAttributes: { class: "task-item flex items-start gap-2" },
         nested: true,
@@ -1728,14 +1733,10 @@ const RichTextEditor = ({
       }),
       Table.configure({
         resizable: true,
-        HTMLAttributes: {
-          class: "border-collapse table-auto w-full my-4",
-        },
+        HTMLAttributes: { class: "border-collapse table-auto w-full my-4" },
       }),
       TableRow.configure({
-        HTMLAttributes: {
-          class: "border border-slate-700",
-        },
+        HTMLAttributes: { class: "border border-slate-700" },
       }),
       TableHeader.configure({
         HTMLAttributes: {
@@ -1743,23 +1744,19 @@ const RichTextEditor = ({
         },
       }),
       TableCell.configure({
-        HTMLAttributes: {
-          class: "border border-slate-700 p-2",
-        },
+        HTMLAttributes: { class: "border border-slate-700 p-2" },
       }),
       Mention.configure({
         HTMLAttributes: {
           class: "mention bg-[#fe9a00]/20 text-[#fe9a00] px-1 rounded",
         },
         suggestion: {
-          items: ({ query }: { query: string }) => {
-            return MENTION_SUGGESTIONS.filter((item) =>
+          items: ({ query }: { query: string }) =>
+            MENTION_SUGGESTIONS.filter((item) =>
               item.toLowerCase().startsWith(query.toLowerCase()),
-            ).slice(0, 5);
-          },
+            ).slice(0, 5),
           render: () => {
             let component: any;
-            let popup: any;
 
             return {
               onStart: (props: any) => {
@@ -1771,7 +1768,9 @@ const RichTextEditor = ({
                   component.innerHTML = props.items
                     .map(
                       (item: string, index: number) =>
-                        `<button class="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded ${index === props.selectedIndex ? "bg-slate-800" : ""}" data-index="${index}">@${item}</button>`,
+                        `<button class="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded ${
+                          index === props.selectedIndex ? "bg-slate-800" : ""
+                        }" data-index="${index}">@${item}</button>`,
                     )
                     .join("");
 
@@ -1785,12 +1784,14 @@ const RichTextEditor = ({
                 renderItems();
 
                 if (!props.clientRect) return;
-
-                popup = {
-                  getBoundingClientRect: props.clientRect,
-                };
-
                 document.body.appendChild(component);
+
+                // ✅ position کردن ساده (اگر بعداً خواستی tippy بذاری بهتر میشه)
+                const rect = props.clientRect();
+                component.style.position = "absolute";
+                component.style.left = rect.left + "px";
+                component.style.top = rect.bottom + 6 + "px";
+                component.style.zIndex = "9999";
               },
 
               onUpdate(props: any) {
@@ -1798,7 +1799,9 @@ const RichTextEditor = ({
                 component.innerHTML = props.items
                   .map(
                     (item: string, index: number) =>
-                      `<button class="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded ${index === props.selectedIndex ? "bg-slate-800" : ""}" data-index="${index}">@${item}</button>`,
+                      `<button class="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 rounded ${
+                        index === props.selectedIndex ? "bg-slate-800" : ""
+                      }" data-index="${index}">@${item}</button>`,
                   )
                   .join("");
 
@@ -1807,6 +1810,11 @@ const RichTextEditor = ({
                     props.command({ id: btn.dataset.index });
                   };
                 });
+
+                if (!props.clientRect) return;
+                const rect = props.clientRect();
+                component.style.left = rect.left + "px";
+                component.style.top = rect.bottom + 6 + "px";
               },
 
               onKeyDown(props: any) {
@@ -1828,33 +1836,50 @@ const RichTextEditor = ({
     ],
     editorProps: {
       attributes: {
-        class: `prose prose-invert max-w-none focus:outline-none text-sm text-slate-300 leading-relaxed`,
+        class:
+          "prose prose-invert max-w-none focus:outline-none text-sm text-slate-300 leading-relaxed",
         style: `min-height: ${minHeight}`,
       },
     },
-    content,
-    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+
+    // ✅ content اولیه
+    content: content || "",
+
+    // ✅ مهم: وقتی از بیرون setContent می‌کنیم، نمی‌خوایم onChange دوباره لوپ بسازه
+    onUpdate: ({ editor }) => {
+      if (applyingExternal.current) return;
+
+      const html = editor.getHTML();
+      lastExternal.current = html; // آخرین وضعیت واقعی
+      onChange(html);
+    },
   });
 
+  // ✅ Sync: وقتی content از بیرون تغییر کرد (AI / load / reset)
   useEffect(() => {
-    if (editor) {
-      const currentContent = editor.getHTML();
-      const newContent = content || "";
+    if (!editor) return;
 
-      // More robust comparison - trim and compare
-      const currentTrimmed = currentContent.trim();
-      const newTrimmed = newContent.trim();
+    const incoming = content || "";
+    const current = editor.getHTML();
 
-      if (currentTrimmed !== newTrimmed) {
-        console.log("🔄 RichTextEditor updating content:", {
-          newLength: newTrimmed.length,
-          currentLength: currentTrimmed.length,
-          newPreview: newTrimmed.substring(0, 100),
-          currentPreview: currentTrimmed.substring(0, 100),
-        });
-        editor.commands.setContent(newContent);
-      }
-    }
+    // اگر یکی هستن، کاری نکن
+    if (incoming === current) return;
+
+    // اگر این تغییر، همون چیزیه که خود ادیتور همین الان تولید کرده، کاری نکن
+    if (incoming === lastExternal.current) return;
+
+    // ✅ حالا تغییر واقعاً از بیرونه:
+    applyingExternal.current = true;
+
+    // نکته: emitUpdate: false باعث میشه history کمتر به هم بریزه
+    editor.commands.setContent(incoming, { emitUpdate: false });
+
+    lastExternal.current = incoming;
+
+    // توی tick بعدی اجازه بده onUpdate کار کنه
+    queueMicrotask(() => {
+      applyingExternal.current = false;
+    });
   }, [content, editor]);
 
   if (!editor) return null;
@@ -2860,7 +2885,7 @@ const ContentSection = ({
         <div className="p-4">
           <Label hint="Rich text with media support">Section Content</Label>
           <RichTextEditor
-            key={`editor-${heading.id}-${heading.content?.length || 0}`}
+            // key={`editor-${heading.id}-${heading.content?.length || 0}`}
             content={heading.content}
             onChange={(content) => onUpdate({ content })}
             placeholder="Write your content... Use the toolbar for formatting, lists, and media."
@@ -2939,8 +2964,12 @@ const FAQSection = ({
 // MAIN COMPONENT
 // ============================================================================
 
-export default function AIBlogBuilder() {
+export default function AIBlogBuilder({
+  blogId,
+  onBack,
+}: { blogId?: string; onBack?: () => void } = {}) {
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
@@ -2974,7 +3003,164 @@ export default function AIBlogBuilder() {
     compiledHtml: "",
   });
 
-  // HTML Compiler
+  // Load existing blog data
+  useEffect(() => {
+    if (!blogId) return;
+
+    const fetchBlogData = async () => {
+      try {
+        console.log("📥 [AIBlogBuilder] Fetching blog data for ID:", blogId);
+        setLoading(true);
+
+        const response = await fetch(`/api/blog/${blogId}`);
+        if (!response.ok) throw new Error("Failed to fetch blog");
+
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error);
+
+        const blog = result.blog;
+        console.log("✅ [AIBlogBuilder] Blog data loaded:", {
+          title: blog.seo?.seoTitle,
+          hasSeoDescription: !!blog.seo?.seoDescription,
+          tagsCount: blog.seo?.tags?.length || 0,
+          anchorsCount: blog.seo?.anchors?.length || 0,
+        });
+
+        // Map database structure to component state
+        setData({
+          topic: blog.content?.topic || "",
+          seoTitle: blog.seo?.seoTitle || "",
+          seoDescription: blog.seo?.seoDescription || "",
+          focusKeyword: blog.seo?.focusKeyword || "",
+          canonicalUrl: blog.seo?.canonicalUrl || "",
+          tags: blog.seo?.tags || [],
+          author: blog.seo?.author || "",
+          publishDate: blog.seo?.publishDate
+            ? new Date(blog.seo.publishDate).toISOString().split("T")[0]
+            : new Date().toISOString().split("T")[0],
+          headings: blog.content?.headings || [
+            { id: generateId(), level: 2, text: "", content: "" },
+          ],
+          mediaLibrary: blog.media?.mediaLibrary || [],
+          anchors: blog.seo?.anchors || [],
+          summary: blog.content?.summary || "",
+          conclusion: blog.content?.conclusion || "",
+          faqs: blog.content?.faqs || [],
+          tableOfContents: blog.content?.tableOfContents ?? true,
+          compiledHtml: blog.content?.compiledHtml || "",
+        });
+
+        showToast.success("Blog loaded successfully!");
+      } catch (error) {
+        console.error("❌ [AIBlogBuilder] Error loading blog:", error);
+        showToast.error("Failed to load blog data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBlogData();
+  }, [blogId]);
+
+  // Handle save (create or update)
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("authToken");
+
+      // Compile HTML
+      const compiledHtml = compileContent();
+
+      // Calculate word count and reading time
+      const textContent =
+        data.headings.map((h) => stripHtml(h.content)).join(" ") +
+        " " +
+        stripHtml(data.summary) +
+        " " +
+        stripHtml(data.conclusion);
+      const wordCount = countWords(textContent);
+      const readingTime = calculateReadingTime(textContent);
+
+      // Prepare request body
+      const requestBody = {
+        content: {
+          topic: data.topic,
+          summary: data.summary,
+          headings: data.headings,
+          conclusion: data.conclusion,
+          faqs: data.faqs,
+          compiledHtml,
+          tableOfContents: data.tableOfContents,
+        },
+        seo: {
+          seoTitle: data.seoTitle,
+          seoDescription: data.seoDescription,
+          focusKeyword: data.focusKeyword,
+          canonicalUrl: data.canonicalUrl,
+          tags: data.tags,
+          author: data.author,
+          publishDate: data.publishDate,
+          anchors: data.anchors,
+        },
+        media: {
+          mediaLibrary: data.mediaLibrary,
+          featuredImage:
+            data.mediaLibrary.find((m) => m.type === "image")?.url || "",
+        },
+        wordCount,
+        readingTime,
+      };
+
+      let response;
+      if (blogId) {
+        // Update existing blog - use the dynamic route /api/blog/[id]
+        response = await fetch(`/api/blog/${blogId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify(requestBody),
+        });
+      } else {
+        // Create new blog
+        response = await fetch("/api/blog", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token && { Authorization: `Bearer ${token}` }),
+          },
+          body: JSON.stringify(requestBody),
+        });
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save blog");
+      }
+
+      const result = await response.json();
+
+      if (blogId) {
+        showToast.success("Blog updated successfully!");
+      } else {
+        showToast.success("Blog created successfully!");
+        // Optionally redirect to edit page for the new blog
+        if (result.blog?._id || result.blog?.id) {
+          const newId = result.blog._id || result.blog.id;
+          window.location.href = `/dashboard/blog/edit/${newId}`;
+        }
+      }
+    } catch (error: any) {
+      console.error("Save error:", error);
+      showToast.error(error.message || "Failed to save blog");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const compileContent = useCallback(() => {
     let html = "";
 
@@ -3083,7 +3269,7 @@ export default function AIBlogBuilder() {
 
   // Handlers
   const handleAIGenerate = async () => {
-    if (!data.topic) return toast.error("Please enter a topic first");
+    if (!data.topic) return showToast.error("Please enter a topic first");
     setLoading(true);
     try {
       await new Promise((r) => setTimeout(r, 2500));
@@ -3139,9 +3325,9 @@ export default function AIBlogBuilder() {
         ],
       };
       setData((prev) => ({ ...prev, ...mockAI }));
-      toast.success("🎉 Content generated!");
+      showToast.success("🎉 Content generated!");
     } catch (e) {
-      toast.error("Generation failed");
+      showToast.error("Generation failed");
     } finally {
       setLoading(false);
     }
@@ -3162,7 +3348,38 @@ export default function AIBlogBuilder() {
       ...prev,
       mediaLibrary: [...prev.mediaLibrary, newMedia],
     }));
-    toast.success(`${isVideo ? "Video" : "Image"} uploaded!`);
+    showToast.success(`${isVideo ? "Video" : "Image"} uploaded!`);
+  };
+
+  const handleDeleteMedia = async (media: MediaItem) => {
+    try {
+      // If it has an s3Key, delete from S3 and database
+      if ("s3Key" in media && media.s3Key && blogId) {
+        const response = await fetch("/api/blog/generate-image", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            blogId,
+            mediaId: media.id,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to delete image");
+        }
+      }
+
+      // Update local state
+      setData({
+        ...data,
+        mediaLibrary: data.mediaLibrary.filter((m) => m.id !== media.id),
+      });
+
+      showToast.success("Image deleted");
+    } catch (error) {
+      console.error("Error deleting media:", error);
+      showToast.error("Failed to delete image");
+    }
   };
 
   const openMediaPicker = (
@@ -3211,204 +3428,54 @@ export default function AIBlogBuilder() {
   };
 
   const handleStepDataUpdate = (updates: Partial<StepGeneratorData>) => {
-    console.log(
-      "📥 [handleStepDataUpdate] Received updates:",
-      JSON.stringify({
-        hasHeadings: !!updates.headings,
-        headingsCount: updates.headings?.length,
-        hasSummary: !!updates.summary,
-        hasConclusion: !!updates.conclusion,
-        hasFAQs: !!updates.faqs,
-      }),
-    );
+    setData((prev) => {
+      const next = { ...prev };
 
-    // Create new objects to ensure React detects changes
-    const updatedData = { ...data };
+      // ✅ SEO (با undefined check)
+      if (updates.seoTitle !== undefined) next.seoTitle = updates.seoTitle;
+      if (updates.seoDescription !== undefined)
+        next.seoDescription = updates.seoDescription;
+      if (updates.focusKeyword !== undefined)
+        next.focusKeyword = updates.focusKeyword;
+      if (updates.canonicalUrl !== undefined)
+        next.canonicalUrl = updates.canonicalUrl;
 
-    if (updates.headings) {
-      console.log("🔄 [handleStepDataUpdate] Processing headings update");
-      console.log("   Current data.headings count:", data.headings.length);
-      console.log(
-        "   Current data.headings:",
-        data.headings.map((h) => ({
-          id: h.id,
-          text: h.text?.substring(0, 30),
-          contentLength: h.content?.length || 0,
-        })),
-      );
-      console.log(
-        "   Incoming headings:",
-        updates.headings.map((h) => ({
-          id: h.id,
-          text: h.text?.substring(0, 30),
-          contentLength: h.content?.length || 0,
-        })),
-      );
+      if (updates.tags !== undefined) next.tags = [...updates.tags];
+      if (updates.anchors !== undefined) next.anchors = [...updates.anchors];
 
-      // Check if this is initial headings generation (all headings have no content yet)
-      // or if it's a content update (some headings have content)
-      const isInitialHeadingsGeneration = updates.headings.every(
-        (h) => !h.content || h.content === "",
-      );
-      const hasContentUpdate = updates.headings.some(
-        (h) => h.content && h.content !== "",
-      );
+      if (updates.author !== undefined) next.author = updates.author;
+      if (updates.publishDate !== undefined)
+        next.publishDate = updates.publishDate;
 
-      if (isInitialHeadingsGeneration) {
-        // REPLACE all headings with new structure
-        console.log(
-          "📝 [handleStepDataUpdate] Initial headings generation - REPLACING all headings",
-        );
-        updatedData.headings = updates.headings.map((h) => ({ ...h }));
-      } else if (hasContentUpdate) {
-        // MERGE content into existing headings by ID
-        console.log("📝 [handleStepDataUpdate] Content update - MERGING by ID");
-        if (!updates.headings.length) {
-          console.log(
-            "   ⚠️ No existing headings found, adding all incoming headings",
-          );
-          updatedData.headings = updates.headings.map((h) => ({ ...h }));
-        }
-        const updatedHeadings = data.headings.map((existingHeading) => {
-          if (!updates.headings) {
-            console.log(
-              `   ⚠️ Existing heading missing ID, skipping:`,
-              existingHeading,
-            );
-            return existingHeading;
-          }
-          const incomingHeading = updates.headings.find(
-            (h) => h.id === existingHeading.id,
-          );
+      // ✅ Summary/Conclusion
+      if (updates.summary !== undefined) next.summary = updates.summary;
+      if (updates.conclusion !== undefined)
+        next.conclusion = updates.conclusion;
 
-          if (incomingHeading) {
-            console.log(`   ✅ Matched heading ID: ${existingHeading.id}`);
-            // Create a completely new object to break React reference
-            return {
-              id: incomingHeading.id,
-              level: incomingHeading.level,
-              text: incomingHeading.text,
-              content: incomingHeading.content || existingHeading.content,
-            };
-          }
+      // ✅ FAQs
+      if (updates.faqs !== undefined) next.faqs = [...updates.faqs];
 
-          return existingHeading;
-        });
+      // ✅ Media Library
+      if (updates.mediaLibrary !== undefined)
+        next.mediaLibrary = [...updates.mediaLibrary];
 
-        // Add any new headings that weren't in the existing array
-        updates.headings.forEach((newHeading) => {
-          if (!updatedHeadings.find((h) => h.id === newHeading.id)) {
-            console.log(`   ➕ Adding new heading ID: ${newHeading.id}`);
-            updatedHeadings.push({ ...newHeading });
-          }
-        });
-
-        updatedData.headings = updatedHeadings;
-      } else {
-        // Default: just update the headings
-        updatedData.headings = updates.headings.map((h) => ({ ...h }));
+      // ⚠️ Headings merge logic شما جداست (می‌تونی همونو نگه داری)
+      if (updates.headings !== undefined) {
+        next.headings = updates.headings.map((h) => ({ ...h }));
       }
 
-      console.log(
-        "📦 [handleStepDataUpdate] Final headings after update:",
-        updatedData.headings.map((h) => ({
-          id: h.id,
-          text: h.text?.substring(0, 30),
-          contentLength: h.content?.length || 0,
-        })),
-      );
-    }
+      return next;
+    });
 
-    if (updates.summary !== undefined) {
-      console.log("📝 [handleStepDataUpdate] Updating summary:", {
-        hasUpdate: !!updates.summary,
-        updateLength: updates.summary?.length || 0,
-        currentLength: data.summary?.length || 0,
-        preview: updates.summary?.substring(0, 100),
-      });
-      updatedData.summary = updates.summary;
-    }
-
-    if (updates.conclusion !== undefined) {
-      console.log("📝 [handleStepDataUpdate] Updating conclusion:", {
-        hasUpdate: !!updates.conclusion,
-        updateLength: updates.conclusion?.length || 0,
-        currentLength: data.conclusion?.length || 0,
-        preview: updates.conclusion?.substring(0, 100),
-      });
-      updatedData.conclusion = updates.conclusion;
-    }
-
-    if (updates.faqs) updatedData.faqs = [...updates.faqs];
-    if (updates.seoTitle) updatedData.seoTitle = updates.seoTitle;
-    if (updates.focusKeyword) updatedData.focusKeyword = updates.focusKeyword;
-    if (updates.seoDescription)
-      updatedData.seoDescription = updates.seoDescription;
-    if (updates.canonicalUrl) updatedData.canonicalUrl = updates.canonicalUrl;
-    if (updates.tags) updatedData.tags = [...updates.tags];
-    if (updates.author) updatedData.author = updates.author;
-    if (updates.publishDate) updatedData.publishDate = updates.publishDate;
-    if (updates.anchors) updatedData.anchors = [...updates.anchors];
-
-    console.log("💾 Setting new data state");
-    console.log("   Summary length:", updatedData.summary?.length || 0);
-    console.log("   Conclusion length:", updatedData.conclusion?.length || 0);
-    console.log("   Summary preview:", updatedData.summary?.substring(0, 80));
-    console.log(
-      "   Conclusion preview:",
-      updatedData.conclusion?.substring(0, 80),
-    );
-    console.log(
-      "   SEO Description:",
-      updatedData.seoDescription?.substring(0, 50),
-    );
-    console.log("   Tags:", updatedData.tags?.length || 0);
-    console.log("   Anchors:", updatedData.anchors?.length || 0);
-    setData(updatedData);
-
-    // Show toast for newly added content
-    if (updates.headings) {
-      const newHeadingsWithContent = updates.headings.filter(
-        (h) => h.content,
-      ).length;
-      const oldHeadingsWithContent = data.headings.filter(
-        (h) => h.content,
-      ).length;
-      if (newHeadingsWithContent > oldHeadingsWithContent) {
-        toast.success("✅ Content updated in editor!");
-      }
-    }
-
-    if (updates.summary && updates.summary !== data.summary) {
-      toast.success("Summary added!");
-    }
-
-    if (updates.conclusion && updates.conclusion !== data.conclusion) {
-      toast.success("Conclusion added!");
-    }
-
-    if (updates.faqs && updates.faqs !== data.faqs) {
-      toast.success("FAQs added!");
-    }
-
-    if (
-      updates.seoDescription &&
-      updates.seoDescription !== data.seoDescription
-    ) {
-      toast.success("SEO metadata updated!");
-    }
-
-    if (updates.tags && updates.tags.length > data.tags.length) {
-      toast.success("Tags updated!");
-    }
-
-    if (updates.anchors && updates.anchors.length > data.anchors.length) {
-      toast.success("Anchor links updated!");
-    }
+    // Optional: debug
+    console.log("✅ SEO update applied:", {
+      seoDescription: updates.seoDescription,
+      tags: updates.tags,
+    });
   };
 
   const handleStepGenerationComplete = () => {
-    toast.success("🎉 All sections generated! You can now edit and save.");
+    showToast.success("🎉 All sections generated! You can now edit and save.");
     setGenerationMode("full"); // Switch to normal editing mode
   };
 
@@ -3450,24 +3517,27 @@ export default function AIBlogBuilder() {
 
   return (
     <div className="min-h-screen bg-[#0f172b] text-slate-200 pb-20 w-full">
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            background: "#1e293b",
-            color: "#fff",
-            border: "1px solid #334155",
-          },
-        }}
-      />
-
       {/* Header */}
       <header className="fixed top-16 z-40 w-full max-w-7xl bg-[#0f172b]/10 backdrop-blur-3xl rounded-2xl border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
+                title="Go Back"
+              >
+                <FiArrowLeft size={20} />
+              </button>
+            )}
             <div className="hidden sm:block">
               <h1 className="text-base font-bold text-white">
                 Blog<span className="text-[#fe9a00]">Architect</span>
+                {blogId && (
+                  <span className="text-[10px] ml-1.5 px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded-full">
+                    Edit
+                  </span>
+                )}
                 <span className="text-[10px] ml-1.5 px-1.5 py-0.5 bg-[#fe9a00]/20 text-[#fe9a00] rounded-full">
                   PRO
                 </span>
@@ -3489,7 +3559,7 @@ export default function AIBlogBuilder() {
               icon={<FiDownload size={14} />}
               onClick={() => {
                 navigator.clipboard.writeText(data.compiledHtml);
-                toast.success("Copied!");
+                showToast.success("Copied!");
               }}
             >
               Export
@@ -3497,9 +3567,10 @@ export default function AIBlogBuilder() {
             <Button
               size="sm"
               icon={<FiSave size={14} />}
-              onClick={() => toast.success("Saved!")}
+              onClick={handleSave}
+              disabled={saving}
             >
-              Save
+              {saving ? "Saving..." : blogId ? "Update" : "Save"}
             </Button>
           </div>
         </div>
@@ -3552,9 +3623,11 @@ export default function AIBlogBuilder() {
 
             {generationMode === "step" ? (
               <StepByStepBlogGenerator
+                data={data}
                 topic={data.topic}
                 onDataUpdate={handleStepDataUpdate}
                 onComplete={handleStepGenerationComplete}
+                blogId={blogId}
               />
             ) : (
               <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-4">
@@ -3602,378 +3675,387 @@ export default function AIBlogBuilder() {
         {/* MAIN CONTENT - With independent scrollbar */}
         <div className="col-span-12 lg:col-span-9 h-[calc(100vh-5rem)] overflow-hidden">
           <div className="h-full overflow-y-auto pl-2 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-          <div className="flex gap-1 p-1 bg-slate-800/50 rounded-lg">
-            {(["content", "seo", "media"] as const).map((tab) => {
-              const isComplete = getTabStatus(tab);
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium flex items-center justify-center gap-1.5 transition-all ${
-                    activeTab === tab
-                      ? isComplete
-                        ? "bg-green-600 text-white shadow-lg"
-                        : "bg-[#fe9a00] text-white shadow-lg"
-                      : isComplete
-                        ? "bg-green-600/20 text-green-400 hover:bg-green-600/30"
-                        : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {tab === "content" && <FiEdit3 size={14} />}
-                  {tab === "seo" && <FiTarget size={14} />}
-                  {tab === "media" && <FiImage size={14} />}
-                  <span className="capitalize">{tab}</span>
-                  {isComplete && <FiCheckCircle size={12} />}
-                </button>
-              );
-            })}
-          </div>
-
-          {activeTab === "content" && (
-            <div className="space-y-4">
-              <Card title="Blog Title" number="1" icon={<FiType size={16} />}>
-                <Input
-                  value={data.seoTitle || ""}
-                  onChange={(e) =>
-                    setData({ ...data, seoTitle: e.target.value })
-                  }
-                  placeholder="Enter an engaging title..."
-                  className="text-lg font-semibold"
-                />
-                <div className="text-[10px] text-slate-500 mt-1">
-                  {(data.seoTitle || "").length}/60 characters
-                </div>
-              </Card>
-
-              <Card title="Summary" number="2" icon={<FiBookOpen size={16} />}>
-                <RichTextEditor
-                  key={`summary-${data.summary?.length || 0}`}
-                  content={data.summary || ""}
-                  onChange={(html) => {
-                    console.log(
-                      "✏️ Summary editor onChange:",
-                      html?.substring(0, 100),
-                    );
-                    setData({ ...data, summary: html });
-                  }}
-                  placeholder="Write a compelling summary..."
-                  minHeight="80px"
-                  showFullToolbar={false}
-                />
-                <div className="text-[10px] text-slate-500 mt-1">
-                  {stripHtml(data.summary || "").length} characters
-                </div>
-              </Card>
-
-              <Card
-                title="Content Sections"
-                number="3"
-                icon={<FiLayers size={16} />}
-                actions={
-                  <label className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={data.tableOfContents}
-                      onChange={(e) =>
-                        setData({ ...data, tableOfContents: e.target.checked })
-                      }
-                      className="rounded border-slate-600 bg-slate-700 text-[#fe9a00]"
-                    />
-                    TOC
-                  </label>
-                }
-              >
-                <div className="space-y-3">
-                  {data.headings.map((heading, index) => (
-                    <ContentSection
-                      key={`${heading.id}-${heading.content?.length || 0}`}
-                      heading={heading}
-                      index={index}
-                      onUpdate={(updates) => updateSection(index, updates)}
-                      onDelete={() => deleteSection(index)}
-                      onMove={(dir) => moveSection(index, dir)}
-                      isFirst={index === 0}
-                      isLast={index === data.headings.length - 1}
-                      onOpenMediaPicker={(type, callback) =>
-                        openMediaPicker(type, callback)
-                      }
-                    />
-                  ))}
+            <div className="flex gap-1 p-1 bg-slate-800/50 rounded-lg">
+              {(["content", "seo", "media"] as const).map((tab) => {
+                const isComplete = getTabStatus(tab);
+                return (
                   <button
-                    onClick={addSection}
-                    className="w-full py-3 border-2 border-dashed border-slate-700 rounded-xl text-sm text-slate-400 hover:text-[#fe9a00] hover:border-[#fe9a00] flex items-center justify-center gap-2"
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`flex-1 py-2 px-3 rounded-md text-sm font-medium flex items-center justify-center gap-1.5 transition-all ${
+                      activeTab === tab
+                        ? isComplete
+                          ? "bg-green-600 text-white shadow-lg"
+                          : "bg-[#fe9a00] text-white shadow-lg"
+                        : isComplete
+                          ? "bg-green-600/20 text-green-400 hover:bg-green-600/30"
+                          : "text-slate-400 hover:text-white"
+                    }`}
                   >
-                    <FiPlus size={16} /> Add Section
+                    {tab === "content" && <FiEdit3 size={14} />}
+                    {tab === "seo" && <FiTarget size={14} />}
+                    {tab === "media" && <FiImage size={14} />}
+                    <span className="capitalize">{tab}</span>
+                    {isComplete && <FiCheckCircle size={12} />}
                   </button>
-                </div>
-              </Card>
-
-              <Card title="Conclusion" number="4" icon={<FiTarget size={16} />}>
-                <RichTextEditor
-                  key={`conclusion-${data.conclusion?.length || 0}`}
-                  content={data.conclusion || ""}
-                  onChange={(html) => {
-                    console.log(
-                      "✏️ Conclusion editor onChange:",
-                      html?.substring(0, 100),
-                    );
-                    setData({ ...data, conclusion: html });
-                  }}
-                  placeholder="Write a strong conclusion..."
-                  minHeight="100px"
-                />
-                <div className="text-[10px] text-slate-500 mt-1">
-                  {stripHtml(data.conclusion || "").length} characters
-                </div>
-              </Card>
-
-              <Card
-                title="FAQs"
-                number="5"
-                icon={<FiMessageSquare size={16} />}
-              >
-                <FAQSection
-                  faqs={data.faqs}
-                  onUpdate={(faqs) => setData({ ...data, faqs })}
-                />
-              </Card>
+                );
+              })}
             </div>
-          )}
 
-          {activeTab === "seo" && (
-            <div className="space-y-4">
-              <Card title="SEO Settings" icon={<FiGlobe size={16} />}>
-                <div className="space-y-4">
-                  <div>
-                    <Label hint="120-160 chars">Meta Description</Label>
-                    <TextArea
-                      value={data.seoDescription || ""}
-                      onChange={(e) =>
-                        setData({ ...data, seoDescription: e.target.value })
-                      }
-                      placeholder="Meta description..."
-                      rows={3}
-                    />
-                    <div className="text-[10px] text-slate-500 mt-1">
-                      {(data.seoDescription || "").length}/160
-                    </div>
+            {activeTab === "content" && (
+              <div className="space-y-4">
+                <Card title="Blog Title" number="1" icon={<FiType size={16} />}>
+                  <Input
+                    value={data.seoTitle || ""}
+                    onChange={(e) =>
+                      setData({ ...data, seoTitle: e.target.value })
+                    }
+                    placeholder="Enter an engaging title..."
+                    className="text-lg font-semibold"
+                  />
+                  <div className="text-[10px] text-slate-500 mt-1">
+                    {(data.seoTitle || "").length}/60 characters
                   </div>
-                  <div>
-                    <Label>Focus Keyword</Label>
-                    <Input
-                      value={data.focusKeyword || ""}
-                      onChange={(e) =>
-                        setData({ ...data, focusKeyword: e.target.value })
-                      }
-                      placeholder="Main keyword..."
-                    />
-                  </div>
-                  <div>
-                    <Label hint="Auto-generated from title">
-                      Canonical URL
-                    </Label>
-                    <Input
-                      value={data.canonicalUrl || ""}
-                      onChange={(e) =>
-                        setData({ ...data, canonicalUrl: e.target.value })
-                      }
-                      placeholder="/blog-post-url"
-                      className="text-xs"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label>Author</Label>
-                      <Input
-                        value={data.author || ""}
-                        onChange={(e) =>
-                          setData({ ...data, author: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div>
-                      <Label>Date</Label>
-                      <Input
-                        type="date"
-                        value={data.publishDate || ""}
-                        onChange={(e) =>
-                          setData({ ...data, publishDate: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Tags</Label>
-                    <div className="flex gap-2 mb-2">
-                      <Input
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        placeholder="Add tag..."
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && (e.preventDefault(), addTag())
-                        }
-                      />
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={addTag}
-                        icon={<FiPlus size={12} />}
-                      />
-                    </div>
-                    {data.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {data.tags.map((tag, i) => (
-                          <Tag
-                            key={i}
-                            text={tag}
-                            onDelete={() =>
-                              setData({
-                                ...data,
-                                tags: data.tags.filter((_, idx) => idx !== i),
-                              })
-                            }
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
+                </Card>
 
-              <Card title="Auto-Links" icon={<FiLink2 size={16} />}>
-                <div className="space-y-2">
-                  {data.anchors.map((anchor, i) => (
-                    <div
-                      key={anchor.id}
-                      className="flex gap-2 items-center bg-slate-800/50 p-2 rounded-lg"
-                    >
-                      <Input
-                        value={anchor.keyword}
-                        onChange={(e) => {
-                          const n = [...data.anchors];
-                          n[i].keyword = e.target.value;
-                          setData({ ...data, anchors: n });
-                        }}
-                        placeholder="Keyword"
-                        className="flex-1"
-                      />
-                      <Input
-                        value={anchor.url}
-                        onChange={(e) => {
-                          const n = [...data.anchors];
-                          n[i].url = e.target.value;
-                          setData({ ...data, anchors: n });
-                        }}
-                        placeholder="URL"
-                        className="flex-1"
-                      />
-                      <button
-                        onClick={() =>
+                <Card
+                  title="Summary"
+                  number="2"
+                  icon={<FiBookOpen size={16} />}
+                >
+                  <RichTextEditor
+                    // key={`summary-${data.summary?.length || 0}`}
+                    content={data.summary || ""}
+                    onChange={(html) => {
+                      console.log(
+                        "✏️ Summary editor onChange:",
+                        html?.substring(0, 100),
+                      );
+                      setData({ ...data, summary: html });
+                    }}
+                    placeholder="Write a compelling summary..."
+                    minHeight="80px"
+                    showFullToolbar={false}
+                  />
+                  <div className="text-[10px] text-slate-500 mt-1">
+                    {stripHtml(data.summary || "").length} characters
+                  </div>
+                </Card>
+
+                <Card
+                  title="Content Sections"
+                  number="3"
+                  icon={<FiLayers size={16} />}
+                  actions={
+                    <label className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={data.tableOfContents}
+                        onChange={(e) =>
                           setData({
                             ...data,
-                            anchors: data.anchors.filter((_, idx) => idx !== i),
+                            tableOfContents: e.target.checked,
                           })
                         }
-                        className="text-slate-500 hover:text-red-400 p-1"
-                      >
-                        <FiTrash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    onClick={() =>
-                      setData({
-                        ...data,
-                        anchors: [
-                          ...data.anchors,
-                          { id: generateId(), keyword: "", url: "" },
-                        ],
-                      })
-                    }
-                    className="w-full py-2 border border-dashed border-slate-700 rounded-lg text-xs text-slate-400 hover:text-[#fe9a00] hover:border-[#fe9a00]"
-                  >
-                    + Add Auto-Link
-                  </button>
-                </div>
-              </Card>
-            </div>
-          )}
-
-          {activeTab === "media" && (
-            <Card
-              title="Media Library"
-              icon={<FiFolder size={16} />}
-              actions={
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  icon={<FiUpload size={12} />}
-                  onClick={() => openMediaPicker("all")}
+                        className="rounded border-slate-600 bg-slate-700 text-[#fe9a00]"
+                      />
+                      TOC
+                    </label>
+                  }
                 >
-                  Upload
-                </Button>
-              }
-            >
-              {data.mediaLibrary.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {data.mediaLibrary.map((media) => (
-                    <div
-                      key={media.id}
-                      className="group relative aspect-video bg-slate-800 rounded-xl overflow-hidden border border-slate-700"
+                  <div className="space-y-3">
+                    {data.headings.map((heading, index) => (
+                      <ContentSection
+                        key={heading.id} // ✅ فقط ثابت
+                        heading={heading}
+                        index={index}
+                        onUpdate={(updates) => updateSection(index, updates)}
+                        onDelete={() => deleteSection(index)}
+                        onMove={(dir) => moveSection(index, dir)}
+                        isFirst={index === 0}
+                        isLast={index === data.headings.length - 1}
+                        onOpenMediaPicker={(type, callback) =>
+                          openMediaPicker(type, callback)
+                        }
+                      />
+                    ))}
+                    <button
+                      onClick={addSection}
+                      className="w-full py-3 border-2 border-dashed border-slate-700 rounded-xl text-sm text-slate-400 hover:text-[#fe9a00] hover:border-[#fe9a00] flex items-center justify-center gap-2"
                     >
-                      {media.type === "image" ? (
-                        <img
-                          src={media.url}
-                          alt={media.alt}
-                          className="w-full h-full object-cover"
+                      <FiPlus size={16} /> Add Section
+                    </button>
+                  </div>
+                </Card>
+
+                <Card
+                  title="Conclusion"
+                  number="4"
+                  icon={<FiTarget size={16} />}
+                >
+                  <RichTextEditor
+                    // key={`conclusion-${data.conclusion?.length || 0}`}
+                    content={data.conclusion || ""}
+                    onChange={(html) => {
+                      console.log(
+                        "✏️ Conclusion editor onChange:",
+                        html?.substring(0, 100),
+                      );
+                      setData({ ...data, conclusion: html });
+                    }}
+                    placeholder="Write a strong conclusion..."
+                    minHeight="100px"
+                  />
+                  <div className="text-[10px] text-slate-500 mt-1">
+                    {stripHtml(data.conclusion || "").length} characters
+                  </div>
+                </Card>
+
+                <Card
+                  title="FAQs"
+                  number="5"
+                  icon={<FiMessageSquare size={16} />}
+                >
+                  <FAQSection
+                    faqs={data.faqs}
+                    onUpdate={(faqs) => setData({ ...data, faqs })}
+                  />
+                </Card>
+              </div>
+            )}
+
+            {activeTab === "seo" && (
+              <div className="space-y-4">
+                <Card title="SEO Settings" icon={<FiGlobe size={16} />}>
+                  <div className="space-y-4">
+                    <div>
+                      <Label hint="120-160 chars">Meta Description</Label>
+                      <TextArea
+                        value={data.seoDescription || ""}
+                        onChange={(e) =>
+                          setData({ ...data, seoDescription: e.target.value })
+                        }
+                        placeholder="Meta description..."
+                        rows={3}
+                      />
+                      <div className="text-[10px] text-slate-500 mt-1">
+                        {(data.seoDescription || "").length}/160
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Focus Keyword</Label>
+                      <Input
+                        value={data.focusKeyword || ""}
+                        onChange={(e) =>
+                          setData({ ...data, focusKeyword: e.target.value })
+                        }
+                        placeholder="Main keyword..."
+                      />
+                    </div>
+                    <div>
+                      <Label hint="Auto-generated from title">
+                        Canonical URL
+                      </Label>
+                      <Input
+                        value={data.canonicalUrl || ""}
+                        onChange={(e) =>
+                          setData({ ...data, canonicalUrl: e.target.value })
+                        }
+                        placeholder="/blog-post-url"
+                        className="text-xs"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Author</Label>
+                        <Input
+                          value={data.author || ""}
+                          onChange={(e) =>
+                            setData({ ...data, author: e.target.value })
+                          }
                         />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-slate-900">
-                          <FiVideo size={32} className="text-slate-600" />
+                      </div>
+                      <div>
+                        <Label>Date</Label>
+                        <Input
+                          type="date"
+                          value={data.publishDate || ""}
+                          onChange={(e) =>
+                            setData({ ...data, publishDate: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Tags</Label>
+                      <div className="flex gap-2 mb-2">
+                        <Input
+                          value={tagInput}
+                          onChange={(e) => setTagInput(e.target.value)}
+                          placeholder="Add tag..."
+                          onKeyDown={(e) =>
+                            e.key === "Enter" && (e.preventDefault(), addTag())
+                          }
+                        />
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={addTag}
+                          icon={<FiPlus size={12} />}
+                        />
+                      </div>
+                      {data.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {data.tags.map((tag, i) => (
+                            <Tag
+                              key={i}
+                              text={tag}
+                              onDelete={() =>
+                                setData({
+                                  ...data,
+                                  tags: data.tags.filter((_, idx) => idx !== i),
+                                })
+                              }
+                            />
+                          ))}
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center">
+                    </div>
+                  </div>
+                </Card>
+
+                <Card title="Auto-Links" icon={<FiLink2 size={16} />}>
+                  <div className="space-y-2">
+                    {data.anchors.map((anchor, i) => (
+                      <div
+                        key={anchor.id}
+                        className="flex gap-2 items-center bg-slate-800/50 p-2 rounded-lg"
+                      >
+                        <Input
+                          value={anchor.keyword}
+                          onChange={(e) => {
+                            const n = [...data.anchors];
+                            n[i].keyword = e.target.value;
+                            setData({ ...data, anchors: n });
+                          }}
+                          placeholder="Keyword"
+                          className="flex-1"
+                        />
+                        <Input
+                          value={anchor.url}
+                          onChange={(e) => {
+                            const n = [...data.anchors];
+                            n[i].url = e.target.value;
+                            setData({ ...data, anchors: n });
+                          }}
+                          placeholder="URL"
+                          className="flex-1"
+                        />
                         <button
                           onClick={() =>
                             setData({
                               ...data,
-                              mediaLibrary: data.mediaLibrary.filter(
-                                (m) => m.id !== media.id,
+                              anchors: data.anchors.filter(
+                                (_, idx) => idx !== i,
                               ),
                             })
                           }
-                          className="p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-lg"
+                          className="text-slate-500 hover:text-red-400 p-1"
                         >
                           <FiTrash2 size={14} />
                         </button>
                       </div>
-                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-linear-to-t from-black/80 to-transparent">
-                        <p className="text-xs text-white truncate">
-                          {media.alt}
-                        </p>
-                        {media.size && (
-                          <p className="text-[10px] text-slate-400">
-                            {formatFileSize(media.size)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 flex flex-col items-center">
-                  <FiImage size={48} className="mx-auto text-slate-600 mb-4" />
-                  <p className="text-slate-400 mb-4">No media files yet</p>
+                    ))}
+                    <button
+                      onClick={() =>
+                        setData({
+                          ...data,
+                          anchors: [
+                            ...data.anchors,
+                            { id: generateId(), keyword: "", url: "" },
+                          ],
+                        })
+                      }
+                      className="w-full py-2 border border-dashed border-slate-700 rounded-lg text-xs text-slate-400 hover:text-[#fe9a00] hover:border-[#fe9a00]"
+                    >
+                      + Add Auto-Link
+                    </button>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {activeTab === "media" && (
+              <Card
+                title="Media Library"
+                icon={<FiFolder size={16} />}
+                actions={
                   <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={<FiUpload size={12} />}
                     onClick={() => openMediaPicker("all")}
-                    icon={<FiUpload size={14} />}
                   >
-                    Upload Media
+                    Upload
                   </Button>
-                </div>
-              )}
-            </Card>
-          )}
+                }
+              >
+                {data.mediaLibrary.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {data.mediaLibrary.map((media) => (
+                      <div
+                        key={media.id}
+                        className="group relative aspect-video bg-slate-800 rounded-xl overflow-hidden border border-slate-700"
+                      >
+                        {media.type === "image" ? (
+                          <img
+                            src={media.url}
+                            alt={media.alt}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-slate-900">
+                            <FiVideo size={32} className="text-slate-600" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center">
+                          <button
+                            onClick={() => handleDeleteMedia(media)}
+                            className="p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-lg"
+                          >
+                            <FiTrash2 size={14} />
+                          </button>
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-linear-to-t from-black/80 to-transparent">
+                          <p className="text-xs text-white truncate">
+                            {media.alt}
+                          </p>
+                          {media.size && (
+                            <p className="text-[10px] text-slate-400">
+                              {formatFileSize(media.size)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 flex flex-col items-center">
+                    <FiImage
+                      size={48}
+                      className="mx-auto text-slate-600 mb-4"
+                    />
+                    <p className="text-slate-400 mb-4">No media files yet</p>
+                    <Button
+                      onClick={() => openMediaPicker("all")}
+                      icon={<FiUpload size={14} />}
+                    >
+                      Upload Media
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            )}
           </div>
         </div>
       </main>

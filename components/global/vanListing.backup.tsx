@@ -316,6 +316,9 @@ function ReservationPanel({
   const [postalCode, setPostalCode] = useState<string>("");
   const [city, setCity] = useState<string>("");
 
+  // Tooltip visibility for same-day reservations
+  const [showSameDayTooltip, setShowSameDayTooltip] = useState<boolean>(true);
+
   const basePriceCalc = usePriceCalculation(
     dateRange[0].startDate && formData.pickupTime
       ? `${format(dateRange[0].startDate, "yyyy-MM-dd")}T${
@@ -1650,7 +1653,23 @@ function ReservationPanel({
                         );
                       })()}
                   </div>
-                  <div>
+                  <div className="relative">
+                    {/* Tooltip for same-day reservation info */}
+                    {dateRange[0].startDate && dateRange[0].endDate &&
+                      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+                      showSameDayTooltip && (
+                        <div className="absolute -top-7 left-0 z-20 px-1 py-1 bg-slate-900 border border-amber-400/30 rounded text-amber-300 text-xs whitespace-nowrap shadow-lg pointer-events-auto flex items-center gap-2">
+                          <span>Reservations less than 24 hours <br/> are calculated as <b>1 day</b>.</span>
+                          <button
+                            type="button"
+                            onClick={() => setShowSameDayTooltip(false)}
+                            aria-label="Close tooltip"
+                            className="ml-2 text-amber-200 hover:text-amber-100 text-sm leading-none px-2 py-0.5 rounded focus:outline-none"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
                     <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
                       <FiClock className="text-[#fe9a00]" />
                       Return Time

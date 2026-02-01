@@ -26,6 +26,25 @@ export default function BlogListing({ posts }: BlogListingProps) {
   const [blogPosts, setBlogPosts] = useState<BlogPostFormatted[]>(posts || []);
   const [loading, setLoading] = useState(!posts);
   const [error, setError] = useState<string | null>(null);
+  const [missingSlugs, setMissingSlugs] = useState<string[]>([]);
+
+  // Track posts missing slugs for telemetry and UI warning
+  useEffect(() => {
+    if (!blogPosts || blogPosts.length === 0) {
+      setMissingSlugs([]);
+      return;
+    }
+
+    const missing = blogPosts
+      .filter((p) => !p.slug || p.slug.trim() === "")
+      .map((p) => p._id || p.id || "unknown");
+
+    if (missing.length > 0) {
+      console.warn(`[BlogListing] ${missing.length} posts missing slug:`, missing);
+    }
+
+    setMissingSlugs(missing);
+  }, [blogPosts]);
 
   // Fetch blogs from API if not provided as props
   useEffect(() => {
@@ -112,6 +131,33 @@ export default function BlogListing({ posts }: BlogListingProps) {
           </div>
         )}
 
+        {missingSlugs.length > 0 && (
+          <div className="mb-6 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/40 text-yellow-300 flex items-center justify-between">
+            <div>
+              <div className="font-semibold">⚠️ {missingSlugs.length} post(s) missing slug</div>
+              <div className="text-sm text-gray-300">Clicking a post will fall back to using its ID in the URL.</div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  console.log("[BlogListing] Missing slugs:", missingSlugs);
+                  // Lightweight UX hint for admins during dev
+                  try {
+                    // eslint-disable-next-line no-alert
+                    alert(`Missing slugs for ${missingSlugs.length} posts. Check console for IDs.`);
+                  } catch (e) {
+                    // ignore
+                  }
+                }}
+                className="px-3 py-2 rounded-lg bg-yellow-600/80 text-white text-sm font-semibold"
+              >
+                Log IDs
+              </button>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center items-center py-20">
             <div className="text-gray-400">Loading blogs...</div>
@@ -145,7 +191,7 @@ export default function BlogListing({ posts }: BlogListingProps) {
 
 function BlogCard({ post }: { post: BlogPostFormatted }) {
   return (
-    <Link href={`/blog/${post.slug}`}>
+    <Link href={`/blog/${encodeURIComponent(post.slug || post._id)}`}>
       <div className="group relative h-125 rounded-3xl overflow-hidden cursor-pointer">
         <div className="absolute inset-0">
           <Image

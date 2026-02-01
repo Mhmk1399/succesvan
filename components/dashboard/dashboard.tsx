@@ -17,8 +17,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiLogOut,
-  FiUser,
-  FiMessageSquare,
+   FiMessageSquare,
   FiBarChart2,
   FiGrid,
   FiMessageCircle,
@@ -48,6 +47,7 @@ import DiscountManagement from "./DiscountManagement";
 import CustomSelect from "../ui/CustomSelect";
 import { showToast } from "../../lib/toast";
 import AddPostBlog from "./addBlog";
+import BlogManagement from "./BlogManagement";
 import TicketsManagement from "./TicketsManagement";
 import { FiFileText } from "react-icons/fi";
 
@@ -141,6 +141,12 @@ const menuItems: MenuItem[] = [
     label: "Add Blog",
     icon: <FiFileText />,
     color: "from-violet-500 to-violet-600",
+  },
+  {
+    id: "manage-blogs",
+    label: "Manage Blogs",
+    icon: <FiClipboard />,
+    color: "from-indigo-500 to-indigo-600",
   },
 ];
 
@@ -381,6 +387,7 @@ export default function Dashboard() {
           {activeTab === "reports" && <ReportsManagement />}
           {activeTab === "tickets" && <TicketsManagement />}
           {activeTab === "blogs" && <AddPostBlog />}
+          {activeTab === "manage-blogs" && <BlogManagement />}
         </div>
       </main>
 

@@ -37,11 +37,59 @@ export const GET = async (req: NextRequest) => {
   }
 
   try {
-    const blogs = await Blog.find();
-    return NextResponse.json({ blogs }, { status: 200 });
+    // Parse query parameters for pagination and filtering
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const search = searchParams.get("search") || "";
+    const status = searchParams.get("status") || "";
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
+
+    // Build query filter
+    const filter: any = {};
+    
+    if (search) {
+      filter.$or = [
+        { "content.topic": { $regex: search, $options: "i" } },
+        { "seo.seoTitle": { $regex: search, $options: "i" } },
+        { slug: { $regex: search, $options: "i" } },
+      ];
+    }
+    
+    if (status && ["draft", "published", "archived"].includes(status)) {
+      filter["status"] = status;
+    }
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+    const sortOptions: any = {};
+    sortOptions[sortBy] = sortOrder === "asc" ? 1 : -1;
+
+    // Execute query with pagination
+    const [blogs, total] = await Promise.all([
+      Blog.find(filter)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
+        .select("_id slug status views readingTime wordCount createdAt updatedAt content.seoTitle content.topic content.compiledHtml content.summary media.featuredImage generationProgress.currentStep"),
+      Blog.countDocuments(filter),
+    ]);
+
+    return NextResponse.json({
+      blogs,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + blogs.length < total,
+      },
+    }, { status: 200 });
   } catch (error) {
+    console.error("GET_BLOGS_ERROR", error);
     return NextResponse.json(
-      { message: "Error logging in", error },
+      { message: "Error fetching blogs", error },
       { status: 500 },
     );
   }
@@ -66,17 +114,13 @@ export const DELETE = async (req: NextRequest) => {
   if (!decodedToken) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
-  const sotreId = decodedToken.storeId;
-  if (!sotreId) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+   
   const blogId = id;
   if (!blogId) {
     return new NextResponse("Blog ID is required", { status: 400 });
   }
   console.log(blogId);
-  console.log(sotreId);
-
+ 
   await Blog.findByIdAndDelete({ _id: id });
   return new NextResponse(
     JSON.stringify({ message: "Blog deleted successfully" }),
@@ -110,14 +154,11 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
     const decodedToken = Jwt.decode(token) as CustomJwtPayload;
-    const sotreId = decodedToken.storeId;
-    if (!sotreId) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+    
 
     const updatedBlog = await Blog.findByIdAndUpdate(
       id,
-      { ...body, storeId: sotreId },
+      { ...body, },
 
       { new: true },
     );

@@ -11,13 +11,13 @@
  */
 
 import {
-  openai,
   generateId,
   calculateReadingTime,
   stripHtml,
   countWords,
   getCurrentYear
 } from "./blog-utils";
+import { getOpenAI } from "./openai";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -147,7 +147,8 @@ REQUIREMENTS:
 
 Return ONLY valid JSON, no markdown formatting.`;
 
-  const outlineCompletion = await openai.chat.completions.create({
+  const client = getOpenAI();
+  const outlineCompletion = await client.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: "You are an expert SEO blog content strategist." },
@@ -176,7 +177,8 @@ The introduction should:
 
 Return ONLY the HTML content, no markdown or explanations.`;
 
-  const summaryCompletion = await openai.chat.completions.create({
+  const client2 = getOpenAI();
+  const summaryCompletion = await client2.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: "You are an expert blog content writer." },
@@ -215,7 +217,8 @@ Requirements:
 
 Return ONLY the HTML content, no heading tags (those are separate), no markdown.`;
 
-    const sectionCompletion = await openai.chat.completions.create({
+    const client3 = getOpenAI();
+    const sectionCompletion = await client3.chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: "You are an expert blog content writer." },
@@ -251,7 +254,8 @@ Requirements:
 
 Return ONLY HTML content.`;
 
-        const subCompletion = await openai.chat.completions.create({
+        const client4 = getOpenAI();
+        const subCompletion = await client4.chat.completions.create({
           model: "gpt-4o",
           messages: [
             { role: "system", content: "You are an expert blog content writer." },
@@ -290,7 +294,8 @@ The conclusion should:
 
 Return ONLY the HTML content.`;
 
-  const conclusionCompletion = await openai.chat.completions.create({
+  const client5 = getOpenAI();
+  const conclusionCompletion = await client5.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: "You are an expert blog content writer." },
@@ -322,7 +327,8 @@ Requirements:
 
 Return ONLY the answer text.`;
 
-    const faqCompletion = await openai.chat.completions.create({
+    const client6 = getOpenAI();
+    const faqCompletion = await client6.chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: "You are an expert answering questions clearly and concisely." },

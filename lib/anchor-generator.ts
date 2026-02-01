@@ -3,7 +3,7 @@
 // ============================================================================
 // Generates optimized URLs for anchor keywords using internal and external links
 
-import { openai } from "./openai";
+import { getOpenAI } from "./openai";
 import Blog from "@/model/blogs";
 
 /**
@@ -163,7 +163,8 @@ Focus on specific, actionable terms rather than generic headings.`;
   let aiAnchors: Array<{ keyword: string; context?: string; priority?: string }> = [];
 
   try {
-    const completion = await openai.chat.completions.create({
+    const client = getOpenAI();
+    const completion = await client.chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: systemPrompt },
@@ -248,7 +249,8 @@ ${needsExternalLinks.map((item, i) => `${i + 1}. "${item.keyword}"${item.context
 Provide trustworthy, relevant external links that add credibility.`;
 
     try {
-      const externalCompletion = await openai.chat.completions.create({
+      const client2 = getOpenAI();
+      const externalCompletion = await client2.chat.completions.create({
         model: "gpt-4o",
         messages: [
           { role: "system", content: externalSystemPrompt },

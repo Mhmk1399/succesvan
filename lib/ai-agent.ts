@@ -13,14 +13,10 @@
  * [discovery] → [recommendation] → [booking] → [availability] → [confirmation] → [complete]
  */
 
-import OpenAI from "openai";
+import { getOpenAI } from "./openai";
 import { buildComprehensiveRAG, checkAvailability, getSimpleLists } from "./comprehensive-rag";
 import Reservation from "@/model/reservation";
 import connect from "@/lib/data";
-
-const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-});
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -131,7 +127,8 @@ export async function processAgentTurn(
   console.log("📤 [AI Agent] Sending to GPT with", messages.length, "messages");
   
   // Call OpenAI
-  const completion = await openai.chat.completions.create({
+  const client = getOpenAI();
+  const completion = await client.chat.completions.create({
     model: "gpt-5-mini",
     messages: messages as any,
     response_format: { type: "json_object" },

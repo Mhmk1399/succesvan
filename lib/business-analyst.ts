@@ -12,7 +12,7 @@
  * - "Compare this month vs last month"
  */
 
-import { openai } from "./openai";
+import { getOpenAI } from "./openai";
 import { getReportRAGContext, selectReportSections } from "./report-rag";
 
 // ============================================================================
@@ -604,7 +604,8 @@ Remember: Be the trusted advisor who helps the admin make SMART DECISIONS backed
   });
   
   // Call OpenAI with JSON response format
-  const completion = await openai.chat.completions.create({
+  const client = getOpenAI();
+  const completion = await client.chat.completions.create({
     model: "gpt-4o",
     messages: messages as any,
     max_completion_tokens: 2000,
@@ -736,7 +737,8 @@ ${reportContext}
 
 Keep it concise and actionable.`;
   
-  const completion = await openai.chat.completions.create({
+  const client = getOpenAI();
+  const completion = await client.chat.completions.create({
     model: "gpt-4o",
     messages: [{ role: "system", content: systemPrompt }],
     max_completion_tokens: 200,
@@ -780,7 +782,8 @@ Provide a comparative analysis covering:
 
 Format with clear sections and use % changes prominently.`;
   
-  const completion = await openai.chat.completions.create({
+  const client2 = getOpenAI();
+  const completion = await client2.chat.completions.create({
     model: "gpt-4o",
     messages: [{ role: "system", content: systemPrompt }],
     max_completion_tokens: 1000,
@@ -812,7 +815,8 @@ Format as a JSON array of strings. Each recommendation should be:
 Example:
 ["Promote GPS add-ons at Mill Hill (only 12% attachment vs 35% at Hendon) with bundle discounts", "Contact 15 customers who haven't booked in 6+ months with a 15% return offer"]`;
   
-  const completion = await openai.chat.completions.create({
+  const client3 = getOpenAI();
+  const completion = await client3.chat.completions.create({
     model: "gpt-4o",
     messages: [{ role: "system", content: systemPrompt }],
     response_format: { type: "json_object" },

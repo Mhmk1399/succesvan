@@ -10,7 +10,8 @@
  * 6. SEO metadata
  */
 
-import { openai, generateId, getCurrentYear } from "./blog-utils";
+import { generateId, getCurrentYear } from "./blog-utils";
+import { getOpenAI } from "./openai";
 
 // ============================================================================
 // STEP 1: GENERATE HEADINGS TREE
@@ -47,7 +48,8 @@ REQUIREMENTS:
 
 Return ONLY valid JSON.`;
 
-  const completion = await openai.chat.completions.create({
+  const client = getOpenAI();
+  const completion = await client.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
@@ -108,7 +110,8 @@ Heading level: H${level}
 
 Make it engaging, informative, and valuable to the reader.`;
 
-  const completion = await openai.chat.completions.create({
+  const client3 = getOpenAI();
+  const completion = await client3.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
@@ -162,7 +165,8 @@ Topic: ${topic}
 
 Make it compelling and encourage readers to continue.`;
 
-  const completion = await openai.chat.completions.create({
+  const client3 = getOpenAI();
+  const completion = await client3.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
@@ -237,7 +241,8 @@ Topic: ${topic}
 
 Make it memorable and actionable.`;
 
-  const completion = await openai.chat.completions.create({
+  const client4 = getOpenAI();
+  const completion = await client4.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
@@ -341,7 +346,8 @@ ${contentContext}
 
 Create FAQs that directly address information in the content above. Make questions specific and answers helpful.`;
 
-  const completion = await openai.chat.completions.create({
+  const client5 = getOpenAI();
+  const completion = await client5.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
@@ -430,7 +436,8 @@ ${conclusionText ? `\nConclusion: ${conclusionText}` : ''}
 
 Make it SEO-optimized and compelling.`;
 
-  const completion = await openai.chat.completions.create({
+  const client6 = getOpenAI();
+  const completion = await client6.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },

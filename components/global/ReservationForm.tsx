@@ -32,12 +32,10 @@ import {
   VoiceData,
   ExtractedVoiceData,
   ConversationData,
-  UserData,
   RentalDetails,
   WorkingTime,
   SpecialDay,
   TimeSlotInfo,
-  ExtensionTimes,
 } from "../../types/reservation-form";
 
 export default function ReservationForm({
@@ -71,6 +69,9 @@ export default function ReservationForm({
 
   // Fast AI Agent modal state (quick 1-minute booking)
   const [showFastAgentModal, setShowFastAgentModal] = useState<boolean>(false);
+
+  // Tooltip visibility for same-day reservations
+  const [showSameDayTooltip, setShowSameDayTooltip] = useState<boolean>(true);
 
   // Initialize with undefined to avoid hydration mismatch
   const [dateRange, setDateRange] = useState<Range[]>([
@@ -172,8 +173,34 @@ export default function ReservationForm({
       }
     }
 
-    return generateTimeSlots(start, end, 15);
-  }, [formData.office, dateRange, offices]);
+    // Base slots
+    let slots = generateTimeSlots(start, end, 15);
+
+    // If pickup and return are on the same date and return time is selected,
+    // ensure pickup slots do not allow a duration less than 6 hours.
+    if (
+      dateRange[0].endDate &&
+      dateRange[0].startDate &&
+      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+      formData.returnTime
+    ) {
+      const [retHour, retMin] = formData.returnTime.split(":").map(Number);
+      const retMinutes = retHour * 60 + retMin;
+      const maxPickupMinutes = retMinutes - 6 * 60;
+      // If maxPickupMinutes < 0 then no pickup slots are valid (same-day 6h rule impossible)
+      if (maxPickupMinutes < 0) {
+        slots = [];
+      } else {
+        slots = slots.filter((s) => {
+          const [h, m] = s.split(":").map(Number);
+          const minutes = h * 60 + m;
+          return minutes <= maxPickupMinutes;
+        });
+      }
+    }
+
+    return slots;
+  }, [formData.office, dateRange, offices, formData.returnTime]);
 
   const returnTimeSlots = useMemo(() => {
     if (!formData.office || !dateRange[0].endDate) return [];
@@ -235,8 +262,34 @@ export default function ReservationForm({
       }
     }
 
-    return generateTimeSlots(start, end, 15);
-  }, [formData.office, dateRange, offices]);
+    // Base slots
+    let slots = generateTimeSlots(start, end, 15);
+
+    // If pickup and return are on the same date and pickup time is selected,
+    // ensure return slots respect minimum 6 hours duration.
+    if (
+      dateRange[0].startDate &&
+      dateRange[0].endDate &&
+      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+      formData.pickupTime
+    ) {
+      const [pickHour, pickMin] = formData.pickupTime.split(":").map(Number);
+      const pickMinutes = pickHour * 60 + pickMin;
+      const minReturnMinutes = pickMinutes + 6 * 60;
+      // If minReturnMinutes > 1439 then no return slots are valid (same-day 6h rule impossible)
+      if (minReturnMinutes > 1439) {
+        slots = [];
+      } else {
+        slots = slots.filter((s) => {
+          const [h, m] = s.split(":").map(Number);
+          const minutes = h * 60 + m;
+          return minutes >= minReturnMinutes;
+        });
+      }
+    }
+
+    return slots;
+  }, [formData.office, dateRange, offices, formData.pickupTime]);
 
   // Initialize voice recording hook
   const { isRecording, isProcessing, toggleRecording } = useVoiceRecording({
@@ -522,10 +575,42 @@ export default function ReservationForm({
   };
 
   const handleTimeChange = (name: string, time: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: time,
-    }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: time };
+
+      // Enforce 6-hour minimum if pickup and return are the same date
+      if (
+        dateRange[0].startDate &&
+        dateRange[0].endDate &&
+        dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString()
+      ) {
+        if (name === "pickupTime" && prev.returnTime) {
+          const [pickH, pickM] = time.split(":").map(Number);
+          const [retH, retM] = prev.returnTime.split(":").map(Number);
+          const pickMinutes = pickH * 60 + pickM;
+          const retMinutes = retH * 60 + retM;
+          if (retMinutes - pickMinutes < 6 * 60) {
+            // Clear return time as it's no longer valid
+            next.returnTime = "";
+            showToast.error("Minimum reservation on the same day is 6 hours");
+          }
+        }
+
+        if (name === "returnTime" && prev.pickupTime) {
+          const [retH, retM] = time.split(":").map(Number);
+          const [pickH, pickM] = prev.pickupTime.split(":").map(Number);
+          const pickMinutes = pickH * 60 + pickM;
+          const retMinutes = retH * 60 + retM;
+          if (retMinutes - pickMinutes < 6 * 60) {
+            // Clear pickup time as it's no longer valid
+            next.pickupTime = "";
+            showToast.error("Minimum reservation on the same day is 6 hours");
+          }
+        }
+      }
+
+      return next;
+    });
   };
 
   const getSelectedOffice = (): Office | undefined => {
@@ -628,6 +713,28 @@ export default function ReservationForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    // Validation: if pickup and return dates are the same, ensure minimum 6 hours
+    if (
+      dateRange[0].startDate &&
+      dateRange[0].endDate &&
+      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString()
+    ) {
+      if (!formData.pickupTime || !formData.returnTime) {
+        showToast.error("Please select pickup and return times (minimum 6 hours)");
+        setIsSubmitting(false);
+        return;
+      }
+      const [pickH, pickM] = formData.pickupTime.split(":").map(Number);
+      const [retH, retM] = formData.returnTime.split(":").map(Number);
+      const pickMinutes = pickH * 60 + pickM;
+      const retMinutes = retH * 60 + retM;
+      if (retMinutes - pickMinutes < 6 * 60) {
+        showToast.error("Minimum reservation on the same day is 6 hours");
+        setIsSubmitting(false);
+        return;
+      }
+    }
 
     try {
       // Store rental details in sessionStorage with time included
@@ -853,6 +960,25 @@ export default function ReservationForm({
 
         {/* Return Time */}
         <div className="">
+          {/* Info for same-day reservation */}
+          {/* Tooltip for same-day reservation info */}
+          <div className="relative w-full">
+            {dateRange[0].startDate && dateRange[0].endDate &&
+              dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+              showSameDayTooltip && (
+                <div className="absolute -top-7 left-11 z-20 px-3 py-1 bg-slate-900 border border-amber-400/30 rounded text-amber-300 text-xs whitespace-nowrap shadow-lg pointer-events-auto flex items-center gap-2">
+                  <span>Reservations less than 24 hours <br/> are calculated as <b>1 day</b>.</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowSameDayTooltip(false)}
+                    aria-label="Close tooltip"
+                    className="ml-2 text-amber-200 hover:text-amber-100 text-sm leading-none px-2 py-0.5 rounded focus:outline-none"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+          </div>
           <label
             className={`text-white font-semibold mb-2 flex items-center gap-2 ${
               isInline ? "text-xs mb-1" : "text-sm"

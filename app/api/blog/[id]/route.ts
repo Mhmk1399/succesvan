@@ -16,11 +16,49 @@ export async function GET(
   try {
     await connect();
 
-    // Try to find by MongoDB ID first, then by slug
-    let blog = await Blog.findById(resolvedParams.id);
-    
+    // Normalize identifier
+    const rawId = String(resolvedParams.id || "").trim();
+    const decodedId = decodeURIComponent(rawId);
+
+    // Try to find by MongoDB ID first
+    let blog = await Blog.findById(decodedId).catch(() => null);
+
+    // Try slug second
     if (!blog) {
-      blog = await Blog.findOne({ slug: resolvedParams.id });
+      blog = await Blog.findOne({ slug: decodedId }).catch(() => null);
+    }
+
+    // Try seo.canonicalUrl variants (supports full URL, pathname, or relative path)
+    if (!blog) {
+      const candidates: string[] = [decodedId];
+
+      // If it's a full URL, extract pathname
+      try {
+        if (/^https?:\/\//i.test(decodedId)) {
+          const u = new URL(decodedId);
+          candidates.push(u.href, u.pathname, u.pathname.replace(/\/$/, ""));
+
+          // Also construct a site-prefix version if NEXT_PUBLIC_SITE_URL is set
+          const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
+          if (siteUrl) candidates.push(`${siteUrl}${u.pathname}`);
+        }
+      } catch (e) {
+        // Not a full URL, ignore
+      }
+
+      // Try exact matches first
+      for (const c of Array.from(new Set(candidates))) {
+        blog = await Blog.findOne({ "seo.canonicalUrl": c }).catch(() => null);
+        if (blog) break;
+      }
+
+      // As a final attempt, try a case-insensitive ends-with match (helps if stored with/without host)
+      if (!blog) {
+        const last = decodedId.split("/").filter(Boolean).pop();
+        if (last) {
+          blog = await Blog.findOne({ "seo.canonicalUrl": { $regex: `${last}$`, $options: "i" } }).catch(() => null);
+        }
+      }
     }
 
     if (!blog) {

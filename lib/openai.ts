@@ -1,9 +1,16 @@
 import OpenAI from "openai";
 
-// Initialize OpenAI client
-export const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-});
+// Server-only OpenAI client factory
+export function getOpenAI() {
+  if (typeof window !== "undefined") {
+    throw new Error("OpenAI client must be used server-side only.");
+  }
+  const apiKey = process.env.OPENAI_API_KEY || process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("OpenAI API key is not set in environment variables.");
+  }
+  return new OpenAI({ apiKey });
+}
 
 /**
  * Transcribe audio using Whisper API
@@ -13,7 +20,8 @@ export const openai = new OpenAI({
 export async function transcribeAudio(audioBlob: Blob): Promise<string> {
   const file = new File([audioBlob], "audio.webm", { type: audioBlob.type });
   
-  const transcription = await openai.audio.transcriptions.create({
+  const client = getOpenAI();
+  const transcription = await client.audio.transcriptions.create({
     file: file,
     model: "whisper-1",
     language: "en", // optional: specify language for better accuracy
@@ -83,7 +91,8 @@ Output: {"office": "hendon_id", "category": "large_id", "startDate": "2025-12-14
 Input: "Medium van from Mill Hill"
 Output: {"office": "millhill_id", "category": "medium_id"}`;
 
-  const completion = await openai.chat.completions.create({
+  const client = getOpenAI();
+  const completion = await client.chat.completions.create({
     model: "gpt-5-mini",
     messages: [
       { role: "system", content: systemPrompt },
@@ -125,7 +134,8 @@ export async function processVoiceReservation(
 
   // Step 3: If autoSubmit is enabled, use function calling to create reservation
   if (autoSubmit) {
-    const completion = await openai.chat.completions.create({
+    const client2 = getOpenAI();
+    const completion = await client2.chat.completions.create({
       model: "gpt-5-mini",
       messages: [
         {
@@ -188,7 +198,8 @@ export async function processVoiceReservation(
 export async function textToSpeech(text: string): Promise<Buffer> {
   console.log("🔊 [TTS] Converting text to speech:", text.substring(0, 100) + "...");
   
-  const mp3 = await openai.audio.speech.create({
+  const client3 = getOpenAI();
+  const mp3 = await client3.audio.speech.create({
     model: "tts-1", // Use "tts-1-hd" for higher quality
     voice: "alloy", // Options: alloy, echo, fable, onyx, nova, shimmer
     input: text,
@@ -230,6 +241,9 @@ export async function conversationalReservation(
   console.log("💬 [Conversational Agent] Starting conversation turn");
   console.log("📝 [Conversational Agent] User said:", transcript);
   console.log("📋 [Conversational Agent] Current data:", currentData);
+
+  // Initialize OpenAI client
+  const openai = getOpenAI();
 
   // Handle initial greeting when user opens modal
   if (transcript.toLowerCase() === "start" && conversationHistory.length === 0) {

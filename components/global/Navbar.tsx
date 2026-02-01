@@ -238,7 +238,12 @@ export default function Navbar() {
     isScrolled || !hasAnnouncement ? "0px" : isMobile ? "32px" : "41px";
 
   // Hide on dashboard pages
-  if (["/dashboard", "/customerDashboard", "/register"].includes(pathname)) {
+  if (
+    pathname.startsWith("/dashboard/blog/edit") ||
+    pathname === "/customerDashboard" ||
+    pathname === "/register" ||
+    pathname === "/dashboard"
+  ) {
     return null;
   }
 
@@ -294,14 +299,14 @@ export default function Navbar() {
 
             {/* Center Logo - Mobile */}
             <Link href="/" className="md:hidden">
-          <Image
-                  src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
-                  alt="Success Van Hire"
-                  width={200}
-                  height={200}
-                  className=" md:h-24 w-auto group-hover:scale-110 transition-transform duration-500 drop-shadow-2xl"
-                  priority
-                />
+              <Image
+                src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png"
+                alt="Success Van Hire"
+                width={200}
+                height={200}
+                className=" md:h-24 w-auto group-hover:scale-110 transition-transform duration-500 drop-shadow-2xl"
+                priority
+              />
             </Link>
 
             {/* Right Section */}

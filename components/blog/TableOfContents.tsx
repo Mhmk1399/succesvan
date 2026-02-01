@@ -7,6 +7,7 @@ interface Heading {
   id: string;
   text: string;
   level: number;
+  children?: Heading[];
 }
 
 interface TableOfContentsProps {
@@ -21,28 +22,51 @@ export default function TableOfContents({ contentRef }: TableOfContentsProps) {
   useEffect(() => {
     if (!contentRef.current) return;
 
-    // Extract H2 and H3 headings from the content
-    const elements = contentRef.current.querySelectorAll("h2, h3");
-    const extractedHeadings: Heading[] = [];
+    const extract = () => {
+      // Extract H2-H5 headings from the content
+      const elements = contentRef.current!.querySelectorAll("h2, h3, h4, h5");
+      const flatHeadings: Heading[] = [];
 
-    elements.forEach((element, index) => {
-      const level = parseInt(element.tagName[1]);
-      const text =
-        element.textContent || `Heading ${index + 1}`;
-
-      // Create or use existing ID
-      if (!element.id) {
-        element.id = `heading-${index}`;
-      }
-
-      extractedHeadings.push({
-        id: element.id,
-        text,
-        level,
+      elements.forEach((element, index) => {
+        const level = parseInt(element.tagName[1]);
+        const text = element.textContent || `Heading ${index + 1}`;
+        if (!element.id) {
+          // Create stable ID
+          element.id = `heading-${index}-${Math.random().toString(36).substr(2, 4)}`;
+        }
+        flatHeadings.push({ id: element.id, text, level });
       });
+
+      // Group headings: h2 as parent, h3-h5 as children
+      const nestedHeadings: Heading[] = [];
+      let currentH2: Heading | null = null;
+      flatHeadings.forEach((heading) => {
+        if (heading.level === 2) {
+          currentH2 = { ...heading, children: [] };
+          nestedHeadings.push(currentH2);
+        } else if (heading.level > 2 && currentH2) {
+          currentH2.children!.push(heading);
+        } else {
+          // If no H2 parent found, push as top-level
+          nestedHeadings.push({ ...heading, children: [] });
+          currentH2 = null;
+        }
+      });
+
+      setHeadings(nestedHeadings);
+    };
+
+    // Run once to extract immediately
+    extract();
+
+    // Observe changes to content (e.g., sanitized HTML being set) and re-extract
+    const observer = new MutationObserver(() => {
+      extract();
     });
 
-    setHeadings(extractedHeadings);
+    observer.observe(contentRef.current, { childList: true, subtree: true });
+
+    return () => observer.disconnect();
   }, [contentRef]);
 
   // Handle scroll to heading
@@ -106,17 +130,36 @@ export default function TableOfContents({ contentRef }: TableOfContentsProps) {
         {isOpen && (
           <div className="mt-3 p-4 bg-white/5 border border-white/10 rounded-xl space-y-2 animate-in fade-in duration-200">
             {headings.map((heading) => (
-              <button
-                key={heading.id}
-                onClick={() => handleHeadingClick(heading.id)}
-                className={`block w-full text-left px-3 py-2 rounded-lg transition-all ${
-                  activeId === heading.id
-                    ? "bg-[#fe9a00] text-white font-semibold"
-                    : "text-gray-300 hover:text-white hover:bg-white/5"
-                } ${heading.level === 3 ? "ml-4 text-sm" : "text-base"}`}
-              >
-                {heading.text}
-              </button>
+              <div key={heading.id}>
+                <button
+                  onClick={() => handleHeadingClick(heading.id)}
+                  className={`block w-full text-left px-3 py-2 rounded-lg transition-all ${
+                    activeId === heading.id
+                      ? "bg-[#fe9a00] text-white font-semibold"
+                      : "text-gray-300 hover:text-white hover:bg-white/5"
+                  } text-base`}
+                >
+                  {heading.text}
+                </button>
+                {heading.children && heading.children.length > 0 && (
+                  <ul className="ml-5 mt-1 space-y-1 list-disc">
+                    {heading.children.map((child) => (
+                      <li key={child.id}>
+                        <button
+                          onClick={() => handleHeadingClick(child.id)}
+                          className={`block w-full text-left px-3 py-1 rounded transition-all text-sm ${
+                            activeId === child.id
+                              ? "bg-[#fe9a00] text-white font-semibold"
+                              : "text-gray-300 hover:text-white hover:bg-white/5"
+                          }`}
+                        >
+                          {child.text}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             ))}
           </div>
         )}
@@ -131,17 +174,36 @@ export default function TableOfContents({ contentRef }: TableOfContentsProps) {
 
         <nav className="space-y-2">
           {headings.map((heading) => (
-            <button
-              key={heading.id}
-              onClick={() => handleHeadingClick(heading.id)}
-              className={`block w-full text-left px-3 py-2 rounded-lg transition-all duration-200 text-sm leading-relaxed ${
-                activeId === heading.id
-                  ? "bg-[#fe9a00]/20 text-[#fe9a00] border-l-2 border-[#fe9a00] pl-2 font-semibold"
-                  : "text-gray-300 hover:text-white hover:bg-white/5 border-l-2 border-transparent"
-              } ${heading.level === 3 ? "ml-3" : ""}`}
-            >
-              {heading.text}
-            </button>
+            <div key={heading.id}>
+              <button
+                onClick={() => handleHeadingClick(heading.id)}
+                className={`block w-full text-left px-3 py-2 rounded-lg transition-all duration-200 text-sm leading-relaxed ${
+                  activeId === heading.id
+                    ? "bg-[#fe9a00]/20 text-[#fe9a00] border-l-2 border-[#fe9a00] pl-2 font-semibold"
+                    : "text-gray-300 hover:text-white hover:bg-white/5 border-l-2 border-transparent"
+                }`}
+              >
+                {heading.text}
+              </button>
+              {heading.children && heading.children.length > 0 && (
+                <ul className="ml-5 mt-1 space-y-1 list-disc">
+                  {heading.children.map((child) => (
+                    <li key={child.id}>
+                      <button
+                        onClick={() => handleHeadingClick(child.id)}
+                        className={`block w-full text-left px-3 py-1 rounded transition-all text-sm ${
+                          activeId === child.id
+                            ? "bg-[#fe9a00]/20 text-[#fe9a00] font-semibold"
+                            : "text-gray-300 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        {child.text}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           ))}
         </nav>
 

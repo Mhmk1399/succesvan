@@ -297,9 +297,24 @@ export async function POST(request: NextRequest) {
         console.log(`🔍 [Step Generator] Generated content length: ${content?.length || 0} characters`);
         console.log(`🔍 [Step Generator] Content preview: ${content?.substring(0, 100)}...`);
 
+        // Preserve existing content (e.g., images) and append new content
+        const existingContent = blog.content.headings[headingIndex].content || "";
+        const hasImage = existingContent.includes('<figure') || existingContent.includes('<img');
+        
+        // If heading already has content with image, append new content after the image
+        let newContent;
+        if (hasImage) {
+          // Extract existing content and append new content
+          newContent = existingContent + content;
+          console.log(`🔍 [Step Generator] Preserving existing image, appending new content`);
+        } else {
+          // No existing content, use new content
+          newContent = content;
+        }
+
         // Mark the nested document as modified to ensure Mongoose saves it
         blog.markModified('content.headings');
-        blog.content.headings[headingIndex].content = content;
+        blog.content.headings[headingIndex].content = newContent;
         blog.generationProgress.currentHeadingIndex = headingIndex;
         blog.generationProgress.currentStep = "content";
         blog.markModified('content.headings');
@@ -813,6 +828,14 @@ export async function POST(request: NextRequest) {
           blogId: blog._id,
           step: "completed",
           message: "Blog generation completed! All content approved.",
+          data: {
+            seoDescription: blog.seo.seoDescription,
+            tags: blog.seo.tags,
+            author: blog.seo.author,
+            anchors: blog.seo.anchors,
+            seoTitle: blog.seo.seoTitle,
+            focusKeyword: blog.seo.focusKeyword,
+          },
           blog: blog
         });
       }

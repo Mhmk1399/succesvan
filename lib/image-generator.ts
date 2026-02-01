@@ -4,11 +4,7 @@
  * Generates relevant, high-quality images for blog sections using OpenAI DALL-E
  */
 
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-});
+import { getOpenAI } from "./openai";
 
 /**
  * Generate an image for a blog heading using DALL-E
@@ -39,7 +35,8 @@ export async function generateBlogImage(
   // Generate image with DALL-E
   console.log(`   Creating image with DALL-E...`);
   
-  const response = await openai.images.generate({
+  const client = getOpenAI();
+  const response = await client.images.generate({
     model: "dall-e-3",
     prompt: imagePrompt,
     n: 1,
@@ -101,7 +98,8 @@ Section Heading: ${headingText}
 
 The image should visually represent this section in a professional, engaging way.`;
 
-  const completion = await openai.chat.completions.create({
+  const client2 = getOpenAI();
+  const completion = await client2.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { openai, extractReservationData } from "@/lib/openai";
+import { getOpenAI, extractReservationData } from "@/lib/openai";
 import connect from "@/lib/data";
 import Office from "@/model/office";
 import Category from "@/model/category";
@@ -9,6 +9,9 @@ export async function POST(request: NextRequest) {
   console.log("🎙️ [API] Voice parse request received");
 
   try {
+    // Initialize OpenAI client
+    const openai = getOpenAI();
+
     // Parse request - support both JSON (old) and FormData (new with audio)
     const contentType = request.headers.get("content-type");
     console.log("📝 [API] Content-Type:", contentType);

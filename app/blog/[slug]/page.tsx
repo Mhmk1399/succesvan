@@ -123,6 +123,13 @@ export default async function BlogDetailPage({ params }: Props) {
     notFound();
   }
 
+  // Debug: log content length to help diagnose empty content issues
+  try {
+    console.log(`[Blog Page] Fetched blog "${blog.title}" content length: ${String(blog.content || "").length}`);
+  } catch (e) {
+    // ignore logging errors
+  }
+
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL || "https://successvanhire.co.uk/";
   const blogSchema = generateBlogSchema(blog, siteUrl);
@@ -241,7 +248,13 @@ export default async function BlogDetailPage({ params }: Props) {
           </div>
 
           {/* Blog Content */}
-          <BlogDetailClient content={blog.content} />
+          {(!blog.content || blog.content.trim() === "") && (
+            <div className="mb-6 p-4 rounded-lg bg-yellow-900/20 border border-yellow-800 text-yellow-200">
+              ⚠️ This article has no compiled HTML. Showing available summary/sections instead.
+            </div>
+          )}
+
+          <BlogDetailClient content={blog.content || blog.excerpt || ""} />
         </article>
 
         {/* Related Articles Section */}

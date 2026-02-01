@@ -7,7 +7,7 @@
  * 3. COMPLETE BOOKING - Collect dates, verify phone, create reservation
  */
 
-import OpenAI from "openai";
+import { getOpenAI } from "./openai";
 import connect from "@/lib/data";
 import Category from "@/model/category";
 import Office from "@/model/office";
@@ -15,9 +15,7 @@ import User from "@/model/user";
 import Reservation from "@/model/reservation";
 import jwt from "jsonwebtoken";
 
-const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-});
+
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -348,7 +346,8 @@ async function handleAskNeeds(
   const offices = await Office.find({}).lean();
 
   // Use GPT to understand needs and match categories
-  const completion = await openai.chat.completions.create({
+  const client = getOpenAI();
+  const completion = await client.chat.completions.create({
     model: "gpt-5-mini",
     messages: [
       {
@@ -748,7 +747,8 @@ async function handleVoiceBooking(
   const todayStr = today.toISOString().split("T")[0];
 
   // Use GPT to parse the voice input for booking details
-  const completion = await openai.chat.completions.create({
+  const client2 = getOpenAI();
+  const completion = await client2.chat.completions.create({
     model: "gpt-5-mini",
     messages: [
       {
@@ -919,7 +919,8 @@ async function handleVoicePhone(
   }
 
   // Use GPT to extract phone number from natural language
-  const completion = await openai.chat.completions.create({
+  const client3 = getOpenAI();
+  const completion = await client3.chat.completions.create({
     model: "gpt-5-mini",
     messages: [
       {

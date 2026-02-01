@@ -6,15 +6,9 @@
  * - blog-step-generator.ts (step-by-step generation)
  */
 
-import OpenAI from "openai";
+// OpenAI client should be used via `lib/openai.ts` which provides a server-only factory (`getOpenAI`).
+// Do NOT initialize OpenAI here to avoid constructing it in client-side bundles.
 
-// ============================================================================
-// OPENAI CLIENT
-// ============================================================================
-
-export const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-});
 
 // ============================================================================
 // ID GENERATION
@@ -85,23 +79,72 @@ export const generateSlug = (title: string): string => {
     .replace(/-+/g, "-");
 };
 
+// Helper function to safely coerce content to string (supports string or structured content)
+function coerceContentToString(content: any): string {
+  if (!content && content !== 0) return "";
+  if (typeof content === "string") return content;
+  if (typeof content === "object") {
+    // Prefer compiledHtml, summary, or fallback to JSON string (concise)
+    return (
+      (content.compiledHtml as string) ||
+      (content.summary as string) ||
+      JSON.stringify(content)
+    );
+  }
+  return String(content);
+}
+
 // Helper function to extract first image from HTML content
-export const extractImageFromContent = (content: string): string => {
+export const extractImageFromContent = (content: any): string => {
+  const contentStr = coerceContentToString(content);
   const imgRegex = /<img[^>]+src=["']([^"']+)["']/;
-  const match = content.match(imgRegex);
+  const match = contentStr.match(imgRegex);
   return match ? match[1] : "/assets/images/van.png";
 };
 
+// Assemble structured content object into a single HTML string
+function assembleContentFromObject(contentObj: any): string {
+  if (!contentObj) return "";
+  // If compiledHtml exists, prefer it
+  if (typeof contentObj === "string") return contentObj;
+  if (contentObj.compiledHtml && contentObj.compiledHtml.trim() !== "") {
+    return contentObj.compiledHtml;
+  }
+
+  const parts: string[] = [];
+
+  if (contentObj.summary) {
+    parts.push(`<div class="lead">${contentObj.summary}</div>`);
+  }
+
+  if (Array.isArray(contentObj.headings)) {
+    contentObj.headings.forEach((h: any) => {
+      const level = h.level && Number.isFinite(h.level) ? h.level : 2;
+      const idAttr = h.id ? ` id="${h.id}"` : "";
+      parts.push(`<h${level}${idAttr}>${h.text}</h${level}>`);
+      if (h.content) parts.push(`<div>${h.content}</div>`);
+    });
+  }
+
+  if (contentObj.conclusion) {
+    parts.push(`<div class="conclusion">${contentObj.conclusion}</div>`);
+  }
+
+  return parts.join("\n");
+}
+
 // Helper function to estimate read time from content
-export const estimateReadTime = (content: string): number => {
-  const textOnly = content.replace(/<[^>]*>/g, "");
-  const words = textOnly.split(/\s+/).length;
-  return Math.ceil(words / 200); // Average 200 words per minute
+export const estimateReadTime = (content: any): number => {
+  const contentStr = coerceContentToString(content);
+  const textOnly = contentStr.replace(/<[^>]*>/g, "");
+  const words = textOnly.trim() === "" ? 0 : textOnly.split(/\s+/).length;
+  return Math.max(1, Math.ceil(words / 200)); // Average 200 words per minute
 };
 
 // Helper function to strip HTML tags and get plain text
-export const stripHtmlTags = (html: string): string => {
-  return html
+export const stripHtmlTags = (html: any): string => {
+  const contentStr = coerceContentToString(html);
+  return contentStr
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
@@ -115,7 +158,7 @@ export const stripHtmlTags = (html: string): string => {
 
 // Get excerpt from content (first 160 chars for meta description)
 export const getExcerpt = (
-  content: string,
+  content: any,
   maxLength: number = 160,
 ): string => {
   const plainText = stripHtmlTags(content);
@@ -141,6 +184,7 @@ export interface BlogPostFormatted {
   _id: string;
   title: string;
   slug: string;
+  canonicalUrl?: string;
   excerpt: string;
   content: string;
   image: string;
@@ -161,18 +205,39 @@ export const convertApiToBlogPost = (apiData: BlogPost): BlogPostFormatted => {
     day: "2-digit",
   });
 
+  // Support both string and structured content objects
+  const rawContent: any = (apiData as any).content;
+  let contentStr = "";
+  if (typeof rawContent === "string") {
+    contentStr = rawContent;
+  } else if (rawContent && typeof rawContent === "object") {
+    // Assemble from structured content when compiledHtml is missing
+    contentStr = assembleContentFromObject(rawContent);
+  } else {
+    contentStr = String(rawContent || "");
+  }
+
+  const featured = (apiData as any).media?.featuredImage || "";
+  const image = featured || extractImageFromContent(contentStr) || "/assets/images/van.png";
+
+  const computedSlug = (apiData as any).slug || generateSlug(apiData.title || "");
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://successvanhire.co.uk").replace(/\/$/, "");
+  const canonicalFromApi = (apiData as any).seo?.canonicalUrl || (apiData as any).canonicalUrl || "";
+  const canonicalUrl = canonicalFromApi || `${siteUrl}/blog/${computedSlug}`;
+
   return {
     id: apiData.id || "",
     _id: apiData._id || "",
     title: apiData.title || "",
-    slug: generateSlug(apiData.title || ""),
-    excerpt: getExcerpt(apiData.content || apiData.description || "", 160),
-    content: apiData.content || "",
-    image: extractImageFromContent(apiData.content) || "/assets/images/van.png",
-    author: "Success Van",
-    category: "Blog",
+    slug: computedSlug,
+    canonicalUrl,
+    excerpt: getExcerpt(contentStr || apiData.description || "", 160),
+    content: contentStr || apiData.content || "",
+    image,
+    author: (apiData as any).author || "Success Van",
+    category: (apiData as any).category || "Blog",
     date: date,
-    readTime: Math.max(1, estimateReadTime(apiData.content || "")),
+    readTime: (apiData as any).readingTime || Math.max(1, estimateReadTime(contentStr || "")),
     seoTitle: apiData.seoTitle,
     createdAt: apiData.createdAt,
     updatedAt: apiData.updatedAt,
@@ -218,33 +283,100 @@ export const fetchAllBlogs = async (): Promise<BlogPostFormatted[]> => {
   }
 };
 
-// Fetch a single blog by slug
+// Fetch a single blog by slug or id
 export const fetchBlogBySlug = async (
-  slug: string,
+  slugOrId: string,
 ): Promise<BlogPostFormatted | null> => {
   try {
-    console.log("[Blog Utils] Fetching blog by slug:", slug);
-    const blogs = await fetchAllBlogs();
+    // Normalize input: remove query/hash and trim
+    const cleanedId = (slugOrId || "").split(/[?#]/)[0].trim();
+    console.log("[Blog Utils] Fetching blog by identifier:", cleanedId);
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
-    const blog = blogs.find((blog) => {
-      const match = blog.slug === slug;
-      console.log(
-        `[Blog Utils] Checking slug: "${blog.slug}" === "${slug}" => ${match}`,
-      );
-      return match;
-    });
+    // Try single-blog endpoint first (works with both Mongo _id, slug, and canonicalUrl)
+    try {
+      // Normalize possible canonical URL input: if it's a full URL, try the pathname as an alternative identifier
+      const candidates = [slugOrId];
+      try {
+        if (/^https?:\/\//i.test(slugOrId)) {
+          const u = new URL(slugOrId);
+          candidates.push(u.pathname, u.pathname.replace(/\/$/, ""));
 
-    if (!blog) {
-      console.warn(`[Blog Utils] No blog found for slug: ${slug}`);
-      console.log(
-        "[Blog Utils] Available slugs:",
-        blogs.map((b) => b.slug),
-      );
+          const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
+          if (siteUrl) candidates.push(`${siteUrl}${u.pathname}`);
+        }
+      } catch (e) {
+        // not a full URL
+      }
+
+      let found: BlogPostFormatted | null = null;
+
+      for (const candidate of Array.from(new Set(candidates))) {
+        const res = await fetch(`${baseUrl}/api/blog/${encodeURIComponent(candidate)}`, {
+          next: { revalidate: 3600 },
+        });
+
+        if (!res.ok) {
+          // try next candidate
+          console.debug(`[Blog Utils] Candidate ${candidate} returned ${res.status}`);
+          continue;
+        }
+
+        const data = await res.json();
+        console.log(`[Blog Utils] Single blog API response for ${candidate}:`, data);
+
+        if (data?.success && data?.blog) {
+          const b: any = data.blog;
+          // Normalize structured content and assemble if needed
+          const rawContent = b.content;
+          let contentStr = "";
+          if (typeof rawContent === "string") contentStr = rawContent;
+          else if (rawContent && typeof rawContent === "object") contentStr = assembleContentFromObject(rawContent);
+
+          const image = b.media?.featuredImage || extractImageFromContent(contentStr || "") || "/assets/images/van.png";
+
+          found = {
+            id: b.id || b._id || "",
+            _id: b._id || "",
+            title: b.title || "",
+            slug: b.slug || generateSlug(b.title || ""),
+            excerpt: getExcerpt(contentStr || b.excerpt || "", 160),
+            content: contentStr || b.content || "",
+            image,
+            author: b.author || "Success Van",
+            category: b.category || "Blog",
+            date: new Date(b.createdAt).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }),
+            readTime: b.readingTime || Math.max(1, estimateReadTime(contentStr || "")),
+            seoTitle: b.seo?.seoTitle || b.seoTitle,
+            createdAt: b.createdAt,
+            updatedAt: b.updatedAt,
+          };
+
+          return found;
+        }
+      }
+
+      if (!found) console.warn(`[Blog Utils] Single-blog endpoint did not find blog for any candidate: ${candidates.join(", ")}`);
+    } catch (err) {
+      console.warn("[Blog Utils] Single blog fetch failed:", err);
     }
 
-    return blog || null;
+    // Fallback - fetch all blogs and try matching by slug or _id
+    console.log("[Blog Utils] Falling back to fetching all blogs for lookup:", slugOrId);
+    const blogs = await fetchAllBlogs();
+    const bySlug = blogs.find((blog) => blog.slug === slugOrId);
+    if (bySlug) return bySlug;
+    const byId = blogs.find((blog) => blog._id === slugOrId || blog.id === slugOrId);
+    if (byId) return byId;
+
+    console.warn(`[Blog Utils] No blog found for identifier: ${slugOrId}`);
+    return null;
   } catch (error) {
-    console.error("[Blog Utils] Error fetching blog by slug:", error);
+    console.error("[Blog Utils] Error fetching blog by identifier:", error);
     return null;
   }
 };

@@ -2,6 +2,7 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -25,10 +26,15 @@ export async function uploadImage(key: string, file: Buffer | Uint8Array) {
 }
 
 export async function getImageUrl(key: string) {
-  const cmd = new GetObjectCommand({
-    Bucket:"svh-bucket-s3",
+  // Return permanent S3 URL format
+  return `https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/${key}`;
+}
+
+export async function deleteImage(key: string) {
+  const cmd = new DeleteObjectCommand({
+    Bucket: "svh-bucket-s3",
     Key: key,
   });
 
-  return await getSignedUrl(s3, cmd, { expiresIn: 3600 });
+  await s3.send(cmd);
 }
