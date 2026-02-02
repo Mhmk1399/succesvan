@@ -329,7 +329,7 @@ async function handleAskNeeds(
   if (userMessage === "start" || !userMessage.trim()) {
     return {
       message:
-        "Hi! Im niki youre AI frien  What do you need to move or transport? Tell me about your job - furniture, boxes, equipment, or something else?",
+        "Hi! Im niki you're AI friend  What do you need to move or transport? Tell me about your job - furniture, boxes, equipment, or something else?",
       state: { ...currentState, phase: "ask_needs" },
       showSuggestions: false,
       needsPhoneInput: false,

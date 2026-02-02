@@ -1,6 +1,6 @@
 /**
  * Shared Blog Generation Utilities
- * 
+ *
  * Common functions and configurations used by both:
  * - blog-generator.ts (full generation)
  * - blog-step-generator.ts (step-by-step generation)
@@ -8,7 +8,6 @@
 
 // OpenAI client should be used via `lib/openai.ts` which provides a server-only factory (`getOpenAI`).
 // Do NOT initialize OpenAI here to avoid constructing it in client-side bundles.
-
 
 // ============================================================================
 // ID GENERATION
@@ -58,11 +57,14 @@ export const stripHtml = (html: string): string => {
 
 /**
  * Count words in text
- * @param text - Text to count words in
+ * @param text - Text to count words
  * @returns Number of words
  */
 export const countWords = (text: string): number => {
-  return text.trim().split(/\s+/).filter(w => w.length > 0).length;
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 0).length;
 };
 
 // ============================================================================
@@ -96,11 +98,45 @@ function coerceContentToString(content: any): string {
 
 // Helper function to extract first image from HTML content
 export const extractImageFromContent = (content: any): string => {
-  const contentStr = coerceContentToString(content);
-  const imgRegex = /<img[^>]+src=["']([^"']+)["']/;
-  const match = contentStr.match(imgRegex);
-  return match ? match[1] : "/assets/images/van.png";
+  const html = coerceContentToString(content);
+  const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return imgMatch ? imgMatch[1] : "";
 };
+
+// Helper function to get excerpt from content
+export const getExcerpt = (
+  content: string,
+  maxLength: number = 150,
+): string => {
+  const stripped = stripHtml(content);
+  if (stripped.length <= maxLength) return stripped;
+  return stripped.substring(0, maxLength).trim() + "...";
+};
+
+// ============================================================================
+// CONTENT ASSEMBLY
+// ============================================================================
+
+// Helper function to apply anchor links to content
+function applyAnchorsToContent(html: string, anchors: any[]): string {
+  if (!Array.isArray(anchors) || anchors.length === 0) return html;
+  let result = html;
+  anchors.forEach((anchor) => {
+    if (anchor.keyword && anchor.url) {
+      // Escape special regex characters in keyword
+      const escapedKeyword = anchor.keyword.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&",
+      );
+      const regex = new RegExp(`\\b${escapedKeyword}\\b`, "gi");
+      result = result.replace(
+        regex,
+        `<a href="${anchor.url}" class="text-[#fe9a00] hover:underline" target="_blank">${anchor.keyword}</a>`,
+      );
+    }
+  });
+  return result;
+}
 
 // Assemble structured content object into a single HTML string
 function assembleContentFromObject(contentObj: any): string {
@@ -113,8 +149,33 @@ function assembleContentFromObject(contentObj: any): string {
 
   const parts: string[] = [];
 
+  // Get anchors from seo section (passed in contentObj for convenience)
+  const anchors = contentObj.anchors || [];
+
+  // Summary section with heading
   if (contentObj.summary) {
-    parts.push(`<div class="lead">${contentObj.summary}</div>`);
+    const summaryWithAnchors = applyAnchorsToContent(
+      contentObj.summary,
+      anchors,
+    );
+    parts.push(
+      `<h2 class="font-bold text-2xl mb-4 mt-8 text-white">📝 Summary</h2>`,
+    );
+    parts.push(
+      `<div class="bg-linear-to-r from-orange-500/10 to-gray-800/10 p-8 rounded-2xl mb-8 border border-orange-500/20 backdrop-blur-sm">`,
+    );
+    parts.push(`  <div class="flex items-start gap-4">`);
+
+    parts.push(`    <div class="flex-1">`);
+    parts.push(
+      `      <h3 class="text-white font-bold text-lg mb-2">Quick Overview</h3>`,
+    );
+    parts.push(
+      `      <p class="text-gray-300 text-xs leading-relaxed italic">${summaryWithAnchors}</p>`,
+    );
+    parts.push(`    </div>`);
+    parts.push(`  </div>`);
+    parts.push(`</div>`);
   }
 
   if (Array.isArray(contentObj.headings)) {
@@ -122,69 +183,96 @@ function assembleContentFromObject(contentObj: any): string {
       const level = h.level && Number.isFinite(h.level) ? h.level : 2;
       const idAttr = h.id ? ` id="${h.id}"` : "";
       parts.push(`<h${level}${idAttr}>${h.text}</h${level}>`);
-      if (h.content) parts.push(`<div>${h.content}</div>`);
+      if (h.content) {
+        const contentWithAnchors = applyAnchorsToContent(h.content, anchors);
+        parts.push(`<div>${contentWithAnchors}</div>`);
+      }
     });
   }
 
+  // Conclusion section with heading
   if (contentObj.conclusion) {
-    parts.push(`<div class="conclusion">${contentObj.conclusion}</div>`);
+    const conclusionWithAnchors = applyAnchorsToContent(
+      contentObj.conclusion,
+      anchors,
+    );
+    parts.push(
+      `<div class="p-8 rounded-2xl mb-16 border border-slate-700 shadow-xl">`,
+    );
+    parts.push(`<h2 class="font-bold text-2xl text-white">🎯 Conclusion</h2>`);
+    parts.push(`  <div class="flex items-start gap-4">`);
+
+    parts.push(`    <div class="flex-1">`);
+
+    parts.push(
+      `      <div class="text-gray-300 leading-relaxed space-y-3">${conclusionWithAnchors}</div>`,
+    );
+    parts.push(`    </div>`);
+    parts.push(`  </div>`);
+    parts.push(`</div>`);
+  }
+
+  // FAQ section with heading
+  if (Array.isArray(contentObj.faqs) && contentObj.faqs.length > 0) {
+    parts.push(
+      `<h2 class="font-bold text-lg md:text-2xl mb-6 mt-10 text-white">❓ FAQ</h2>`,
+    );
+    parts.push(`<div class="grid gap-4">`);
+    contentObj.faqs.forEach((faq: any, index: number) => {
+      if (faq.question && faq.answer) {
+        const answerWithAnchors = applyAnchorsToContent(faq.answer, anchors);
+        parts.push(
+          `  <div class="bg-slate-900/50 rounded-2xl border border-gray-700 p-6 hover:border-[#fe9a00]/30 transition-all duration-300">`,
+        );
+        parts.push(`    <div class="flex items-start gap-4">`);
+        parts.push(
+          `      <div class="shrink-0 w-10 h-10 bg-[#fe9a00]/20 rounded-xl flex items-center justify-center text-[#fe9a00] text-lg font-bold">${index + 1}</div>`,
+        );
+        parts.push(`      <div class="flex-1">`);
+        parts.push(
+          `        <h3 class="text-white font-semibold text-lg mb-3">${faq.question}</h3>`,
+        );
+        parts.push(
+          `        <p class="text-gray-300 leading-relaxed text-base">${answerWithAnchors}</p>`,
+        );
+        parts.push(`      </div>`);
+        parts.push(`    </div>`);
+        parts.push(`  </div>`);
+      }
+    });
+    parts.push(`</div>`);
   }
 
   return parts.join("\n");
 }
 
-// Helper function to estimate read time from content
-export const estimateReadTime = (content: any): number => {
-  const contentStr = coerceContentToString(content);
-  const textOnly = contentStr.replace(/<[^>]*>/g, "");
-  const words = textOnly.trim() === "" ? 0 : textOnly.split(/\s+/).length;
-  return Math.max(1, Math.ceil(words / 200)); // Average 200 words per minute
-};
+// ============================================================================
+// BLOG POST FORMATTING
+// ============================================================================
 
-// Helper function to strip HTML tags and get plain text
-export const stripHtmlTags = (html: any): string => {
-  const contentStr = coerceContentToString(html);
-  return contentStr
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
-};
-
-// Get excerpt from content (first 160 chars for meta description)
-export const getExcerpt = (
-  content: any,
-  maxLength: number = 160,
-): string => {
-  const plainText = stripHtmlTags(content);
-  return plainText.length > maxLength
-    ? plainText.substring(0, maxLength) + "..."
-    : plainText;
-};
-
-export interface BlogPost {
-  _id: string;
-  id: string;
-  title: string;
-  description: string;
-  content: string;
-  seoTitle?: string;
-  createdAt: string;
-  updatedAt: string;
-  __v?: number;
+interface BlogPost {
+  id?: string;
+  _id?: string;
+  title?: string;
+  slug?: string;
+  description?: string;
+  content?: any;
+  seo?: any;
+  media?: any;
+  readingTime?: number;
+  wordCount?: number;
+  views?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  author?: string;
+  category?: string;
 }
 
-export interface BlogPostFormatted {
+interface BlogPostFormatted {
   id: string;
   _id: string;
   title: string;
   slug: string;
-  canonicalUrl?: string;
   excerpt: string;
   content: string;
   image: string;
@@ -193,13 +281,23 @@ export interface BlogPostFormatted {
   date: string;
   readTime: number;
   seoTitle?: string;
+  tags: string[];
   createdAt: string;
   updatedAt: string;
+  canonicalUrl?: string;
 }
 
-// Convert API data to formatted blog post
+// Estimate reading time from content string
+function estimateReadTime(content: string): number {
+  const words = stripHtml(content)
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 0).length;
+  return Math.max(1, Math.ceil(words / 200));
+}
+
 export const convertApiToBlogPost = (apiData: BlogPost): BlogPostFormatted => {
-  const date = new Date(apiData.createdAt).toLocaleDateString("en-US", {
+  const date = new Date(apiData.createdAt!).toLocaleDateString("en-US", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -218,67 +316,49 @@ export const convertApiToBlogPost = (apiData: BlogPost): BlogPostFormatted => {
   }
 
   const featured = (apiData as any).media?.featuredImage || "";
-  const image = featured || extractImageFromContent(contentStr) || "/assets/images/van.png";
+  const image =
+    featured || extractImageFromContent(contentStr) || "/assets/images/van.png";
 
-  const computedSlug = (apiData as any).slug || generateSlug(apiData.title || "");
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://successvanhire.co.uk").replace(/\/$/, "");
-  const canonicalFromApi = (apiData as any).seo?.canonicalUrl || (apiData as any).canonicalUrl || "";
-  const canonicalUrl = canonicalFromApi || `${siteUrl}/blog/${computedSlug}`;
+  const computedSlug =
+    (apiData as any).slug ||
+    generateSlug((apiData as any).seo?.seoTitle || apiData.title || "");
 
   return {
     id: apiData.id || "",
     _id: apiData._id || "",
-    title: apiData.title || "",
+    title: (apiData as any).seo?.seoTitle || apiData.title || "",
     slug: computedSlug,
-    canonicalUrl,
     excerpt: getExcerpt(contentStr || apiData.description || "", 160),
     content: contentStr || apiData.content || "",
     image,
     author: (apiData as any).author || "Success Van",
     category: (apiData as any).category || "Blog",
     date: date,
-    readTime: (apiData as any).readingTime || Math.max(1, estimateReadTime(contentStr || "")),
-    seoTitle: apiData.seoTitle,
-    createdAt: apiData.createdAt,
-    updatedAt: apiData.updatedAt,
+    readTime:
+      (apiData as any).readingTime ||
+      Math.max(1, estimateReadTime(contentStr || "")),
+    seoTitle: (apiData as any).seoTitle || (apiData as any).title || "",
+    tags: (apiData as any).seo?.tags || [],
+    createdAt: apiData.createdAt || "",
+    updatedAt: apiData.updatedAt || "",
   };
 };
 
-// Fetch all blogs from API
+// ============================================================================
+// API FETCHING
+// ============================================================================
+
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
 export const fetchAllBlogs = async (): Promise<BlogPostFormatted[]> => {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-    const apiUrl = `${baseUrl}/api/blog`;
-
-    console.log("[Blog Utils] Fetching from:", apiUrl);
-
-    const response = await fetch(apiUrl, {
-      next: { revalidate: 3600 }, // Revalidate every hour
+    const res = await fetch(`${baseUrl}/api/blog?limit=100`, {
+      cache: "no-store",
     });
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch blogs: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    const data = await response.json();
-    console.log("[Blog Utils] API Response:", data);
-
-    const blogs = (data.blogs || []).map((blog: BlogPost) =>
-      convertApiToBlogPost(blog),
-    );
-    console.log(
-      "[Blog Utils] Converted blogs:",
-      blogs.map((b: { title: string; slug: string }) => ({
-        title: b.title,
-        slug: b.slug,
-      })),
-    );
-
-    return blogs;
+    const data = await res.json();
+    return (data.blogs || []).map((b: any) => convertApiToBlogPost(b));
   } catch (error) {
-    console.error("[Blog Utils] Error fetching blogs:", error);
+    console.error("Error fetching all blogs:", error);
     return [];
   }
 };
@@ -291,7 +371,6 @@ export const fetchBlogBySlug = async (
     // Normalize input: remove query/hash and trim
     const cleanedId = (slugOrId || "").split(/[?#]/)[0].trim();
     console.log("[Blog Utils] Fetching blog by identifier:", cleanedId);
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
     // Try single-blog endpoint first (works with both Mongo _id, slug, and canonicalUrl)
     try {
@@ -302,7 +381,10 @@ export const fetchBlogBySlug = async (
           const u = new URL(slugOrId);
           candidates.push(u.pathname, u.pathname.replace(/\/$/, ""));
 
-          const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
+          const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(
+            /\/$/,
+            "",
+          );
           if (siteUrl) candidates.push(`${siteUrl}${u.pathname}`);
         }
       } catch (e) {
@@ -312,18 +394,26 @@ export const fetchBlogBySlug = async (
       let found: BlogPostFormatted | null = null;
 
       for (const candidate of Array.from(new Set(candidates))) {
-        const res = await fetch(`${baseUrl}/api/blog/${encodeURIComponent(candidate)}`, {
-          next: { revalidate: 3600 },
-        });
+        const res = await fetch(
+          `${baseUrl}/api/blog/${encodeURIComponent(candidate)}`,
+          {
+            cache: "no-store", // Don't cache to ensure fresh data after edits
+          },
+        );
 
         if (!res.ok) {
           // try next candidate
-          console.debug(`[Blog Utils] Candidate ${candidate} returned ${res.status}`);
+          console.debug(
+            `[Blog Utils] Candidate ${candidate} returned ${res.status}`,
+          );
           continue;
         }
 
         const data = await res.json();
-        console.log(`[Blog Utils] Single blog API response for ${candidate}:`, data);
+        console.log(
+          `[Blog Utils] Single blog API response for ${candidate}:`,
+          data,
+        );
 
         if (data?.success && data?.blog) {
           const b: any = data.blog;
@@ -331,15 +421,20 @@ export const fetchBlogBySlug = async (
           const rawContent = b.content;
           let contentStr = "";
           if (typeof rawContent === "string") contentStr = rawContent;
-          else if (rawContent && typeof rawContent === "object") contentStr = assembleContentFromObject(rawContent);
+          else if (rawContent && typeof rawContent === "object")
+            contentStr = assembleContentFromObject(rawContent);
 
-          const image = b.media?.featuredImage || extractImageFromContent(contentStr || "") || "/assets/images/van.png";
+          const image =
+            b.media?.featuredImage ||
+            extractImageFromContent(contentStr || "") ||
+            "/assets/images/van.png";
 
           found = {
             id: b.id || b._id || "",
             _id: b._id || "",
-            title: b.title || "",
-            slug: b.slug || generateSlug(b.title || ""),
+            canonicalUrl: b.seo?.canonicalUrl || undefined,
+            title: b.seo?.seoTitle || b.title || "",
+            slug: b.slug || generateSlug(b.seo?.seoTitle || b.title || ""),
             excerpt: getExcerpt(contentStr || b.excerpt || "", 160),
             content: contentStr || b.content || "",
             image,
@@ -350,84 +445,86 @@ export const fetchBlogBySlug = async (
               month: "2-digit",
               day: "2-digit",
             }),
-            readTime: b.readingTime || Math.max(1, estimateReadTime(contentStr || "")),
-            seoTitle: b.seo?.seoTitle || b.seoTitle,
-            createdAt: b.createdAt,
-            updatedAt: b.updatedAt,
+            readTime: b.readingTime || 1,
+            seoTitle: b.seo?.seoTitle || b.title || "",
+            tags: b.seo?.tags || [],
+            createdAt: b.createdAt || "",
+            updatedAt: b.updatedAt || "",
           };
-
-          return found;
+          break;
         }
       }
 
-      if (!found) console.warn(`[Blog Utils] Single-blog endpoint did not find blog for any candidate: ${candidates.join(", ")}`);
-    } catch (err) {
-      console.warn("[Blog Utils] Single blog fetch failed:", err);
+      if (found) {
+        console.log(`✅ [Blog Utils] Found blog: ${found.title}`);
+        return found;
+      }
+    } catch (apiError) {
+      console.warn(
+        "[Blog Utils] Single blog API failed, falling back to list endpoint:",
+        apiError,
+      );
     }
 
-    // Fallback - fetch all blogs and try matching by slug or _id
-    console.log("[Blog Utils] Falling back to fetching all blogs for lookup:", slugOrId);
-    const blogs = await fetchAllBlogs();
-    const bySlug = blogs.find((blog) => blog.slug === slugOrId);
-    if (bySlug) return bySlug;
-    const byId = blogs.find((blog) => blog._id === slugOrId || blog.id === slugOrId);
-    if (byId) return byId;
+    // Fallback: fetch all and filter
+    const allBlogs = await fetchAllBlogs();
+    const matched = allBlogs.find(
+      (b) =>
+        b.slug === slugOrId ||
+        b.id === slugOrId ||
+        b.title.toLowerCase().replace(/\s+/g, "-") === slugOrId.toLowerCase(),
+    );
 
-    console.warn(`[Blog Utils] No blog found for identifier: ${slugOrId}`);
-    return null;
+    if (matched) {
+      return matched;
+    }
+
+    // Try case-insensitive slug match
+    return (
+      allBlogs.find(
+        (b) =>
+          b.slug.toLowerCase() === slugOrId.toLowerCase().replace(/ /g, "-"),
+      ) || null
+    );
   } catch (error) {
-    console.error("[Blog Utils] Error fetching blog by identifier:", error);
+    console.error("Error fetching blog by slug:", error);
     return null;
   }
 };
 
-// Generate JSON-LD schema for blog post
-export const generateBlogSchema = (
-  blog: BlogPostFormatted,
-  siteUrl: string,
-) => {
+// ============================================================================
+// SCHEMA GENERATION
+// ============================================================================
+
+function generateBlogSchema(blog: BlogPostFormatted, siteUrl: string) {
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "@id": `${siteUrl}/blog/${blog.slug}#BlogPosting`,
     headline: blog.seoTitle || blog.title,
     description: blog.excerpt,
-    image: {
-      "@type": "ImageObject",
-      url: blog.image,
-      width: 1200,
-      height: 630,
-    },
-    datePublished: new Date(blog.createdAt).toISOString(),
-    dateModified: new Date(blog.updatedAt).toISOString(),
+    image: blog.image ? [blog.image] : undefined,
     author: {
-      "@type": "Organization",
+      "@type": "Person",
       name: blog.author,
-      url: siteUrl,
     },
     publisher: {
       "@type": "Organization",
       name: "Success Van Hire",
       logo: {
         "@type": "ImageObject",
-        url: `${siteUrl}/assets/logo.png`,
-        width: 250,
-        height: 60,
+        url: `${siteUrl}/assets/images/logo.png`,
       },
-      url: siteUrl,
     },
+    datePublished: blog.createdAt,
+    dateModified: blog.updatedAt,
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": `${siteUrl}/blog/${blog.slug}`,
     },
   };
-};
+}
 
-// Generate JSON-LD schema for breadcrumb navigation
-export const generateBreadcrumbSchema = (
-  siteUrl: string,
-  blogTitle: string,
-) => {
+function generateBreadcrumbSchema(siteUrl: string, blogTitle: string) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -448,33 +545,28 @@ export const generateBreadcrumbSchema = (
         "@type": "ListItem",
         position: 3,
         name: blogTitle,
-        item: `${siteUrl}/blog`,
       },
     ],
   };
-};
+}
 
-// Generate JSON-LD schema for organization
-export const generateOrganizationSchema = (siteUrl: string) => {
+function generateOrganizationSchema(siteUrl: string) {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Success Van Hire",
     url: siteUrl,
-    logo: `${siteUrl}/assets/logo.png`,
-    description: "Professional van hire services in London",
+    logo: `${siteUrl}/assets/images/logo.png`,
     sameAs: [
-      "https://www.facebook.com/successvanhire",
-      "https://www.twitter.com/successvanhire",
-      "https://www.instagram.com/successvanhire",
+      "https://www.facebook.com/topvanhire",
+      "https://x.com/MatinDiba?t=GKR1BWNSQK6yB2Rj4W5Jhg&s=09",
+      "https://www.instagram.com/accounts/login/?next=https%3A%2F%2Fwww.instagram.com%2Fsuccess.van.hire&is_from_rle",
     ],
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: "Success Van, North West London",
-      addressLocality: "London",
-      addressRegion: "England",
-      postalCode: "NW",
-      addressCountry: "GB",
-    },
   };
+}
+
+export {
+  generateBlogSchema,
+  generateBreadcrumbSchema,
+  generateOrganizationSchema,
 };

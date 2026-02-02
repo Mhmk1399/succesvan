@@ -154,10 +154,10 @@ export default function TimeSelect({
               );
             })
           ) : (
-            <div className="px-3 py-4 text-center text-red-400 text-xs">
+            <div className="px-3 py-4 text-center text-amber-400 text-xs">
               {isStartTime
-                ? "Can't pickup on this date"
-                : "Can't deliver on this date"}
+                ? "No available pickup times (6h minimum for same-day)"
+                : "No available return times (6h minimum for same-day)"}
             </div>
           )}
         </div>

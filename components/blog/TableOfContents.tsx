@@ -17,7 +17,7 @@ interface TableOfContentsProps {
 export default function TableOfContents({ contentRef }: TableOfContentsProps) {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [activeId, setActiveId] = useState<string>("");
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   useEffect(() => {
     if (!contentRef.current) return;
@@ -73,9 +73,12 @@ export default function TableOfContents({ contentRef }: TableOfContentsProps) {
   const handleHeadingClick = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
+      // Use different scroll alignment for mobile vs desktop
+      const isMobile =
+        typeof window !== "undefined" && window.innerWidth < 1024;
       element.scrollIntoView({
         behavior: "smooth",
-        block: "start",
+        block: isMobile ? "end" : "center",
       });
       setActiveId(id);
       setIsOpen(false);
@@ -109,12 +112,12 @@ export default function TableOfContents({ contentRef }: TableOfContentsProps) {
   if (headings.length === 0) return null;
 
   return (
-    <div className="sticky top-24 max-w-xs">
+    <div className="sticky top-24 max-w-sm">
       {/* Mobile Collapsible */}
-      <div className="lg:hidden mb-8">
+      <div className="lg:hidden  ">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-[#fe9a00]/20 to-[#fe9a00]/10 border border-[#fe9a00]/30 rounded-xl text-white font-semibold hover:border-[#fe9a00]/50 transition-colors"
+          className="w-full flex items-center justify-between gap-3 px-4 py-3   border border-gray-700 rounded-xl text-white font-semibold hover:border-[#fe9a00]/50 transition-colors"
         >
           <div className="flex items-center gap-2">
             <FiList className="w-5 h-5" />
@@ -177,9 +180,9 @@ export default function TableOfContents({ contentRef }: TableOfContentsProps) {
             <div key={heading.id}>
               <button
                 onClick={() => handleHeadingClick(heading.id)}
-                className={`block w-full text-left px-3 py-2 rounded-lg transition-all duration-200 text-sm leading-relaxed ${
+                className={`block w-full text-left px-3 py-2 rounded-sm transition-all duration-200 text-sm leading-relaxed ${
                   activeId === heading.id
-                    ? "bg-[#fe9a00]/20 text-[#fe9a00] border-l-2 border-[#fe9a00] pl-2 font-semibold"
+                    ? "  text-[#fe9a00] border-l-2 border-[#fe9a00] pl-2 font-semibold"
                     : "text-gray-300 hover:text-white hover:bg-white/5 border-l-2 border-transparent"
                 }`}
               >
@@ -217,7 +220,7 @@ export default function TableOfContents({ contentRef }: TableOfContentsProps) {
               });
               setActiveId("");
             }}
-            className="mt-5 pt-5 border-t border-white/10 w-full py-2 px-3 text-sm text-[#fe9a00] hover:text-white hover:bg-white/5 rounded-lg transition-colors font-semibold"
+            className="mt-5   border-t border-white/5 w-full py-2 px-3 text-sm text-[#fe9a00] hover:text-white hover:bg-white/5 rounded-lg transition-colors font-semibold"
           >
             ↑ Back to top
           </button>

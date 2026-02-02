@@ -252,26 +252,55 @@ export default function StepByStepBlogGenerator({
   // ========================================================================
 
   // Initialize headingsForImages from parent data when available (edit mode)
+  // This ensures that when editing an existing blog, we use the actual heading IDs from the database
   useEffect(() => {
-    if (data?.headings && data.headings.length > 0 && headingsForImages.length === 0) {
-      setHeadingsForImages(data.headings);
+    if (data?.headings && data.headings.length > 0) {
+      // Check if we need to sync headings from database
+      const headings = data.headings;
+      const needsSync =
+        headingsForImages.length === 0 ||
+        !headingsForImages.some((h) =>
+          headings.find((dh: any) => dh.id === h.id),
+        );
+
+      if (needsSync) {
+        setHeadingsForImages(data.headings);
+      }
     }
-  }, [data, headingsForImages.length]);
+  }, [data, data?.headings, headingsForImages]);
 
   // Initialize allHeadings from parent data when available (edit mode)
   useEffect(() => {
-    if (data?.headings && data.headings.length > 0 && allHeadings.length === 0) {
-      setAllHeadings(data.headings);
+    const headings = data?.headings;
+
+    if (data?.headings && data.headings.length > 0) {
+      const needsSync =
+        allHeadings.length === 0 ||
+        !allHeadings.some((h) => headings?.find((dh: any) => dh.id === h.id));
+
+      if (needsSync) {
+        setAllHeadings(data.headings);
+      }
     }
-  }, [data, allHeadings.length]);
+  }, [data, data?.headings, allHeadings]);
 
   // Initialize generatedImages from parent data when available (edit mode)
   useEffect(() => {
-    if (data?.mediaLibrary && data.mediaLibrary.length > 0 && generatedImages.length === 0) {
-      const existingImages = data.mediaLibrary.filter(m => m.type === "image");
-      setGeneratedImages(existingImages);
+    if (data?.mediaLibrary && data.mediaLibrary.length > 0) {
+      const existingImages = data.mediaLibrary.filter(
+        (m) => m.type === "image",
+      );
+      const needsSync =
+        generatedImages.length === 0 ||
+        !existingImages.some((ei) =>
+          generatedImages.find((gi) => gi.id === ei.id),
+        );
+
+      if (needsSync) {
+        setGeneratedImages(existingImages);
+      }
     }
-  }, [data, generatedImages.length]);
+  }, [data, data?.mediaLibrary, generatedImages]);
 
   // ========================================================================
   // STEP HANDLERS
@@ -284,14 +313,22 @@ export default function StepByStepBlogGenerator({
     }
 
     // Validate prerequisite steps
-    const stepOrder: StepKey[] = ["headings", "images", "content", "summary", "conclusion", "faq", "seo"];
+    const stepOrder: StepKey[] = [
+      "headings",
+      "images",
+      "content",
+      "summary",
+      "conclusion",
+      "faq",
+      "seo",
+    ];
     const currentStepIndex = stepOrder.indexOf(currentStep);
-    
+
     // Check if previous steps are completed (using data from parent)
     if (currentStepIndex > 0) {
       const prevStep = stepOrder[currentStepIndex - 1];
       const prevStepCompleted = isStepCompleted(prevStep);
-      
+
       // Also check parent data
       let parentDataCompleted = false;
       if (data) {
@@ -300,10 +337,17 @@ export default function StepByStepBlogGenerator({
             parentDataCompleted = !!(data.headings && data.headings.length > 0);
             break;
           case "images":
-            parentDataCompleted = !!(data.mediaLibrary && data.mediaLibrary.length > 0);
+            parentDataCompleted = !!(
+              data.mediaLibrary && data.mediaLibrary.length > 0
+            );
             break;
           case "content":
-            parentDataCompleted = !!(data.headings && data.headings.some(h => h.content && h.content.trim().length > 0));
+            parentDataCompleted = !!(
+              data.headings &&
+              data.headings.some(
+                (h) => h.content && h.content.trim().length > 0,
+              )
+            );
             break;
           case "summary":
             parentDataCompleted = !!data.summary;
@@ -315,13 +359,17 @@ export default function StepByStepBlogGenerator({
             parentDataCompleted = !!(data.faqs && data.faqs.length > 0);
             break;
           case "seo":
-            parentDataCompleted = !!(data.seoTitle || data.focusKeyword || (data.tags && data.tags.length > 0));
+            parentDataCompleted = !!(
+              data.seoTitle ||
+              data.focusKeyword ||
+              (data.tags && data.tags.length > 0)
+            );
             break;
         }
       }
-      
+
       if (!prevStepCompleted && !parentDataCompleted) {
-        const stepTitle = STEPS.find(s => s.key === prevStep)?.title;
+        const stepTitle = STEPS.find((s) => s.key === prevStep)?.title;
         toast.error(`Please complete "${stepTitle}" step first!`);
         setCurrentStep(prevStep);
         return;
@@ -329,11 +377,19 @@ export default function StepByStepBlogGenerator({
     }
 
     // Check if headings step is completed for steps that require blogId
-    const stepsRequiringBlogId: StepKey[] = ["images", "content", "summary", "conclusion", "faq", "seo"];
+    const stepsRequiringBlogId: StepKey[] = [
+      "images",
+      "content",
+      "summary",
+      "conclusion",
+      "faq",
+      "seo",
+    ];
     if (stepsRequiringBlogId.includes(currentStep)) {
       // Check if we have headings from parent data or local state
-      const hasHeadings = (data?.headings && data.headings.length > 0) || (allHeadings.length > 0);
-      
+      const hasHeadings =
+        (data?.headings && data.headings.length > 0) || allHeadings.length > 0;
+
       if (!blogId) {
         if (!hasHeadings) {
           toast.error('Please complete "Generate Structure" step first!');
@@ -342,22 +398,34 @@ export default function StepByStepBlogGenerator({
         }
         // We have headings but no blogId - this can happen when switching from full mode
         // We'll try to proceed, but content step requires heading index
-        if (currentStep === "content" && currentHeadingIndex === 0 && allHeadings.length === 0 && data?.headings) {
+        if (
+          currentStep === "content" &&
+          currentHeadingIndex === 0 &&
+          allHeadings.length === 0 &&
+          data?.headings
+        ) {
           // Set heading index to 0 and use headings from parent
           setCurrentHeadingIndex(0);
         }
       }
-      
+
       // Content step also requires heading index
       if (currentStep === "content") {
-        const hasContentHeadings = (data?.headings && data.headings.length > 0) || allHeadings.length > 0;
+        const hasContentHeadings =
+          (data?.headings && data.headings.length > 0) ||
+          allHeadings.length > 0;
         if (!hasContentHeadings) {
-          toast.error('No headings found! Please complete "Generate Structure" step first.');
+          toast.error(
+            'No headings found! Please complete "Generate Structure" step first.',
+          );
           setCurrentStep("headings");
           return;
         }
         // Ensure we have a valid heading index
-        if (currentHeadingIndex >= allHeadings.length && allHeadings.length > 0) {
+        if (
+          currentHeadingIndex >= allHeadings.length &&
+          allHeadings.length > 0
+        ) {
           setCurrentHeadingIndex(0);
         }
       }
@@ -365,18 +433,24 @@ export default function StepByStepBlogGenerator({
 
     try {
       const additionalData: any = {};
-      
+
       // Content step requires headingIndex
       if (currentStep === "content") {
         // Use headings from parent data if local state is empty
         if (allHeadings.length === 0 && data?.headings) {
           setAllHeadings(data.headings);
         }
-        
+
         // Check if we've already generated all headings
-        const headingsToUse = allHeadings.length > 0 ? allHeadings : (data?.headings || []);
-        if (headingsToUse.length > 0 && currentHeadingIndex >= headingsToUse.length) {
-          console.log(`⚠️ All headings (${headingsToUse.length}) already have content generated`);
+        const headingsToUse =
+          allHeadings.length > 0 ? allHeadings : data?.headings || [];
+        if (
+          headingsToUse.length > 0 &&
+          currentHeadingIndex >= headingsToUse.length
+        ) {
+          console.log(
+            `⚠️ All headings (${headingsToUse.length}) already have content generated`,
+          );
           toast.error(`All content generated! Moving to summary step...`);
           // Move to summary step
           const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
@@ -388,22 +462,28 @@ export default function StepByStepBlogGenerator({
           return;
         }
         additionalData.headingIndex = currentHeadingIndex;
-        console.log(`🎯 Generating content for heading index ${currentHeadingIndex} of ${headingsToUse.length}`);
+        console.log(
+          `🎯 Generating content for heading index ${currentHeadingIndex} of ${headingsToUse.length}`,
+        );
       }
-      
+
       const result = await callStepAPI(currentStep, "generate", additionalData);
-      
+
       // Show which heading we just generated
       if (currentStep === "content" && result.data?.heading) {
         toast.success(`Content generated for: ${result.data.heading.text}`);
       } else {
-        toast.success(`${STEPS.find((s) => s.key === currentStep)?.title} generated!`);
+        toast.success(
+          `${STEPS.find((s) => s.key === currentStep)?.title} generated!`,
+        );
       }
     } catch (error: any) {
       // Better error handling
       console.error("Generation error:", error);
       if (error.message?.includes("Blog ID")) {
-        toast.error('Please complete "Generate Structure" step first to get a Blog ID.');
+        toast.error(
+          'Please complete "Generate Structure" step first to get a Blog ID.',
+        );
         setCurrentStep("headings");
       } else if (error.message?.includes("heading index")) {
         toast.error("Invalid heading index. Please try again.");
@@ -416,14 +496,18 @@ export default function StepByStepBlogGenerator({
   const handleRegenerate = async () => {
     try {
       const additionalData: any = {};
-      
+
       // Content step requires headingIndex
       if (currentStep === "content") {
         additionalData.headingIndex = currentHeadingIndex;
       }
-      
-      const result = await callStepAPI(currentStep, "regenerate", additionalData);
-      
+
+      const result = await callStepAPI(
+        currentStep,
+        "regenerate",
+        additionalData,
+      );
+
       if (currentStep === "content" && result.data?.heading) {
         toast.success(`Content regenerated for: ${result.data.heading.text}`);
       } else {
@@ -438,18 +522,17 @@ export default function StepByStepBlogGenerator({
   const handleStepClick = (stepKey: StepKey) => {
     setCurrentStep(stepKey);
     setGeneratedData(null);
-    
+
     // Reset content index when switching to content step
     if (stepKey === "content") {
       setCurrentHeadingIndex(0);
     }
-    
+
     // Reset image index when switching to images step
     if (stepKey === "images") {
       setCurrentImageIndex(0);
     }
   };
-
 
   // ========================================================================
   // IMAGE GENERATION HANDLERS
@@ -461,17 +544,30 @@ export default function StepByStepBlogGenerator({
       return;
     }
 
-    const headingForImage = headingsForImages[currentImageIndex];
+    // Use heading from database data if available (edit mode), otherwise use local state
+    const availableHeadings =
+      data?.headings && data.headings.length > 0
+        ? data.headings
+        : headingsForImages;
+    const headingForImage = availableHeadings[currentImageIndex];
+
     if (!headingForImage) {
       toast.error("No heading available for image generation");
       return;
     }
 
+    // Debug log to help identify heading ID issues
+    console.log(
+      `🎨 [ImageGen] Using heading ID: ${headingForImage.id}, text: ${headingForImage.text}`,
+    );
+
     try {
       setLoading(true);
-      
-      console.log(`🎨 [StepGenerator] Generating image for heading: ${headingForImage.text}`);
-      
+
+      console.log(
+        `🎨 [StepGenerator] Generating image for heading: ${headingForImage.text}`,
+      );
+
       const response = await fetch("/api/blog/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -488,9 +584,9 @@ export default function StepByStepBlogGenerator({
       }
 
       const result = await response.json();
-      
+
       console.log(`✅ [StepGenerator] Image generated:`, result);
-      
+
       // Add to generated images
       const newImage: MediaItem = {
         id: result.mediaItem.id,
@@ -500,12 +596,14 @@ export default function StepByStepBlogGenerator({
         alt: result.mediaItem.alt,
         caption: result.mediaItem.caption,
       };
-      
+
       setGeneratedImages((prev) => [...prev, newImage]);
-      
+
       // Update the heading content with the image
       const updatedHeadings = [...allHeadings];
-      const headingIndex = updatedHeadings.findIndex((h) => h.id === headingForImage.id);
+      const headingIndex = updatedHeadings.findIndex(
+        (h) => h.id === headingForImage.id,
+      );
       if (headingIndex !== -1) {
         const imageHtml = `<figure class="my-6">\n  <img src="${result.mediaItem.url}" alt="${result.mediaItem.alt}" class="w-full rounded-xl shadow-lg" />\n</figure>`;
         updatedHeadings[headingIndex] = {
@@ -514,27 +612,27 @@ export default function StepByStepBlogGenerator({
         };
         setAllHeadings(updatedHeadings);
       }
-      
+
       // Update parent component with headings and mediaLibrary
-      onDataUpdate({ 
+      onDataUpdate({
         headings: updatedHeadings,
-        mediaLibrary: [...generatedImages, newImage]
+        mediaLibrary: [...generatedImages, newImage],
       });
-      
+
       // Mark this image as approved
       const newProgress = { ...progress };
       if (!newProgress.imageApproved[currentImageIndex]) {
         newProgress.imageApproved[currentImageIndex] = true;
       }
       setProgress(newProgress);
-      
-      setGeneratedData({ 
-        image: newImage, 
+
+      setGeneratedData({
+        image: newImage,
         heading: headingForImage,
         headingIndex: currentImageIndex,
         totalHeadings: headingsForImages.length,
       });
-      
+
       toast.success(`Image generated for: ${headingForImage.text}`);
     } catch (error: any) {
       console.error("Image generation error:", error);
@@ -546,59 +644,61 @@ export default function StepByStepBlogGenerator({
 
   const handleImageApprove = async () => {
     const isLastImage = currentImageIndex >= headingsForImages.length - 1;
-    
+
     if (isLastImage) {
       // All images done, move to content step
       const currentIndex = STEPS.findIndex((s) => s.key === "images");
       const nextStep = STEPS[currentIndex + 1].key;
       setCurrentStep(nextStep);
-      
+
       const newProgress = { ...progress };
       newProgress.imagesApproved = true;
       newProgress.currentStep = nextStep;
       setProgress(newProgress);
-      
+
       setCurrentImageIndex(0);
       setGeneratedData(null);
-      
+
       toast.success("All images generated! Moving to content step...");
     } else {
       // Move to next image
       const nextIndex = currentImageIndex + 1;
       setCurrentImageIndex(nextIndex);
       setGeneratedData(null);
-      
+
       const newProgress = { ...progress };
       newProgress.currentHeadingIndex = nextIndex;
       setProgress(newProgress);
-      
-      toast.success(`Image ${currentImageIndex + 1} approved. Ready for image ${nextIndex + 1}`);
+
+      toast.success(
+        `Image ${currentImageIndex + 1} approved. Ready for image ${nextIndex + 1}`,
+      );
     }
   };
 
   const handleApprove = async () => {
     try {
       const additionalData: any = {};
-      
+
       // Content step requires headingIndex
       if (currentStep === "content") {
         additionalData.headingIndex = currentHeadingIndex;
       }
-      
-      console.log('🚀 [StepGenerator] Approve clicked:', {
+
+      console.log("🚀 [StepGenerator] Approve clicked:", {
         currentStep,
         currentHeadingIndex,
         blogId,
-        additionalData
+        additionalData,
       });
-      
+
       const result = await callStepAPI(currentStep, "approve", additionalData);
-      
-      console.log('📥 [StepGenerator] API Response:', {
+
+      console.log("📥 [StepGenerator] API Response:", {
         step: currentStep,
         hasData: !!result.data,
         dataKeys: result.data ? Object.keys(result.data) : [],
-        isLastHeading: result.isLastHeading
+        isLastHeading: result.isLastHeading,
       });
 
       // Update parent component with new data
@@ -606,49 +706,50 @@ export default function StepByStepBlogGenerator({
         const updateData: Partial<StepGeneratorData> = {};
 
         if (currentStep === "headings" && result.data.headings) {
-          console.log('📋 [StepGenerator] Processing headings approval:', {
+          console.log("📋 [StepGenerator] Processing headings approval:", {
             headingsCount: result.data.headings.length,
             headings: result.data.headings.map((h: any) => ({
               id: h.id,
               text: h.text,
               level: h.level,
-              hasContent: !!h.content
-            }))
+              hasContent: !!h.content,
+            })),
           });
-          
+
           updateData.headings = result.data.headings;
-          updateData.seoTitle = result.data.seoTitle || result.data.suggestedTitle;
+          updateData.seoTitle =
+            result.data.seoTitle || result.data.suggestedTitle;
           updateData.focusKeyword = result.data.focusKeyword;
-          
+
           // Store headings for content step
           setAllHeadings(result.data.headings);
-          setGeneratedData({ 
-            ...result.data, 
-            headings: result.data.headings 
+          setGeneratedData({
+            ...result.data,
+            headings: result.data.headings,
           });
         } else if (currentStep === "content" && result.data.heading) {
-          console.log('✍️ [StepGenerator] Processing content approval:', {
+          console.log("✍️ [StepGenerator] Processing content approval:", {
             headingIndex: currentHeadingIndex,
             headingId: result.data.heading.id,
             headingText: result.data.heading.text,
             contentLength: result.data.heading.content?.length || 0,
-            allHeadingsCount: allHeadings.length
+            allHeadingsCount: allHeadings.length,
           });
-          
+
           // Update the specific heading in allHeadings array
           const updatedHeadings = [...allHeadings];
           updatedHeadings[currentHeadingIndex] = result.data.heading;
-          
-          console.log('📊 [StepGenerator] Updated headings array:', {
+
+          console.log("📊 [StepGenerator] Updated headings array:", {
             totalHeadings: updatedHeadings.length,
             headings: updatedHeadings.map((h, i) => ({
               index: i,
               id: h.id,
               text: h.text,
-              contentLength: h.content?.length || 0
-            }))
+              contentLength: h.content?.length || 0,
+            })),
           });
-          
+
           setAllHeadings(updatedHeadings);
           // Send updated headings to parent immediately
           updateData.headings = updatedHeadings;
@@ -669,37 +770,40 @@ export default function StepByStepBlogGenerator({
           updateData.focusKeyword = seoBlogData.focusKeyword;
         }
 
-        console.log('📤 [StepGenerator] Calling onDataUpdate with:', {
+        console.log("📤 [StepGenerator] Calling onDataUpdate with:", {
           updateDataKeys: Object.keys(updateData),
           headingsCount: updateData.headings?.length,
-          headingsData: updateData.headings?.map(h => ({
+          headingsData: updateData.headings?.map((h) => ({
             id: h.id,
             text: h.text,
-            contentLength: h.content?.length || 0
-          }))
+            contentLength: h.content?.length || 0,
+          })),
         });
-        
+
         onDataUpdate(updateData);
-        
-        console.log('✅ [StepGenerator] onDataUpdate called successfully');
+
+        console.log("✅ [StepGenerator] onDataUpdate called successfully");
       }
 
       // Update progress
       const newProgress = { ...progress };
-      
+
       // Special handling for content step - iterate through headings
       if (currentStep === "content") {
         // Mark current heading as approved
         if (!newProgress.contentApproved[currentHeadingIndex]) {
           newProgress.contentApproved[currentHeadingIndex] = true;
         }
-        
+
         // Check if this was the last heading OR if we've gone through all headings
-        const isLastHeading = result.isLastHeading || currentHeadingIndex >= allHeadings.length - 1;
-        
+        const isLastHeading =
+          result.isLastHeading || currentHeadingIndex >= allHeadings.length - 1;
+
         if (isLastHeading) {
           // All headings done, move to next step
-          console.log(`✅ All ${allHeadings.length} headings completed. Moving to summary step...`);
+          console.log(
+            `✅ All ${allHeadings.length} headings completed. Moving to summary step...`,
+          );
           const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
           const nextStep = STEPS[currentIndex + 1].key;
           setCurrentStep(nextStep);
@@ -710,47 +814,60 @@ export default function StepByStepBlogGenerator({
         } else {
           // Move to next heading
           const nextIndex = currentHeadingIndex + 1;
-          console.log(`➡️ Moving from heading ${currentHeadingIndex} to ${nextIndex}`);
+          console.log(
+            `➡️ Moving from heading ${currentHeadingIndex} to ${nextIndex}`,
+          );
           setCurrentHeadingIndex(nextIndex);
           newProgress.currentHeadingIndex = nextIndex;
           setGeneratedData(null); // Clear so user needs to generate next heading
-          toast.success(`Heading ${currentHeadingIndex + 1} approved. Ready for heading ${nextIndex + 1}`);
+          toast.success(
+            `Heading ${currentHeadingIndex + 1} approved. Ready for heading ${nextIndex + 1}`,
+          );
         }
       } else {
         // Other steps - standard flow
         if (currentStep === "headings") {
           newProgress.headingsApproved = true;
           // When headings are approved, prepare headings for images (H2-H4)
-          const headingsWithImages = result.data.headings?.filter((h: any) => h.level >= 2 && h.level <= 4) || [];
+          const headingsWithImages =
+            result.data.headings?.filter(
+              (h: any) => h.level >= 2 && h.level <= 4,
+            ) || [];
           setHeadingsForImages(headingsWithImages);
-          newProgress.imageApproved = new Array(headingsWithImages.length).fill(false);
-        }
-        else if (currentStep === "images") newProgress.imagesApproved = true;
+          newProgress.imageApproved = new Array(headingsWithImages.length).fill(
+            false,
+          );
+        } else if (currentStep === "images") newProgress.imagesApproved = true;
         else if (currentStep === "summary") newProgress.summaryApproved = true;
-        else if (currentStep === "conclusion") newProgress.conclusionApproved = true;
+        else if (currentStep === "conclusion")
+          newProgress.conclusionApproved = true;
         else if (currentStep === "faq") newProgress.faqApproved = true;
         else if (currentStep === "seo") newProgress.seoApproved = true;
-        
+
         // Move to next step
         const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
         if (currentIndex < STEPS.length - 1) {
           const nextStep = STEPS[currentIndex + 1].key;
           setCurrentStep(nextStep);
           newProgress.currentStep = nextStep;
-          
+
           // When moving from headings to images, ensure we start at image 0
           if (currentStep === "headings" && nextStep === "images") {
             setCurrentImageIndex(0);
             newProgress.currentHeadingIndex = 0;
             setGeneratedData(null);
-            console.log(`🎨 Starting image generation for ${headingsForImages.length} headings`);
+            console.log(
+              `🎨 Starting image generation for ${headingsForImages.length} headings`,
+            );
           }
           // When moving from headings to content (skipping images), ensure we start at heading 0
           else if (currentStep === "headings" && nextStep === "content") {
             setCurrentHeadingIndex(0);
             newProgress.currentHeadingIndex = 0;
             setGeneratedData(null);
-            console.log(`🎯 Starting content generation at heading index 0 of ${allHeadings.length}`);
+            console.log(
+              `🎯 Starting content generation at heading index 0 of ${allHeadings.length}`,
+            );
           } else {
             // For other transitions, clear generated data
             setGeneratedData(null);
@@ -763,7 +880,7 @@ export default function StepByStepBlogGenerator({
           toast.success("🎉 Blog generation completed!");
         }
       }
-      
+
       setProgress(newProgress);
     } catch (error) {
       // Error handled in callStepAPI
@@ -802,7 +919,7 @@ export default function StepByStepBlogGenerator({
       default:
         isCompleted = false;
     }
-    
+
     // Also check if parent data exists (for persistence across remounts)
     if (!isCompleted && data) {
       switch (stepKey) {
@@ -822,14 +939,21 @@ export default function StepByStepBlogGenerator({
           isCompleted = !!(data.faqs && data.faqs.length > 0);
           break;
         case "seo":
-          isCompleted = !!(data.seoTitle || data.focusKeyword || (data.tags && data.tags.length > 0));
+          isCompleted = !!(
+            data.seoTitle ||
+            data.focusKeyword ||
+            (data.tags && data.tags.length > 0)
+          );
           break;
         case "content":
-          isCompleted = !!(data.headings && data.headings.some(h => h.content && h.content.trim().length > 0));
+          isCompleted = !!(
+            data.headings &&
+            data.headings.some((h) => h.content && h.content.trim().length > 0)
+          );
           break;
       }
     }
-    
+
     return isCompleted;
   };
 
@@ -846,7 +970,8 @@ export default function StepByStepBlogGenerator({
             <FiZap size={24} className="text-slate-600" />
           </div>
           <p className="text-slate-400 mb-4 text-sm">
-            Click Generate to create {STEPS.find((s) => s.key === currentStep)?.title.toLowerCase()}
+            Click Generate to create{" "}
+            {STEPS.find((s) => s.key === currentStep)?.title.toLowerCase()}
           </p>
         </div>
       );
@@ -864,7 +989,9 @@ export default function StepByStepBlogGenerator({
                 <strong>Focus Keyword:</strong> {generatedData.focusKeyword}
               </p>
               <div className="text-sm text-slate-300">
-                <strong>Headings ({generatedData.headings?.length || 0}):</strong>
+                <strong>
+                  Headings ({generatedData.headings?.length || 0}):
+                </strong>
                 <ul className="mt-2 space-y-1.5 ml-4">
                   {generatedData.headings?.map((h: HeadingItem, i: number) => (
                     <li
@@ -885,7 +1012,7 @@ export default function StepByStepBlogGenerator({
         const totalImages = headingsForImages.length;
         const currentImageNum = currentImageIndex + 1;
         const currentImageHeading = headingsForImages[currentImageIndex];
-        
+
         if (totalImages === 0 || !currentImageHeading) {
           return (
             <div className="text-center py-12">
@@ -898,7 +1025,7 @@ export default function StepByStepBlogGenerator({
             </div>
           );
         }
-        
+
         return (
           <div className="space-y-4">
             {/* Progress indicator */}
@@ -912,19 +1039,23 @@ export default function StepByStepBlogGenerator({
               <div className="w-full bg-slate-700 rounded-full h-2">
                 <div
                   className="bg-[#fe9a00] h-2 rounded-full transition-all"
-                  style={{ width: `${(currentImageIndex / totalImages) * 100}%` }}
+                  style={{
+                    width: `${(currentImageIndex / totalImages) * 100}%`,
+                  }}
                 />
               </div>
               <div className="mt-2 text-xs text-slate-500">
                 {progress.imageApproved.filter(Boolean).length} completed
               </div>
             </div>
-            
+
             {/* Current heading info - ALWAYS SHOW */}
             <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-600">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-slate-500 mb-1">Generating image for:</p>
+                  <p className="text-xs text-slate-500 mb-1">
+                    Generating image for:
+                  </p>
                   <h4 className="text-base font-semibold text-[#fe9a00]">
                     {currentImageHeading.text}
                   </h4>
@@ -934,7 +1065,7 @@ export default function StepByStepBlogGenerator({
                 </span>
               </div>
             </div>
-            
+
             {/* Generated image */}
             {generatedData?.image ? (
               <div className="bg-slate-800/50 p-4 rounded-lg border border-green-500/30">
@@ -945,8 +1076,8 @@ export default function StepByStepBlogGenerator({
                   </span>
                 </div>
                 <div className="relative">
-                  <img 
-                    src={generatedData.image.url} 
+                  <img
+                    src={generatedData.image.url}
                     alt={generatedData.image.alt}
                     className="w-full rounded-lg"
                   />
@@ -956,7 +1087,8 @@ export default function StepByStepBlogGenerator({
               <div className="bg-slate-800/50 p-4 rounded-lg border border-dashed border-slate-700 text-center">
                 <FiImage size={20} className="mx-auto mb-2 text-slate-600" />
                 <p className="text-slate-400 text-sm">
-                  Click <strong className="text-[#fe9a00]">Generate</strong> below to create an image
+                  Click <strong className="text-[#fe9a00]">Generate</strong>{" "}
+                  below to create an image
                 </p>
               </div>
             )}
@@ -965,10 +1097,11 @@ export default function StepByStepBlogGenerator({
 
       case "content":
         // Show individual heading generation
-        const totalHeadings = allHeadings.length || progress.contentApproved.length;
+        const totalHeadings =
+          allHeadings.length || progress.contentApproved.length;
         const currentHeadingNum = currentHeadingIndex + 1;
         const currentHeading = allHeadings[currentHeadingIndex];
-        
+
         if (totalHeadings === 0 || !currentHeading) {
           return (
             <div className="text-center py-12">
@@ -981,7 +1114,7 @@ export default function StepByStepBlogGenerator({
             </div>
           );
         }
-        
+
         return (
           <div className="space-y-4">
             {/* Progress indicator */}
@@ -995,14 +1128,16 @@ export default function StepByStepBlogGenerator({
               <div className="w-full bg-slate-700 rounded-full h-2">
                 <div
                   className="bg-[#fe9a00] h-2 rounded-full transition-all"
-                  style={{ width: `${(currentHeadingIndex / totalHeadings) * 100}%` }}
+                  style={{
+                    width: `${(currentHeadingIndex / totalHeadings) * 100}%`,
+                  }}
                 />
               </div>
               <div className="mt-2 text-xs text-slate-500">
                 {progress.contentApproved.filter(Boolean).length} completed
               </div>
             </div>
-            
+
             {/* Current heading info - ALWAYS SHOW */}
             <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-600">
               <div className="flex items-center justify-between">
@@ -1017,7 +1152,7 @@ export default function StepByStepBlogGenerator({
                 </span>
               </div>
             </div>
-            
+
             {/* Generated content */}
             {generatedData?.heading?.content ? (
               <div className="bg-slate-800/50 p-4 rounded-lg border border-green-500/30">
@@ -1032,14 +1167,17 @@ export default function StepByStepBlogGenerator({
                 </div>
                 <div
                   className="text-slate-300 prose prose-sm text-sm prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{ __html: generatedData.heading.content }}
+                  dangerouslySetInnerHTML={{
+                    __html: generatedData.heading.content,
+                  }}
                 />
               </div>
             ) : (
               <div className="bg-slate-800/50 p-4 rounded-lg border border-dashed border-slate-700 text-center">
                 <FiEdit3 size={20} className="mx-auto mb-2 text-slate-600" />
                 <p className="text-slate-400 text-sm">
-                  Click <strong className="text-[#fe9a00]">Generate</strong> below to create content
+                  Click <strong className="text-[#fe9a00]">Generate</strong>{" "}
+                  below to create content
                 </p>
               </div>
             )}
@@ -1091,7 +1229,9 @@ export default function StepByStepBlogGenerator({
             <div className="bg-slate-800/50 p-4 rounded-lg space-y-3">
               <div>
                 <p className="text-xs text-slate-500 mb-1">Meta Description</p>
-                <p className="text-sm text-slate-300">{generatedData.seoDescription}</p>
+                <p className="text-sm text-slate-300">
+                  {generatedData.seoDescription}
+                </p>
                 <p className="text-xs text-slate-500 mt-1">
                   {generatedData.seoDescription?.length || 0}/160 characters
                 </p>
@@ -1157,7 +1297,8 @@ export default function StepByStepBlogGenerator({
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold text-white">AI Step-by-Step</h3>
           <span className="text-xs text-slate-400">
-            Step {STEPS.findIndex((s) => s.key === currentStep) + 1}/{STEPS.length}
+            Step {STEPS.findIndex((s) => s.key === currentStep) + 1}/
+            {STEPS.length}
           </span>
         </div>
         <div className="flex gap-1">
@@ -1165,7 +1306,7 @@ export default function StepByStepBlogGenerator({
             <div
               key={step.key}
               onClick={() => handleStepClick(step.key)}
-               className={`flex-1 h-1.5 rounded-full transition-all cursor-pointer ${
+              className={`flex-1 h-1.5 rounded-full transition-all cursor-pointer ${
                 isStepCompleted(step.key)
                   ? "bg-green-500"
                   : step.key === currentStep
@@ -1185,7 +1326,7 @@ export default function StepByStepBlogGenerator({
             <div
               key={step.key}
               onClick={() => handleStepClick(step.key)}
-               className={`flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer ${
+              className={`flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer ${
                 isStepCompleted(step.key)
                   ? "bg-green-900/20 border border-green-500/30"
                   : step.key === currentStep
@@ -1298,64 +1439,64 @@ export default function StepByStepBlogGenerator({
                   ) : (
                     <>
                       <FiCheck size={14} />
-                      {currentImageIndex >= headingsForImages.length - 1 ? "Approve All" : "Approve & Next"}
+                      {currentImageIndex >= headingsForImages.length - 1
+                        ? "Approve All"
+                        : "Approve & Next"}
                     </>
                   )}
                 </button>
               </>
             )
+          ) : /* Other steps use standard handlers */
+          !generatedData ? (
+            <button
+              onClick={handleGenerate}
+              disabled={loading || !topic.trim()}
+              className="flex-1 bg-[#fe9a00] hover:bg-[#ff8800] disabled:bg-slate-700 disabled:text-slate-500 text-white py-2.5 px-4 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all"
+            >
+              {loading ? (
+                <>
+                  <FiLoader size={14} className="animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FiZap size={14} />
+                  Generate
+                </>
+              )}
+            </button>
           ) : (
-            /* Other steps use standard handlers */
-            !generatedData ? (
+            <>
               <button
-                onClick={handleGenerate}
-                disabled={loading || !topic.trim()}
-                className="flex-1 bg-[#fe9a00] hover:bg-[#ff8800] disabled:bg-slate-700 disabled:text-slate-500 text-white py-2.5 px-4 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all"
+                onClick={handleRegenerate}
+                disabled={loading}
+                className="flex-1 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-white py-2.5 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all"
               >
                 {loading ? (
-                  <>
-                    <FiLoader size={14} className="animate-spin" />
-                    Generating...
-                  </>
+                  <FiLoader size={14} className="animate-spin" />
                 ) : (
                   <>
-                    <FiZap size={14} />
-                    Generate
+                    <FiRefreshCw size={14} />
+                    Regenerate
                   </>
                 )}
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={handleRegenerate}
-                  disabled={loading}
-                  className="flex-1 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 text-white py-2.5 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all"
-                >
-                  {loading ? (
-                    <FiLoader size={14} className="animate-spin" />
-                  ) : (
-                    <>
-                      <FiRefreshCw size={14} />
-                      Regenerate
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={handleApprove}
-                  disabled={loading}
-                  className="flex-1 bg-green-600 hover:bg-green-500 text-nowrap disabled:bg-slate-800 text-white py-2.5 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all"
-                >
-                  {loading ? (
-                    <FiLoader size={14} className="animate-spin" />
-                  ) : (
-                    <>
-                      <FiCheck size={14} />
-                      Approve & Next
-                    </>
-                  )}
-                </button>
-              </>
-            )
+              <button
+                onClick={handleApprove}
+                disabled={loading}
+                className="flex-1 bg-green-600 hover:bg-green-500 text-nowrap disabled:bg-slate-800 text-white py-2.5 px-4 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+              >
+                {loading ? (
+                  <FiLoader size={14} className="animate-spin" />
+                ) : (
+                  <>
+                    <FiCheck size={14} />
+                    Approve & Next
+                  </>
+                )}
+              </button>
+            </>
           )}
         </div>
       </div>

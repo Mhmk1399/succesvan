@@ -14,7 +14,9 @@ interface BlogDetailClientProps {
 }
 
 export default function BlogDetailClient({ content }: BlogDetailClientProps) {
-  const contentRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+  const contentRef = useRef<HTMLDivElement>(
+    null,
+  ) as React.RefObject<HTMLDivElement>;
   const [mounted, setMounted] = useState(false);
   const [sanitizedContent, setSanitizedContent] = useState("");
 
@@ -54,6 +56,10 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
             "td",
             "figure",
             "figcaption",
+            "div",
+            "hr",
+            "mark",
+            "script",
           ],
           ALLOWED_ATTR: [
             "class",
@@ -62,15 +68,29 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
             "alt",
             "title",
             "href",
+            "target",
+            "rel",
             "dir",
             "width",
             "height",
             "loading",
             "decoding",
+            "bgcolor",
+            "background",
+            "data-color",
           ],
           ALLOW_DATA_ATTR: false,
         });
-        setSanitizedContent(sanitized);
+
+        // Process mark elements to apply background-color from data-color attribute
+        const processed = sanitized.replace(
+          /<mark\s+data-color="([^"]*)"[^>]*>/gi,
+          (match, color) => {
+            return `<mark style="background-color: ${color};" data-color="${color}">`;
+          },
+        );
+
+        setSanitizedContent(processed);
         setMounted(true);
       });
     }
@@ -90,33 +110,113 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
             y: 0,
             duration: 0.8,
             ease: "power3.out",
-          }
+          },
         );
       }
     }, contentRef);
 
     return () => ctx.revert();
   }, [mounted]);
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 relative">
-      {/* TOC Sidebar - Only on large screens */}
-      <div className="lg:col-span-1">
-        <TableOfContents contentRef={contentRef} />
-      </div>
+    <>
+      {/* Static heading styles */}
+      <style>{`
+        .blog-content h1 {
+          color: white !important;
+          font-weight: 700 !important;
+          font-size: 1.875rem !important;
+          margin-bottom: 1rem !important;
+          margin-top: 2rem !important;
+          line-height: 1.2 !important;
+        }
+        .blog-content h2 {
+          color: white !important;
+          font-weight: 700 !important;
+          font-size: 1.5rem !important;
+          margin-bottom: 0.75rem !important;
+          margin-top: 1.5rem !important;
+          line-height: 1.3 !important;
+        }
+        .blog-content h3 {
+          color: white !important;
+          font-weight: 700 !important;
+          font-size: 1.25rem !important;
+          margin-bottom: 0.75rem !important;
+          margin-top: 1.25rem !important;
+          line-height: 1.4 !important;
+        }
+        .blog-content h4 {
+          color: white !important;
+          font-weight: 600 !important;
+          font-size: 1.125rem !important;
+          margin-bottom: 0.5rem !important;
+          margin-top: 1rem !important;
+          line-height: 1.4 !important;
+        }
+        .blog-content h5 {
+          color: white !important;
+          font-weight: 600 !important;
+          font-size: 1rem !important;
+          margin-bottom: 0.5rem !important;
+          margin-top: 0.75rem !important;
+          line-height: 1.5 !important;
+        }
+        .blog-content h6 {
+          color: white !important;
+          font-weight: 600 !important;
+          font-size: 0.875rem !important;
+          margin-bottom: 0.5rem !important;
+          margin-top: 0.5rem !important;
+          line-height: 1.5 !important;
+        }
+        /* Horizontal line styling */
+        .blog-content hr {
+          border-color: #e4e4e !important;
+          margin: 1.5rem 0 !important;
+        }
+        /* Highlight/mark styling */
+        .blog-content mark {
+           color: inherit !important;
+          padding: 0.125rem 0.25rem !important;
+          border-radius: 0.25rem !important;
+        }
+        /* Allow inline background colors */
+        .blog-content [style*="background"],
+        .blog-content [style*="background-color"] {
+          display: inline-block !important;
+        }
+      `}</style>
 
-      {/* Main Content */}
-      <div
-        ref={contentRef}
-        className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white prose-em:text-gray-200 prose-a:text-[#fe9a00] hover:prose-a:text-white prose-a:transition-colors prose-img:rounded-xl prose-img:shadow-xl prose-img:my-8 prose-code:bg-slate-800 prose-code:text-[#fe9a00] prose-code:px-2 prose-code:py-1 prose-code:rounded prose-pre:bg-slate-800 prose-pre:border prose-pre:border-white/10 prose-blockquote:border-[#fe9a00] prose-blockquote:text-gray-300 lg:col-span-3"
-        dangerouslySetInnerHTML={{
-          __html: sanitizedContent,
-        }}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 relative">
+        {/* TOC Sidebar - Only on large screens */}
+        <div className="lg:col-span-1">
+          <TableOfContents contentRef={contentRef} />
+        </div>
 
-      {/* Mobile TOC - Only on small screens */}
-      <div className="lg:hidden">
-        <TableOfContents contentRef={contentRef} />
+        {/* Main Content */}
+
+        <div
+          ref={contentRef}
+          className="blog-content prose prose-invert   max-w-none lg:col-span-3
+            prose-p:text-gray-300
+            prose-strong:text-white
+            prose-em:text-gray-200
+            prose-a:text-[#fe9a00] hover:prose-a:text-white prose-a:transition-colors
+            prose-img:rounded-xl prose-img:shadow-xl prose-img:my-8
+            prose-code:bg-slate-800 prose-code:text-[#fe9a00] prose-code:px-2 prose-code:py-1 prose-code:rounded
+            prose-pre:bg-slate-800 prose-pre:border prose-pre:border-white/10
+            prose-blockquote:border-[#fe9a00] prose-blockquote:text-gray-300"
+          dangerouslySetInnerHTML={{
+            __html: sanitizedContent,
+          }}
+        />
+
+        {/* Mobile TOC - Only on small screens */}
+        <div className="lg:hidden">
+          <TableOfContents contentRef={contentRef} />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

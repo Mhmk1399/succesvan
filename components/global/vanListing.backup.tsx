@@ -256,8 +256,8 @@ function ReservationPanel({
     code: "",
     pickupDate: "",
     returnDate: "",
-    pickupTime: "10:00",
-    returnTime: "10:00",
+    pickupTime: "",
+    returnTime: "",
     pickupLocation: "",
     notes: "",
     acceptTerms: false,
@@ -639,8 +639,33 @@ function ReservationPanel({
       }
     }
 
-    return generateTimeSlots(start, end, 15);
-  }, [formData.office, dateRange, offices]);
+    // Base slots
+    let slots = generateTimeSlots(start, end, 15);
+
+    // If pickup and return are on the same date and return time is selected,
+    // ensure pickup slots do not allow a duration less than 6 hours.
+    if (
+      dateRange[0].endDate &&
+      dateRange[0].startDate &&
+      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+      formData.returnTime
+    ) {
+      const [retHour, retMin] = formData.returnTime.split(":").map(Number);
+      const retMinutes = retHour * 60 + retMin;
+      const maxPickupMinutes = retMinutes - 6 * 60;
+      if (maxPickupMinutes < 0) {
+        slots = [];
+      } else {
+        slots = slots.filter((s) => {
+          const [h, m] = s.split(":").map(Number);
+          const minutes = h * 60 + m;
+          return minutes <= maxPickupMinutes;
+        });
+      }
+    }
+
+    return slots;
+  }, [formData.office, dateRange, offices, formData.returnTime]);
 
   const returnTimeSlots = useMemo(() => {
     if (!formData.office || !dateRange[0].endDate) return [];
@@ -702,8 +727,33 @@ function ReservationPanel({
       }
     }
 
-    return generateTimeSlots(start, end, 15);
-  }, [formData.office, dateRange, offices]);
+    // Base slots
+    let slots = generateTimeSlots(start, end, 15);
+
+    // If pickup and return are on the same date and pickup time is selected,
+    // ensure return slots respect minimum 6 hours duration.
+    if (
+      dateRange[0].startDate &&
+      dateRange[0].endDate &&
+      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+      formData.pickupTime
+    ) {
+      const [pickHour, pickMin] = formData.pickupTime.split(":").map(Number);
+      const pickMinutes = pickHour * 60 + pickMin;
+      const minReturnMinutes = pickMinutes + 6 * 60;
+      if (minReturnMinutes > 1439) {
+        slots = [];
+      } else {
+        slots = slots.filter((s) => {
+          const [h, m] = s.split(":").map(Number);
+          const minutes = h * 60 + m;
+          return minutes >= minReturnMinutes;
+        });
+      }
+    }
+
+    return slots;
+  }, [formData.office, dateRange, offices, formData.pickupTime]);
 
   useEffect(() => {
     if (formData.office && dateRange[0].startDate) {
@@ -820,6 +870,20 @@ function ReservationPanel({
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+  };
+
+  const handleTimeChange = (name: string, time: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: time,
+      // Clear return time when pickup changes on same day
+      ...(name === "pickupTime" &&
+        dateRange[0].startDate &&
+        dateRange[0].endDate &&
+        dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() && {
+          returnTime: "",
+        }),
+    }));
   };
 
   const handleSendCode = async () => {
@@ -959,6 +1023,26 @@ function ReservationPanel({
     e.preventDefault();
 
     if (!validateForm()) return;
+
+    // Validation: if pickup and return dates are the same, ensure minimum 6 hours
+    if (
+      dateRange[0].startDate &&
+      dateRange[0].endDate &&
+      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString()
+    ) {
+      if (!formData.pickupTime || !formData.returnTime) {
+        setErrors({ submit: "Please select pickup and return times (minimum 6 hours)" });
+        return;
+      }
+      const [pickH, pickM] = formData.pickupTime.split(":").map(Number);
+      const [retH, retM] = formData.returnTime.split(":").map(Number);
+      const pickMinutes = pickH * 60 + pickM;
+      const retMinutes = retH * 60 + retM;
+      if (retMinutes - pickMinutes < 6 * 60) {
+        setErrors({ submit: "Minimum reservation on the same day is 6 hours" });
+        return;
+      }
+    }
 
     setIsSubmitting(true);
 

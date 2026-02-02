@@ -756,6 +756,54 @@ export default function ReservationForm({
         0
       );
 
+      // Calculate extension costs (so ReservationModal final price includes the same extra payment)
+      const extensionCost = (() => {
+        let pickupExtension = 0;
+        let returnExtension = 0;
+
+        if (formData.office) {
+          const office = offices?.find((o) => o._id === formData.office);
+          if (office) {
+            const pickupDay = pickupDateTime
+              .toLocaleDateString("en-US", { weekday: "long" })
+              .toLowerCase();
+            const returnDay = returnDateTime
+              .toLocaleDateString("en-US", { weekday: "long" })
+              .toLowerCase();
+
+            const pickupDaySchedule = office.workingTime?.find(
+              (wt: any) => wt.day === pickupDay
+            );
+            const returnDaySchedule = office.workingTime?.find(
+              (wt: any) => wt.day === returnDay
+            );
+
+            const pickupNormalStart = pickupDaySchedule?.startTime || "00:00";
+            const pickupNormalEnd = pickupDaySchedule?.endTime || "23:59";
+            const returnNormalStart = returnDaySchedule?.startTime || "00:00";
+            const returnNormalEnd = returnDaySchedule?.endTime || "23:59";
+
+            if (
+              pickupDaySchedule?.pickupExtension &&
+              (formData.pickupTime < pickupNormalStart ||
+                formData.pickupTime > pickupNormalEnd)
+            ) {
+              pickupExtension = pickupDaySchedule.pickupExtension.flatPrice || 0;
+            }
+
+            if (
+              returnDaySchedule?.returnExtension &&
+              (formData.returnTime < returnNormalStart ||
+                formData.returnTime > returnNormalEnd)
+            ) {
+              returnExtension = returnDaySchedule.returnExtension.flatPrice || 0;
+            }
+          }
+        }
+
+        return pickupExtension + returnExtension;
+      })();
+
       const rentalDetails: RentalDetails = {
         office: formData.office,
         type: formData.type,
@@ -767,6 +815,7 @@ export default function ReservationForm({
           offices?.find((o) => o._id === formData.office)?.name || "",
         driverAge: formData.driverAge,
         message: formData.message,
+        extensionCost,
       };
       sessionStorage.setItem("rentalDetails", JSON.stringify(rentalDetails));
 
@@ -1235,11 +1284,33 @@ export default function ReservationForm({
                       price: workingDay.pickupExtension.flatPrice,
                     }
                   : undefined;
+
+                // Filter pickup slots for mobile - same logic as desktop
+                let mobilePickupSlots = pickupTimeSlots;
+                if (
+                  dateRange[0].endDate &&
+                  dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+                  formData.returnTime
+                ) {
+                  const [retHour, retMin] = formData.returnTime.split(":").map(Number);
+                  const retMinutes = retHour * 60 + retMin;
+                  const maxPickupMinutes = retMinutes - 6 * 60;
+                  if (maxPickupMinutes < 0) {
+                    mobilePickupSlots = [];
+                  } else {
+                    mobilePickupSlots = pickupTimeSlots.filter((s) => {
+                      const [h, m] = s.split(":").map(Number);
+                      const minutes = h * 60 + m;
+                      return minutes <= maxPickupMinutes;
+                    });
+                  }
+                }
+
                 return (
                   <TimeSelect
                     value={formData.pickupTime}
                     onChange={(time) => handleTimeChange("pickupTime", time)}
-                    slots={pickupTimeSlots}
+                    slots={mobilePickupSlots}
                     reservedSlots={startDateReservedSlots}
                     isInline={true}
                     tooltip={getAvailableTimeSlots(dateRange[0].startDate).info}
@@ -1250,11 +1321,6 @@ export default function ReservationForm({
                   />
                 );
               })()}
-            {dateRange[0].startDate && (
-              <p className="text-amber-300 text-[10px] mt-0.5">
-                {getAvailableTimeSlots(dateRange[0].startDate).info}
-              </p>
-            )}
           </div>
           <div>
             <label className="block text-white text-xs font-semibold mb-1">
@@ -1285,11 +1351,33 @@ export default function ReservationForm({
                       price: workingDay.returnExtension.flatPrice,
                     }
                   : undefined;
+
+                // Filter return slots for mobile - same logic as desktop
+                let mobileReturnSlots = returnTimeSlots;
+                if (
+                  dateRange[0].startDate &&
+                  dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+                  formData.pickupTime
+                ) {
+                  const [pickHour, pickMin] = formData.pickupTime.split(":").map(Number);
+                  const pickMinutes = pickHour * 60 + pickMin;
+                  const minReturnMinutes = pickMinutes + 6 * 60;
+                  if (minReturnMinutes > 1439) {
+                    mobileReturnSlots = [];
+                  } else {
+                    mobileReturnSlots = returnTimeSlots.filter((s) => {
+                      const [h, m] = s.split(":").map(Number);
+                      const minutes = h * 60 + m;
+                      return minutes >= minReturnMinutes;
+                    });
+                  }
+                }
+
                 return (
                   <TimeSelect
                     value={formData.returnTime}
                     onChange={(time) => handleTimeChange("returnTime", time)}
-                    slots={returnTimeSlots}
+                    slots={mobileReturnSlots}
                     reservedSlots={endDateReservedSlots}
                     isInline={true}
                     tooltip={getAvailableTimeSlots(dateRange[0].endDate).info}
@@ -1300,11 +1388,6 @@ export default function ReservationForm({
                   />
                 );
               })()}
-            {dateRange[0].endDate && (
-              <p className="text-amber-300 text-[10px] mt-0.5">
-                {getAvailableTimeSlots(dateRange[0].endDate).info}
-              </p>
-            )}
           </div>
         </div>
 

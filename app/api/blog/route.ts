@@ -72,7 +72,7 @@ export const GET = async (req: NextRequest) => {
         .sort(sortOptions)
         .skip(skip)
         .limit(limit)
-        .select("_id slug status views readingTime wordCount createdAt updatedAt content.seoTitle content.topic content.compiledHtml content.summary media.featuredImage generationProgress.currentStep"),
+        .select("_id slug status views readingTime wordCount createdAt updatedAt seo.canonicalUrl seo.seoTitle content.topic content.compiledHtml content.summary media.featuredImage generationProgress.currentStep"),
       Blog.countDocuments(filter),
     ]);
 

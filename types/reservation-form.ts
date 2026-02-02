@@ -33,6 +33,7 @@ export interface RentalDetails {
   pickupLocation: string;
   driverAge: string;
   message: string;
+  extensionCost?: number;
 }
 
 // ============================================================================

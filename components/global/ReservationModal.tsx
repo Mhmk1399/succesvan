@@ -128,6 +128,7 @@ export default function ReservationModal({
   const [address, setAddress] = useState<string>("");
   const [postalCode, setPostalCode] = useState<string>("");
   const [city, setCity] = useState<string>("");
+  const [storedExtensionCost, setStoredExtensionCost] = useState<number>(0);
   const [uploadingLicense, setUploadingLicense] = useState({
     front: false,
     back: false,
@@ -331,8 +332,15 @@ export default function ReservationModal({
     formData.endDate ? `${formData.endDate}T${formData.endTime}` : "",
     selectedCategory?.pricingTiers || [],
     (selectedCategory as any)?.extrahoursRate || 0,
-    extensionPrices.pickupExtension,
-    extensionPrices.returnExtension,
+    // If we came from ReservationForm (sessionStorage flow), we persist the computed extension cost there.
+    // This acts as a fallback in case timezone / office hours parsing causes extensionPrices to be 0.
+    // NOTE: usePriceCalculation accepts pickup/return separately, so we apply fallback as pickup.
+    (extensionPrices.pickupExtension + extensionPrices.returnExtension) > 0
+      ? extensionPrices.pickupExtension
+      : storedExtensionCost,
+    (extensionPrices.pickupExtension + extensionPrices.returnExtension) > 0
+      ? extensionPrices.returnExtension
+      : 0,
     formData.gearType === "automatic" &&
       (selectedCategory as any)?.gear?.availableTypes?.includes("automatic") &&
       (selectedCategory as any)?.gear?.availableTypes?.includes("manual")
@@ -457,6 +465,10 @@ export default function ReservationModal({
         ? new Date(details.returnDate)
         : null;
 
+      setStoredExtensionCost(
+        typeof details.extensionCost === "number" ? details.extensionCost : 0
+      );
+
       const typeObj =
         typeof details.type === "string"
           ? types.find((t) => t._id === details.type) || { name: "" }
@@ -467,9 +479,14 @@ export default function ReservationModal({
         type: typeObj,
         category: details.category || "",
         startDate: pickupDate ? pickupDate.toISOString().split("T")[0] : "",
-        startTime: pickupDate ? pickupDate.toTimeString().slice(0, 5) : "10:00",
+        // Prefer the explicit time selected in ReservationForm to avoid timezone shifts.
+        startTime:
+          details.pickupTime ||
+          (pickupDate ? pickupDate.toTimeString().slice(0, 5) : "10:00"),
         endDate: returnDate ? returnDate.toISOString().split("T")[0] : "",
-        endTime: returnDate ? returnDate.toTimeString().slice(0, 5) : "10:00",
+        endTime:
+          details.returnTime ||
+          (returnDate ? returnDate.toTimeString().slice(0, 5) : "10:00"),
         driverAge: details.driverAge || 25,
       }));
       hasRentalData = !!(

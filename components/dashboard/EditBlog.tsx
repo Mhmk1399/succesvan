@@ -285,6 +285,16 @@ export default function EditBlog({
 
   // Save blog
   const handleSave = async () => {
+    // Validate required SEO fields
+    if (!data.seoTitle || data.seoTitle.trim() === "") {
+      showToast.error("SEO Title is required. Please enter a SEO Title.");
+      return;
+    }
+    if (!data.canonicalUrl || data.canonicalUrl.trim() === "") {
+      showToast.error("Canonical URL is required. Please enter a Canonical URL.");
+      return;
+    }
+
     try {
       const token = getAuthToken();
 

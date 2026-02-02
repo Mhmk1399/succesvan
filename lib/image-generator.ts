@@ -42,7 +42,8 @@ export async function generateBlogImage(
     n: 1,
     size: "1792x1024", // Wide format, good for blog headers
     quality: "standard", // Use "hd" for higher quality but slower/more expensive
-    style: "vivid", // "vivid" or "natural"
+    style: "natural", // "vivid" or "natural"
+    
   });
 if (!response || !response.data || response.data.length === 0) {
     throw new Error("Failed to generate image - no data returned");

@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import {
   FiX,
   FiMic,
-  FiVolume2,
   FiCheck,
   FiTruck,
   FiCalendar,
@@ -15,8 +14,9 @@ import {
   FiLoader,
   FiPlus,
   FiMinus,
+  FiMapPin,
 } from "react-icons/fi";
-import { BsFuelPump } from "react-icons/bs";
+import { BsFuelPump, BsRobot } from "react-icons/bs";
 import Image from "next/image";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import {
@@ -41,9 +41,38 @@ interface FastAgentModalProps {
   onComplete: (
     reservationId: string,
     userToken: string,
-    isNewUser: boolean
+    isNewUser: boolean,
   ) => void;
 }
+
+// --- Enhanced Animations & Styles ---
+const uiStyles = `
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes ripple {
+    0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
+    70% { box-shadow: 0 0 0 15px rgba(249, 115, 22, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+  }
+  @keyframes wave {
+    0%, 100% { height: 6px; }
+    50% { height: 16px; }
+  }
+  @keyframes pulse-opacity {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  .animate-fade-in { animation: fadeInUp 0.4s ease-out forwards; }
+  .animate-ripple { animation: ripple 1.5s infinite; }
+  .animate-wave { animation: wave 1s ease-in-out infinite; }
+  .animate-pulse-opacity { animation: pulse-opacity 1.5s ease-in-out infinite; }
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+`;
 
 export default function FastAgentModal({
   isOpen,
@@ -54,9 +83,14 @@ export default function FastAgentModal({
   const [hasStarted, setHasStarted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [existingUserToken, setExistingUserToken] = useState<string | null>(
-    null
+    null,
   );
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // -- New UI State --
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [msgTimestamps, setMsgTimestamps] = useState<Date[]>([]);
+  const hasRecordedOnceRef = useRef(false); // To prevent transcribing loading on initial load
 
   // Booking form state
   const [bookingForm, setBookingForm] = useState({
@@ -145,15 +179,70 @@ export default function FastAgentModal({
   } = useFastAgent();
 
   const canReturn = agentState.phase !== "ask_needs" && canGoBack;
-  
-  console.log("🔍 [FastAgentModal] Current phase:", agentState.phase, "| canGoBack:", canGoBack, "| canReturn:", canReturn);
 
-  // Use ref to track current phase for voice callback (avoids stale closure)
+  // Use ref to track current phase for voice callback
   const phaseRef = useRef(agentState.phase);
   useEffect(() => {
     phaseRef.current = agentState.phase;
-    console.log("📍 [FastAgentModal] Phase updated to:", agentState.phase);
   }, [agentState.phase]);
+
+  // --- Timestamp Logic ---
+  // Sync timestamps with messages array.
+  // If a new message appears, we create a timestamp for it.
+  useEffect(() => {
+    if (messages.length > msgTimestamps.length) {
+      const newItems = messages
+        .slice(msgTimestamps.length)
+        .map(() => new Date());
+      setMsgTimestamps((prev) => [...prev, ...newItems]);
+    }
+  }, [messages, msgTimestamps.length]);
+
+  // Format time helper
+  const formatTime = (date?: Date) => {
+    if (!date) return "";
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  // --- Voice Recording & Transcribing State Logic ---
+  const { isRecording, toggleRecording } = useVoiceRecording({
+    onTranscriptionComplete: async (result) => {
+      // 3. Transcription done, turn off loading
+      setIsTranscribing(false);
+      hasRecordedOnceRef.current = false;
+
+      // Use different handler based on current phase
+      let response;
+      if (phaseRef.current === "collect_booking") {
+        response = await voiceBooking(result.transcript);
+      } else if (phaseRef.current === "verify_phone") {
+        response = await voicePhone(result.transcript);
+      } else {
+        response = await sendMessage(result.transcript);
+      }
+
+      if (response?.isComplete && response.state.reservationId) {
+        setTimeout(() => {
+          onComplete(
+            response.state.reservationId!,
+            response.state.userToken || "",
+            response.state.isNewUser || false,
+          );
+        }, 2000);
+      }
+    },
+    autoSubmit: false,
+  });
+
+  // Handle "Transcribing" state visual
+  useEffect(() => {
+    if (isRecording) {
+      hasRecordedOnceRef.current = true;
+    } else if (!isRecording && hasRecordedOnceRef.current) {
+      // 2. Recording stopped, but transcript not back yet -> Start loading
+      setIsTranscribing(true);
+    }
+  }, [isRecording]);
 
   // Initialize gear type when category is selected
   useEffect(() => {
@@ -165,52 +254,20 @@ export default function FastAgentModal({
     }
   }, [agentState.selectedCategory]);
 
-  const { isRecording, toggleRecording } = useVoiceRecording({
-    onTranscriptionComplete: async (result) => {
-      console.log("🎤 User said:", result.transcript);
-      console.log("📍 Current phase (from ref):", phaseRef.current);
-
-      // Use different handler based on current phase
-      let response;
-      if (phaseRef.current === "collect_booking") {
-        console.log("🎯 Calling voiceBooking...");
-        response = await voiceBooking(result.transcript);
-      } else if (phaseRef.current === "verify_phone") {
-        console.log("🎯 Calling voicePhone...");
-        response = await voicePhone(result.transcript);
-      } else {
-        console.log("🎯 Calling sendMessage...");
-        response = await sendMessage(result.transcript);
-      }
-
-      if (response?.isComplete && response.state.reservationId) {
-        setTimeout(() => {
-          onComplete(
-            response.state.reservationId!,
-            response.state.userToken || "",
-            response.state.isNewUser || false
-          );
-        }, 2000);
-      }
-    },
-    autoSubmit: false,
-  });
-
   useEffect(() => {
     setMounted(true);
-
     // Check if user is already logged in
     const token = localStorage.getItem("token");
     if (token) {
       setIsAuthenticated(true);
       setExistingUserToken(token);
-      console.log("✅ [FastAgentModal] User is already authenticated");
     }
   }, []);
 
   useEffect(() => {
+    // Scroll to bottom when messages change, or loading/transcribing states change
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isLoading, isTranscribing]);
 
   // Auto-advance from non-interactive gear selection
   useEffect(() => {
@@ -229,7 +286,7 @@ export default function FastAgentModal({
     }
   }, [agentState.phase, agentState.selectedCategory, selectGear]);
 
-  // Sync booking form with agent state (for voice-filled values)
+  // Sync booking form with agent state
   useEffect(() => {
     if (agentState.booking) {
       setBookingForm((prev) => ({
@@ -248,14 +305,14 @@ export default function FastAgentModal({
     if (bookingForm.officeId && bookingForm.startDate) {
       setStartDateReservedSlots([]);
       fetch(
-        `/api/reservations/by-office?office=${bookingForm.officeId}&startDate=${bookingForm.startDate}&type=start`
+        `/api/reservations/by-office?office=${bookingForm.officeId}&startDate=${bookingForm.startDate}&type=start`,
       )
         .then((res) => res.json())
         .then((data) => {
           setStartDateReservedSlots(data.data?.reservedSlots || []);
         })
         .catch((err) =>
-          console.log("Failed to fetch start date reserved slots:", err)
+          console.log("Failed to fetch start date reserved slots:", err),
         );
     }
   }, [bookingForm.officeId, bookingForm.startDate]);
@@ -265,14 +322,14 @@ export default function FastAgentModal({
     if (bookingForm.officeId && bookingForm.endDate) {
       setEndDateReservedSlots([]);
       fetch(
-        `/api/reservations/by-office?office=${bookingForm.officeId}&endDate=${bookingForm.endDate}&type=end`
+        `/api/reservations/by-office?office=${bookingForm.officeId}&endDate=${bookingForm.endDate}&type=end`,
       )
         .then((res) => res.json())
         .then((data) => {
           setEndDateReservedSlots(data.data?.reservedSlots || []);
         })
         .catch((err) =>
-          console.log("Failed to fetch end date reserved slots:", err)
+          console.log("Failed to fetch end date reserved slots:", err),
         );
     }
   }, [bookingForm.officeId, bookingForm.endDate]);
@@ -305,7 +362,7 @@ export default function FastAgentModal({
         onComplete(
           agentState.reservationId!,
           agentState.userToken || "",
-          agentState.isNewUser || false
+          agentState.isNewUser || false,
         );
       }, 2500);
     }
@@ -331,7 +388,7 @@ export default function FastAgentModal({
     ][date.getDay()];
 
     const specialDay = office.specialDays?.find(
-      (sd: any) => sd.month === month && sd.day === day
+      (sd: any) => sd.month === month && sd.day === day,
     );
     let start = "00:00",
       end = "23:59";
@@ -341,7 +398,7 @@ export default function FastAgentModal({
       end = specialDay.endTime;
     } else {
       const workingDay = office.workingTime?.find(
-        (w: any) => w.day === dayName && w.isOpen
+        (w: any) => w.day === dayName && w.isOpen,
       );
       if (workingDay) {
         start = workingDay.startTime;
@@ -360,11 +417,11 @@ export default function FastAgentModal({
             (workingDay.pickupExtension.hoursAfter || 0) * 60;
           start = `${String(Math.floor(extendedStart / 60)).padStart(
             2,
-            "0"
+            "0",
           )}:${String(extendedStart % 60).padStart(2, "0")}`;
           end = `${String(Math.floor(extendedEnd / 60)).padStart(
             2,
-            "0"
+            "0",
           )}:${String(extendedEnd % 60).padStart(2, "0")}`;
         }
       }
@@ -395,7 +452,7 @@ export default function FastAgentModal({
     ][date.getDay()];
 
     const specialDay = office.specialDays?.find(
-      (sd: any) => sd.month === month && sd.day === day
+      (sd: any) => sd.month === month && sd.day === day,
     );
     let start = "00:00",
       end = "23:59";
@@ -405,7 +462,7 @@ export default function FastAgentModal({
       end = specialDay.endTime;
     } else {
       const workingDay = office.workingTime?.find(
-        (w: any) => w.day === dayName && w.isOpen
+        (w: any) => w.day === dayName && w.isOpen,
       );
       if (workingDay) {
         start = workingDay.startTime;
@@ -424,11 +481,11 @@ export default function FastAgentModal({
             (workingDay.returnExtension.hoursAfter || 0) * 60;
           start = `${String(Math.floor(extendedStart / 60)).padStart(
             2,
-            "0"
+            "0",
           )}:${String(extendedStart % 60).padStart(2, "0")}`;
           end = `${String(Math.floor(extendedEnd / 60)).padStart(
             2,
-            "0"
+            "0",
           )}:${String(extendedEnd % 60).padStart(2, "0")}`;
         }
       }
@@ -453,13 +510,11 @@ export default function FastAgentModal({
       "saturday",
     ][date.getDay()];
 
-    // Check special days first
     const specialDay = office.specialDays?.find(
-      (sd) => sd.month === month && sd.day === day
+      (sd) => sd.month === month && sd.day === day,
     );
     if (specialDay && !specialDay.isOpen) return true;
 
-    // Check working hours
     const workingDay = office.workingTime?.find((w) => w.day === dayName);
     if (workingDay && !workingDay.isOpen) return true;
 
@@ -469,17 +524,14 @@ export default function FastAgentModal({
   // Body scroll lock
   useEffect(() => {
     if (!isOpen) return;
-
     const body = document.body;
     const scrollY = window.scrollY;
-
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
     body.style.left = "0";
     body.style.right = "0";
     body.style.overflow = "hidden";
     body.style.width = "100%";
-
     return () => {
       body.style.position = "";
       body.style.top = "";
@@ -506,13 +558,8 @@ export default function FastAgentModal({
 
   const handleSubmitBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      !bookingForm.officeId ||
-      !bookingForm.startDate ||
-      !bookingForm.endDate
-    ) {
+    if (!bookingForm.officeId || !bookingForm.startDate || !bookingForm.endDate)
       return;
-    }
     await submitBooking(bookingForm);
   };
 
@@ -524,22 +571,9 @@ export default function FastAgentModal({
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(
-      "🔐 [FastAgentModal] Attempting to verify code:",
-      verificationCode
-    );
-    if (!verificationCode || verificationCode.length !== 6) {
-      console.log(
-        "⚠️ [FastAgentModal] Invalid code length:",
-        verificationCode.length
-      );
-      return;
-    }
-    console.log("📤 [FastAgentModal] Calling verifyCode...");
+    if (!verificationCode || verificationCode.length !== 6) return;
     await verifyCode(verificationCode);
   };
-
-  const today = new Date().toISOString().split("T")[0];
 
   const getPhaseProgress = (phase: FastPhase): number => {
     switch (phase) {
@@ -564,30 +598,22 @@ export default function FastAgentModal({
     }
   };
 
-  // Calculate add-on price based on rental days
   const getAddOnPrice = (addOn: AddOnOption): number => {
     const totalDays = agentState.booking.totalDays || 1;
-
     if (addOn.pricingType === "flat") {
       const amount = addOn.flatPrice?.amount || 0;
-      // If flat price is per day, multiply by total days
       return addOn.flatPrice?.isPerDay ? amount * totalDays : amount;
     }
-
-    // Find matching tier for tiered pricing
     if (addOn.tieredPrice?.tiers && addOn.tieredPrice.tiers.length > 0) {
       const tier = addOn.tieredPrice.tiers.find(
-        (t) => totalDays >= t.minDays && totalDays <= t.maxDays
+        (t) => totalDays >= t.minDays && totalDays <= t.maxDays,
       );
       const tierPrice = tier?.price || addOn.tieredPrice.tiers[0].price || 0;
-      // If tiered price is per day, multiply by total days
       return addOn.tieredPrice.isPerDay ? tierPrice * totalDays : tierPrice;
     }
-
     return 0;
   };
 
-  // Handle add-on quantity change
   const handleAddOnQuantityChange = (addOnId: string, delta: number) => {
     setAddOnQuantities((prev) => {
       const current = prev[addOnId] || 0;
@@ -596,13 +622,11 @@ export default function FastAgentModal({
     });
   };
 
-  // Handle gear type selection
   const handleGearSelection = () => {
     const extraCost = getGearExtraCost();
     selectGear(selectedGearType, extraCost);
   };
 
-  // Get gear extra cost
   const getGearExtraCost = (): number => {
     if (!agentState.selectedCategory) return 0;
     const gear = agentState.selectedCategory.gear;
@@ -618,71 +642,61 @@ export default function FastAgentModal({
     return 0;
   };
 
-  // Validate and apply discount code
   const handleApplyDiscount = async () => {
     if (!discountCode.trim()) {
       setDiscountError("Please enter a discount code");
       return;
     }
-
     setDiscountLoading(true);
     setDiscountError("");
-
     try {
-      const response = await fetch(`/api/discounts?code=${encodeURIComponent(discountCode)}&status=active`);
+      const response = await fetch(
+        `/api/discounts?code=${encodeURIComponent(discountCode)}&status=active`,
+      );
       const data = await response.json();
-
-      console.log("Discount API response:", data);
-
       if (!data.success || !data.data || data.data.length === 0) {
         setDiscountError("Invalid discount code");
         setAppliedDiscount(null);
         return;
       }
-
       const discount = data.data[0];
-      console.log("Discount object:", discount);
-
-      // Check if discount has required fields
-      if (!discount || !discount.percentage || !discount.validFrom || !discount.validTo) {
-        console.log("Discount missing required fields:", discount);
+      if (
+        !discount ||
+        !discount.percentage ||
+        !discount.validFrom ||
+        !discount.validTo
+      ) {
         setDiscountError("Invalid discount data");
         setAppliedDiscount(null);
         return;
       }
-
-      // Check if discount is valid
       const now = new Date();
       const validFrom = new Date(discount.validFrom);
       const validTo = new Date(discount.validTo);
-
       if (now < validFrom || now > validTo) {
         setDiscountError("This discount code has expired");
         setAppliedDiscount(null);
         return;
       }
-
-      // Check usage limit
       if (discount.usageLimit && discount.usageCount >= discount.usageLimit) {
         setDiscountError("This discount code has reached its usage limit");
         setAppliedDiscount(null);
         return;
       }
-
-      // Check if discount applies to selected category
       if (discount.categories && discount.categories.length > 0) {
-        const categoryIds = discount.categories.map((cat: any) => cat._id || cat);
+        const categoryIds = discount.categories.map(
+          (cat: any) => cat._id || cat,
+        );
         if (!categoryIds.includes(agentState.booking.categoryId)) {
-          setDiscountError("This discount code is not valid for the selected vehicle");
+          setDiscountError(
+            "This discount code is not valid for the selected vehicle",
+          );
           setAppliedDiscount(null);
           return;
         }
       }
-
-      // Calculate discount amount
       const totalPrice = agentState.booking.totalPrice || 0;
       const discountAmount = (totalPrice * discount.percentage) / 100;
-
       setAppliedDiscount({
         code: discount.code,
         percentage: discount.percentage,
@@ -691,7 +705,6 @@ export default function FastAgentModal({
       setDiscountError("");
       showToast.success(`Discount applied! ${discount.percentage}% off`);
     } catch (error) {
-      console.log("Error applying discount:", error);
       setDiscountError("Failed to apply discount. Please try again.");
       setAppliedDiscount(null);
     } finally {
@@ -699,17 +712,14 @@ export default function FastAgentModal({
     }
   };
 
-  // Remove discount
   const handleRemoveDiscount = () => {
     setAppliedDiscount(null);
     setDiscountCode("");
     setDiscountError("");
   };
 
-  // Handle confirm add-ons
   const handleConfirmAddOns = async () => {
     const selectedAddOns: SelectedAddOn[] = [];
-
     for (const addOn of agentState.availableAddOns || []) {
       const quantity = addOnQuantities[addOn._id] || 0;
       if (quantity > 0) {
@@ -723,34 +733,19 @@ export default function FastAgentModal({
         });
       }
     }
-
-    // Include gear selection in the booking
     await confirmAddOns(selectedAddOns);
   };
 
-  // Handle confirm receipt
   const handleConfirmReceipt = async () => {
     if (isAuthenticated && existingUserToken) {
-      // User is already logged in, create reservation directly
-      console.log(
-        "✅ [FastAgentModal] User is authenticated, creating reservation directly"
-      );
-
       try {
-        // Decode the token to get userId
         const tokenPayload = JSON.parse(atob(existingUserToken.split(".")[1]));
         const userId = tokenPayload.userId || tokenPayload.id;
+        if (!userId) throw new Error("Invalid token: No user ID found");
 
-        if (!userId) {
-          throw new Error("Invalid token: No user ID found");
-        }
-
-        const { booking, selectedCategory } = agentState;
-
-        // Combine date and time
+        const { booking } = agentState;
         const startDateObj = new Date(booking.startDate!);
         const endDateObj = new Date(booking.endDate!);
-
         if (booking.startTime) {
           const [startHour, startMin] = booking.startTime
             .split(":")
@@ -761,25 +756,17 @@ export default function FastAgentModal({
           const [endHour, endMin] = booking.endTime.split(":").map(Number);
           endDateObj.setHours(endHour, endMin, 0, 0);
         }
-
-        // Build add-ons array
         const reservationAddOns = (booking.selectedAddOns || []).map(
           (addon) => ({
             addOn: addon.addOnId,
             quantity: addon.quantity,
-          })
+          }),
         );
-
-        // Create reservation via API with correct structure
         const response = await fetch("/api/reservations", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userData: {
-              userId: userId,
-            },
+            userData: { userId: userId },
             reservationData: {
               office: booking.officeId,
               category: booking.categoryId,
@@ -794,25 +781,14 @@ export default function FastAgentModal({
             },
           }),
         });
-
         const data = await response.json();
-
         if (data.success) {
-          console.log(
-            "✅ [FastAgentModal] Reservation created:",
-            data.data._id
-          );
           showToast.success("Booking confirmed successfully!");
-          // Complete the booking
           onComplete(data.data._id, existingUserToken, false);
         } else {
           throw new Error(data.error || "Failed to create reservation");
         }
       } catch (error) {
-        console.log(
-          "❌ [FastAgentModal] Failed to create reservation:",
-          error
-        );
         const errorMessage =
           error instanceof Error
             ? error.message
@@ -820,171 +796,220 @@ export default function FastAgentModal({
         showToast.error(errorMessage);
       }
     } else {
-      // User not logged in, proceed to phone verification
       confirmReceipt();
     }
   };
 
+  const isInputPhase =
+    agentState.phase === "ask_needs" ||
+    agentState.phase === "collect_booking" ||
+    agentState.phase === "verify_phone";
+
   return createPortal(
-    <div className="fixed inset-0 z-99999 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-[#0f172b] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden border border-white/10">
-        {/* Header */}
-        <div className="bg-linear-to-r from-orange-500 to-orange-600 text-white px-6 py-4">
-          <div className="flex items-center justify-between mb-3">
+    <div className="fixed inset-0 z-9999 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm">
+      <style>{uiStyles}</style>
+
+      {/* Main Container */}
+      <div className="bg-[#0f172b] w-full md:w-150 h-[95dvh] md:h-[85vh] md:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300 border border-white/10">
+        {/* --- Header --- */}
+        <div className="bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-4 z-20 flex flex-col gap-3 sticky top-0">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                <FiTruck className="w-5 h-5" />
+              <div className="relative">
+                <div className="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-500 flex items-center justify-center shadow-inner">
+                  <BsRobot className="w-6 h-6" />
+                </div>
+                {/* Status Dot */}
+                <div
+                  className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-[#1e293b] flex items-center justify-center ${
+                    isLoading
+                      ? "bg-blue-500"
+                      : isRecording
+                        ? "bg-red-500"
+                        : isPlaying
+                          ? "bg-green-500"
+                          : "bg-gray-400"
+                  }`}
+                >
+                  {isLoading && (
+                    <div className="w-2 h-2 border-t-2 border-r-2 border-white rounded-full animate-spin" />
+                  )}
+                </div>
               </div>
-              <div>
-                <h2 className="font-bold text-lg">AI Van Consultant</h2>
-                <p className="text-orange-100 text-sm">
-                  Quick Booking in 1 Minute
-                </p>
+
+              <div className="flex flex-col">
+                <h2 className="font-bold text-lg text-white leading-tight">
+                  AI Van Assistant
+                </h2>
+                <span className="text-xs text-gray-400 font-medium flex items-center gap-1.5">
+                  {isLoading ? (
+                    <span className="text-blue-400 animate-pulse">
+                      Processing...
+                    </span>
+                  ) : isRecording ? (
+                    <span className="text-red-400 animate-pulse">
+                      Listening...
+                    </span>
+                  ) : isPlaying ? (
+                    <span className="text-green-400">Speaking...</span>
+                  ) : (
+                    "Ready to help"
+                  )}
+                </span>
               </div>
             </div>
+
             <button
               onClick={handleClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              className="p-2.5 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-full transition-colors active:scale-90"
             >
               <FiX className="w-5 h-5" />
             </button>
           </div>
 
           {/* Progress Bar */}
-          <div className="mt-2">
-            <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-white transition-all duration-500 ease-out"
-                style={{ width: `${getPhaseProgress(agentState.phase)}%` }}
-              />
-            </div>
+          <div className="h-1 w-full bg-gray-800 rounded-full overflow-hidden relative">
+            <div
+              className="absolute top-0 left-0 h-full bg-linear-to-r from-orange-600 to-amber-500 transition-all duration-700 ease-out"
+              style={{ width: `${getPhaseProgress(agentState.phase)}%` }}
+            />
           </div>
         </div>
 
-        {/* Content Area */}
-        <div className="max-h-[calc(90vh-180px)] overflow-y-auto">
+        {/* --- Scrollable Content --- */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-5 pb-32 md:pb-24 bg-linear-to-b from-[#0f172b] to-[#1e293b]">
           {/* Chat Messages */}
-          <div className="p-4 space-y-3">
+          <div className="space-y-6">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
+                className={`flex flex-col animate-fade-in ${
+                  msg.role === "user" ? "items-end" : "items-start"
                 }`}
+                style={{ animationDelay: `${i * 0.05}s` }}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
+                  className={`max-w-[85%] rounded-2xl px-5 py-3.5 text-sm md:text-base leading-relaxed shadow-sm backdrop-blur-sm relative ${
                     msg.role === "user"
-                      ? "bg-orange-500 text-white rounded-br-none"
-                      : "bg-white/10 text-white rounded-bl-none"
+                      ? "bg-orange-600 text-white rounded-br-sm ml-8"
+                      : "bg-[#2d3a52] text-gray-100 rounded-bl-sm mr-8 border border-white/5"
                   }`}
                 >
                   {msg.content}
                 </div>
+                {/* Message Timestamp */}
+                <span
+                  className={`text-[10px] text-gray-500 mt-1 px-1 ${msg.role === "user" ? "text-right" : "text-left"}`}
+                >
+                  {msgTimestamps[i]
+                    ? formatTime(msgTimestamps[i])
+                    : formatTime(new Date())}
+                </span>
               </div>
             ))}
 
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-white/10 rounded-2xl rounded-bl-none px-4 py-2.5">
-                  <div className="flex gap-1">
+            {/* Voice-to-Text Loading State (User Side) */}
+            {isTranscribing && (
+              <div className="flex flex-col items-end animate-fade-in">
+                <div className="bg-orange-600/50 backdrop-blur-sm rounded-2xl rounded-br-sm px-4 py-3 ml-8 border border-orange-500/30 flex items-center gap-2">
+                  <div className="flex gap-1 items-end h-4">
                     <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0ms" }}
-                    />
+                      className="w-1 bg-white/80 animate-wave rounded-full"
+                      style={{ animationDelay: "0s" }}
+                    ></div>
                     <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "150ms" }}
-                    />
+                      className="w-1 bg-white/80 animate-wave rounded-full"
+                      style={{ animationDelay: "0.1s" }}
+                    ></div>
                     <div
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "300ms" }}
-                    />
+                      className="w-1 bg-white/80 animate-wave rounded-full"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                    <div
+                      className="w-1 bg-white/80 animate-wave rounded-full"
+                      style={{ animationDelay: "0.3s" }}
+                    ></div>
                   </div>
+                  <span className="text-xs text-white/90 font-medium animate-pulse-opacity">
+                    Converting voice...
+                  </span>
                 </div>
               </div>
             )}
 
+            {/* AI Processing State (Left Side) */}
+            {isLoading && !isTranscribing && (
+              <div className="flex flex-col items-start animate-fade-in">
+                <div className="bg-[#2d3a52] border border-white/5 rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1 shadow-sm">
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                </div>
+              </div>
+            )}
             <div ref={chatEndRef} />
           </div>
 
-          {/* Category Suggestions Cards */}
+          {/* --- Dynamic Modules --- */}
+
+          {/* 1. Suggestion Cards */}
           {agentState.phase === "show_suggestions" &&
             agentState.suggestions && (
-              <div className="px-4 pb-4">
-                <div className="mb-3">
-                  <p className="text-gray-400 text-sm">
-                    Select your preferred van:
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {agentState.suggestions.map((category) => (
-                    <SuggestionCard
-                      key={category._id}
-                      category={category}
-                      onSelect={() => handleSelectCategory(category)}
-                      isLoading={isLoading}
-                    />
-                  ))}
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in pt-2">
+                {agentState.suggestions.map((category) => (
+                  <SuggestionCard
+                    key={category._id}
+                    category={category}
+                    onSelect={() => handleSelectCategory(category)}
+                    isLoading={isLoading}
+                  />
+                ))}
               </div>
             )}
 
-          {/* Booking Form */}
+          {/* 2. Booking Form */}
           {agentState.phase === "collect_booking" && (
-            <div className="px-4 pb-4">
+            <div className="bg-[#1e293b]/50 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg animate-fade-in">
+              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                <FiCalendar className="text-orange-500" /> Verify Details
+              </h3>
               <form onSubmit={handleSubmitBooking} className="space-y-4">
-                {/* Selected Category Summary */}
-                {agentState.selectedCategory && (
-                  <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-3 flex items-center gap-3">
-                    <FiTruck className="text-orange-500 text-xl" />
-                    <div>
-                      <p className="text-white font-medium">
-                        {agentState.selectedCategory.name}
-                      </p>
-                      <p className="text-gray-400 text-xs">
-                        {agentState.selectedCategory.matchReason}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Office Select */}
-                <div>
-                  <label className="block text-gray-300 text-sm mb-1.5">
-                    Pickup Location *
+                {/* Office */}
+                <div className="space-y-1.5">
+                  <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">
+                    Location
                   </label>
                   <CustomSelect
                     options={offices}
                     value={bookingForm.officeId}
                     onChange={(officeId) =>
-                      setBookingForm((p) => ({
-                        ...p,
-                        officeId,
-                      }))
+                      setBookingForm((p) => ({ ...p, officeId }))
                     }
-                    placeholder="Select office"
-                    icon={<FiTruck className="text-orange-500" />}
+                    placeholder="Select pickup office"
+                    icon={<FiMapPin className="text-orange-500" />}
                   />
                 </div>
 
-                {/* Dates */}
-                <div>
-                  <label className="block text-gray-300 text-sm mb-1.5">
-                    Dates *
+                {/* Date Picker (Inline or Popup) */}
+                <div className="space-y-1.5">
+                  <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">
+                    Dates
                   </label>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setShowDateRange(!showDateRange)}
-                      className="w-full bg-white/10 border border-white/20 rounded-lg text-white text-left focus:outline-none focus:border-amber-400 transition-colors px-4 py-3 text-sm"
+                      className="w-full bg-[#0f172b] border border-white/10 hover:border-orange-500/50 rounded-xl px-4 py-3.5 text-left text-white transition-all flex items-center gap-3"
                     >
-                      {dateRange[0].startDate && dateRange[0].endDate
-                        ? `${(dateRange[0].startDate.getMonth() + 1).toString().padStart(2, "0")}/${dateRange[0].startDate.getDate().toString().padStart(2, "0")}/${dateRange[0].startDate.getFullYear()} - ${(dateRange[0].endDate.getMonth() + 1).toString().padStart(2, "0")}/${dateRange[0].endDate.getDate().toString().padStart(2, "0")}/${dateRange[0].endDate.getFullYear()}`
-                        : "Select Dates"}
+                      <FiCalendar className="text-orange-500 text-lg" />
+                      <span className="text-sm font-medium">
+                        {dateRange[0].startDate && dateRange[0].endDate
+                          ? `${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`
+                          : "Select Dates"}
+                      </span>
                     </button>
                     {showDateRange && (
-                      <div className="absolute left-0 -mt-20 md:mt-20 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 -top-50">
+                      <div className="absolute left-0 bottom-full mb-2 z-50 bg-[#1e293b] border border-white/10 rounded-xl shadow-2xl p-2 w-full max-w-xs overflow-hidden">
                         <DateRange
                           ranges={dateRange}
                           onChange={(item) => {
@@ -998,7 +1023,7 @@ export default function FastAgentModal({
                             ]);
                           }}
                           minDate={new Date()}
-                          rangeColors={["#fbbf24"]}
+                          rangeColors={["#f97316"]}
                           disabledDates={
                             bookingForm.officeId
                               ? (Array.from({ length: 365 }, (_, i) => {
@@ -1009,135 +1034,83 @@ export default function FastAgentModal({
                               : []
                           }
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowDateRange(false)}
-                          className="w-full mt-3 px-4 py-2 bg-amber-500 text-slate-900 font-semibold rounded-lg hover:bg-amber-400 transition-colors text-sm"
-                        >
-                          Done
-                        </button>
+                        <div className="p-2 border-t border-white/5">
+                          <button
+                            type="button"
+                            onClick={() => setShowDateRange(false)}
+                            className="w-full py-2 bg-orange-500 text-white rounded-lg font-bold text-sm"
+                          >
+                            Done
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Times */}
+                {/* Time Selection */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-gray-300 text-sm mb-1.5">
-                      Pickup Time *
+                  <div className="space-y-1.5">
+                    <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">
+                      Pickup Time
                     </label>
-                    {bookingForm.startDate &&
-                      (() => {
-                        const office = offices?.find(
-                          (o) => o._id === bookingForm.officeId
-                        ) as any;
-                        const date = new Date(bookingForm.startDate);
-                        const dayName = [
-                          "sunday",
-                          "monday",
-                          "tuesday",
-                          "wednesday",
-                          "thursday",
-                          "friday",
-                          "saturday",
-                        ][date.getDay()];
-                        const workingDay = office?.workingTime?.find(
-                          (w: any) => w.day === dayName && w.isOpen
-                        );
-                        const extensionTimes = workingDay?.pickupExtension
-                          ? {
-                              start: pickupTimeSlots[0],
-                              end: pickupTimeSlots[pickupTimeSlots.length - 1],
-                              normalStart: workingDay.startTime,
-                              normalEnd: workingDay.endTime,
-                              price: workingDay.pickupExtension.flatPrice,
-                            }
-                          : undefined;
-                        return (
-                          <TimeSelect
-                            value={bookingForm.startTime}
-                            onChange={(time) =>
-                              setBookingForm((p) => ({ ...p, startTime: time }))
-                            }
-                            slots={pickupTimeSlots}
-                            reservedSlots={startDateReservedSlots}
-                            selectedDate={new Date(bookingForm.startDate)}
-                            isStartTime={true}
-                            isInline={false}
-                            extensionTimes={extensionTimes}
-                          />
-                        );
-                      })()}
+                    <div className="bg-[#0f172b] border border-white/10 rounded-xl overflow-hidden h-12">
+                      {bookingForm.startDate && (
+                        <TimeSelect
+                          value={bookingForm.startTime}
+                          onChange={(time) =>
+                            setBookingForm((p) => ({ ...p, startTime: time }))
+                          }
+                          slots={pickupTimeSlots}
+                          reservedSlots={startDateReservedSlots}
+                          selectedDate={new Date(bookingForm.startDate)}
+                          isStartTime={true}
+                          isInline={false}
+                        />
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-gray-300 text-sm mb-1.5">
-                      Return Time *
+                  <div className="space-y-1.5">
+                    <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">
+                      Return Time
                     </label>
-                    {bookingForm.endDate &&
-                      (() => {
-                        const office = offices?.find(
-                          (o) => o._id === bookingForm.officeId
-                        ) as any;
-                        const date = new Date(bookingForm.endDate);
-                        const dayName = [
-                          "sunday",
-                          "monday",
-                          "tuesday",
-                          "wednesday",
-                          "thursday",
-                          "friday",
-                          "saturday",
-                        ][date.getDay()];
-                        const workingDay = office?.workingTime?.find(
-                          (w: any) => w.day === dayName && w.isOpen
-                        );
-                        const extensionTimes = workingDay?.returnExtension
-                          ? {
-                              start: returnTimeSlots[0],
-                              end: returnTimeSlots[returnTimeSlots.length - 1],
-                              normalStart: workingDay.startTime,
-                              normalEnd: workingDay.endTime,
-                              price: workingDay.returnExtension.flatPrice,
-                            }
-                          : undefined;
-                        return (
-                          <TimeSelect
-                            value={bookingForm.endTime}
-                            onChange={(time) =>
-                              setBookingForm((p) => ({ ...p, endTime: time }))
-                            }
-                            slots={returnTimeSlots}
-                            reservedSlots={endDateReservedSlots}
-                            selectedDate={new Date(bookingForm.endDate)}
-                            isStartTime={false}
-                            isInline={false}
-                            extensionTimes={extensionTimes}
-                          />
-                        );
-                      })()}
+                    <div className="bg-[#0f172b] border border-white/10 rounded-xl overflow-hidden h-12">
+                      {bookingForm.endDate && (
+                        <TimeSelect
+                          value={bookingForm.endTime}
+                          onChange={(time) =>
+                            setBookingForm((p) => ({ ...p, endTime: time }))
+                          }
+                          slots={returnTimeSlots}
+                          reservedSlots={endDateReservedSlots}
+                          selectedDate={new Date(bookingForm.endDate)}
+                          isStartTime={false}
+                          isInline={false}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 {/* Driver Age */}
-                <div>
-                  <label className="block text-gray-300 text-sm mb-1.5">
-                    Driver Age *
+                <div className="space-y-1.5">
+                  <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">
+                    Driver Age
                   </label>
-                  <input
-                    type="number"
-                    value={bookingForm.driverAge}
-                    onChange={(e) =>
-                      setBookingForm((p) => ({
-                        ...p,
-                        driverAge: parseInt(e.target.value) || 25,
-                      }))
-                    }
-                    min={22}
-                    max={80}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500"
-                    required
-                  />
+                  <div className="relative">
+                    <FiUsers className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" />
+                    <input
+                      type="number"
+                      value={bookingForm.driverAge}
+                      onChange={(e) =>
+                        setBookingForm((p) => ({
+                          ...p,
+                          driverAge: parseInt(e.target.value) || 25,
+                        }))
+                      }
+                      className="w-full bg-[#0f172b] border border-white/10 rounded-xl px-4 py-3.5 pl-11 text-white focus:outline-none focus:border-orange-500 transition-colors"
+                    />
+                  </div>
                 </div>
 
                 <button
@@ -1148,728 +1121,421 @@ export default function FastAgentModal({
                     !bookingForm.startDate ||
                     !bookingForm.endDate
                   }
-                  className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-orange-600 hover:bg-orange-500 disabled:bg-gray-700 disabled:text-gray-400 text-white font-bold py-4 rounded-xl shadow-lg shadow-orange-900/20 transition-all flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
-                    <FiLoader className="animate-spin" />
+                    <FiLoader className="animate-spin text-xl" />
                   ) : (
-                    <FiCalendar />
+                    "Continue"
                   )}
-                  Continue to Add-ons
                 </button>
               </form>
             </div>
           )}
 
-          {/* Gear Type Selection */}
+          {/* 3. Gear Selection */}
           {agentState.phase === "select_Gearbox" &&
-            agentState.selectedCategory &&
-            (() => {
-              const gear = agentState.selectedCategory.gear;
-              const hasGearOptions =
-                typeof gear !== "string" && gear.availableTypes?.length > 1;
+            agentState.selectedCategory && (
+              <div className="bg-[#1e293b]/50 border border-white/10 rounded-2xl p-5 animate-fade-in space-y-4">
+                <div className="text-center pb-2">
+                  <h3 className="text-lg font-bold text-white">Transmission</h3>
+                  <p className="text-gray-400 text-sm">
+                    Select your preference
+                  </p>
+                </div>
 
-              // If no gear options, don't render (useEffect will auto-advance)
-              if (!hasGearOptions) {
-                return null;
-              }
-
-              return (
-                <div className="px-4 pb-4">
-                  <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
-                    {/* Header */}
-                    <div className="text-center border-b border-white/10 pb-3">
-                      <h3 className="text-xl font-bold text-white">
-                        ⚙️ Select Gear Option
-                      </h3>
-                      <p className="text-gray-400 text-sm">
-                        Choose your preferred transmission
-                      </p>
-                    </div>
-
-                    {/* Vehicle Info */}
-                    <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
-                      <FiTruck className="text-orange-500 text-xl shrink-0" />
-                      <div>
-                        <p className="text-white font-medium">
-                          {agentState.selectedCategory.name}
-                        </p>
-                        <p className="text-gray-400 text-xs">
-                          {agentState.booking.totalDays} day(s) rental
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Gear Options */}
-                    <div className="space-y-3">
-                      {typeof gear !== "string" &&
-                        gear.availableTypes?.map((type) => {
-                          const isSelected = selectedGearType === type;
-                          const extraCost =
-                            type === "automatic" && gear.automaticExtraCost
-                              ? gear.automaticExtraCost
-                              : 0;
-                          const totalDays = agentState.booking.totalDays || 1;
-                          const totalExtraCost = extraCost * totalDays;
-
-                          return (
-                            <button
-                              key={type}
-                              onClick={() =>
-                                setSelectedGearType(
-                                  type as "manual" | "automatic"
-                                )
-                              }
-                              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                                isSelected
-                                  ? "border-orange-500 bg-orange-500/10"
-                                  : "border-white/10 bg-white/5 hover:bg-white/10"
-                              }`}
+                <div className="space-y-3">
+                  {(() => {
+                    const gear = agentState.selectedCategory.gear;
+                    if (typeof gear === "string" || !gear.availableTypes)
+                      return null;
+                    return gear.availableTypes.map((type) => {
+                      const isSelected = selectedGearType === type;
+                      const extraCost =
+                        type === "automatic" && gear.automaticExtraCost
+                          ? gear.automaticExtraCost
+                          : 0;
+                      return (
+                        <button
+                          key={type}
+                          onClick={() =>
+                            setSelectedGearType(type as "manual" | "automatic")
+                          }
+                          className={`w-full p-4 rounded-xl border transition-all flex items-center justify-between group ${
+                            isSelected
+                              ? "border-orange-500 bg-orange-500/10 shadow-[0_0_15px_rgba(249,115,22,0.1)]"
+                              : "border-white/10 bg-[#0f172b] hover:bg-[#16223b]"
+                          }`}
+                        >
+                          <div className="text-left">
+                            <p className="text-white font-bold capitalize text-lg group-hover:text-orange-400 transition-colors">
+                              {type}
+                            </p>
+                            <p
+                              className={`text-sm ${extraCost > 0 ? "text-orange-400" : "text-green-400"}`}
                             >
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-white font-medium capitalize">
-                                    {type}
-                                  </p>
-                                  {extraCost > 0 && (
-                                    <p className="text-orange-400 text-sm mt-1">
-                                      +£{extraCost}/day (£{totalExtraCost}{" "}
-                                      total)
-                                    </p>
-                                  )}
-                                  {extraCost === 0 && (
-                                    <p className="text-green-400 text-sm mt-1">
-                                      Included
-                                    </p>
-                                  )}
-                                </div>
-                                {isSelected && (
-                                  <FiCheck className="text-orange-500 text-xl" />
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })}
-                    </div>
-
-                    {/* Continue Button */}
-                    <button
-                      onClick={handleGearSelection}
-                      disabled={isLoading}
-                      className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
-                    >
-                      {isLoading ? (
-                        <FiLoader className="animate-spin" />
-                      ) : (
-                        <FiCheck />
-                      )}
-                      Continue to Add-ons
-                    </button>
-                  </div>
-                </div>
-              );
-            })()}
-
-          {/* Add-ons Selection */}
-          {agentState.phase === "select_addons" &&
-            agentState.availableAddOns && (
-              <div className="px-4 pb-4">
-                <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
-                  {/* Header */}
-                  <div className="text-center border-b border-white/10 pb-3">
-                    <h3 className="text-xl font-bold text-white">
-                      📦 Optional Add-ons
-                    </h3>
-                    <p className="text-gray-400 text-sm">
-                      Enhance your rental experience
-                    </p>
-                  </div>
-
-                  {/* Add-ons List */}
-                  <div className="space-y-3">
-                    {agentState.availableAddOns
-                      .sort((a, b) => {
-                        const typeA = (a as any).type || '';
-                        const typeB = (b as any).type || '';
-                        // Group by type - items with same type together
-                        if (typeA === typeB) return 0;
-                        // Items without type go to the end
-                        if (!typeA) return 1;
-                        if (!typeB) return -1;
-                        // Sort alphabetically by type
-                        return typeA.localeCompare(typeB);
-                      })
-                      .map((addOn) => {
-                        const price = getAddOnPrice(addOn);
-                        const quantity = addOnQuantities[addOn._id] || 0;
-                        
-                        // Check if another addon with the same type is already selected
-                        const addonType = (addOn as any).type;
-                        const isTypeDisabled = addonType && Object.entries(addOnQuantities).some(([id, qty]) => {
-                          if (id === addOn._id || qty === 0) return false;
-                          const selectedAddon = agentState.availableAddOns?.find((a) => a._id === id);
-                          return selectedAddon && (selectedAddon as any).type === addonType;
-                        });
-                        
-                        // Max quantity is 1
-                        const isMaxQuantity = quantity >= 1;
-                        const canAdd = !isTypeDisabled && !isMaxQuantity;
-
-                        return (
-                          <div
-                            key={addOn._id}
-                            className={`flex items-center justify-between rounded-lg p-3 transition-all ${
-                              isTypeDisabled 
-                                ? 'bg-white/5 opacity-50 border border-red-500/30' 
-                                : 'bg-white/5'
-                            }`}
-                          >
-                            <div className="flex-1">
-                              <p className="text-white font-medium">
-                                {addOn.name}
-                              </p>
-                              {addOn.description && (
-                                <p className="text-gray-400 text-xs">
-                                  {addOn.description}
-                                </p>
-                              )}
-                              {isTypeDisabled && (
-                                <p className="text-red-400 text-xs mt-1">
-                                  Another option of this type is already selected
-                                </p>
-                              )}
-                              <p className="text-orange-400 text-sm font-medium">
-                                £{price.toFixed(2)}{" "}
-                                {addOn.pricingType === "flat" ? "" : "/ rental"}
-                              </p>
-                            </div>
-
-                            {/* Quantity Controls */}
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleAddOnQuantityChange(addOn._id, -1)
-                                }
-                                disabled={quantity === 0}
-                                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <FiMinus className="w-4 h-4" />
-                              </button>
-                              <span className="w-8 text-center text-white font-medium">
-                                {quantity}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (canAdd) {
-                                    handleAddOnQuantityChange(addOn._id, 1);
-                                  }
-                                }}
-                                disabled={!canAdd}
-                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                                  canAdd
-                                    ? 'bg-orange-500 text-white hover:bg-orange-600'
-                                    : 'bg-gray-600/50 text-gray-400 cursor-not-allowed opacity-50'
-                                }`}
-                                title={
-                                  isTypeDisabled 
-                                    ? 'Another option of this type is already selected' 
-                                    : isMaxQuantity 
-                                    ? 'Maximum quantity reached' 
-                                    : 'Add addon'
-                                }
-                              >
-                                <FiPlus className="w-4 h-4" />
-                              </button>
-                            </div>
+                              {extraCost > 0
+                                ? `+£${extraCost}/day`
+                                : "Included"}
+                            </p>
                           </div>
-                        );
-                      })}
-                  </div>
-
-                  {/* Total for selected add-ons */}
-                  {Object.values(addOnQuantities).some((q) => q > 0) && (
-                    <div className="border-t border-white/10 pt-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-300">Add-ons Total:</span>
-                        <span className="text-orange-400 font-medium">
-                          £
-                          {(agentState.availableAddOns || [])
-                            .reduce((sum, addOn) => {
-                              const qty = addOnQuantities[addOn._id] || 0;
-                              return sum + getAddOnPrice(addOn) * qty;
-                            }, 0)
-                            .toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Buttons */}
-                  <button
-                    onClick={handleConfirmAddOns}
-                    disabled={isLoading}
-                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
-                  >
-                    {isLoading ? (
-                      <FiLoader className="animate-spin" />
-                    ) : (
-                      <FiCheck />
-                    )}
-                    Continue
-                  </button>
+                          <div
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${isSelected ? "border-orange-500" : "border-gray-500"}`}
+                          >
+                            {isSelected && (
+                              <div className="w-3 h-3 bg-orange-500 rounded-full" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    });
+                  })()}
                 </div>
+                <button
+                  onClick={handleGearSelection}
+                  disabled={isLoading}
+                  className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg mt-2"
+                >
+                  Confirm Selection
+                </button>
               </div>
             )}
 
-          {/* Booking Receipt */}
+          {/* 4. Add-ons */}
+          {agentState.phase === "select_addons" &&
+            agentState.availableAddOns && (
+              <div className="bg-[#1e293b]/50 border border-white/10 rounded-2xl p-5 animate-fade-in space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-white font-bold text-lg">Extras</h3>
+                  <span className="bg-orange-500/10 text-orange-400 text-xs px-2 py-1 rounded-full font-medium">
+                    Optional
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {agentState.availableAddOns.map((addOn) => {
+                    const quantity = addOnQuantities[addOn._id] || 0;
+                    const price = getAddOnPrice(addOn);
+                    const isActive = quantity > 0;
+
+                    return (
+                      <div
+                        key={addOn._id}
+                        className={`p-4 rounded-xl border transition-all ${isActive ? "bg-orange-500/5 border-orange-500/50" : "bg-[#0f172b] border-white/5"}`}
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <p className="text-white font-bold">{addOn.name}</p>
+                            <p className="text-gray-400 text-xs mt-1 max-w-[90%]">
+                              {addOn.description}
+                            </p>
+                          </div>
+                          <span className="text-orange-400 font-bold whitespace-nowrap">
+                            £{price.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-end">
+                          <div className="flex items-center gap-3 bg-[#1e293b] rounded-lg p-1 border border-white/10">
+                            <button
+                              onClick={() =>
+                                handleAddOnQuantityChange(addOn._id, -1)
+                              }
+                              disabled={quantity === 0}
+                              className="w-8 h-8 flex items-center justify-center bg-white/5 rounded hover:bg-white/10 text-white disabled:opacity-30"
+                            >
+                              <FiMinus />
+                            </button>
+                            <span className="w-6 text-center text-white font-bold">
+                              {quantity}
+                            </span>
+                            <button
+                              onClick={() =>
+                                handleAddOnQuantityChange(addOn._id, 1)
+                              }
+                              disabled={quantity >= 1}
+                              className="w-8 h-8 flex items-center justify-center bg-orange-500 rounded hover:bg-orange-600 text-white disabled:bg-gray-700 disabled:opacity-50"
+                            >
+                              <FiPlus />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={handleConfirmAddOns}
+                  className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-xl mt-2 shadow-lg"
+                >
+                  Confirm Add-ons
+                </button>
+              </div>
+            )}
+
+          {/* 5. Summary & Receipt */}
           {agentState.phase === "show_receipt" && agentState.booking && (
-            <div className="px-4 pb-4">
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
-                {/* Header */}
-                <div className="text-center border-b border-white/10 pb-3">
-                  <h3 className="text-xl font-bold text-white">
-                    📋 Booking Summary
-                  </h3>
-                  <p className="text-gray-400 text-sm">
-                    Please review your booking details
-                  </p>
+            <div className="bg-[#1e293b] border border-white/10 rounded-2xl p-6 animate-fade-in shadow-xl">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-500/20 text-green-500 mb-3">
+                  <FiCheck className="text-2xl" />
+                </div>
+                <h3 className="text-xl font-bold text-white">
+                  Booking Summary
+                </h3>
+              </div>
+
+              <div className="space-y-4 text-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-[#0f172b] p-3 rounded-xl border border-white/5">
+                    <span className="text-gray-500 text-xs block mb-1">
+                      Pickup
+                    </span>
+                    <span className="text-white font-bold block">
+                      {agentState.booking.startDate}
+                    </span>
+                    <span className="text-orange-500 block text-xs">
+                      {agentState.booking.startTime}
+                    </span>
+                  </div>
+                  <div className="bg-[#0f172b] p-3 rounded-xl border border-white/5">
+                    <span className="text-gray-500 text-xs block mb-1">
+                      Return
+                    </span>
+                    <span className="text-white font-bold block">
+                      {agentState.booking.endDate}
+                    </span>
+                    <span className="text-orange-500 block text-xs">
+                      {agentState.booking.endTime}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Vehicle */}
-                {agentState.selectedCategory && (
-                  <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
-                    <FiTruck className="text-orange-500 text-xl shrink-0" />
-                    <div>
-                      <p className="text-white font-medium">
-                        {agentState.selectedCategory.name}
-                      </p>
-                      <p className="text-gray-400 text-xs">
-                        {agentState.selectedCategory.matchReason}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Details Grid */}
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  {/* Pickup Location */}
-                  <div className="col-span-2 bg-white/5 rounded-lg p-3">
-                    <p className="text-gray-400 text-xs mb-1">
-                      Pickup Location
-                    </p>
-                    <p className="text-white font-medium">
-                      {offices.find(
-                        (o) => o._id === agentState.booking.officeId
-                      )?.name || "—"}
-                    </p>
-                  </div>
-
-                  {/* Pickup Date & Time */}
-                  <div className="bg-white/5 rounded-lg p-3">
-                    <p className="text-gray-400 text-xs mb-1">Pickup</p>
-                    <p className="text-white font-medium">
-                      {agentState.booking.startDate || "—"}
-                    </p>
-                    <p className="text-orange-400 text-sm">
-                      {agentState.booking.startTime || "—"}
-                    </p>
-                  </div>
-
-                  {/* Return Date & Time */}
-                  <div className="bg-white/5 rounded-lg p-3">
-                    <p className="text-gray-400 text-xs mb-1">Return</p>
-                    <p className="text-white font-medium">
-                      {agentState.booking.endDate || "—"}
-                    </p>
-                    <p className="text-orange-400 text-sm">
-                      {agentState.booking.endTime || "—"}
-                    </p>
-                  </div>
-
-                  {/* Driver Age */}
-                  <div className="bg-white/5 rounded-lg p-3">
-                    <p className="text-gray-400 text-xs mb-1">Driver Age</p>
-                    <p className="text-white font-medium">
-                      {agentState.booking.driverAge || 25} years
-                    </p>
-                  </div>
-
-                  {/* Duration */}
-                  <div className="bg-white/5 rounded-lg p-3">
-                    <p className="text-gray-400 text-xs mb-1">Duration</p>
-                    <p className="text-white font-medium">
-                      {agentState.booking.totalDays || 0} day(s)
-                      {agentState.booking.extraHours
-                        ? ` + ${agentState.booking.extraHours}h`
-                        : ""}
-                    </p>
-                  </div>
-
-                  {/* Gear Type */}
-                  {agentState.booking.gearType && (
-                    <div className="bg-white/5 rounded-lg p-3">
-                      <p className="text-gray-400 text-xs mb-1">Transmission</p>
-                      <p className="text-white font-medium capitalize">
-                        {agentState.booking.gearType}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Price Breakdown */}
-                <div className="border-t border-white/10 pt-3 space-y-2">
-                  <p className="text-gray-400 text-xs uppercase tracking-wider">
-                    Price Breakdown
-                  </p>
-
-                  {agentState.booking.totalDays &&
-                    agentState.booking.pricePerDay && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-300">
-                          {agentState.booking.totalDays} day(s) × £
-                          {agentState.booking.pricePerDay}
-                        </span>
-                        <span className="text-white">
-                          £
-                          {(
-                            agentState.booking.totalDays *
-                            agentState.booking.pricePerDay
-                          ).toFixed(2)}
-                        </span>
-                      </div>
-                    )}
-
-                  {agentState.booking.extraHours &&
-                    agentState.booking.extraHoursRate && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-300">
-                          {agentState.booking.extraHours} extra hour(s) × £
-                          {agentState.booking.extraHoursRate}
-                        </span>
-                        <span className="text-white">
-                          £
-                          {(
-                            agentState.booking.extraHours *
-                            agentState.booking.extraHoursRate
-                          ).toFixed(2)}
-                        </span>
-                      </div>
-                    )}
-
-                  {/* Automatic Gear Extra Cost */}
-                  {agentState.booking.gearType === "automatic" &&
-                    agentState.selectedCategory &&
-                    (() => {
-                      const gear = agentState.selectedCategory.gear;
-                      if (
-                        typeof gear !== "string" &&
-                        gear.automaticExtraCost &&
-                        gear.availableTypes?.includes("manual")
-                      ) {
-                        const totalDays = agentState.booking.totalDays || 1;
-                        const totalCost = gear.automaticExtraCost * totalDays;
-                        return (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-300">
-                              Automatic transmission × {totalDays} day(s)
-                            </span>
-                            <span className="text-white">
-                              £{totalCost.toFixed(2)}
-                            </span>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
-
-                  {/* Add-ons */}
-                  {agentState.booking.selectedAddOns &&
-                    agentState.booking.selectedAddOns.length > 0 && (
-                      <>
-                        <p className="text-gray-400 text-xs uppercase tracking-wider pt-2">
-                          Add-ons
-                        </p>
-                        {agentState.booking.selectedAddOns.map((addon, idx) => (
-                          <div
-                            key={idx}
-                            className="flex justify-between text-sm"
-                          >
-                            <span className="text-gray-300">
-                              {addon.name} × {addon.quantity}
-                            </span>
-                            <span className="text-white">
-                              £{addon.totalPrice.toFixed(2)}
-                            </span>
-                          </div>
-                        ))}
-                      </>
-                    )}
-
-                  {/* Total */}
-                  <div className="flex justify-between items-center pt-2 border-t border-white/10">
-                    <span className="text-white font-bold text-lg">Total</span>
+                <div className="border-t border-white/10 pt-4 mt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Total Price</span>
                     <span className="text-2xl font-bold text-green-400">
                       £{(agentState.booking.totalPrice || 0).toFixed(2)}
                     </span>
                   </div>
-
-                  {/* Discount Section */}
                   {appliedDiscount && (
-                    <div className="flex justify-between items-center text-sm pt-2 border-t border-white/10">
-                      <span className="text-orange-400 font-medium">
-                        Discount ({appliedDiscount.percentage}%)
-                      </span>
-                      <span className="text-orange-400 font-medium">
-                        -£{appliedDiscount.discountAmount.toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Final Total */}
-                  {appliedDiscount && (
-                    <div className="flex justify-between items-center pt-2 border-t border-white/10">
-                      <span className="text-white font-bold text-lg">Final Total</span>
-                      <span className="text-2xl font-bold text-green-400">
-                        £{((agentState.booking.totalPrice || 0) - appliedDiscount.discountAmount).toFixed(2)}
-                      </span>
+                    <div className="flex justify-between items-center mt-2 text-sm text-orange-400 bg-orange-500/10 px-3 py-1.5 rounded-lg">
+                      <span>Discount Applied</span>
+                      <span>-£{appliedDiscount.discountAmount.toFixed(2)}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Discount Code Input */}
-                <div className="border-t border-white/10 pt-3">
-                  <label className="block text-gray-300 text-sm mb-2">
-                    Have a discount code?
-                  </label>
+                {/* Promo Code */}
+                <div className="pt-2">
                   {!appliedDiscount ? (
                     <div className="flex gap-2">
                       <input
-                        type="text"
                         value={discountCode}
-                        onChange={(e) => {
-                          setDiscountCode(e.target.value.toUpperCase());
-                          setDiscountError("");
-                        }}
-                        placeholder="Enter code"
-                        className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-orange-500"
-                        disabled={discountLoading}
+                        onChange={(e) =>
+                          setDiscountCode(e.target.value.toUpperCase())
+                        }
+                        placeholder="PROMO CODE"
+                        className="flex-1 bg-[#0f172b] border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:border-orange-500 outline-none"
                       />
                       <button
-                        type="button"
                         onClick={handleApplyDiscount}
-                        disabled={discountLoading || !discountCode.trim()}
-                        className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-medium rounded-lg transition-colors text-sm flex items-center gap-2"
+                        disabled={discountLoading}
+                        className="px-4 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm font-bold border border-white/5"
                       >
-                        {discountLoading ? (
-                          <FiLoader className="animate-spin" />
-                        ) : (
-                          <FiCheck />
-                        )}
                         Apply
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between bg-orange-500/10 border border-orange-500/30 rounded-lg px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <FiCheck className="text-orange-500" />
-                        <span className="text-white font-medium text-sm">
-                          {appliedDiscount.code}
-                        </span>
-                        <span className="text-orange-400 text-sm">
-                          ({appliedDiscount.percentage}% off)
-                        </span>
-                      </div>
+                    <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 px-3 py-2 rounded-lg">
+                      <span className="text-green-400 text-sm flex items-center gap-2">
+                        <FiCheck /> {appliedDiscount.code} active
+                      </span>
                       <button
-                        type="button"
                         onClick={handleRemoveDiscount}
-                        className="text-gray-400 hover:text-white transition-colors"
+                        className="text-gray-400 hover:text-white"
                       >
                         <FiX />
                       </button>
                     </div>
                   )}
                   {discountError && (
-                    <p className="text-red-400 text-xs mt-1">{discountError}</p>
+                    <p className="text-red-400 text-xs mt-1 ml-1">
+                      {discountError}
+                    </p>
                   )}
                 </div>
 
-                {/* Confirm Button */}
                 <button
                   onClick={handleConfirmReceipt}
                   disabled={isLoading}
-                  className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg mt-2 transition-all active:scale-[0.98]"
                 >
-                  {isLoading ? (
-                    <FiLoader className="animate-spin" />
-                  ) : (
-                    <FiCheck />
-                  )}
                   {isAuthenticated
-                    ? "Confirm Booking"
-                    : "Confirm & Continue to Verification"}
+                    ? "Complete Booking"
+                    : "Proceed to Verification"}
                 </button>
               </div>
             </div>
           )}
 
-          {/* Phone Verification */}
+          {/* 6. Verification */}
           {agentState.phase === "verify_phone" && (
-            <div className="px-4 pb-4">
+            <div className="bg-[#1e293b] border border-white/10 rounded-2xl p-6 animate-fade-in text-center">
               {!agentState.verificationSent ? (
-                // Phone input
                 <form onSubmit={handleSendCode} className="space-y-4">
-                  <div>
-                    <label className="block text-gray-300 text-sm mb-1.5">
-                      Phone Number *
-                    </label>
+                  <h3 className="text-white font-bold text-lg">
+                    Verify Mobile Number
+                  </h3>
+                  <p className="text-gray-400 text-sm">
+                    To secure your booking, please enter your number.
+                  </p>
+                  <div className="relative">
+                    <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-orange-500" />
                     <input
                       type="tel"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="+44 123 456 7890"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-orange-500"
-                      required
+                      placeholder="+44 7123 456789"
+                      className="w-full bg-[#0f172b] border border-white/10 rounded-xl py-4 pl-11 text-white focus:border-orange-500 outline-none"
                     />
-                    <p className="text-gray-500 text-xs mt-1">
-                      We&apos;ll send a verification code
-                    </p>
                   </div>
-
                   <button
                     type="submit"
                     disabled={isLoading || !phoneNumber}
-                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg"
                   >
-                    {isLoading ? (
-                      <FiLoader className="animate-spin" />
-                    ) : (
-                      <FiPhone />
-                    )}
                     Send Code
                   </button>
                 </form>
               ) : (
-                // Code input
-                <form onSubmit={handleVerifyCode} className="space-y-4">
-                  <div>
-                    <label className="block text-gray-300 text-sm mb-1.5">
-                      Verification Code *
-                    </label>
+                <form onSubmit={handleVerifyCode} className="space-y-5">
+                  <h3 className="text-white font-bold text-lg">Enter Code</h3>
+                  <p className="text-gray-400 text-sm">
+                    Code sent to {phoneNumber}
+                  </p>
+                  <div className="flex justify-center">
                     <input
-                      type="text"
                       value={verificationCode}
                       onChange={(e) =>
-                        setVerificationCode(
-                          e.target.value.replace(/\D/g, "").slice(0, 6)
-                        )
+                        setVerificationCode(e.target.value.slice(0, 6))
                       }
-                      placeholder="123456"
                       maxLength={6}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-center text-2xl tracking-widest focus:outline-none focus:border-orange-500"
-                      required
+                      placeholder="000000"
+                      className="w-48 text-center text-4xl tracking-[0.2em] bg-transparent border-b-2 border-orange-500 text-white focus:outline-none pb-2 font-mono"
                     />
-                    <p className="text-gray-500 text-xs mt-1">
-                      Enter the 6-digit code sent to{" "}
-                      {agentState.booking.phoneNumber}
-                    </p>
                   </div>
-
                   <button
                     type="submit"
                     disabled={isLoading || verificationCode.length !== 6}
-                    className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg"
                   >
-                    {isLoading ? (
-                      <FiLoader className="animate-spin" />
-                    ) : (
-                      <FiCheck />
-                    )}
-                    Confirm Booking
+                    Verify & Book
                   </button>
                 </form>
               )}
             </div>
           )}
 
-          {/* Complete State */}
+          {/* 7. Success */}
           {agentState.phase === "complete" && (
-            <div className="px-4 pb-8 text-center">
-              <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-                <FiCheck className="text-5xl text-green-500" />
+            <div className="flex flex-col items-center justify-center py-10 animate-fade-in text-center h-full">
+              <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.4)] mb-6 animate-bounce">
+                <FiCheck className="text-5xl text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">
-                Booking Confirmed! 🎉
-              </h3>
-              <p className="text-gray-400">
-                {agentState.isNewUser
-                  ? "Account created! Redirecting to upload your licences..."
-                  : "Redirecting to your dashboard..."}
+              <h2 className="text-3xl font-bold text-white mb-2">
+                Booking Confirmed!
+              </h2>
+              <p className="text-gray-400 max-w-xs mx-auto">
+                Redirecting you to the next step...
               </p>
             </div>
           )}
         </div>
 
-        {/* Bottom Controls */}
-        {(agentState.phase === "ask_needs" ||
-          agentState.phase === "collect_booking" ||
-          agentState.phase === "verify_phone" ||
-          canReturn) && (
-          <div className="p-4 border-t border-white/10 bg-[#0f172b]">
-            <div className="flex items-center justify-between gap-4">
-              {/* Return Button - only when can go back */}
+        {/* --- Bottom Action Bar (Fixed) --- */}
+        {(isInputPhase || canReturn) && (
+          <div className="absolute bottom-0 left-0 right-0 bg-[#0f172b]/95 backdrop-blur-md border-t border-white/5 p-4 z-30 pb-6 md:pb-4">
+            <div className="flex items-center gap-4 max-w-lg mx-auto relative">
+              {/* Back Button */}
               {canReturn && (
                 <button
                   onClick={goBack}
-                  disabled={!canReturn || isLoading}
-                  className="flex-1 bg-white/10 hover:bg-white/20 disabled:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors"
+                  disabled={isLoading}
+                  className="absolute left-0 p-3 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
                 >
-                  Return
+                  <span className="text-[10px] font-bold tracking-widest uppercase">
+                    Back
+                  </span>
                 </button>
               )}
 
-              {/* Voice Button - only for voice-enabled phases */}
-              {(agentState.phase === "ask_needs" ||
-                agentState.phase === "collect_booking" ||
-                agentState.phase === "verify_phone") && (
-                <>
-                  <div className="text-sm text-gray-400 text-center flex-1">
-                    {isRecording ? (
-                      <span className="text-red-500 flex items-center gap-1">
-                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                        Recording...
-                      </span>
-                    ) : isPlaying ? (
-                      <span className="flex items-center gap-1">
-                        <FiVolume2 className="animate-pulse" />
-                        Speaking...
-                      </span>
-                    ) : agentState.phase === "collect_booking" ? (
-                      <span>
-                        Or speak: &quot;Tomorrow at 10am, return Friday 5pm&quot;
-                      </span>
-                    ) : agentState.phase === "verify_phone" &&
-                      !agentState.verificationSent ? (
-                      <span>Or speak: &quot;My number is 07123456789&quot;</span>
-                    ) : (
-                      <span>Tap to speak</span>
+              {/* Voice Interaction Area - Centered */}
+              <div className="flex-1 flex flex-col items-center justify-center">
+                {isInputPhase ? (
+                  <div className="relative group">
+                    {/* Visual Rings */}
+                    {isRecording && (
+                      <div className="absolute inset-0 rounded-full bg-red-500 opacity-20 animate-ripple"></div>
                     )}
-                  </div>
+                    {isPlaying && (
+                      <div className="absolute inset-0 rounded-full bg-green-500 opacity-20 animate-ripple"></div>
+                    )}
 
-                  <button
-                    onClick={toggleRecording}
-                    disabled={isPlaying || isLoading || agentState.verificationSent}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center transition-all transform hover:scale-105 ${
-                      isRecording
-                        ? "bg-red-500 animate-pulse"
-                        : "bg-orange-500 hover:bg-orange-600"
-                    } text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    <FiMic className="w-6 h-6" />
-                  </button>
-                </>
-              )}
+                    <button
+                      onClick={toggleRecording}
+                      disabled={
+                        isPlaying ||
+                        isLoading ||
+                        agentState.verificationSent ||
+                        isTranscribing
+                      }
+                      className={`relative z-10 w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 transform ${
+                        isLoading || isTranscribing
+                          ? "bg-gray-700 cursor-wait scale-100"
+                          : isRecording
+                            ? "bg-red-500 scale-110 shadow-red-500/40"
+                            : isPlaying
+                              ? "bg-green-500 scale-105 shadow-green-500/40"
+                              : "bg-linear-to-tr from-orange-500 to-amber-500 hover:scale-105 shadow-orange-500/30"
+                      } text-white disabled:opacity-80`}
+                    >
+                      {/* Loading State for AI Processing */}
+                      {isLoading || isTranscribing ? (
+                        <FiLoader className="w-6 h-6 animate-spin text-gray-300" />
+                      ) : isRecording ? (
+                        <div className="flex gap-0.5 items-end justify-center h-4 w-4">
+                          <div
+                            className="w-1 bg-white animate-wave"
+                            style={{ animationDelay: "0s" }}
+                          ></div>
+                          <div
+                            className="w-1 bg-white animate-wave"
+                            style={{ animationDelay: "0.1s" }}
+                          ></div>
+                          <div
+                            className="w-1 bg-white animate-wave"
+                            style={{ animationDelay: "0.2s" }}
+                          ></div>
+                        </div>
+                      ) : (
+                        <FiMic className="w-7 h-7" />
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="h-16" />
+                )}
+
+                {/* Dynamic Status Text */}
+                <p className="text-xs text-gray-400 mt-2 font-medium tracking-wide">
+                  {isTranscribing
+                    ? "Converting to text..."
+                    : isLoading
+                      ? "Thinking..."
+                      : isRecording
+                        ? "Listening..."
+                        : "Tap to Speak"}
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -1879,14 +1545,11 @@ export default function FastAgentModal({
         {datePickerStyles}
       </style>
     </div>,
-    document.body
+    document.body,
   );
 }
 
-// ============================================================================
-// SUGGESTION CARD COMPONENT (VanListing Style)
-// ============================================================================
-
+// --- Suggestion Card Component (Enhanced) ---
 function SuggestionCard({
   category,
   onSelect,
@@ -1898,69 +1561,73 @@ function SuggestionCard({
 }) {
   return (
     <div
-      className="group relative rounded-2xl overflow-hidden cursor-pointer border border-white/10 hover:border-orange-500/50 transition-all"
       onClick={!isLoading ? onSelect : undefined}
+      className="group relative rounded-2xl overflow-hidden cursor-pointer border border-white/5 bg-[#1e293b] hover:border-orange-500/50 transition-all hover:shadow-[0_0_20px_rgba(249,115,22,0.15)] hover:-translate-y-1"
     >
-      {/* Image/Background */}
-      <div className="relative h-40">
+      <div className="relative h-40 w-full bg-linear-to-b from-[#0f172b] to-[#1e293b]">
         {category.image ? (
           <Image
             src={category.image}
             alt={category.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
             unoptimized
           />
         ) : (
-          <div className="w-full h-full bg-linear-to-br from-orange-500/20 to-orange-500/5" />
+          <div className="w-full h-full flex items-center justify-center text-gray-700 flex-col gap-2">
+            <FiTruck className="text-3xl text-gray-600" />
+            <span className="text-xs">No Image</span>
+          </div>
         )}
-        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
-
-        {/* Match Badge */}
-        <div className="absolute top-2 right-2 px-2 py-1 bg-green-500 rounded-full text-xs font-bold text-white">
+        <div className="absolute top-2 right-2 bg-green-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg uppercase tracking-wide">
           {category.matchScore}% Match
         </div>
       </div>
 
-      {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-3">
-        <h3 className="text-lg font-bold text-white mb-1">{category.name}</h3>
-        <p className="text-gray-300 text-xs mb-2 line-clamp-2">
+      <div className="p-4 relative bg-[#1e293b]">
+        {/* Separator */}
+        <div className="absolute top-0 left-4 right-4 h-px bg-white/5"></div>
+
+        <h3 className="text-base font-bold text-white mb-1 group-hover:text-orange-400 transition-colors">
+          {category.name}
+        </h3>
+        <p className="text-gray-400 text-xs mb-3 line-clamp-2 h-8 leading-relaxed">
           {category.matchReason}
         </p>
 
-        {/* Specs */}
-        <div className="flex gap-2 flex-wrap mb-2">
-          <div className="px-2 py-0.5 rounded-full bg-white/20 flex items-center gap-1">
-            <FiUsers className="text-orange-400 text-xs" />
-            <span className="text-white text-xs">{category.seats}</span>
-          </div>
-          <div className="px-2 py-0.5 rounded-full bg-white/20 flex items-center gap-1">
-            <BsFuelPump className="text-orange-400 text-xs" />
-            <span className="text-white text-xs">{category.fuel}</span>
-          </div>
-          <div className="px-2 py-0.5 rounded-full bg-white/20 flex items-center gap-1">
-            <FiPackage className="text-orange-400 text-xs" />
-            <span className="text-white text-xs">{category.doors} doors</span>
-          </div>
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-1 no-scrollbar">
+          <Badge icon={<FiUsers />} text={category.seats} />
+          <Badge icon={<BsFuelPump />} text={category.fuel} />
+          <Badge icon={<FiPackage />} text={`${category.doors}dr`} />
         </div>
 
-        {/* Price */}
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-xl font-bold text-white">
+        <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/5">
+          <div className="flex flex-col">
+            <span className="text-lg font-bold text-white">
               £{category.pricingTiers?.[0]?.pricePerDay || 0}
             </span>
-            <span className="text-gray-400 text-xs">/day</span>
+            <span className="text-gray-500 text-[10px] uppercase">Per Day</span>
           </div>
-          <button
-            disabled={isLoading}
-            className="px-4 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50"
-          >
+          <div className="px-5 py-2 bg-white/5 group-hover:bg-orange-600 text-white text-xs font-bold rounded-lg transition-colors border border-white/5 group-hover:border-transparent">
             Select
-          </button>
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Badge({
+  icon,
+  text,
+}: {
+  icon: React.ReactNode;
+  text: string | number;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0f172b] border border-white/5 text-[10px] font-medium text-gray-300 whitespace-nowrap">
+      <span className="text-orange-500 text-xs">{icon}</span>
+      <span>{text}</span>
     </div>
   );
 }

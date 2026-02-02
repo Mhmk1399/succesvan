@@ -35,6 +35,9 @@ interface Blog {
     seoTitle?: string;
     featuredImage?: string;
   };
+  seo: {
+    seoTitle?: string;
+  };
   media: {
     featuredImage?: string;
   };
@@ -369,7 +372,7 @@ export default function BlogManagement() {
   const openDeleteModal = (blog: Blog) => {
     setBlogToDelete({
       id: blog._id,
-      title: blog.content.seoTitle || blog.content.topic || "Untitled Blog",
+      title: blog.seo.seoTitle || blog.content.topic || "Untitled Blog",
     });
     setDeleteModalOpen(true);
     setActiveMenu(null);
@@ -479,7 +482,7 @@ export default function BlogManagement() {
         onConfirm={handleTogglePublish}
         currentStatus={blogForStatus?.status || "draft"}
         blogTitle={
-          blogForStatus?.content.seoTitle ||
+          blogForStatus?.seo.seoTitle ||
           blogForStatus?.content.topic ||
           "Untitled Blog"
         }
@@ -561,7 +564,7 @@ export default function BlogManagement() {
                     Progress
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden lg:table-cell">
-                    Views
+                    Words
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden lg:table-cell">
                     Date
@@ -582,7 +585,7 @@ export default function BlogManagement() {
                         {blog.media.featuredImage ? (
                           <img
                             src={blog.media.featuredImage}
-                            alt={blog.content.seoTitle || blog.content.topic}
+                            alt={blog.seo.seoTitle || "Featured Image"}
                             className="w-10 h-10 rounded-lg object-cover"
                           />
                         ) : (
@@ -592,8 +595,8 @@ export default function BlogManagement() {
                         )}
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-white truncate max-w-50 sm:max-w-62.5">
-                            {blog.content.seoTitle ||
-                              blog.content.topic ||
+                            {blog.seo.seoTitle ||
+                               
                               "Untitled Blog"}
                           </p>
                           <p className="text-xs text-slate-400 truncate max-w-50 sm:max-w-62.5">
@@ -612,7 +615,7 @@ export default function BlogManagement() {
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">
                       <span className="text-xs text-slate-400">
-                        {blog.views || 0}
+                        {blog.wordCount || 0}
                       </span>
                     </td>
                     <td className="px-4 py-3 hidden lg:table-cell">

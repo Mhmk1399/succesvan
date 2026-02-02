@@ -508,6 +508,7 @@ interface BlogPostData {
   publishDate: string;
   headings: HeadingItem[];
   mediaLibrary: MediaItem[];
+  featuredImage: string;
   anchors: Anchor[];
   summary: string;
   conclusion: string;
@@ -537,13 +538,13 @@ const DEVICE_SIZES: Record<DeviceType, { width: number; label: string }> = {
 
 const FONT_SIZES = [
   { label: "XS", value: "12px" },
-  { label: "SM", value: "12px" },
-  { label: "Base", value: "12px" },
-  { label: "LG", value: "12px" },
-  { label: "XL", value: "12px" },
-  { label: "2XL", value: "12px" },
-  { label: "3XL", value: "12px" },
-  { label: "4XL", value: "12px" },
+  { label: "SM", value: "14px" },
+  { label: "Base", value: "16px" },
+  { label: "LG", value: "18px" },
+  { label: "XL", value: "20px" },
+  { label: "2XL", value: "24px" },
+  { label: "3XL", value: "32px" },
+  { label: "4XL", value: "48px" },
 ];
 
 const TEXT_COLORS = [
@@ -2995,6 +2996,7 @@ export default function AIBlogBuilder({
     publishDate: new Date().toISOString().split("T")[0],
     headings: [{ id: generateId(), level: 2, text: "", content: "" }],
     mediaLibrary: [],
+    featuredImage: "",
     anchors: [],
     summary: "",
     conclusion: "",
@@ -3048,6 +3050,7 @@ export default function AIBlogBuilder({
           faqs: blog.content?.faqs || [],
           tableOfContents: blog.content?.tableOfContents ?? true,
           compiledHtml: blog.content?.compiledHtml || "",
+          featuredImage: blog.media?.featuredImage || "",
         });
 
         showToast.success("Blog loaded successfully!");
@@ -3064,6 +3067,16 @@ export default function AIBlogBuilder({
 
   // Handle save (create or update)
   const handleSave = async () => {
+    // Validate required SEO fields
+    if (!data.seoTitle || data.seoTitle.trim() === "") {
+      showToast.error("SEO Title is required. Please enter a SEO Title.");
+      return;
+    }
+    if (!data.canonicalUrl || data.canonicalUrl.trim() === "") {
+      showToast.error("Canonical URL is required. Please enter a Canonical URL.");
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -3107,7 +3120,9 @@ export default function AIBlogBuilder({
         media: {
           mediaLibrary: data.mediaLibrary,
           featuredImage:
-            data.mediaLibrary.find((m) => m.type === "image")?.url || "",
+            data.featuredImage ||
+            data.mediaLibrary.find((m) => m.type === "image")?.url ||
+            "",
         },
         wordCount,
         readingTime,
@@ -3141,17 +3156,31 @@ export default function AIBlogBuilder({
         throw new Error(errorData.error || "Failed to save blog");
       }
 
-      const result = await response.json();
-
+ 
       if (blogId) {
         showToast.success("Blog updated successfully!");
       } else {
         showToast.success("Blog created successfully!");
-        // Optionally redirect to edit page for the new blog
-        if (result.blog?._id || result.blog?.id) {
-          const newId = result.blog._id || result.blog.id;
-          window.location.href = `/dashboard/blog/edit/${newId}`;
-        }
+        // Reset form after creating new blog
+        setData({
+          topic: "",
+          seoTitle: "",
+          seoDescription: "",
+          focusKeyword: "",
+          canonicalUrl: "",
+          tags: [],
+          author: "",
+          publishDate: new Date().toISOString().split("T")[0],
+          headings: [{ id: generateId(), level: 2, text: "", content: "" }],
+          mediaLibrary: [],
+          featuredImage: "",
+          anchors: [],
+          summary: "",
+          conclusion: "",
+          faqs: [],
+          tableOfContents: true,
+          compiledHtml: "",
+        });
       }
     } catch (error: any) {
       console.error("Save error:", error);
@@ -3182,7 +3211,16 @@ export default function AIBlogBuilder({
     }
 
     if (data.summary) {
-      html += `<div class="bg-orange-50 p-6 rounded-xl mb-8 border-l-4 border-orange-500">\n  <p class="text-gray-700 italic"><strong>📝 Summary:</strong> ${data.summary}</p>\n</div>\n\n`;
+      html += `<h2 class="font-bold text-2xl mb-4 mt-8 text-white">📝 Summary</h2>\n`;
+      html += `<div class="bg-linear-to-r from-orange-500/10 to-amber-500/10 p-8 rounded-2xl mb-8 border border-orange-500/20 backdrop-blur-sm">\n`;
+      html += `  <div class="flex items-start gap-4">\n`;
+      html += `    <div class=" shrink-0 w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-2xl shadow-lg shadow-orange-500/30">📝</div>\n`;
+      html += `    <div class="flex-1">\n`;
+      html += `      <h3 class="text-white font-bold text-lg mb-2">Quick Overview</h3>\n`;
+      html += `      <p class="text-gray-300 leading-relaxed italic">${data.summary}</p>\n`;
+      html += `    </div>\n`;
+      html += `  </div>\n`;
+      html += `</div>\n\n`;
     }
 
     if (
@@ -3225,17 +3263,35 @@ export default function AIBlogBuilder({
     });
 
     if (data.conclusion) {
-      html += `\n<div class="bg-gray-900 text-white p-6 rounded-xl mt-10">\n  <h3 class="font-bold text-xl mb-3">🎯 Conclusion</h3>\n  <div>${data.conclusion}</div>\n</div>\n`;
+      html += `<h2 class="font-bold text-2xl mb-4 mt-10 text-white">🎯 conclusion</h2>\n`;
+      html += `<div class="bg-linear-to-br from-slate-800 to-slate-900 p-8 rounded-2xl mb-8 border border-slate-700 shadow-xl">\n`;
+      html += `  <div class="flex items-start gap-4">\n`;
+      html += `    <div class=" shrink-0 w-14 h-14 bg-linear-to-br from-[#fe9a00] to-orange-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-orange-500/30">🎯</div>\n`;
+      html += `    <div class="flex-1">\n`;
+      html += `      <h3 class="text-white font-bold text-xl mb-4">Final Thoughts</h3>\n`;
+      html += `      <div class="text-gray-300 leading-relaxed space-y-3">${data.conclusion}</div>\n`;
+      html += `    </div>\n`;
+      html += `  </div>\n`;
+      html += `</div>\n\n`;
     }
 
     if (data.faqs.filter((f) => f.question && f.answer).length > 0) {
-      html += `\n<div class="mt-10">\n  <h3 class="font-bold text-2xl mb-6">❓ FAQ</h3>\n  <div class="space-y-4">\n`;
-      data.faqs.forEach((faq) => {
+      html += `<h2 class="font-bold md:text-2xl mb-6 mt-10 text-white">❓ FAQ</h2>\n`;
+      html += `<div class="grid gap-4">\n`;
+      data.faqs.forEach((faq, index) => {
         if (faq.question && faq.answer) {
-          html += `    <details class="bg-gray-50 rounded-lg p-4">\n      <summary class="font-semibold cursor-pointer">${faq.question}</summary>\n      <p class="mt-3 text-gray-600">${faq.answer}</p>\n    </details>\n`;
+          html += `  <div class="bg-slate-800/50 rounded-2xl border border-slate-700 p-6 hover:border-[#fe9a00]/30 transition-all duration-300">\n`;
+          html += `    <div class="flex items-start gap-4">\n`;
+          html += `      <div class=" shrink-0 w-10 h-10 bg-[#fe9a00]/20 rounded-xl flex items-center justify-center text-[#fe9a00] text-lg font-bold">${index + 1}</div>\n`;
+          html += `      <div class="flex-1">\n`;
+          html += `        <h3 class="text-white font-semibold text-lg mb-3">${faq.question}</h3>\n`;
+          html += `        <p class="text-gray-300 leading-relaxed text-base">${faq.answer}</p>\n`;
+          html += `      </div>\n`;
+          html += `    </div>\n`;
+          html += `  </div>\n`;
         }
       });
-      html += `  </div>\n</div>\n`;
+      html += `</div>\n\n`;
     }
 
     if (data.tags.length > 0) {
@@ -3581,7 +3637,7 @@ export default function AIBlogBuilder({
         <div className="col-span-12 lg:col-span-3 h-[calc(100vh-5rem)] overflow-hidden">
           <div className="h-full overflow-y-auto pr-2 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
             {/* Topic Input - Shared by both modes */}
-            <Card title="Blog Topic" icon={<FiCpu size={16} />}>
+            <Card title="Blog Topic" icon={<FiCpu size={16}  />}>
               <div className="space-y-2">
                 <Label hint="What's your blog about?">Topic</Label>
                 <TextArea
@@ -4001,44 +4057,76 @@ export default function AIBlogBuilder({
                 }
               >
                 {data.mediaLibrary.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {data.mediaLibrary.map((media) => (
-                      <div
-                        key={media.id}
-                        className="group relative aspect-video bg-slate-800 rounded-xl overflow-hidden border border-slate-700"
-                      >
-                        {media.type === "image" ? (
-                          <img
-                            src={media.url}
-                            alt={media.alt}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-slate-900">
-                            <FiVideo size={32} className="text-slate-600" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center">
-                          <button
-                            onClick={() => handleDeleteMedia(media)}
-                            className="p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-lg"
-                          >
-                            <FiTrash2 size={14} />
-                          </button>
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-linear-to-t from-black/80 to-transparent">
-                          <p className="text-xs text-white truncate">
-                            {media.alt}
-                          </p>
-                          {media.size && (
-                            <p className="text-[10px] text-slate-400">
-                              {formatFileSize(media.size)}
-                            </p>
+                  <>
+                    <div className="mb-4 flex items-center justify-between">
+                      <p className="text-sm text-slate-400">
+                        Click on an image to set it as the featured image
+                      </p>
+                      {data.featuredImage && (
+                        <span className="text-xs text-[#fe9a00] bg-[#fe9a00]/10 px-2 py-1 rounded">
+                          Featured image set
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {data.mediaLibrary.map((media) => (
+                        <div
+                          key={media.id}
+                          className={`group relative aspect-video bg-slate-800 rounded-xl overflow-hidden border-2 cursor-pointer transition-all ${
+                            data.featuredImage === media.url
+                              ? "border-[#fe9a00]"
+                              : "border-slate-700 hover:border-slate-600"
+                          }`}
+                          onClick={() => {
+                            setData((prev) => ({
+                              ...prev,
+                              featuredImage: media.url,
+                            }));
+                          }}
+                        >
+                          {media.type === "image" ? (
+                            <>
+                              <img
+                                src={media.url}
+                                alt={media.alt}
+                                className="w-full h-full object-cover"
+                              />
+                              {data.featuredImage === media.url && (
+                                <div className="absolute top-2 right-2 w-6 h-6 bg-[#fe9a00] rounded-full flex items-center justify-center">
+                                  <FiCheck size={12} className="text-white" />
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-slate-900">
+                              <FiVideo size={32} className="text-slate-600" />
+                            </div>
                           )}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteMedia(media);
+                              }}
+                              className="p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-lg"
+                            >
+                              <FiTrash2 size={14} />
+                            </button>
+                          </div>
+                          <div className="absolute bottom-0 left-0 right-0 p-2 bg-linear-to-t from-black/80 to-transparent">
+                            <p className="text-xs text-white truncate">
+                              {media.alt}
+                            </p>
+                            {media.size && (
+                              <p className="text-[10px] text-slate-400">
+                                {formatFileSize(media.size)}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <div className="text-center py-12 flex flex-col items-center">
                     <FiImage
