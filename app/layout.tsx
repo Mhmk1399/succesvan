@@ -30,6 +30,11 @@ export const metadata: Metadata = {
   creator: "SuccessVan",
   publisher: "SuccessVan",
   robots: "index, follow",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  themeColor: "#fe9a00",
   openGraph: {
     type: "website",
     locale: "en_GB",
@@ -62,6 +67,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="theme-color" content="#fe9a00" />
         <link
           rel="apple-touch-icon"
           sizes="180x180"

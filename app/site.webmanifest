@@ -1,6 +1,7 @@
 {
-  "name": "succesvan",
-  "short_name": "succesvan",
+  "name": "SuccessVan",
+  "short_name": "SuccessVan",
+  "description": "Premium van hire and rental services in North West London",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -13,8 +14,8 @@
       "type": "image/png"
     }
   ],
-  "theme_color": "#ffffff",
-
+  "theme_color": "#fe9a00",
   "background_color": "#ffffff",
-  "display": "standalone"
+  "display": "standalone",
+  "start_url": "/"
 }
