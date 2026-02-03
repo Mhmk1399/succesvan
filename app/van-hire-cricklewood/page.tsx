@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import CricklewoodVanHire from "@/components/static/areas/cricklewood";
+import Script from "next/script";
+import { cricklewood } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title: "Van Hire Cricklewood - Success Van Hire | Local Van Rental NW London",
@@ -18,7 +20,15 @@ export const metadata: Metadata = {
 export default function VanHireCricklewood() {
   return (
     <div>
-      
+      {/* ✅ Schema.org JSON-LD */}
+      <Script
+        id="Cricklewood-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(cricklewood),
+        }}
+      />
       <CricklewoodVanHire />
     </div>
   );

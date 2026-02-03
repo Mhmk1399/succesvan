@@ -269,3 +269,275 @@ export const termsSchema = {
   ],
   serviceType: "Automatic Van Rental",
 };
+
+export const cricklewood = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Van Hire Cricklewood - Success Van Hire",
+  url: "https://successvanhire.co.uk/van-hire-cricklewood",
+  description:
+    "Professional van hire services in Cricklewood, North West London. Success Van Hire offers reliable van rental near Cricklewood Broadway and surrounding areas.",
+  telephone: "+44 20 3011 1198",
+  email: "Info@successvanhire.com",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
+    addressLocality: "London",
+    addressRegion: "London",
+    postalCode: "Your Postal Code",
+    addressCountry: "GB",
+  },
+  sameAs: [
+    "https://www.facebook.com/topvanhire",
+    "https://www.instagram.com/success.van.hire",
+    "https://twitter.com/MatinDiba?t=GKR1BWNSQK6yB2Rj4W5Jhg&s=09",
+  ],
+  areaServed: [
+    "Cricklewood",
+    "Golders Green",
+    "Hampstead",
+    "Hendon",
+    "Mill Hill",
+    "Wembley",
+    "North West London",
+  ],
+  serviceType: "Automatic Van Rental",
+};
+
+export const goldersGreen = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Van Hire Golders Green - Success Van Hire",
+  url: "https://successvanhire.co.uk/van-hire-golders-green",
+  description:
+    "Professional van hire services in Golders Green, North West London. Success Van Hire offers reliable van rental near Golders Green station and surrounding areas.",
+  telephone: "+44 20 3011 1198",
+  email: "Info@successvanhire.com",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
+    addressLocality: "London",
+    addressRegion: "London",
+    postalCode: "Your Postal Code",
+    addressCountry: "GB",
+  },
+  sameAs: [
+    "https://www.facebook.com/topvanhire",
+    "https://www.instagram.com/success.van.hire",
+    "https://twitter.com/MatinDiba?t=GKR1BWNSQK6yB2Rj4W5Jhg&s=09",
+  ],
+  areaServed: [
+    "Cricklewood",
+    "Golders Green",
+    "Hampstead",
+    "Hendon",
+    "Mill Hill",
+    "Wembley",
+    "North West London",
+  ],
+  serviceType: "Automatic Van Rental",
+};
+
+export const hampstead = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Van Hire Hampstead - Success Van Hire",
+  url: "https://successvanhire.co.uk/van-hire-hampstead",
+  description:
+    "Professional van hire services in Hampstead, North West London. Success Van Hire offers reliable van rental near Hampstead Heath and surrounding areas.",
+  telephone: "+44 20 3011 1198",
+  email: "Info@successvanhire.com",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
+    addressLocality: "London",
+    addressRegion: "London",
+    postalCode: "Your Postal Code",
+    addressCountry: "GB",
+  },
+  sameAs: [
+    "https://www.facebook.com/topvanhire",
+    "https://www.instagram.com/success.van.hire",
+    "https://twitter.com/MatinDiba?t=GKR1BWNSQK6yB2Rj4W5Jhg&s=09",
+  ],
+  areaServed: [
+    "Cricklewood",
+    "Golders Green",
+    "Hampstead",
+    "Hendon",
+    "Mill Hill",
+    "Wembley",
+    "North West London",
+  ],
+  serviceType: "Automatic Van Rental",
+};
+
+export const hendon = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Van Hire Hendon - Success Van Hire",
+  url: "https://successvanhire.co.uk/van-hire-hendon",
+  description:
+    "Professional van hire services in Hendon, North West London. Success Van Hire offers reliable van rental near Hendon Central and surrounding areas.",
+  telephone: "+44 20 3011 1198",
+  email: "Info@successvanhire.com",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
+    addressLocality: "London",
+    addressRegion: "London",
+    postalCode: "Your Postal Code",
+    addressCountry: "GB",
+  },
+  sameAs: [
+    "https://www.facebook.com/topvanhire",
+    "https://www.instagram.com/success.van.hire",
+    "https://twitter.com/MatinDiba?t=GKR1BWNSQK6yB2Rj4W5Jhg&s=09",
+  ],
+  areaServed: [
+    "Cricklewood",
+    "Golders Green",
+    "Hampstead",
+    "Hendon",
+    "Mill Hill",
+    "Wembley",
+    "North West London",
+  ],
+  serviceType: "Automatic Van Rental",
+};
+
+export const millHill = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Van Hire Mill Hill - Success Van Hire",
+  url: "https://successvanhire.co.uk/van-hire-mill-hill",
+  description:
+    "Professional van hire services in Mill Hill, North West London. Success Van Hire offers reliable van rental near Mill Hill Broadway and surrounding areas.",
+  telephone: "+44 20 3011 1198",
+  email: "Info@successvanhire.com",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
+    addressLocality: "London",
+    addressRegion: "London",
+    postalCode: "Your Postal Code",
+    addressCountry: "GB",
+  },
+  sameAs: [
+    "https://www.facebook.com/topvanhire",
+    "https://www.instagram.com/success.van.hire",
+    "https://twitter.com/MatinDiba?t=GKR1BWNSQK6yB2Rj4W5Jhg&s=09",
+  ],
+  areaServed: [
+    "Cricklewood",
+    "Golders Green",
+    "Hampstead",
+    "Hendon",
+    "Mill Hill",
+    "Wembley",
+    "North West London",
+  ],
+  serviceType: "Automatic Van Rental",
+};
+
+export const northWestLondon = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Van Hire North West London - Success Van Hire",
+  url: "https://successvanhire.co.uk/van-hire-north-west-london",
+  description:
+    "Professional van hire services in North West London. Success Van Hire offers reliable van rental near North West London areas.",
+  telephone: "+44 20 3011 1198",
+  email: "Info@successvanhire.com",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
+    addressLocality: "London",
+    addressRegion: "London",
+    postalCode: "Your Postal Code",
+    addressCountry: "GB",
+  },
+  sameAs: [
+    "https://www.facebook.com/topvanhire",
+    "https://www.instagram.com/success.van.hire",
+    "https://twitter.com/MatinDiba?t=GKR1BWNSQK6yB2Rj4W5Jhg&s=09",
+  ],
+  areaServed: [
+    "Cricklewood",
+    "Golders Green",
+    "Hampstead",
+    "Hendon",
+    "Mill Hill",
+    "Wembley",
+    "North West London",
+  ],
+  serviceType: "Automatic Van Rental",
+};
+
+export const wembleySchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Van Hire Wembley - Success Van Hire",
+  url: "https://successvanhire.co.uk/van-hire-wembley",
+  description:
+    "Professional van hire services in Wembley, North West London. Success Van Hire offers reliable van rental near Wembley Stadium and surrounding areas.",
+  telephone: "+44 20 3011 1198",
+  email: "Info@successvanhire.com",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
+    addressLocality: "London",
+    addressRegion: "London",
+    postalCode: "Your Postal Code",
+    addressCountry: "GB",
+  },
+  sameAs: [
+    "https://www.facebook.com/topvanhire",
+    "https://www.instagram.com/success.van.hire",
+    "https://twitter.com/MatinDiba?t=GKR1BWNSQK6yB2Rj4W5Jhg&s=09",
+  ],
+  areaServed: [
+    "Cricklewood",
+    "Golders Green",
+    "Hampstead",
+    "Hendon",
+    "Mill Hill",
+    "Wembley",
+    "North West London",
+  ],
+  serviceType: "Automatic Van Rental",
+};
+
+export const camdenSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Van Hire Camden - Success Van Hire",
+  url: "https://successvanhire.co.uk/van-hire-wembley-2-2",
+  description:
+    "Professional van hire services in Camden, North London. Success Van Hire offers reliable van rental near Camden Market and surrounding areas.",
+  telephone: "+44 20 3011 1198",
+  email: "Info@successvanhire.com",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
+    addressLocality: "London",
+    addressRegion: "London",
+    postalCode: "Your Postal Code",
+    addressCountry: "GB",
+  },
+  sameAs: [
+    "https://www.facebook.com/topvanhire",
+    "https://www.instagram.com/success.van.hire",
+    "https://twitter.com/MatinDiba?t=GKR1BWNSQK6yB2Rj4W5Jhg&s=09",
+  ],
+  areaServed: [
+    "Cricklewood",
+    "Golders Green",
+    "Hampstead",
+    "Hendon",
+    "Mill Hill",
+    "Wembley",
+    "North West London",
+  ],
+  serviceType: "Automatic Van Rental",
+};

@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import GoldersGreenVanHire from "@/components/static/areas/GoldersGreen";
+import Script from "next/script";
+import { goldersGreen } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title:
@@ -19,6 +21,15 @@ export const metadata: Metadata = {
 export default function VanHireGoldersGreen() {
   return (
     <div>
+      {/* ✅ Schema.org JSON-LD */}
+      <Script
+        id="about-us-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(goldersGreen),
+        }}
+      />
       <GoldersGreenVanHire />
     </div>
   );

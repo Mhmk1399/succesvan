@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import WembleyVanHire from "@/components/static/areas/wembley";
+import Script from "next/script";
+import { wembleySchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title:
@@ -19,6 +21,15 @@ export const metadata: Metadata = {
 export default function VanHireWembley() {
   return (
     <div>
+      {/* ✅ Schema.org JSON-LD */}
+      <Script
+        id="wembley-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(wembleySchema),
+        }}
+      />
       <WembleyVanHire />
     </div>
   );

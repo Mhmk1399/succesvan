@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import HendonVanHire from "@/components/static/areas/hendon";
+import Script from "next/script";
+import { hendon } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title: "Van Hire Hendon - Success Van Hire | Local Van Rental North London",
@@ -18,6 +20,15 @@ export const metadata: Metadata = {
 export default function VanHireHendon() {
   return (
     <div>
+      {/* ✅ Schema.org JSON-LD */}
+      <Script
+        id="hendon-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(hendon),
+        }}
+      />
       <HendonVanHire />
     </div>
   );

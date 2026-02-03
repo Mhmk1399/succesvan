@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import CamdenVanHire from "@/components/static/areas/Camedan";
+import { camdenSchema } from "@/lib/schema";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Van Hire Camden - Success Van Hire | Local Van Rental North London",
@@ -18,6 +20,15 @@ export const metadata: Metadata = {
 export default function VanHireCamden() {
   return (
     <div>
+      {/* ✅ Schema.org JSON-LD */}
+      <Script
+        id="camden-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(camdenSchema),
+        }}
+      />
       <CamdenVanHire />
     </div>
   );

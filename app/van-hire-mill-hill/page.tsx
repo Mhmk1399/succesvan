@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import MillHillVanHire from "@/components/static/areas/millHill";
+import Script from "next/script";
+import { millHill } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title:
@@ -19,6 +21,15 @@ export const metadata: Metadata = {
 export default function VanHireMillHill() {
   return (
     <div>
+      {/* ✅ Schema.org JSON-LD */}
+      <Script
+        id="mill-hill-schema"
+        type="application/ld+json"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(millHill),
+        }}
+      />
       <MillHillVanHire />
     </div>
   );
