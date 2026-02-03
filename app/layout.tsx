@@ -1,5 +1,5 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { Metadata } from "next";
+import { Metadata, Viewport } from "next";
 import "./globals.css";
 import Navbar from "@/components/global/Navbar";
 import Footer from "@/components/global/footer";
@@ -35,7 +35,6 @@ export const metadata: Metadata = {
     icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
-  themeColor: "#fe9a00",
   openGraph: {
     type: "website",
     locale: "en_GB",
@@ -58,6 +57,13 @@ export const metadata: Metadata = {
     description: "Premium van hire and rental services in North West London",
     images: ["https://successvanhire.co.uk/android-chrome-192x192.png"],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#fe9a00",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({

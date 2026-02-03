@@ -13,10 +13,7 @@ async function getBlogs(): Promise<Blog[]> {
     const baseUrl =
       process.env.NEXT_PUBLIC_BASE_URL || "https://successvanhire.co.uk";
     const res = await fetch(`${baseUrl}/api/blog`, {
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      next: { revalidate: 3600 }, // Cache for 1 hour
     });
 
     if (!res.ok) {
@@ -150,7 +147,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const blogs = await getBlogs();
 
   const blogRoutes = blogs.map((blog) => ({
-    url: `${baseUrl}/blog/${blog.seo.canonicalUrl}`,
+    url: `${baseUrl}/blog/${blog.seo?.canonicalUrl || blog.slug}`,
     lastModified: new Date(blog.updatedAt),
     changeFrequency: "daily" as const,
     priority: 0.8,

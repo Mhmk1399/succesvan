@@ -353,7 +353,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 export const fetchAllBlogs = async (): Promise<BlogPostFormatted[]> => {
   try {
     const res = await fetch(`${baseUrl}/api/blog?limit=100`, {
-      cache: "no-store",
+      next: { revalidate: 3600 }, // Cache for 1 hour
     });
     const data = await res.json();
     return (data.blogs || []).map((b: any) => convertApiToBlogPost(b));
@@ -396,9 +396,7 @@ export const fetchBlogBySlug = async (
       for (const candidate of Array.from(new Set(candidates))) {
         const res = await fetch(
           `${baseUrl}/api/blog/${encodeURIComponent(candidate)}`,
-          {
-            cache: "no-store", // Don't cache to ensure fresh data after edits
-          },
+          { next: { revalidate: 3600 } },
         );
 
         if (!res.ok) {
