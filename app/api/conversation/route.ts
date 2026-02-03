@@ -18,17 +18,17 @@ export async function POST(request: NextRequest) {
     console.log("📋 [Conversation API] Current data:", currentData);
     console.log(
       "🗣️ [Conversation API] Conversation history length:",
-      conversationHistory.length
+      conversationHistory.length,
     );
     console.log(
       "🗣️ [Conversation API] Conversation history:",
-      conversationHistory
+      conversationHistory,
     );
 
     if (!transcript) {
       return NextResponse.json(
         { success: false, error: "Transcript is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     await connect();
 
     console.log(
-      "🔍 [Conversation API] Fetching full office and category data for RAG"
+      "🔍 [Conversation API] Fetching full office and category data for RAG",
     );
 
     // Fetch comprehensive data for RAG context
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     const fullCategories = await fetchFullCategories();
 
     console.log(
-      `📍 [Conversation API] Loaded ${fullOffices.length} offices and ${fullCategories.length} categories with full details`
+      `📍 [Conversation API] Loaded ${fullOffices.length} offices and ${fullCategories.length} categories with full details`,
     );
 
     // Build RAG context with all available information
@@ -53,13 +53,13 @@ export async function POST(request: NextRequest) {
       fullCategories,
       currentData.startDate,
       currentData.endDate,
-      currentData.office
+      currentData.office,
     );
 
     console.log(
       "📚 [Conversation API] RAG context size:",
       ragContext.length,
-      "characters"
+      "characters",
     );
 
     // Format data for the function (simple version for extraction)
@@ -79,31 +79,40 @@ export async function POST(request: NextRequest) {
       formattedOffices,
       formattedCategories,
       conversationHistory,
-      ragContext // Pass RAG context to AI
+      ragContext, // Pass RAG context to AI
     );
 
     console.log("✅ [Conversation API] AI response:", aiResponse.message);
     console.log("📊 [Conversation API] Is complete:", aiResponse.isComplete);
     console.log(
       "🔍 [Conversation API] Missing fields:",
-      aiResponse.missingFields
+      aiResponse.missingFields,
     );
 
     // Convert AI message to speech
     console.log("🔊 [Conversation API] Generating speech...");
-    const audioBuffer = await textToSpeech(aiResponse.message);
-    const audioBase64 = audioBuffer.toString("base64");
+    // const audioBuffer = await textToSpeech(aiResponse.message);
+    // const audioBase64 = audioBuffer.toString("base64");
 
-    console.log(
-      "✅ [Conversation API] Speech generated, size:",
-      audioBuffer.length,
-      "bytes"
-    );
+    // console.log(
+    //   "✅ [Conversation API] Speech generated, size:",
+    //   audioBuffer.length,
+    //   "bytes",
+    // );
 
+    // return NextResponse.json({
+    //   success: true,
+    //   message: aiResponse.message,
+    //   audio: audioBase64, // Base64 encoded audio
+    //   data: aiResponse.data,
+    //   missingFields: aiResponse.missingFields,
+    //   isComplete: aiResponse.isComplete,
+    //   action: aiResponse.action,
+    // });
     return NextResponse.json({
       success: true,
       message: aiResponse.message,
-      audio: audioBase64, // Base64 encoded audio
+      audio: null, // یا اصلاً نفرست
       data: aiResponse.data,
       missingFields: aiResponse.missingFields,
       isComplete: aiResponse.isComplete,
@@ -118,7 +127,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: message || "Failed to process conversation",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
