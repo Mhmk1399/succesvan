@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { textToSpeech } from "@/lib/openai";
-
+ 
 export async function POST(request: NextRequest) {
   try {
     const { text } = await request.json();
@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     if (!text || typeof text !== "string") {
       return NextResponse.json(
         { success: false, error: "`text` is required" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -26,13 +26,12 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to synthesize audio";
+    const message = error instanceof Error ? error.message : "Failed to synthesize audio";
     console.log("❌ [TTS API]", message);
 
     return NextResponse.json(
       { success: false, error: message },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
