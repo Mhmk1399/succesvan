@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOpenAI, extractReservationData } from "@/lib/openai";
+import { getOpenAI } from "@/lib/openai";
 import connect from "@/lib/data";
 import Office from "@/model/office";
 import Category from "@/model/category";
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         console.log("❌ [API] No audio file provided");
         return NextResponse.json(
           { success: false, error: "No audio file provided" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       Category.find({}).select("_id name").lean(),
     ]);
     console.log(
-      `✅ [API] Found ${offices.length} offices and ${categories.length} categories`
+      `✅ [API] Found ${offices.length} offices and ${categories.length} categories`,
     );
 
     // Extract structured data using GPT-4
@@ -141,7 +141,7 @@ Rules:
     };
 
     const missingFields = requiredFields.filter(
-      (field) => !normalizedData[field]
+      (field) => !normalizedData[field],
     );
 
     if (missingFields.length > 0) {
@@ -162,7 +162,7 @@ Rules:
       parsedData.returnDate
     ) {
       console.log(
-        "🚀 [API] Auto-submit enabled and all required fields present"
+        "🚀 [API] Auto-submit enabled and all required fields present",
       );
       // Here you would call your reservation API
       // For now, just return the data with autoSubmit flag
@@ -196,7 +196,7 @@ Rules:
         success: false,
         error: message || "Failed to process voice input",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

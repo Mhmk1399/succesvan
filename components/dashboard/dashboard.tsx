@@ -27,6 +27,7 @@ import {
   FiSun,
   FiVolume2,
   FiUsers,
+  FiBook,
 } from "react-icons/fi";
 import { useStats } from "../../hooks/useStats";
 import { useRecentReservations } from "../../hooks/useRecentReservations";
@@ -145,7 +146,7 @@ const menuItems: MenuItem[] = [
   {
     id: "manage-blogs",
     label: "Manage Blogs",
-    icon: <FiClipboard />,
+    icon: <FiBook />,
     color: "from-indigo-500 to-indigo-600",
   },
 ];

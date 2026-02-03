@@ -122,6 +122,14 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
     <>
       {/* Static heading styles */}
       <style>{`
+        /* Prevent black text in dark mode - only override if text would be black */
+        @media (prefers-color-scheme: dark) {
+          .blog-content p:not([style*="color"]),
+          .blog-content span:not([style*="color"]),
+          .blog-content li:not([style*="color"]) {
+            color: #d1d5db !important;
+          }
+        }
         .blog-content h1 {
           color: white !important;
           font-weight: 700 !important;
@@ -198,15 +206,12 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
 
         <div
           ref={contentRef}
-          className="blog-content prose prose-invert   max-w-none lg:col-span-3
-            prose-p:text-gray-300
-            prose-strong:text-white
-            prose-em:text-gray-200
+          className="blog-content prose prose-invert max-w-none lg:col-span-3
             prose-a:text-[#fe9a00] hover:prose-a:text-white prose-a:transition-colors
             prose-img:rounded-xl prose-img:shadow-xl prose-img:my-8
             prose-code:bg-slate-800 prose-code:text-[#fe9a00] prose-code:px-2 prose-code:py-1 prose-code:rounded
             prose-pre:bg-slate-800 prose-pre:border prose-pre:border-white/10
-            prose-blockquote:border-[#fe9a00] prose-blockquote:text-gray-300"
+            prose-blockquote:border-[#fe9a00]"
           dangerouslySetInnerHTML={{
             __html: sanitizedContent,
           }}

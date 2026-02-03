@@ -7,8 +7,10 @@ import { Office } from "@/types/type";
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
+  
 
-export type FastPhase =
+
+export type FastPhase =    
   | "ask_needs"
   | "show_suggestions"
   | "collect_booking"

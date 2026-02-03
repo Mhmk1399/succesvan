@@ -4,6 +4,8 @@
  * Streamlined booking flow that completes in ~1 minute
  */
 
+
+
 import { NextRequest, NextResponse } from "next/server";
 import {
   processFastAgent,

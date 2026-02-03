@@ -837,9 +837,15 @@ export default function ReservationsManagement() {
             },
           },
           {
+            key:"createdAt",
+            label: "Created At",
+            render: (value: string) =>
+              value ? new Date(value).toLocaleDateString('en-GB') : "-",
+          },
+          {
             key: "office",
             label: "Office",
-            render: (value: any) => value?.name || "-",
+            render: (value: any) => value?.name.slice(0,10) || "-",
           },
           {
             key: "totalPrice",

@@ -12,8 +12,7 @@ import {
   FiMapPin,
   FiTruck,
   FiUser,
-  FiMessageSquare,
-} from "react-icons/fi";
+ } from "react-icons/fi";
 import { showToast } from "../../lib/toast";
 import { Office, Category, Type } from "../../types/type";
 import CustomSelect from "../../components/ui/CustomSelect";

@@ -5,7 +5,10 @@ interface VoiceRecordingOptions {
   onTranscriptionComplete?: (data: any) => void;
   onError?: (error: Error) => void;
   autoSubmit?: boolean;
-}
+}      
+
+
+
 
 export function useVoiceRecording({
   onTranscriptionComplete,

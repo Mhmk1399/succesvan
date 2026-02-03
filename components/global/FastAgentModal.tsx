@@ -24,7 +24,8 @@ import {
   CategorySuggestion,
   FastPhase,
   AddOnOption,
-  SelectedAddOn,
+  SelectedAddOn,     
+
 } from "@/hooks/useFastAgent";
 import TimeSelect from "@/components/ui/TimeSelect";
 import CustomSelect from "@/components/ui/CustomSelect";
@@ -182,6 +183,8 @@ export default function FastAgentModal({
 
   // Use ref to track current phase for voice callback
   const phaseRef = useRef(agentState.phase);
+
+
   useEffect(() => {
     phaseRef.current = agentState.phase;
   }, [agentState.phase]);
@@ -433,6 +436,8 @@ export default function FastAgentModal({
   const getSelectedOffice = () => {
     return offices?.find((o) => o._id === bookingForm.officeId);
   }; // Generate return time slots based on office working hours
+
+  
   const returnTimeSlots = useMemo(() => {
     if (!bookingForm.officeId || !bookingForm.endDate) return [];
     const office = offices?.find((o) => o._id === bookingForm.officeId) as any;
