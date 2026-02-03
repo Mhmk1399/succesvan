@@ -5,10 +5,7 @@ interface VoiceRecordingOptions {
   onTranscriptionComplete?: (data: any) => void;
   onError?: (error: Error) => void;
   autoSubmit?: boolean;
-}      
-
-
-
+}
 
 export function useVoiceRecording({
   onTranscriptionComplete,
@@ -23,7 +20,7 @@ export function useVoiceRecording({
   const startRecording = useCallback(async () => {
     try {
       console.log("🎤 [Voice] Starting recording...");
-      
+
       // Check browser support
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         console.log("❌ [Voice] Audio recording not supported");
@@ -45,14 +42,16 @@ export function useVoiceRecording({
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          console.log(`📊 [Voice] Audio chunk received: ${event.data.size} bytes`);
+          console.log(
+            `📊 [Voice] Audio chunk received: ${event.data.size} bytes`,
+          );
           audioChunksRef.current.push(event.data);
         }
       };
 
       mediaRecorder.onstop = async () => {
         console.log("🛑 [Voice] Recording stopped");
-        
+
         // Stop all tracks
         stream.getTracks().forEach((track) => track.stop());
         console.log("🎤 [Voice] Microphone released");
@@ -93,7 +92,7 @@ export function useVoiceRecording({
     async (audioBlob: Blob) => {
       try {
         console.log("🔄 [Voice] Processing audio...");
-        
+
         // Create FormData to send audio
         const formData = new FormData();
         formData.append("audio", audioBlob, "recording.webm");
@@ -101,7 +100,7 @@ export function useVoiceRecording({
         console.log("📤 [Voice] Sending audio to API...");
 
         const startTime = Date.now();
-        
+
         // Send to API
         const response = await fetch("/api/parse-voice", {
           method: "POST",
@@ -112,7 +111,11 @@ export function useVoiceRecording({
         console.log(`⏱️ [Voice] API response received in ${processingTime}ms`);
 
         if (!response.ok) {
-          console.log("❌ [Voice] API error:", response.status, response.statusText);
+          console.log(
+            "❌ [Voice] API error:",
+            response.status,
+            response.statusText,
+          );
           throw new Error("Failed to process audio");
         }
 
@@ -123,15 +126,15 @@ export function useVoiceRecording({
           console.log("✅ [Voice] Processing successful!");
           console.log(`📝 [Voice] Transcript: "${result.transcript}"`);
           console.log("📊 [Voice] Extracted data:", result.data);
-          
+
           if (result.missingFields && result.missingFields.length > 0) {
             console.warn("⚠️ [Voice] Missing fields:", result.missingFields);
           }
-          
+
           showToast.success(
             result.autoSubmit
               ? "Reservation created successfully!"
-              : "Form filled from voice input!"
+              : "Form filled from voice input!",
           );
 
           if (onTranscriptionComplete) {
@@ -153,7 +156,7 @@ export function useVoiceRecording({
         setIsProcessing(false);
       }
     },
-    [autoSubmit, onTranscriptionComplete, onError]
+    [autoSubmit, onTranscriptionComplete, onError],
   );
 
   const toggleRecording = useCallback(() => {
