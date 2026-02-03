@@ -16,7 +16,7 @@ import {
   FiMinus,
   FiMapPin,
 } from "react-icons/fi";
-import { BsFuelPump, BsRobot } from "react-icons/bs";
+import { BsFuelPump } from "react-icons/bs";
 import Image from "next/image";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import {
@@ -817,7 +817,13 @@ export default function FastAgentModal({
             <div className="flex items-center gap-3">
               <div className="relative">
                 <div className="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-500 flex items-center justify-center shadow-inner">
-                  <BsRobot className="w-6 h-6" />
+                  <Image
+                    src="/assets/images/bot.jpeg"
+                    alt="AI Agent"
+                    width={50}
+                    height={50}
+                    className="w-10 h-10 rounded-md"
+                  />
                 </div>
                 {/* Status Dot */}
                 <div

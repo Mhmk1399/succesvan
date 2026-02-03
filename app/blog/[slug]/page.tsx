@@ -201,8 +201,6 @@ export default async function BlogDetailPage({ params }: Props) {
                 </span>
               </div>
 
-             
-
               <div className="flex items-center gap-2">
                 <FiUser className="w-5 h-5 text-[#fe9a00]" />
                 <span>
