@@ -57,6 +57,7 @@ export const metadata: Metadata = {
     description: "Premium van hire and rental services in North West London",
     images: ["https://successvanhire.co.uk/android-chrome-192x192.png"],
   },
+  manifest: "/site.webmanifest",
 };
 
 export const viewport: Viewport = {
@@ -73,12 +74,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="theme-color" content="#fe9a00" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+        <meta name="apple-mobile-web-app-title" content="SuccessVan" />
+        <meta name="msapplication-TileColor" content="#fe9a00" />
         <Script
           id="gtm-script"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-          (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          (function(w,d,s,l,i){w[l]=w[l]=[];w[l].push({'gtm.start':
           new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
           j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
@@ -105,9 +117,7 @@ export default function RootLayout({
           <Toaster position="bottom-center" />
           <MobileAppPrompt />
 
-          <main id="main-content">
-            {children}
-          </main>
+          <main id="main-content">{children}</main>
           <Footer />
           <FloatingActionMenu />
         </AuthProvider>
