@@ -103,10 +103,10 @@ export const blogSchema = {
 export const carHireNwLondonSchema = {
   "@context": "https://schema.org",
   "@type": "Service",
-  name: "Car Hire NW London",
+  name: "Van Hire NW London",
   url: "https://successvanhire.co.uk/car-hire-nw-london",
   description:
-    "Car and vehicle hire services in North West London. Success Van Hire provides reliable car rental solutions for Brent, Harrow, Ealing and surrounding NW London areas.",
+    "Van and vehicle hire services in North West London. Success Van Hire provides reliable Van rental solutions for Brent, Harrow, Ealing and surrounding NW London areas.",
   telephone: "+44 20 3011 1198",
   email: "Info@successvanhire.com",
   address: {

@@ -5,15 +5,15 @@ import { carHireNwLondonSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title:
-    "Car Hire NW London - Success Van Hire | Vehicle Rental North West London",
+    "Van Hire NW London - Success Van Hire | Vehicle Rental North West London",
   description:
-    "Car and vehicle hire services in North West London. Success Van Hire provides reliable car rental solutions for Brent, Harrow, Ealing and surrounding NW London areas.",
+    "Van and vehicle hire services in North West London. Success Van Hire provides reliable Van rental solutions for Brent, Harrow, Ealing and surrounding NW London areas.",
   keywords:
-    "car hire nw london, vehicle rental north west london, car rental brent, harrow car hire, ealing vehicle rental, success van hire cars",
+    "Van hire nw london, vehicle rental north west london, Van rental brent, harrow Van hire, ealing vehicle rental, success van hire",
   openGraph: {
-    title: "Car Hire North West London - Success Van Hire",
+    title: "Van Hire North West London - Success Van Hire",
     description:
-      "Professional car and vehicle rental services in North West London. Quality vehicles for all your transport needs.",
+      "Professional Van and vehicle rental services in North West London. Quality vehicles for all your transport needs.",
     type: "website",
   },
 };

@@ -94,9 +94,9 @@ export default function SuccessVanHire() {
     },
     {
       icon: <MdOutlineLocalParking className="text-4xl" />,
-      title: "Free Parking for Your Car",
+      title: "Free Parking for Your car",
       description:
-        "Hiring a van or minibus? Leave your car with us at no extra cost. We offer free, secure parking for the duration of your hire, giving you one less thing to worry about.",
+        "Hiring a van or minibus? Leave your Van with us at no extra cost. We offer free, secure parking for the duration of your hire, giving you one less thing to worry about.",
       linear: " ",
       iconColor: "text-[#fe9a00]",
     },

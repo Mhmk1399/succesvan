@@ -137,6 +137,7 @@ export default function Footer() {
                 <li>
                   <a
                     href="tel:+442030111198"
+                    aria-label="Call us at +44 20 3011 1198"
                     className="group flex items-start gap-4 text-gray-400 hover:text-[#fe9a00] transition-all duration-300"
                   >
                     <div className="w-11 h-11 md:w-12 md:h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-[#fe9a00]/15 group-hover:border-[#fe9a00]/60 transition-all duration-300 shrink-0">
@@ -319,6 +320,7 @@ export default function Footer() {
                       href={social.href}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label={social.name}
                       className="group relative p-3 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 transition-all duration-500 hover:scale-110 hover:border-transparent hover:shadow-2xl"
                       style={{
                         background: `rgba(${parseInt(

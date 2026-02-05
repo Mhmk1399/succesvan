@@ -237,6 +237,7 @@ if (active.length === 0) {
               href={announcement.link}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={`Learn more about ${announcement.text}`}
               className="
                 hidden md:flex items-center gap-1.5
                 px-4 py-1.5 rounded-full

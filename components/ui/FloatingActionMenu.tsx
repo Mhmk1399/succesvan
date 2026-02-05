@@ -469,6 +469,7 @@ export default function FloatingActionMenu() {
                     onClick={item.onClick}
                     onMouseEnter={() => setHoveredItem(item.id)}
                     onMouseLeave={() => setHoveredItem(null)}
+                    aria-label={item.label}
                     className="group relative w-12 h-12 bg-[#860a89] rounded-2xl flex items-center justify-center 
                                shadow-2xl transition-all duration-300 hover:scale-110 
                                hover:shadow-[0_0_30px_rgba(254,154,0,0.4)]"
@@ -489,6 +490,7 @@ export default function FloatingActionMenu() {
                     }
                     onMouseEnter={() => setHoveredItem(item.id)}
                     onMouseLeave={() => setHoveredItem(null)}
+                    aria-label={item.label}
                     className={`group relative w-12 h-12 ${
                       item.id === "whatsapp" ? "bg-[#25D366]" : "bg-[#0891b2]"
                     } rounded-2xl flex items-center justify-center 
@@ -526,6 +528,7 @@ export default function FloatingActionMenu() {
           {/* Main Toggle Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
+            aria-label={isOpen ? "Close menu" : "Open menu"}
             className="group relative w-12 h-12 bg-[#fe9a00] rounded-2xl flex items-center justify-center 
                        shadow-2xl transition-all duration-500 hover:scale-110 
                        hover:shadow-[0_0_40px_rgba(254,154,0,0.6)]"

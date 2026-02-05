@@ -23,19 +23,19 @@ if (typeof window !== "undefined") {
 // FAQ Data
 const faqData = [
   {
-    question: "What are the age requirements for renting a car?",
+    question: "What are the age requirements for renting a Van?",
     answer:
       "We accept drivers aged 25-70 years with a full clean licence. If you are 21-24, 70-76, or have certain endorsements it may still be possible to hire. Call our office on 020 3011 1198 for more details.",
     category: "Requirements",
   },
   {
-    question: "How do I book a car hire in NW London?",
+    question: "How do I book a Van hire in NW London?",
     answer:
       "You can book by sending your request on our website at www.successvanhire.co.uk/reservation/, sending us an email, or giving us a call on 020 3011 1198. Our booking process is quick and simple.",
     category: "Booking",
   },
   {
-    question: "What do I need to rent a car in NW London?",
+    question: "What do I need to rent a Van in NW London?",
     answer:
       "You need to provide: Your ID, a valid driving licences, proof of address, and your bank card. We accept full UK and EU driving licences with quick and easy verification.",
     category: "Requirements",
@@ -53,39 +53,39 @@ const faqData = [
     category: "Booking",
   },
   {
-    question: "Can I get the car picked up at my address?",
+    question: "Can I get the Van picked up at my address?",
     answer:
       "Yes, you can order pick-up at your address, but it may incur an extra charge. Contact us on 020 3011 1198 for more details on delivery options.",
     category: "Services",
   },
   {
-    question: "What types of cars do you offer for rental?",
+    question: "What types of Vans do you offer for rental?",
     answer:
-      "We offer a wide range of vehicles from compact cars for city driving to larger family cars and automatic vehicles. All our cars are well-maintained and serviced regularly.",
+      "We offer a wide range of vehicles from compact vans for city driving to larger family vans and automatic vehicles. All our Vans are well-maintained and serviced regularly.",
     category: "Vehicles",
   },
   {
-    question: "How long has Success Car Rental been in business?",
+    question: "How long has Success Van Hire been in business?",
     answer:
-      "We have been London's trusted car rental specialist for over 15 years, with 10+ years of experience specializing in long-term and short-term rentals.",
+      "We have been London's trusted Van hire specialist for over 15 years, with 10+ years of experience specializing in long-term and short-term rentals.",
     category: "About Us",
   },
   {
-    question: "Are your cars eco-friendly?",
+    question: "Are your Vans eco-friendly?",
     answer:
-      "Yes, all our cars meet EU6 emission standards and are part of our eco-friendly fleet. We are committed to environmental protection.",
+      "Yes, all our Vans meet EU6 emission standards and are part of our eco-friendly fleet. We are committed to environmental protection.",
     category: "Vehicles",
   },
   {
     question: "What insurance and guarantees are provided?",
     answer:
-      "Your rental reservation is 100% secure with comprehensive insurance coverage. All cars are fully insured for self-drive with complete peace of mind.",
+      "Your rental reservation is 100% secure with comprehensive insurance coverage. All Vans are fully insured for self-drive with complete peace of mind.",
     category: "Insurance",
   },
   {
     question: "What is your pricing policy?",
     answer:
-      "We offer highly competitive rates with the best value for money. Our pricing is transparent with no hidden charges. Prices fit every budget for both long and short-term car hire.",
+      "We offer highly competitive rates with the best value for money. Our pricing is transparent with no hidden charges. Prices fit every budget for both long and short-term Van hire.",
     category: "Pricing",
   },
   {
@@ -176,14 +176,14 @@ export default function NWLondonCarHire() {
             <div>
               {/* Main Heading */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
-                Cheap Car Hire in
+                Cheap Van Hire in
                 <span className="text-transparent ml-1 bg-clip-text bg-linear-to-r from-[#fe9a00] to-orange-500">
                   NW London
                 </span>
               </h1>
 
               <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-                Rent a car in NW London with Success Car Rental at highly
+                Rent a Van in NW London with Success Van Hire at highly
                 competitive rates. Perfect for business travel, family trips,
                 airport transfers, and more.
               </p>
@@ -270,7 +270,7 @@ export default function NWLondonCarHire() {
               Serving <span className="text-[#fe9a00]">NW London</span> Areas
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Convenient car hire locations across North West London
+              Convenient Van hire locations across North West London
             </p>
           </div>
 
@@ -301,10 +301,10 @@ export default function NWLondonCarHire() {
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4">
               Why Choose{" "}
-              <span className="text-[#fe9a00]">Success Car Rental?</span>
+              <span className="text-[#fe9a00]">Success Van Hire?</span>
             </h2>
             <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Your trusted partner for affordable car hire in NW London
+              Your trusted partner for affordable Van hire in NW London
             </p>
           </div>
 
@@ -380,7 +380,7 @@ export default function NWLondonCarHire() {
       {/* FAQ Section */}
       <FAQComponent
         title="Frequently Asked Questions"
-        subtitle="Find answers to common questions about our car hire services in NW London"
+        subtitle="Find answers to common questions about our Van hire services in NW London"
         faqs={faqData}
         showSearch={false}
         defaultOpen={0}
@@ -394,11 +394,11 @@ export default function NWLondonCarHire() {
             <div className="bg-linear-to-br from-[#0f172b] to-[#1e293b] rounded-3xl p-8 lg:p-12">
               <div className="text-center max-w-3xl mx-auto">
                 <h2 className="text-3xl lg:text-5xl font-black text-white mb-6">
-                  Book Your Car Rental in NW London Today
+                  Book Your Van Hire in NW London Today
                 </h2>
                 <p className="text-gray-300 text-xl mb-8 leading-relaxed">
-                  Get the best rates on car hire in NW London. Whether you need
-                  a car for a few hours or several weeks, we've got you covered!
+                  Get the best rates on Van hire in NW London. Whether you need
+                  a Van for a few hours or several weeks, we've got you covered!
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">

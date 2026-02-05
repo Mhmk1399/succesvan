@@ -63,7 +63,6 @@ export const viewport: Viewport = {
   themeColor: "#fe9a00",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -106,7 +105,9 @@ export default function RootLayout({
           <Toaster position="bottom-center" />
           <MobileAppPrompt />
 
-          {children}
+          <main id="main-content">
+            {children}
+          </main>
           <Footer />
           <FloatingActionMenu />
         </AuthProvider>

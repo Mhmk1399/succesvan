@@ -337,6 +337,7 @@ function CarouselLayout({
       {/* Navigation Buttons */}
       <button
         onClick={prevTestimonial}
+        aria-label="Previous testimonial"
         className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 lg:translate-x-0 w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white hover:scale-110 transition-all duration-300 group"
         style={{
           boxShadow: `0 10px 30px ${accentColor}20`,
@@ -347,6 +348,7 @@ function CarouselLayout({
 
       <button
         onClick={nextTestimonial}
+        aria-label="Next testimonial"
         className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 lg:translate-x-0 w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white hover:scale-110 transition-all duration-300 group"
         style={{
           boxShadow: `0 10px 30px ${accentColor}20`,
@@ -361,6 +363,7 @@ function CarouselLayout({
           <button
             key={index}
             onClick={() => goToTestimonial(index)}
+            aria-label={`Go to testimonial ${index + 1}`}
             className={`transition-all duration-300 rounded-full ${
               index === currentIndex ? "w-12 h-3" : "w-3 h-3 bg-white/20"
             }`}

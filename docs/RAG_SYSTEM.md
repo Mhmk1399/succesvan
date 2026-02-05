@@ -105,7 +105,7 @@ AI uses context to answer questions intelligently
 Before RAG:
 ```
 User: "What options do I have?"
-AI: "We have van ford and car. Which do you prefer?"
+AI: "We have van ford and Van. Which do you prefer?"
 ```
 
 After RAG:
@@ -113,7 +113,7 @@ After RAG:
 User: "What options do I have?"
 AI: "We have:
 - Van Ford: Gas, automatic, 2 seats, $50/hour
-- Car: Electric, automatic, 4 seats, $35/hour
+- Van: Electric, automatic, 4 seats, $35/hour
 Which do you prefer?"
 ```
 

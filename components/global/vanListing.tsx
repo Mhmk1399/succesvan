@@ -1257,8 +1257,8 @@ function CategoryCard({
             src={category.image}
             alt={category.name}
             fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover group-hover:scale-110 rounded-3xl group-hover:blur-sm transition-all duration-500"
-            unoptimized
           />
         ) : (
           <div className="w-full h-full bg-linear-to-br rounded-3xl from-[#fe9a00]/20 to-[#fe9a00]/5"></div>
