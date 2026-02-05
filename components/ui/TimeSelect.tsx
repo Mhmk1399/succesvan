@@ -27,14 +27,14 @@ interface TimeSelectProps {
   };
   disabled?: boolean;
 }
-
+     
 export default function TimeSelect({
   value,
   onChange,
   slots,
   reservedSlots,
   isInline,
-  tooltip,
+  // tooltip,
   selectedDate,
   isStartTime = true,
   extensionTimes,
@@ -96,11 +96,11 @@ export default function TimeSelect({
           className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
-      {tooltip && (
+      {/* {tooltip && (
         <div className="absolute bottom-full left-0 mb-2 px-3 py-2 bg-slate-900 border border-amber-400/30 rounded-lg text-amber-300 text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40">
           {tooltip}
         </div>
-      )}
+      )} */}
 
       {isOpen && !disabled && (
         <div className="absolute top-full left-0 right-0 z-50 mt-2 w-full bg-slate-800 border border-white/20 rounded-lg shadow-2xl max-h-40 overflow-y-auto scrollable-dropdown">
