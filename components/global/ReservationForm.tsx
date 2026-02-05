@@ -12,7 +12,7 @@ import {
   FiMapPin,
   FiTruck,
   FiUser,
- } from "react-icons/fi";
+} from "react-icons/fi";
 import { showToast } from "../../lib/toast";
 import { Office, Category, Type } from "../../types/type";
 import CustomSelect from "../../components/ui/CustomSelect";
@@ -36,6 +36,7 @@ import {
   SpecialDay,
   TimeSlotInfo,
 } from "../../types/reservation-form";
+import toast from "react-hot-toast";
 
 export default function ReservationForm({
   isModal = false,
@@ -51,7 +52,7 @@ export default function ReservationForm({
   const [filteredTypes, setFilteredTypes] = useState<Type[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-   const [startDateReservedSlots, setStartDateReservedSlots] = useState<
+  const [startDateReservedSlots, setStartDateReservedSlots] = useState<
     ReservedSlot[]
   >([]);
   const [endDateReservedSlots, setEndDateReservedSlots] = useState<
@@ -87,10 +88,10 @@ export default function ReservationForm({
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 2);
     tomorrow.setHours(0, 0, 0, 0);
-    
+
     const dayAfter = new Date(tomorrow);
     dayAfter.setDate(dayAfter.getDate() + 1);
-    
+
     setDateRange([
       {
         startDate: tomorrow,
@@ -131,7 +132,7 @@ export default function ReservationForm({
     ][date.getDay()] as WorkingTime["day"];
 
     const specialDay = office.specialDays?.find(
-      (sd: SpecialDay) => sd.month === month && sd.day === day
+      (sd: SpecialDay) => sd.month === month && sd.day === day,
     );
     let start = "00:00",
       end = "23:59";
@@ -141,7 +142,7 @@ export default function ReservationForm({
       end = specialDay.endTime || "23:59";
     } else {
       const workingDay = office.workingTime?.find(
-        (w: WorkingTime) => w.day === dayName && w.isOpen
+        (w: WorkingTime) => w.day === dayName && w.isOpen,
       );
       if (workingDay) {
         start = workingDay.startTime || "00:00";
@@ -154,19 +155,19 @@ export default function ReservationForm({
             0,
             startHour * 60 +
               startMin -
-              workingDay.pickupExtension.hoursBefore * 60
+              workingDay.pickupExtension.hoursBefore * 60,
           );
           const extendedEndMinutes = Math.min(
             1439,
-            endHour * 60 + endMin + workingDay.pickupExtension.hoursAfter * 60
+            endHour * 60 + endMin + workingDay.pickupExtension.hoursAfter * 60,
           );
           start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(
             2,
-            "0"
+            "0",
           )}:${String(extendedStartMinutes % 60).padStart(2, "0")}`;
           end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(
             2,
-            "0"
+            "0",
           )}:${String(extendedEndMinutes % 60).padStart(2, "0")}`;
         }
       }
@@ -180,7 +181,8 @@ export default function ReservationForm({
     if (
       dateRange[0].endDate &&
       dateRange[0].startDate &&
-      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+      dateRange[0].startDate.toDateString() ===
+        dateRange[0].endDate.toDateString() &&
       formData.returnTime
     ) {
       const [retHour, retMin] = formData.returnTime.split(":").map(Number);
@@ -220,7 +222,7 @@ export default function ReservationForm({
     ][date.getDay()] as WorkingTime["day"];
 
     const specialDay = office.specialDays?.find(
-      (sd: SpecialDay) => sd.month === month && sd.day === day
+      (sd: SpecialDay) => sd.month === month && sd.day === day,
     );
     let start = "00:00",
       end = "23:59";
@@ -230,7 +232,7 @@ export default function ReservationForm({
       end = specialDay.endTime || "23:59";
     } else {
       const workingDay = office.workingTime?.find(
-        (w: WorkingTime) => w.day === dayName && w.isOpen
+        (w: WorkingTime) => w.day === dayName && w.isOpen,
       );
       if (workingDay) {
         start = workingDay.startTime || "00:00";
@@ -243,19 +245,19 @@ export default function ReservationForm({
             0,
             startHour * 60 +
               startMin -
-              workingDay.returnExtension.hoursBefore * 60
+              workingDay.returnExtension.hoursBefore * 60,
           );
           const extendedEndMinutes = Math.min(
             1439,
-            endHour * 60 + endMin + workingDay.returnExtension.hoursAfter * 60
+            endHour * 60 + endMin + workingDay.returnExtension.hoursAfter * 60,
           );
           start = `${String(Math.floor(extendedStartMinutes / 60)).padStart(
             2,
-            "0"
+            "0",
           )}:${String(extendedStartMinutes % 60).padStart(2, "0")}`;
           end = `${String(Math.floor(extendedEndMinutes / 60)).padStart(
             2,
-            "0"
+            "0",
           )}:${String(extendedEndMinutes % 60).padStart(2, "0")}`;
         }
       }
@@ -269,7 +271,8 @@ export default function ReservationForm({
     if (
       dateRange[0].startDate &&
       dateRange[0].endDate &&
-      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+      dateRange[0].startDate.toDateString() ===
+        dateRange[0].endDate.toDateString() &&
       formData.pickupTime
     ) {
       const [pickHour, pickMin] = formData.pickupTime.split(":").map(Number);
@@ -375,10 +378,13 @@ export default function ReservationForm({
   useEffect(() => {
     if (formData.office) {
       const filtered = types.filter((type: Type) => {
-        return type.offices && type.offices.some((office) => {
-          const officeId = typeof office === "string" ? office : office._id;
-          return officeId === formData.office;
-        });
+        return (
+          type.offices &&
+          type.offices.some((office) => {
+            const officeId = typeof office === "string" ? office : office._id;
+            return officeId === formData.office;
+          })
+        );
       });
       setFilteredTypes(filtered);
     } else {
@@ -390,11 +396,11 @@ export default function ReservationForm({
     if (formData.office && dateRange[0].startDate) {
       const date = dateRange[0].startDate;
       const startDate = `${date.getFullYear()}-${String(
-        date.getMonth() + 1
+        date.getMonth() + 1,
       ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       setStartDateReservedSlots([]);
       fetch(
-        `/api/reservations/by-office?office=${formData.office}&startDate=${startDate}&type=start`
+        `/api/reservations/by-office?office=${formData.office}&startDate=${startDate}&type=start`,
       )
         .then((res) => res.json())
         .then((data) => {
@@ -408,11 +414,11 @@ export default function ReservationForm({
     if (formData.office && dateRange[0].endDate) {
       const date = dateRange[0].endDate;
       const endDate = `${date.getFullYear()}-${String(
-        date.getMonth() + 1
+        date.getMonth() + 1,
       ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       setEndDateReservedSlots([]);
       fetch(
-        `/api/reservations/by-office?office=${formData.office}&endDate=${endDate}&type=end`
+        `/api/reservations/by-office?office=${formData.office}&endDate=${endDate}&type=end`,
       )
         .then((res) => res.json())
         .then((data) => {
@@ -435,13 +441,13 @@ export default function ReservationForm({
   const handleFastAgentComplete = (
     reservationId: string,
     userToken: string,
-    isNewUser: boolean
+    isNewUser: boolean,
   ) => {
     console.log(
       "✅ [Form] Fast Agent completed booking:",
       reservationId,
       "isNewUser:",
-      isNewUser
+      isNewUser,
     );
     setShowFastAgentModal(false);
 
@@ -558,7 +564,7 @@ export default function ReservationForm({
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -581,7 +587,8 @@ export default function ReservationForm({
       if (
         dateRange[0].startDate &&
         dateRange[0].endDate &&
-        dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString()
+        dateRange[0].startDate.toDateString() ===
+          dateRange[0].endDate.toDateString()
       ) {
         if (name === "pickupTime" && prev.returnTime) {
           const [pickH, pickM] = time.split(":").map(Number);
@@ -634,7 +641,7 @@ export default function ReservationForm({
 
     // Check special days first
     const specialDay = office.specialDays?.find(
-      (sd) => sd.month === month && sd.day === day
+      (sd) => sd.month === month && sd.day === day,
     );
     if (specialDay && !specialDay.isOpen) return true;
 
@@ -663,7 +670,7 @@ export default function ReservationForm({
 
     // Check special days first
     const specialDay = office.specialDays?.find(
-      (sd) => sd.month === month && sd.day === day
+      (sd) => sd.month === month && sd.day === day,
     );
     if (specialDay && specialDay.isOpen) {
       return {
@@ -712,15 +719,26 @@ export default function ReservationForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    const age = parseInt(formData.driverAge, 10);
+
+    // Validation for age
+    if (isNaN(age) || age < 23 || age > 80) {
+      showToast.error("Driver age must be between 23 and 80 years");
+      setIsSubmitting(false);
+      return;
+    }
 
     // Validation: if pickup and return dates are the same, ensure minimum 6 hours
     if (
       dateRange[0].startDate &&
       dateRange[0].endDate &&
-      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString()
+      dateRange[0].startDate.toDateString() ===
+        dateRange[0].endDate.toDateString()
     ) {
       if (!formData.pickupTime || !formData.returnTime) {
-        showToast.error("Please select pickup and return times (minimum 6 hours)");
+        showToast.error(
+          "Please select pickup and return times (minimum 6 hours)",
+        );
         setIsSubmitting(false);
         return;
       }
@@ -743,7 +761,7 @@ export default function ReservationForm({
         parseInt(pickupHour),
         parseInt(pickupMinute),
         0,
-        0
+        0,
       );
 
       const returnDateTime = new Date(dateRange[0].endDate || new Date());
@@ -752,7 +770,7 @@ export default function ReservationForm({
         parseInt(returnHour),
         parseInt(returnMinute),
         0,
-        0
+        0,
       );
 
       // Calculate extension costs (so ReservationModal final price includes the same extra payment)
@@ -771,10 +789,10 @@ export default function ReservationForm({
               .toLowerCase();
 
             const pickupDaySchedule = office.workingTime?.find(
-              (wt: any) => wt.day === pickupDay
+              (wt: any) => wt.day === pickupDay,
             );
             const returnDaySchedule = office.workingTime?.find(
-              (wt: any) => wt.day === returnDay
+              (wt: any) => wt.day === returnDay,
             );
 
             const pickupNormalStart = pickupDaySchedule?.startTime || "00:00";
@@ -787,7 +805,8 @@ export default function ReservationForm({
               (formData.pickupTime < pickupNormalStart ||
                 formData.pickupTime > pickupNormalEnd)
             ) {
-              pickupExtension = pickupDaySchedule.pickupExtension.flatPrice || 0;
+              pickupExtension =
+                pickupDaySchedule.pickupExtension.flatPrice || 0;
             }
 
             if (
@@ -795,7 +814,8 @@ export default function ReservationForm({
               (formData.returnTime < returnNormalStart ||
                 formData.returnTime > returnNormalEnd)
             ) {
-              returnExtension = returnDaySchedule.returnExtension.flatPrice || 0;
+              returnExtension =
+                returnDaySchedule.returnExtension.flatPrice || 0;
             }
           }
         }
@@ -908,7 +928,7 @@ export default function ReservationForm({
             >
               {dateRange[0]?.startDate && dateRange[0]?.endDate
                 ? `${formatDate(dateRange[0].startDate)} - ${formatDate(
-                    dateRange[0].endDate
+                    dateRange[0].endDate,
                   )}`
                 : "Select Dates"}
             </button>
@@ -978,7 +998,7 @@ export default function ReservationForm({
                 "saturday",
               ][date.getDay()];
               const workingDay = office?.workingTime?.find(
-                (w: any) => w.day === dayName && w.isOpen
+                (w: any) => w.day === dayName && w.isOpen,
               );
               const extensionTimes = workingDay?.pickupExtension
                 ? {
@@ -1000,7 +1020,11 @@ export default function ReservationForm({
                   selectedDate={dateRange[0].startDate}
                   isStartTime={true}
                   extensionTimes={extensionTimes}
-                  disabled={!formData.office || !formData.type || !dateRange[0].startDate}
+                  disabled={
+                    !formData.office ||
+                    !formData.type ||
+                    !dateRange[0].startDate
+                  }
                 />
               );
             })()}
@@ -1011,11 +1035,16 @@ export default function ReservationForm({
           {/* Info for same-day reservation */}
           {/* Tooltip for same-day reservation info */}
           <div className="relative w-full">
-            {dateRange[0].startDate && dateRange[0].endDate &&
-              dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+            {dateRange[0].startDate &&
+              dateRange[0].endDate &&
+              dateRange[0].startDate.toDateString() ===
+                dateRange[0].endDate.toDateString() &&
               showSameDayTooltip && (
                 <div className="absolute -top-7 left-11 z-20 px-3 py-1 bg-slate-900 border border-amber-400/30 rounded text-amber-300 text-xs whitespace-nowrap shadow-lg pointer-events-auto flex items-center gap-2">
-                  <span>Reservations less than 24 hours <br/> are calculated as <b>1 day</b>.</span>
+                  <span>
+                    Reservations less than 24 hours <br /> are calculated as{" "}
+                    <b>1 day</b>.
+                  </span>
                   <button
                     type="button"
                     onClick={() => setShowSameDayTooltip(false)}
@@ -1048,7 +1077,7 @@ export default function ReservationForm({
                 "saturday",
               ][date.getDay()];
               const workingDay = office?.workingTime?.find(
-                (w: any) => w.day === dayName && w.isOpen
+                (w: any) => w.day === dayName && w.isOpen,
               );
               const extensionTimes = workingDay?.returnExtension
                 ? {
@@ -1070,7 +1099,12 @@ export default function ReservationForm({
                   selectedDate={dateRange[0].endDate}
                   isStartTime={false}
                   extensionTimes={extensionTimes}
-                  disabled={!formData.office || !formData.type || !dateRange[0].endDate || !formData.pickupTime}
+                  disabled={
+                    !formData.office ||
+                    !formData.type ||
+                    !dateRange[0].endDate ||
+                    !formData.pickupTime
+                  }
                 />
               );
             })()}
@@ -1091,7 +1125,13 @@ export default function ReservationForm({
             value={formData.driverAge}
             onChange={handleInputChange}
             required
-            disabled={!formData.office || !formData.type || !dateRange[0].endDate || !formData.pickupTime || !formData.returnTime}
+            disabled={
+              !formData.office ||
+              !formData.type ||
+              !dateRange[0].endDate ||
+              !formData.pickupTime ||
+              !formData.returnTime
+            }
             className={`w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors ${
               isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
             } ${!formData.office || !formData.type || !dateRange[0].endDate || !formData.pickupTime || !formData.returnTime ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -1099,6 +1139,15 @@ export default function ReservationForm({
             min="23"
             max="80"
           />
+          <small>
+            {formData.driverAge &&
+              (parseInt(formData.driverAge, 10) < 23 ||
+                parseInt(formData.driverAge, 10) > 80) && (
+                <span className="text-red-500 text-xs  font-semibold   ">
+                  Driver age must be between 23 and 80 .
+                </span>
+              )}
+          </small>
         </div>
 
         {/* Buttons Row */}
@@ -1126,8 +1175,8 @@ export default function ReservationForm({
                 isRecording
                   ? "bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/50"
                   : isProcessing
-                  ? "bg-blue-500 text-white shadow-lg shadow-blue-500/50"
-                  : "bg-linear-to-r from-amber-500 to-amber-600 text-white hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/50"
+                    ? "bg-blue-500 text-white shadow-lg shadow-blue-500/50"
+                    : "bg-linear-to-r from-amber-500 to-amber-600 text-white hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/50"
               }`}
             >
               <FiMic className="text-lg" />
@@ -1203,12 +1252,14 @@ export default function ReservationForm({
             onClick={() => setShowDateRange(!showDateRange)}
             disabled={!formData.office || !formData.type}
             className={`w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs text-left focus:outline-none focus:border-amber-400 transition-colors ${
-              !formData.office || !formData.type ? "opacity-50 cursor-not-allowed" : ""
+              !formData.office || !formData.type
+                ? "opacity-50 cursor-not-allowed"
+                : ""
             }`}
           >
             {dateRange[0]?.startDate && dateRange[0]?.endDate
               ? `${formatDate(dateRange[0].startDate)} - ${formatDate(
-                  dateRange[0].endDate
+                  dateRange[0].endDate,
                 )}`
               : "Select Dates"}
           </button>
@@ -1272,7 +1323,7 @@ export default function ReservationForm({
                   "saturday",
                 ][date.getDay()];
                 const workingDay = office?.workingTime?.find(
-                  (w: any) => w.day === dayName && w.isOpen
+                  (w: any) => w.day === dayName && w.isOpen,
                 );
                 const extensionTimes = workingDay?.pickupExtension
                   ? {
@@ -1288,10 +1339,13 @@ export default function ReservationForm({
                 let mobilePickupSlots = pickupTimeSlots;
                 if (
                   dateRange[0].endDate &&
-                  dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+                  dateRange[0].startDate.toDateString() ===
+                    dateRange[0].endDate.toDateString() &&
                   formData.returnTime
                 ) {
-                  const [retHour, retMin] = formData.returnTime.split(":").map(Number);
+                  const [retHour, retMin] = formData.returnTime
+                    .split(":")
+                    .map(Number);
                   const retMinutes = retHour * 60 + retMin;
                   const maxPickupMinutes = retMinutes - 6 * 60;
                   if (maxPickupMinutes < 0) {
@@ -1316,7 +1370,11 @@ export default function ReservationForm({
                     selectedDate={dateRange[0].startDate}
                     isStartTime={true}
                     extensionTimes={extensionTimes}
-                    disabled={!formData.office || !formData.type || !dateRange[0].startDate}
+                    disabled={
+                      !formData.office ||
+                      !formData.type ||
+                      !dateRange[0].startDate
+                    }
                   />
                 );
               })()}
@@ -1339,7 +1397,7 @@ export default function ReservationForm({
                   "saturday",
                 ][date.getDay()];
                 const workingDay = office?.workingTime?.find(
-                  (w: any) => w.day === dayName && w.isOpen
+                  (w: any) => w.day === dayName && w.isOpen,
                 );
                 const extensionTimes = workingDay?.returnExtension
                   ? {
@@ -1355,10 +1413,13 @@ export default function ReservationForm({
                 let mobileReturnSlots = returnTimeSlots;
                 if (
                   dateRange[0].startDate &&
-                  dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+                  dateRange[0].startDate.toDateString() ===
+                    dateRange[0].endDate.toDateString() &&
                   formData.pickupTime
                 ) {
-                  const [pickHour, pickMin] = formData.pickupTime.split(":").map(Number);
+                  const [pickHour, pickMin] = formData.pickupTime
+                    .split(":")
+                    .map(Number);
                   const pickMinutes = pickHour * 60 + pickMin;
                   const minReturnMinutes = pickMinutes + 6 * 60;
                   if (minReturnMinutes > 1439) {
@@ -1383,7 +1444,12 @@ export default function ReservationForm({
                     selectedDate={dateRange[0].endDate}
                     isStartTime={false}
                     extensionTimes={extensionTimes}
-                    disabled={!formData.office || !formData.type || !dateRange[0].endDate || !formData.pickupTime}
+                    disabled={
+                      !formData.office ||
+                      !formData.type ||
+                      !dateRange[0].endDate ||
+                      !formData.pickupTime
+                    }
                   />
                 );
               })()}
@@ -1401,12 +1467,27 @@ export default function ReservationForm({
               value={formData.driverAge}
               onChange={handleInputChange}
               required
-              disabled={!formData.office || !formData.type || !dateRange[0].endDate || !formData.pickupTime || !formData.returnTime}
+              disabled={
+                !formData.office ||
+                !formData.type ||
+                !dateRange[0].endDate ||
+                !formData.pickupTime ||
+                !formData.returnTime
+              }
               className="w-full px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white text-base md:text-xs placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="23-80"
               min="23"
               max="80"
             />
+            <small>
+              {formData.driverAge &&
+                (parseInt(formData.driverAge, 10) < 23 ||
+                  parseInt(formData.driverAge, 10) > 80) && (
+                  <span className="text-red-500 text-xs font-semibold   ">
+                    Driver age must be between 23 and 80 .
+                  </span>
+                )}
+            </small>
           </div>
         </div>
 

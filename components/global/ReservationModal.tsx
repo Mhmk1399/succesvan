@@ -10,7 +10,7 @@ import {
   FiMail,
   FiCheckCircle,
   FiPackage,
-  FiUsers,
+  FiUsers, 
   FiAlertCircle,
   FiArrowLeft,
 } from "react-icons/fi";
@@ -41,7 +41,7 @@ interface Category {
   seats: number;
   doors: number;
   fuel: string;
-   expert: string;
+  expert: string;
   selloffer?: number;
   gear: {
     availableTypes: ("manual" | "automatic")[];
@@ -108,7 +108,7 @@ export default function ReservationModal({
   });
 
   const [authStep, setAuthStep] = useState<"phone" | "code" | "register">(
-    "phone"
+    "phone",
   );
   const [selectedAddOns, setSelectedAddOns] = useState<
     { addOn: string; quantity: number; selectedTierIndex?: number }[]
@@ -156,10 +156,10 @@ export default function ReservationModal({
         .toLowerCase();
 
       const startDaySchedule = selectedOfficeData.workingTime?.find(
-        (wt: any) => wt.day === startDay
+        (wt: any) => wt.day === startDay,
       );
       const endDaySchedule = selectedOfficeData.workingTime?.find(
-        (wt: any) => wt.day === endDay
+        (wt: any) => wt.day === endDay,
       );
 
       if (
@@ -295,7 +295,7 @@ export default function ReservationModal({
 
     const tier =
       cat.pricingTiers.find(
-        (t) => totalDays >= t.minDays && totalDays <= t.maxDays
+        (t) => totalDays >= t.minDays && totalDays <= t.maxDays,
       ) || cat.pricingTiers[cat.pricingTiers.length - 1];
     const originalPricePerDay = tier.pricePerDay;
     let pricePerDay = tier.pricePerDay;
@@ -311,11 +311,11 @@ export default function ReservationModal({
     // Breakdown formatted like usePriceCalculation
     let breakdown = "";
     if (totalDays > 0 && extraHours > 0) {
-      breakdown = `(${totalDays} day${totalDays > 1 ? 's' : ''} × £${pricePerDay.toFixed(2)}) + (${extraHours}h × £${(
+      breakdown = `(${totalDays} day${totalDays > 1 ? "s" : ""} × £${pricePerDay.toFixed(2)}) + (${extraHours}h × £${(
         cat.extrahoursRate || 0
       ).toFixed(2)}) = £${totalPrice.toFixed(2)}`;
     } else if (totalDays > 0) {
-      breakdown = `(${totalDays} day${totalDays > 1 ? 's' : ''} × £${pricePerDay.toFixed(2)}) = £${totalPrice.toFixed(2)}`;
+      breakdown = `(${totalDays} day${totalDays > 1 ? "s" : ""} × £${pricePerDay.toFixed(2)}) = £${totalPrice.toFixed(2)}`;
     } else {
       breakdown = `(${extraHours}h × £${(cat.extrahoursRate || 0).toFixed(2)}) = £${totalPrice.toFixed(2)}`;
     }
@@ -335,10 +335,10 @@ export default function ReservationModal({
     // If we came from ReservationForm (sessionStorage flow), we persist the computed extension cost there.
     // This acts as a fallback in case timezone / office hours parsing causes extensionPrices to be 0.
     // NOTE: usePriceCalculation accepts pickup/return separately, so we apply fallback as pickup.
-    (extensionPrices.pickupExtension + extensionPrices.returnExtension) > 0
+    extensionPrices.pickupExtension + extensionPrices.returnExtension > 0
       ? extensionPrices.pickupExtension
       : storedExtensionCost,
-    (extensionPrices.pickupExtension + extensionPrices.returnExtension) > 0
+    extensionPrices.pickupExtension + extensionPrices.returnExtension > 0
       ? extensionPrices.returnExtension
       : 0,
     formData.gearType === "automatic" &&
@@ -346,7 +346,7 @@ export default function ReservationModal({
       (selectedCategory as any)?.gear?.availableTypes?.includes("manual")
       ? (selectedCategory as any)?.gear?.automaticExtraCost || 0
       : 0,
-    addOnsPrice
+    addOnsPrice,
   );
 
   const finalPrice = useMemo(() => {
@@ -418,7 +418,7 @@ export default function ReservationModal({
       Promise.all([
         fetch(`/api/offices/${formData.office}`).then((r) => r.json()),
         fetch(
-          `/api/reservations/by-office?office=${formData.office}&startDate=${formData.startDate}`
+          `/api/reservations/by-office?office=${formData.office}&startDate=${formData.startDate}`,
         ).then((r) => r.json()),
       ])
         .then(([officeData, reservationData]) => {
@@ -428,7 +428,7 @@ export default function ReservationModal({
             .toLocaleDateString("en-US", { weekday: "long" })
             .toLowerCase();
           const workingDay = office?.workingTime?.find(
-            (wt: WorkingTime) => wt.day === dayName && wt.isOpen
+            (wt: WorkingTime) => wt.day === dayName && wt.isOpen,
           );
 
           if (workingDay) {
@@ -466,7 +466,7 @@ export default function ReservationModal({
         : null;
 
       setStoredExtensionCost(
-        typeof details.extensionCost === "number" ? details.extensionCost : 0
+        typeof details.extensionCost === "number" ? details.extensionCost : 0,
       );
 
       const typeObj =
@@ -740,7 +740,7 @@ export default function ReservationModal({
       if (!data.success) throw new Error("Invalid discount code");
       const discounts = data.data.data || data.data;
       const discount = discounts.find(
-        (d: any) => d.code.toUpperCase() === discountCode.toUpperCase()
+        (d: any) => d.code.toUpperCase() === discountCode.toUpperCase(),
       );
       if (!discount) throw new Error("Invalid discount code");
       const now = new Date();
@@ -834,8 +834,7 @@ export default function ReservationModal({
           category: formData.category,
           startDate: new Date(`${formData.startDate}T${formData.startTime}`),
           endDate: new Date(`${formData.endDate}T${formData.endTime}`),
-          totalPrice:
-            (finalPrice || priceCalc?.totalPrice || 0) ,
+          totalPrice: finalPrice || priceCalc?.totalPrice || 0,
           driverAge: formData.driverAge,
           messege: "",
           status: "pending",
@@ -914,8 +913,8 @@ export default function ReservationModal({
         className="fixed inset-0 bg-black/60 backdrop-blur-lg z-9999"
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-10000 flex items-center justify-center p-2 overflow-y-auto">
-        <div className="relative bg-[#0f172b]/20 rounded-2xl max-w-6xl w-full max-h-[99vh] overflow-y-auto border border-white/10">
+      <div className="fixed inset-0 z-10000 flex items-center justify-center md:p-2 overflow-y-auto">
+        <div className="relative bg-[#0f172b]/20 md:rounded-2xl max-w-6xl w-full h-screen md:max-h-[99vh] overflow-y-auto border border-white/10">
           {/* Header */}
           <div className="sticky top-0 bg-linear-to-b from-[#0f172b]/50 to-[#0f172b]/70 border-b border-white/10 px-6 py-3 flex items-center justify-between z-10 backdrop-blur-sm">
             {step > 1 && (
@@ -929,7 +928,7 @@ export default function ReservationModal({
               </button>
             )}
             <div className="flex-1">
-              <h2 className="text-xl md:text-2xl font-black text-white">
+              <h2 className="text-xl md:text-2xl font-bold text-white">
                 Book Your Van
               </h2>
               <div className="flex items-center gap-2 mt-1">
@@ -983,9 +982,11 @@ export default function ReservationModal({
                           >
                             <div className="absolute inset-0">
                               <Image
+                                key={cat.image}
                                 src={cat.image}
                                 alt={cat.name}
                                 fill
+                                priority
                                 className="object-cover group-hover:scale-110 transition-all duration-500"
                                 unoptimized
                               />
@@ -1119,7 +1120,7 @@ export default function ReservationModal({
                           details.category = formData.category;
                           sessionStorage.setItem(
                             "rentalDetails",
-                            JSON.stringify(details)
+                            JSON.stringify(details),
                           );
                         }
                         setStep(user ? 3 : 2);
@@ -1390,7 +1391,7 @@ export default function ReservationModal({
                                     e.target.files?.[0] &&
                                     handleLicenseUpload(
                                       e.target.files[0],
-                                      "front"
+                                      "front",
                                     )
                                   }
                                   disabled={uploadingLicense.front}
@@ -1412,7 +1413,7 @@ export default function ReservationModal({
                                   e.target.files?.[0] &&
                                   handleLicenseUpload(
                                     e.target.files[0],
-                                    "front"
+                                    "front",
                                   )
                                 }
                                 disabled={uploadingLicense.front}
@@ -1448,7 +1449,7 @@ export default function ReservationModal({
                                     e.target.files?.[0] &&
                                     handleLicenseUpload(
                                       e.target.files[0],
-                                      "back"
+                                      "back",
                                     )
                                   }
                                   disabled={uploadingLicense.back}
@@ -1550,7 +1551,7 @@ export default function ReservationModal({
                         </h5>
                         <div className="flex gap-2">
                           {selectedCategory.gear.availableTypes.includes(
-                            "manual"
+                            "manual",
                           ) && (
                             <button
                               type="button"
@@ -1570,7 +1571,7 @@ export default function ReservationModal({
                             </button>
                           )}
                           {selectedCategory.gear.availableTypes.includes(
-                            "automatic"
+                            "automatic",
                           ) && (
                             <button
                               type="button"
@@ -1633,7 +1634,7 @@ export default function ReservationModal({
                             addon.tieredPrice?.tiers?.some(
                               (tier) =>
                                 priceCalc.totalDays >= tier.minDays &&
-                                priceCalc.totalDays <= tier.maxDays
+                                priceCalc.totalDays <= tier.maxDays,
                             )
                           );
                         })
@@ -1650,7 +1651,7 @@ export default function ReservationModal({
                         })
                         .map((addon) => {
                           const selected = selectedAddOns.find(
-                            (s) => s.addOn === addon._id
+                            (s) => s.addOn === addon._id,
                           );
                           const rentalDays = priceCalc.totalDays;
 
@@ -1660,7 +1661,7 @@ export default function ReservationModal({
                             addonType &&
                             selectedAddOns.some((s) => {
                               const selectedAddon = addOns.find(
-                                (a) => a._id === s.addOn
+                                (a) => a._id === s.addOn,
                               );
                               return (
                                 selectedAddon &&
@@ -1721,12 +1722,12 @@ export default function ReservationModal({
                                         ?.filter(
                                           (tier) =>
                                             rentalDays >= tier.minDays &&
-                                            rentalDays <= tier.maxDays
+                                            rentalDays <= tier.maxDays,
                                         )
                                         .map((tier) => {
                                           const originalIdx =
                                             addon.tieredPrice?.tiers?.indexOf(
-                                              tier
+                                              tier,
                                             ) || 0;
                                           const totalPrice = addon.tieredPrice
                                             ?.isPerDay
@@ -1755,20 +1756,20 @@ export default function ReservationModal({
                                     onClick={() => {
                                       setSelectedAddOns((prev) => {
                                         const existing = prev.find(
-                                          (s) => s.addOn === addon._id
+                                          (s) => s.addOn === addon._id,
                                         );
                                         if (
                                           !existing ||
                                           existing.quantity <= 1
                                         ) {
                                           return prev.filter(
-                                            (s) => s.addOn !== addon._id
+                                            (s) => s.addOn !== addon._id,
                                           );
                                         }
                                         return prev.map((s) =>
                                           s.addOn === addon._id
                                             ? { ...s, quantity: s.quantity - 1 }
-                                            : s
+                                            : s,
                                         );
                                       });
                                     }}
@@ -1785,7 +1786,7 @@ export default function ReservationModal({
                                       if (!canAdd) return;
                                       setSelectedAddOns((prev) => {
                                         const existing = prev.find(
-                                          (s) => s.addOn === addon._id
+                                          (s) => s.addOn === addon._id,
                                         );
                                         if (existing) {
                                           // Max quantity is 1, so don't increment
@@ -1800,7 +1801,7 @@ export default function ReservationModal({
                                             addon.tieredPrice.tiers.findIndex(
                                               (tier) =>
                                                 rentalDays >= tier.minDays &&
-                                                rentalDays <= tier.maxDays
+                                                rentalDays <= tier.maxDays,
                                             );
                                           defaultTierIndex =
                                             matchingTierIndex !== -1
@@ -1827,8 +1828,8 @@ export default function ReservationModal({
                                       isTypeDisabled
                                         ? "Another option of this type is already selected"
                                         : isMaxQuantity
-                                        ? "Maximum quantity reached"
-                                        : "Add addon"
+                                          ? "Maximum quantity reached"
+                                          : "Add addon"
                                     }
                                   >
                                     +
