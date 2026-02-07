@@ -36,7 +36,6 @@ import {
   SpecialDay,
   TimeSlotInfo,
 } from "../../types/reservation-form";
-import toast from "react-hot-toast";
 
 export default function ReservationForm({
   isModal = false,
@@ -301,12 +300,9 @@ export default function ReservationForm({
       // Store the voice data and show modal for confirmation
       setVoiceData(result);
       setShowVoiceModal(true);
-
-      console.log("👁️ [Form] Opening confirmation modal");
     },
     onError: (error: Error) => {
-      console.log("❌ [Form] Voice recording error:", error);
-      showToast.error("Voice recording failed");
+      showToast.error(error.message);
     },
     autoSubmit: false, // Set to true if you want automatic submission
   });
@@ -886,6 +882,7 @@ export default function ReservationForm({
             }
             placeholder="Select Office"
             isInline={isInline}
+            id="gtm-reservation-office"
           />
         </div>
 
@@ -905,6 +902,7 @@ export default function ReservationForm({
             placeholder="Select Type"
             isInline={isInline}
             disabled={!formData.office}
+            id="gtm-reservation-type"
           />
         </div>
 
@@ -922,6 +920,7 @@ export default function ReservationForm({
               type="button"
               onClick={() => setShowDateRange(!showDateRange)}
               disabled={!formData.office || !formData.type}
+              id="gtm-reservation-dates"
               className={`w-full bg-white/10 border border-white/20 rounded-lg text-white text-left focus:outline-none focus:border-amber-400 transition-colors ${
                 isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
               } ${!formData.office || !formData.type ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -1025,6 +1024,7 @@ export default function ReservationForm({
                     !formData.type ||
                     !dateRange[0].startDate
                   }
+                  id="gtm-reservation-pickup-time"
                 />
               );
             })()}
@@ -1105,6 +1105,7 @@ export default function ReservationForm({
                     !dateRange[0].endDate ||
                     !formData.pickupTime
                   }
+                  id="gtm-reservation-return-time"
                 />
               );
             })()}
@@ -1132,6 +1133,7 @@ export default function ReservationForm({
               !formData.pickupTime ||
               !formData.returnTime
             }
+            id="gtm-reservation-driver-age"
             className={`w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors ${
               isInline ? "px-2 py-2 text-xs" : "px-4 py-3 text-sm"
             } ${!formData.office || !formData.type || !dateRange[0].endDate || !formData.pickupTime || !formData.returnTime ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -1155,6 +1157,7 @@ export default function ReservationForm({
           <div className="flex gap-2">
             <button
               type="submit"
+              id="gtm-reservation-submit-inline"
               disabled={
                 isSubmitting ||
                 !formData.office ||
@@ -1169,6 +1172,7 @@ export default function ReservationForm({
             </button>
             <button
               type="button"
+              id="gtm-reservation-voice-inline"
               onClick={handleGlobalVoice}
               disabled={isProcessing}
               className={`px-6 py-1 rounded-lg font-semibold flex items-center gap-2 transition-all text-xs disabled:opacity-50 ${
@@ -1186,6 +1190,7 @@ export default function ReservationForm({
           <div className="col-span-2 space-y-3">
             <button
               type="submit"
+              id="gtm-reservation-submit"
               disabled={
                 isSubmitting ||
                 !formData.office ||
@@ -1202,6 +1207,7 @@ export default function ReservationForm({
             {/* AI Consultant Button - New comprehensive agent */}
             <button
               type="button"
+              id="gtm-reservation-ai-consultant"
               onClick={handleAIAgentMode}
               className="w-full px-4 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all text-sm bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
             >
@@ -1226,6 +1232,7 @@ export default function ReservationForm({
             }
             placeholder="Select Office"
             isInline={true}
+            id="gtm-reservation-office-mobile"
           />
         </div>
 
@@ -1240,6 +1247,7 @@ export default function ReservationForm({
             placeholder="Select Type"
             isInline={true}
             disabled={!formData.office}
+            id="gtm-reservation-type-mobile"
           />
         </div>
 
@@ -1251,6 +1259,7 @@ export default function ReservationForm({
             type="button"
             onClick={() => setShowDateRange(!showDateRange)}
             disabled={!formData.office || !formData.type}
+            id="gtm-reservation-dates-mobile"
             className={`w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-xs text-left focus:outline-none focus:border-amber-400 transition-colors ${
               !formData.office || !formData.type
                 ? "opacity-50 cursor-not-allowed"
@@ -1375,6 +1384,7 @@ export default function ReservationForm({
                       !formData.type ||
                       !dateRange[0].startDate
                     }
+                    id="gtm-reservation-pickup-time-mobile"
                   />
                 );
               })()}
@@ -1450,6 +1460,7 @@ export default function ReservationForm({
                       !dateRange[0].endDate ||
                       !formData.pickupTime
                     }
+                    id="gtm-reservation-return-time-mobile"
                   />
                 );
               })()}
@@ -1474,6 +1485,7 @@ export default function ReservationForm({
                 !formData.pickupTime ||
                 !formData.returnTime
               }
+              id="gtm-reservation-driver-age-mobile"
               className="w-full px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white text-base md:text-xs placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="23-80"
               min="23"
@@ -1493,6 +1505,7 @@ export default function ReservationForm({
 
         <button
           type="submit"
+          id="gtm-reservation-submit-mobile"
           disabled={
             isSubmitting ||
             !formData.office ||
@@ -1509,6 +1522,7 @@ export default function ReservationForm({
         {/* AI Consultant Button - Mobile */}
         <button
           type="button"
+          id="gtm-reservation-ai-consultant-mobile"
           onClick={handleAIAgentMode}
           className="w-full px-4 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition-all text-sm bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
         >

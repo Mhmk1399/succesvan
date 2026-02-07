@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     let autoSubmit = false;
 
     if (contentType?.includes("multipart/form-data")) {
-      // New: Audio upload
+      // Audio upload - Process directly to avoid S3 permission issues
       console.log("🎧 [API] Processing audio file...");
       const formData = await request.formData();
       const audioFile = formData.get("audio") as File;
@@ -115,9 +115,23 @@ export async function POST(request: NextRequest) {
       }
 
       console.log(`📊 [API] Audio file size: ${audioFile.size} bytes`);
-      console.log("🎙️ [API] Transcribing with Whisper...");
+      
+      // Check if file is too large for CloudFront (20MB limit)
+      const maxSize = 20 * 1024 * 1024; // 20MB
+      if (audioFile.size > maxSize) {
+        console.warn(`⚠️ [API] Audio file exceeds CloudFront limit: ${audioFile.size} bytes`);
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: "Audio file too large. Please record a shorter message (max 3-4 minutes)." 
+          },
+          { status: 413 }
+        );
+      }
 
-      // Transcribe audio using Whisper
+      console.log("🎙️ [API] Transcribing with Whisper...");
+      
+      // Process directly - no S3 needed
       if (!openai) openai = getOpenAI();
       const transcription = await openai.audio.transcriptions.create({
         file: audioFile,

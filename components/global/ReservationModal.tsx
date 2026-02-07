@@ -950,6 +950,7 @@ export default function ReservationModal({
             </div>
             <button
               onClick={onClose}
+              id="gtm-modal-close"
               className="p-2 hover:bg-white/10 rounded-lg transition-colors ml-4  shrink-0"
             >
               <FiX className="text-white text-xl" />
@@ -1114,6 +1115,7 @@ export default function ReservationModal({
                 {formData.category && (
                   <div className="absolute bottom-0 left-0 right-0 px-8 z-20 animate-[slideUp_0.5s_ease-out]">
                     <button
+                      id="gtm-category-continue"
                       onClick={() => {
                         const stored = sessionStorage.getItem("rentalDetails");
                         if (stored) {
@@ -1154,6 +1156,7 @@ export default function ReservationModal({
                       </div>
                       <input
                         type="tel"
+                        id="gtm-phone-input"
                         value={formData.phone}
                         onChange={(e) => {
                           const digits = e.target.value.replace(/\D/g, "");
@@ -1172,6 +1175,7 @@ export default function ReservationModal({
                       </p>
                     )}
                     <button
+                      id="gtm-send-code"
                       onClick={handleSendCode}
                       disabled={isSubmitting}
                       className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
@@ -1188,6 +1192,7 @@ export default function ReservationModal({
                     </label>
                     <input
                       type="text"
+                      id="gtm-verification-code"
                       value={formData.code}
                       onChange={(e) =>
                         setFormData((prev) => ({
@@ -1205,6 +1210,7 @@ export default function ReservationModal({
                       </p>
                     )}
                     <button
+                      id="gtm-verify-code"
                       onClick={handleVerifyCode}
                       disabled={isSubmitting}
                       className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
@@ -1232,6 +1238,7 @@ export default function ReservationModal({
                       </label>
                       <input
                         type="text"
+                        id="gtm-first-name"
                         value={formData.name}
                         onChange={(e) =>
                           setFormData((prev) => ({
@@ -1255,6 +1262,7 @@ export default function ReservationModal({
                       </label>
                       <input
                         type="text"
+                        id="gtm-last-name"
                         value={formData.lastName}
                         onChange={(e) =>
                           setFormData((prev) => ({
@@ -1278,6 +1286,7 @@ export default function ReservationModal({
                       </label>
                       <input
                         type="email"
+                        id="gtm-email"
                         value={formData.email}
                         onChange={(e) =>
                           setFormData((prev) => ({
@@ -1301,6 +1310,7 @@ export default function ReservationModal({
                       </label>
                       <input
                         type="text"
+                        id="gtm-address"
                         value={address}
                         onChange={(e) => {
                           setAddress(e.target.value);
@@ -1325,6 +1335,7 @@ export default function ReservationModal({
                         </label>
                         <input
                           type="text"
+                          id="gtm-postal-code"
                           value={postalCode}
                           onChange={(e) => {
                             setPostalCode(e.target.value);
@@ -1350,6 +1361,7 @@ export default function ReservationModal({
                         </label>
                         <input
                           type="text"
+                          id="gtm-city"
                           value={city}
                           onChange={(e) => {
                             setCity(e.target.value);
@@ -1502,6 +1514,7 @@ export default function ReservationModal({
                       </>
                     )}
                     <button
+                      id="gtm-register"
                       onClick={handleRegister}
                       disabled={isSubmitting}
                       className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
@@ -1556,6 +1569,7 @@ export default function ReservationModal({
                           ) && (
                             <button
                               type="button"
+                              id="gtm-gear-manual"
                               onClick={() =>
                                 setFormData((prev) => ({
                                   ...prev,
@@ -1576,6 +1590,7 @@ export default function ReservationModal({
                           ) && (
                             <button
                               type="button"
+                              id="gtm-gear-automatic"
                               onClick={() =>
                                 setFormData((prev) => ({
                                   ...prev,
@@ -1846,6 +1861,7 @@ export default function ReservationModal({
 
                 <div className="flex gap-3">
                   <button
+                    id="gtm-step3-back"
                     onClick={() => setStep(user ? 1 : 2)}
                     className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
                   >
@@ -1853,6 +1869,7 @@ export default function ReservationModal({
                     Back
                   </button>
                   <button
+                    id="gtm-continue-review"
                     onClick={() => setStep(4)}
                     className="flex-1 bg-[#fe9a00] hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all"
                   >
@@ -2064,6 +2081,7 @@ export default function ReservationModal({
                       <div className="flex gap-2">
                         <input
                           type="text"
+                          id="gtm-discount-input"
                           value={discountCode}
                           onChange={(e) => {
                             setDiscountCode(e.target.value.toUpperCase());
@@ -2073,6 +2091,7 @@ export default function ReservationModal({
                           className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-[#fe9a00] uppercase text-sm"
                         />
                         <button
+                          id="gtm-apply-discount"
                           onClick={handleApplyDiscount}
                           disabled={isApplyingDiscount || !discountCode.trim()}
                           className="px-4 py-2 bg-[#fe9a00] hover:bg-orange-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 text-sm"
@@ -2096,6 +2115,7 @@ export default function ReservationModal({
                           </p>
                         </div>
                         <button
+                          id="gtm-remove-discount"
                           onClick={handleRemoveDiscount}
                           className="text-red-400 hover:text-red-300 text-sm font-semibold"
                         >
@@ -2148,6 +2168,7 @@ export default function ReservationModal({
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
+                      id="gtm-accept-terms"
                       checked={formData.acceptTerms}
                       onChange={(e) =>
                         setFormData((prev) => ({
@@ -2177,6 +2198,7 @@ export default function ReservationModal({
 
                 <div className="flex gap-3">
                   <button
+                    id="gtm-step4-back"
                     onClick={() => setStep(3)}
                     className="flex-1 bg-white/10 hover:bg-white/20 text-white text-sm md:text-base font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
                   >
@@ -2184,6 +2206,7 @@ export default function ReservationModal({
                     Back
                   </button>
                   <button
+                    id="gtm-confirm-reservation"
                     onClick={handleSubmit}
                     disabled={isSubmitting || !formData.acceptTerms}
                     className="flex-1 bg-[#fe9a00] text-sm md:text-base hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-all disabled:opacity-50"

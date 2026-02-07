@@ -246,6 +246,7 @@ export interface CustomSelectProps {
   icon?: React.ReactNode;
   isInline?: boolean;
   disabled?: boolean;
+  id?: string;
 }
 
 // Testimonial -------------------------------------------------------------------------------

@@ -26,8 +26,9 @@ interface TimeSelectProps {
     price: number;
   };
   disabled?: boolean;
+  id?: string;
 }
-     
+
 export default function TimeSelect({
   value,
   onChange,
@@ -39,6 +40,7 @@ export default function TimeSelect({
   isStartTime = true,
   extensionTimes,
   disabled = false,
+  id,
 }: TimeSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -79,9 +81,10 @@ export default function TimeSelect({
   };
 
   return (
-    <div ref={dropdownRef} className="relative w-full group">
+    <div ref={dropdownRef}  className="relative w-full group">
       <button
         type="button"
+        id={id}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`w-full bg-white/10 border border-white/20 rounded-lg text-white flex items-center justify-between focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all ${

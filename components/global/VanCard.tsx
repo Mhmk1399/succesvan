@@ -36,8 +36,12 @@ export default function VanCard({
 }: VanCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
+  // Generate GTM-friendly ID from van name
+  const vanId = `gtm-van-${van.name.toLowerCase().replace(/\s+/g, "-")}`;
+
   return (
     <div
+      id={vanId}
       onClick={onSelect}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

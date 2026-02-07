@@ -1200,6 +1200,7 @@ function ReservationPanel({
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl font-black text-white">Complete Booking</h2>
             <button
+              id="gtm-sidebar-close"
               onClick={onClose}
               className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white transition-all hover:rotate-90 duration-300"
             >
@@ -1300,6 +1301,7 @@ function ReservationPanel({
                   </div>
                   <input
                     type="tel"
+                    id="gtm-sidebar-phone"
                     name="phone"
                     value={formData.phone}
                     onChange={(e) => {
@@ -1317,6 +1319,7 @@ function ReservationPanel({
                 )}
                 <button
                   type="button"
+                  id="gtm-sidebar-send-code"
                   onClick={handleSendCode}
                   disabled={isSubmitting}
                   className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
@@ -1333,6 +1336,7 @@ function ReservationPanel({
                 </label>
                 <input
                   type="text"
+                  id="gtm-sidebar-verification-code"
                   name="code"
                   value={formData.code}
                   onChange={handleChange}
@@ -1349,6 +1353,7 @@ function ReservationPanel({
                 )}
                 <button
                   type="button"
+                  id="gtm-sidebar-verify-code"
                   onClick={handleVerifyCode}
                   disabled={isSubmitting}
                   className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
@@ -1377,6 +1382,7 @@ function ReservationPanel({
                   </label>
                   <input
                     type="text"
+                    id="gtm-sidebar-first-name"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
@@ -1396,6 +1402,7 @@ function ReservationPanel({
                   </label>
                   <input
                     type="text"
+                    id="gtm-sidebar-last-name"
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
@@ -1417,6 +1424,7 @@ function ReservationPanel({
                   </label>
                   <input
                     type="email"
+                    id="gtm-sidebar-email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
@@ -1436,6 +1444,7 @@ function ReservationPanel({
                   </label>
                   <input
                     type="text"
+                    id="gtm-sidebar-address"
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
@@ -1458,6 +1467,7 @@ function ReservationPanel({
                     </label>
                     <input
                       type="text"
+                      id="gtm-sidebar-postal-code"
                       value={postalCode}
                       onChange={(e) => {
                         setPostalCode(e.target.value);
@@ -1481,6 +1491,7 @@ function ReservationPanel({
                     </label>
                     <input
                       type="text"
+                      id="gtm-sidebar-city"
                       value={city}
                       onChange={(e) => {
                         setCity(e.target.value);
@@ -1498,6 +1509,7 @@ function ReservationPanel({
                 </div>
                 <button
                   type="button"
+                  id="gtm-sidebar-register"
                   onClick={handleRegister}
                   disabled={isSubmitting}
                   className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
@@ -1531,6 +1543,7 @@ function ReservationPanel({
                   </label>
                   <input
                     type="text"
+                    id="gtm-sidebar-full-name"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
@@ -1554,6 +1567,7 @@ function ReservationPanel({
                   </label>
                   <input
                     type="email"
+                    id="gtm-sidebar-email-details"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
@@ -1577,6 +1591,7 @@ function ReservationPanel({
                   </label>
                   <input
                     type="tel"
+                    id="gtm-sidebar-phone-details"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
@@ -1620,6 +1635,7 @@ function ReservationPanel({
                       setFormData((prev) => ({ ...prev, office: value }))
                     }
                     placeholder="Select office"
+                    id="gtm-sidebar-office"
                   />
                   {errors.office && (
                     <p className="text-red-400 text-xs mt-1">{errors.office}</p>
@@ -1634,6 +1650,7 @@ function ReservationPanel({
                   <div className="relative">
                     <button
                       type="button"
+                      id="gtm-sidebar-dates"
                       onClick={() => setShowDateRange(!showDateRange)}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-left focus:outline-none focus:border-[#fe9a00] focus:ring-2 focus:ring-[#fe9a00]/20 transition-all"
                     >
@@ -1810,6 +1827,7 @@ function ReservationPanel({
                   </label>
                   <input
                     type="number"
+                    id="gtm-sidebar-driver-age"
                     name="driverAge"
                     value={formData.driverAge}
                     onChange={handleChange}
@@ -1829,6 +1847,7 @@ function ReservationPanel({
                     </span>
                   </label>
                   <textarea
+                    id="gtm-sidebar-notes"
                     name="notes"
                     value={formData.notes}
                     onChange={handleChange}
@@ -2002,6 +2021,7 @@ function ReservationPanel({
                     </div>
                     <button
                       type="button"
+                      id="gtm-sidebar-remove-discount"
                       onClick={handleRemoveDiscount}
                       className="text-red-400 hover:text-red-300 text-sm font-semibold"
                     >
@@ -2207,6 +2227,7 @@ function ReservationPanel({
             <div className="space-y-3 pt-2">
               <button
                 type="submit"
+                id="gtm-sidebar-submit"
                 disabled={isSubmitting}
                 className="w-full bg-linear-to-r from-[#fe9a00] to-[#ff8800] hover:from-[#ff8800] hover:to-[#fe9a00] text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-lg shadow-[#fe9a00]/20 hover:shadow-[#fe9a00]/40 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
               >
@@ -2224,6 +2245,7 @@ function ReservationPanel({
               </button>
               <button
                 type="button"
+                id="gtm-sidebar-cancel"
                 onClick={onClose}
                 disabled={isSubmitting}
                 className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold py-4 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -2451,6 +2473,7 @@ function CategoryCard({
 
           {/* Book Button */}
           <button
+          id="gtm-sidebar-Book-now"
             onClick={(e) => {
               e.stopPropagation();
               onView();

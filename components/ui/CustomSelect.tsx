@@ -12,6 +12,7 @@ export default function CustomSelect({
   icon,
   isInline = false,
   disabled = false,
+  id,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -42,6 +43,7 @@ export default function CustomSelect({
     <div ref={dropdownRef} className="relative w-full">
       <button
         type="button"
+        id={id}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={`w-full bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-amber-400 transition-colors flex items-center justify-between ${
