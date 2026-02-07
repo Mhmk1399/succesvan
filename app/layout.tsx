@@ -10,6 +10,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import MobileAppPrompt from "@/components/ui/MobileAppPrompt";
 import CanonicalUrl from "@/components/global/CanonicalUrl";
 import Script from "next/script";
+import Breadcrumbs from "@/components/global/breadcrumbs";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -112,6 +113,7 @@ export default function RootLayout({
         </noscript>
         <AuthProvider>
           <AnnouncementBar />
+          <Breadcrumbs />
           <Navbar />
           <CanonicalUrl />
           <Toaster position="bottom-center" />

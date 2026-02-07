@@ -168,23 +168,12 @@ export default async function BlogDetailPage({ params }: Props) {
       />
 
       <main className="min-h-screen bg-linear-to-br from-[#0f172b] via-slate-900 to-[#0f172b]">
-        {/* Navigation */}
-        <div className="  z-40   bg-slate-900/80 backdrop-blur-xl">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 ">
-            <Link
-              href="/blog"
-              className="inline-flex mt-16 items-center gap-2 text-[#fe9a00] hover:text-white transition-colors duration-300 font-semibold"
-            >
-              <FiArrowLeft className="w-5 h-5" />
-              Back to Blog
-            </Link>
-          </div>
-        </div>
+     
 
         {/* Blog Detail Content */}
-        <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 lg:pb-20">
+        <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12  lg:pb-20">
           {/* Header Section */}
-          <header className="mb-12">
+          <header className="mb-12 pt-26">
             <h1 className="text-2xl lg:text-5xl font-black text-white mb-6 leading-tight">
               {blog.seoTitle}
             </h1>

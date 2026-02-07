@@ -24,7 +24,7 @@ export default function ReservationHero({
             preload="metadata"
             className="absolute inset-0 w-full h-full object-cover brightness-50 blur-[1px] pointer-events-none"
           >
-            <source src="/assets/videos/video.mp4" type="video/mp4" />
+            <source src="https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/videos/video.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/40"></div>
         </div>

@@ -51,9 +51,9 @@ export default function Breadcrumbs() {
 
   return (
     <nav
-      className="fixed left-0 right-0 z-40 py-4 transition-all duration-500"
+      className="fixed left-0 right-0 z-40 py-4  transition-all duration-75"
       style={{
-        top: isScrolled ? "0px" : isMobile ? "32px" : "52px",
+        top: isScrolled ? "-40px" : isMobile ? "92px" : "92px",
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
