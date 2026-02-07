@@ -15,6 +15,31 @@ import User from "@/model/user";
 import Reservation from "@/model/reservation";
 import jwt from "jsonwebtoken";
 
+// Simple in-memory cache to reduce DB hits during fast flow
+const CACHE_TTL_MS = 5 * 60 * 1000;
+let cachedCategories: { data: any[]; expiresAt: number } | null = null;
+let cachedOffices: { data: any[]; expiresAt: number } | null = null;
+
+async function getCachedCategories() {
+  const now = Date.now();
+  if (cachedCategories && cachedCategories.expiresAt > now) {
+    return cachedCategories.data;
+  }
+  const data = await Category.find({}).lean();
+  cachedCategories = { data, expiresAt: now + CACHE_TTL_MS };
+  return data;
+}
+
+async function getCachedOffices() {
+  const now = Date.now();
+  if (cachedOffices && cachedOffices.expiresAt > now) {
+    return cachedOffices.data;
+  }
+  const data = await Office.find({}).lean();
+  cachedOffices = { data, expiresAt: now + CACHE_TTL_MS };
+  return data;
+}
+
 
 
 // ============================================================================
@@ -106,6 +131,7 @@ export interface FastAgentState {
     driverAge?: number;
     phoneNumber?: string;
     gearType?: "manual" | "automatic";
+    message?: string;
     // Calculated price
     totalDays?: number;
     extraHours?: number;
@@ -148,11 +174,113 @@ export interface FastAgentResponse {
 // MAIN AGENT FUNCTION
 // ============================================================================
 
+function wordNumberToInt(word: string): number | null {
+  const map: Record<string, number> = {
+    one: 1,
+    two: 2,
+    three: 3,
+    four: 4,
+    five: 5,
+    six: 6,
+    seven: 7,
+    eight: 8,
+    nine: 9,
+    ten: 10,
+    eleven: 11,
+    twelve: 12,
+  };
+  return map[word.toLowerCase()] ?? null;
+}
+
+function extractBoxHeuristic(message: string, existingNeeds?: FastAgentState["needs"]) {
+  const text = message.toLowerCase();
+  if (!text.includes("box")) return null;
+
+  // Quantity: digits or word numbers near "box/boxes"
+  let quantity: number | null = null;
+  const qtyDigitMatch = text.match(/(\d+)\s*(boxes?|box)/);
+  if (qtyDigitMatch) {
+    quantity = parseInt(qtyDigitMatch[1], 10);
+  } else {
+    const qtyWordMatch = text.match(
+      /\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b\s*(boxes?|box)/
+    );
+    if (qtyWordMatch) {
+      quantity = wordNumberToInt(qtyWordMatch[1]);
+    }
+  }
+
+  // Weight: capture kg
+  let weightKg: number | null = null;
+  const weightMatch = text.match(/(\d+(?:\.\d+)?)\s*(kg|kilograms?)/);
+  if (weightMatch) {
+    weightKg = parseFloat(weightMatch[1]);
+  }
+
+  const isEach = text.includes("each");
+  const isTotal = text.includes("total");
+
+  // Dimensions: capture meters/centimeters/feet
+  const dimMatches = Array.from(
+    text.matchAll(/(\d+(?:\.\d+)?)\s*(m|meter|metre|cm|centimeter|centimetre|ft|feet)/g)
+  );
+  let maxDimM: number | null = null;
+  if (dimMatches.length > 0) {
+    maxDimM = Math.max(
+      ...dimMatches.map((m) => {
+        const val = parseFloat(m[1]);
+        const unit = m[2];
+        if (unit === "cm" || unit.startsWith("centi")) return val / 100;
+        if (unit === "ft" || unit === "feet") return val * 0.3048;
+        return val; // meters
+      })
+    );
+  }
+
+  // Use existing needs when user gives partial follow-up
+  const prevQty = existingNeeds?.description?.match(/(\d+)\s*boxes?/)?.[1];
+  if (!quantity && prevQty) quantity = parseInt(prevQty, 10);
+
+  let totalWeightKg: number | null = null;
+  if (weightKg !== null && quantity) {
+    totalWeightKg = isEach ? weightKg * quantity : weightKg;
+  } else if (weightKg !== null) {
+    totalWeightKg = weightKg;
+  }
+
+  if (!quantity && !totalWeightKg && !maxDimM) return null;
+
+  let size: "small" | "medium" | "large" = "small";
+  if ((maxDimM && maxDimM >= 2) || (totalWeightKg && totalWeightKg >= 300)) {
+    size = "large";
+  } else if ((totalWeightKg && totalWeightKg >= 120) || (quantity && quantity >= 10)) {
+    size = "medium";
+  }
+
+  const descParts = [];
+  if (quantity) descParts.push(`${quantity} boxes`);
+  if (totalWeightKg) descParts.push(`${totalWeightKg} kg total`);
+  if (maxDimM) descParts.push(`${maxDimM}m max dimension`);
+
+  return {
+    needs: {
+      purpose: "moving",
+      description: descParts.join(", "),
+      size,
+    },
+    quantity,
+    totalWeightKg,
+    maxDimM,
+  };
+}
+
 export async function processFastAgent(
   userMessage: string,
   currentState: FastAgentState,
-  action?: string // "select_category" | "submit_booking" | "send_code" | "verify_code"
+  action?: string, // "select_category" | "submit_booking" | "send_code" | "verify_code" | "voice_parsed"
+  parsedData?: any
 ): Promise<FastAgentResponse> {
+  const startedAt = Date.now();
   console.log("⚡ [Fast Agent] Processing...");
   console.log("📍 Phase:", currentState.phase);
   console.log("💬 Message:", userMessage);
@@ -161,15 +289,22 @@ export async function processFastAgent(
   await connect();
 
   try {
+    let response: FastAgentResponse;
     switch (currentState.phase) {
       case "ask_needs":
-        return await handleAskNeeds(userMessage, currentState);
+        if (action === "voice_parsed" && parsedData) {
+          response = await handleVoiceParsed(userMessage, currentState, parsedData);
+          break;
+        }
+        response = await handleAskNeeds(userMessage, currentState);
+        break;
 
       case "show_suggestions":
         if (action === "select_category") {
-          return handleSelectCategory(userMessage, currentState);
+          response = handleSelectCategory(userMessage, currentState);
+          break;
         }
-        return {
+        response = {
           message: "Please select a van from the suggestions above.",
           state: currentState,
           showSuggestions: true,
@@ -180,15 +315,22 @@ export async function processFastAgent(
           needsReceipt: false,
           isComplete: false,
         };
+        break;
 
       case "collect_booking":
         if (action === "submit_booking") {
-          return await handleSubmitBooking(userMessage, currentState);
+          response = await handleSubmitBooking(userMessage, currentState);
+          break;
         }
         if (action === "voice_booking") {
-          return await handleVoiceBooking(userMessage, currentState);
+          response = await handleVoiceBooking(userMessage, currentState);
+          break;
         }
-        return {
+        if (action === "voice_parsed" && parsedData) {
+          response = await handleVoiceParsed(userMessage, currentState, parsedData);
+          break;
+        }
+        response = {
           message:
             "Please fill in the booking details or tap the mic to speak them.",
           state: currentState,
@@ -200,10 +342,11 @@ export async function processFastAgent(
           needsReceipt: false,
           isComplete: false,
         };
+        break;
 
       case "select_Gearbox":
         // Gear selection is handled by the client, just provide default response
-        return {
+        response = {
           message: "Please select your preferred transmission type.",
           state: currentState,
           showSuggestions: false,
@@ -214,15 +357,18 @@ export async function processFastAgent(
           needsReceipt: false,
           isComplete: false,
         };
+        break;
 
       case "select_addons":
         if (action === "confirm_addons") {
-          return handleConfirmAddOns(userMessage, currentState);
+          response = handleConfirmAddOns(userMessage, currentState);
+          break;
         }
         if (action === "skip_addons") {
-          return handleSkipAddOns(currentState);
+          response = handleSkipAddOns(currentState);
+          break;
         }
-        return {
+        response = {
           message: "Would you like to add any extras to your booking?",
           state: currentState,
           showSuggestions: false,
@@ -233,10 +379,11 @@ export async function processFastAgent(
           needsReceipt: false,
           isComplete: false,
         };
+        break;
 
       case "show_receipt":
         if (action === "confirm_receipt") {
-          return {
+          response = {
             message:
               "Great! Now let's verify your phone number to confirm the booking:",
             state: { ...currentState, phase: "verify_phone" },
@@ -248,8 +395,9 @@ export async function processFastAgent(
             needsReceipt: false,
             isComplete: false,
           };
+          break;
         }
-        return {
+        response = {
           message: "Please review your booking details and confirm to proceed.",
           state: currentState,
           showSuggestions: false,
@@ -260,18 +408,22 @@ export async function processFastAgent(
           needsReceipt: true,
           isComplete: false,
         };
+        break;
 
       case "verify_phone":
         if (action === "send_code") {
-          return await handleSendCode(userMessage, currentState);
+          response = await handleSendCode(userMessage, currentState);
+          break;
         }
         if (action === "verify_code") {
-          return await handleVerifyCode(userMessage, currentState);
+          response = await handleVerifyCode(userMessage, currentState);
+          break;
         }
         if (action === "voice_phone") {
-          return await handleVoicePhone(userMessage, currentState);
+          response = await handleVoicePhone(userMessage, currentState);
+          break;
         }
-        return {
+        response = {
           message: "Please enter your phone number to confirm the booking.",
           state: currentState,
           showSuggestions: false,
@@ -282,9 +434,10 @@ export async function processFastAgent(
           needsReceipt: false,
           isComplete: false,
         };
+        break;
 
       case "complete":
-        return {
+        response = {
           message: "Your booking is complete! Redirecting to your dashboard...",
           state: currentState,
           showSuggestions: false,
@@ -295,10 +448,23 @@ export async function processFastAgent(
           needsReceipt: false,
           isComplete: true,
         };
+        break;
 
       default:
-        return await handleAskNeeds(userMessage, currentState);
+        if (action === "voice_parsed" && parsedData) {
+          response = await handleVoiceParsed(userMessage, currentState, parsedData);
+          break;
+        }
+        response = await handleAskNeeds(userMessage, currentState);
+        break;
     }
+
+    console.log(
+      `⏱️ [Fast Agent] Phase ${currentState.phase} -> ${response.state.phase} in ${
+        Date.now() - startedAt
+      }ms`
+    );
+    return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.log("❌ [Fast Agent] Error:", error);
@@ -321,6 +487,167 @@ export async function processFastAgent(
 // PHASE HANDLERS
 // ============================================================================
 
+async function handleVoiceParsed(
+  transcript: string,
+  currentState: FastAgentState,
+  parsedData: any
+): Promise<FastAgentResponse> {
+  console.log("🎤 [Fast Agent] Using parsed voice data");
+
+  const newBooking = { ...currentState.booking };
+  if (parsedData.office) {
+    newBooking.officeId = parsedData.office;
+  }
+  if (parsedData.startDate) newBooking.startDate = parsedData.startDate;
+  if (parsedData.endDate) newBooking.endDate = parsedData.endDate;
+  if (parsedData.startTime) newBooking.startTime = parsedData.startTime;
+  if (parsedData.endTime) newBooking.endTime = parsedData.endTime;
+  if (parsedData.driverAge) newBooking.driverAge = parsedData.driverAge;
+  if (parsedData.message) newBooking.message  = parsedData.message;
+
+  let selectedCategory = currentState.selectedCategory;
+  if (parsedData.category) {
+    try {
+      const categoryDoc = (await Category.findById(parsedData.category).lean()) as any;
+      if (categoryDoc) {
+        selectedCategory = {
+          _id: categoryDoc._id.toString(),
+          name: categoryDoc.name,
+          description: categoryDoc.description,
+          image: categoryDoc.image,
+          fuel: categoryDoc.fuel,
+          gear: categoryDoc.gear,
+          seats: categoryDoc.seats,
+          doors: categoryDoc.doors,
+          pricingTiers: categoryDoc.pricingTiers || [],
+          extrahoursRate: categoryDoc.extrahoursRate,
+          matchScore: 95,
+          matchReason: "Matched from voice input.",
+        };
+        newBooking.categoryId = selectedCategory._id;
+      }
+    } catch (error) {
+      console.log("⚠️ [Fast Agent] Failed to load category by ID:", error);
+    }
+  }
+
+  // If no category yet, try heuristic suggestions and show cards
+  if (!selectedCategory) {
+    const categories = await getCachedCategories();
+    const fallbackSuggestions: CategorySuggestion[] = categories.slice(0, 3).map((cat: any, i: number) => ({
+      _id: cat._id.toString(),
+      name: cat.name,
+      description: cat.description,
+      image: cat.image,
+      fuel: cat.fuel,
+      gear: cat.gear,
+      seats: cat.seats,
+      doors: cat.doors,
+      pricingTiers: cat.pricingTiers || [],
+      matchScore: 85 - i * 5,
+      matchReason: "Good all-purpose option based on your request",
+    }));
+
+    return {
+      message: "Got it. Pick a van size and I’ll book it right away:",
+      state: {
+        ...currentState,
+        phase: "show_suggestions",
+        suggestions: fallbackSuggestions,
+        booking: newBooking,
+      },
+      showSuggestions: true,
+      needsPhoneInput: false,
+      needsCodeInput: false,
+      needsBookingForm: false,
+      needsAddOns: false,
+      needsReceipt: false,
+      isComplete: false,
+    };
+  }
+
+  // Check if booking is complete
+  const isComplete =
+    newBooking.officeId &&
+    newBooking.startDate &&
+    newBooking.endDate &&
+    newBooking.driverAge;
+
+  if (!isComplete) {
+    return {
+      message: "Thanks! Please complete the remaining booking details.",
+      state: {
+        ...currentState,
+        phase: "collect_booking",
+        selectedCategory,
+        booking: newBooking,
+      },
+      showSuggestions: false,
+      needsPhoneInput: false,
+      needsCodeInput: false,
+      needsBookingForm: true,
+      needsAddOns: false,
+      needsReceipt: false,
+      isComplete: false,
+    };
+  }
+
+  // Calculate price and go to add-ons
+  let priceInfo = null;
+  if (selectedCategory) {
+    const categoryDoc = (await Category.findById(selectedCategory._id).lean()) as any;
+    if (categoryDoc?.pricingTiers) {
+      priceInfo = calculatePrice(
+        newBooking.startDate!,
+        newBooking.endDate!,
+        newBooking.startTime || "10:00",
+        newBooking.endTime || "10:00",
+        categoryDoc.pricingTiers,
+        categoryDoc.extrahoursRate || 0
+      );
+    }
+  }
+
+  const AddOn = (await import("@/model/addOn")).default;
+  const addOns = await AddOn.find({}).lean();
+  const availableAddOns: AddOnOption[] = (addOns as any[]).map((a: any) => ({
+    _id: a._id.toString(),
+    name: a.name,
+    description: a.description,
+    pricingType: a.pricingType,
+    flatPrice: a.flatPrice,
+    tieredPrice: a.tieredPrice,
+  }));
+
+  return {
+    message: "Great! Would you like to add any extras to your booking?",
+    state: {
+      ...currentState,
+      phase: "select_addons",
+      selectedCategory,
+      availableAddOns,
+      booking: {
+        ...newBooking,
+        totalPrice: priceInfo?.totalPrice,
+        priceBreakdown: priceInfo?.breakdown,
+        totalDays: priceInfo?.totalDays,
+        extraHours: priceInfo?.extraHours,
+        pricePerDay: priceInfo?.pricePerDay,
+        extraHoursRate: priceInfo?.extraHoursRate,
+        selectedAddOns: [],
+        addOnsTotal: 0,
+      },
+    },
+    showSuggestions: false,
+    needsPhoneInput: false,
+    needsCodeInput: false,
+    needsBookingForm: false,
+    needsAddOns: true,
+    needsReceipt: false,
+    isComplete: false,
+  };
+}
+
 async function handleAskNeeds(
   userMessage: string,
   currentState: FastAgentState
@@ -342,8 +669,58 @@ async function handleAskNeeds(
   }
 
   // User has described their needs - analyze and get suggestions
-  const categories = await Category.find({}).lean();
-  const offices = await Office.find({}).lean();
+  const [categories, offices] = await Promise.all([
+    getCachedCategories(),
+    getCachedOffices(),
+  ]);
+
+  // Heuristic short-circuit for common box moves (avoid LLM latency)
+  const heuristic = extractBoxHeuristic(userMessage, currentState.needs);
+  if (heuristic) {
+    const sizeKeyword = heuristic.needs.size;
+    const matchedCat =
+      categories.find((c: any) =>
+        String(c.name).toLowerCase().includes(sizeKeyword)
+      ) || categories[0];
+
+    const suggestion: CategorySuggestion = {
+      _id: matchedCat._id.toString(),
+      name: matchedCat.name,
+      description: matchedCat.description,
+      image: matchedCat.image,
+      fuel: matchedCat.fuel,
+      gear: matchedCat.gear,
+      seats: matchedCat.seats,
+      doors: matchedCat.doors,
+      pricingTiers: matchedCat.pricingTiers || [],
+      matchScore: 95,
+      matchReason: `Based on ${heuristic.needs.description || "your load"} size/weight.`,
+    };
+
+    const newState: FastAgentState = {
+      ...currentState,
+      phase: "collect_booking",
+      needs: heuristic.needs,
+      suggestions: [suggestion],
+      selectedCategory: suggestion,
+      booking: {
+        ...currentState.booking,
+        categoryId: suggestion._id,
+      },
+    };
+
+    return {
+      message: `Perfect! I recommend the **${suggestion.name}**. Let’s lock in your dates and pickup office.`,
+      state: newState,
+      showSuggestions: false,
+      needsPhoneInput: false,
+      needsCodeInput: false,
+      needsBookingForm: true,
+      needsAddOns: false,
+      needsReceipt: false,
+      isComplete: false,
+    };
+  }
 
   // Use GPT to understand needs and match categories
   const client = getOpenAI();
@@ -352,7 +729,7 @@ async function handleAskNeeds(
     messages: [
       {
         role: "system",
-        content: `You are a van hire expert. Analyze what the customer needs and match them to the best van categories.
+        content: `You are a van hire expert. Analyze needs and match the best van category.
 
 IMPORTANT: Before suggesting vans, you MUST gather these key details:
 1. What items/things they're moving (type and quantity)
@@ -405,8 +782,23 @@ EXAMPLES:
   const result = JSON.parse(completion.choices[0].message.content || "{}");
   console.log("🧠 [Fast Agent] Analysis:", JSON.stringify(result, null, 2));
 
+  // Soft override: if user provided quantity + weight/size, treat as enough info
+  const desc = `${result?.needs?.description || ""} ${userMessage || ""}`.toLowerCase();
+  const hasWeight = /\d+(\.\d+)?\s*(kg|kilograms?)/.test(desc);
+  const hasDimensions = /\d+(\.\d+)?\s*(m|meter|metre|cm|centimeter|centimetre|ft|feet)/.test(desc);
+  const hasQuantity =
+    /\d+\s*(boxes?|items?)/.test(desc) ||
+    /\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b\s*(boxes?|items?)/.test(desc);
+  if (hasQuantity && (hasWeight || hasDimensions)) {
+    result.hasEnoughInfo = true;
+  }
+
   // If we don't have enough info yet, ask follow-up question and STAY in ask_needs phase
   if (!result.hasEnoughInfo && result.followUpQuestion) {
+    console.log(
+      "🧩 [Fast Agent] Needs follow-up question:",
+      result.followUpQuestion
+    );
     return {
       message: result.followUpQuestion,
       state: { 
@@ -447,6 +839,10 @@ EXAMPLES:
     })
     .filter(Boolean)
     .slice(0, 3); // Max 3 suggestions
+  console.log(
+    "✅ [Fast Agent] Suggestions:",
+    suggestions.map((s) => `${s.name} (${s.matchScore})`).join(", ")
+  );
 
   // If no matches, show all categories
   if (suggestions.length === 0) {
@@ -467,6 +863,44 @@ EXAMPLES:
     });
   }
 
+  const topMatch = suggestions[0];
+  const highConfidence =
+    !!topMatch && typeof topMatch.matchScore === "number" && topMatch.matchScore >= 90;
+  console.log(
+    "🎯 [Fast Agent] Top match:",
+    topMatch?.name,
+    "score:",
+    topMatch?.matchScore,
+    "highConfidence:",
+    highConfidence
+  );
+
+  if (highConfidence) {
+    const newState: FastAgentState = {
+      ...currentState,
+      phase: "collect_booking",
+      needs: result.needs,
+      suggestions,
+      selectedCategory: topMatch,
+      booking: {
+        ...currentState.booking,
+        categoryId: topMatch._id,
+      },
+    };
+
+    return {
+      message: `Perfect! The **${topMatch.name}** is the best fit. Let’s lock in your dates and pickup office.`,
+      state: newState,
+      showSuggestions: false,
+      needsPhoneInput: false,
+      needsCodeInput: false,
+      needsBookingForm: true,
+      needsAddOns: false,
+      needsReceipt: false,
+      isComplete: false,
+    };
+  }
+
   const newState: FastAgentState = {
     ...currentState,
     phase: "show_suggestions",
@@ -474,7 +908,6 @@ EXAMPLES:
     suggestions,
   };
 
-  const topMatch = suggestions[0];
   const message = `Perfect! Based on your needs, I recommend the **${topMatch?.name}** - ${topMatch?.matchReason}. Here are your best options:`;
 
   return {
@@ -674,14 +1107,15 @@ async function handleSubmitBooking(
       }
     }
 
-    // Get office name
-    const office = (await Office.findById(booking.officeId).lean()) as any;
-    const officeName = office?.name || "Selected Office";
-
-    // Fetch available add-ons
+    // Get office name + add-ons in parallel
     const AddOn = (await import("@/model/addOn")).default;
-    const addOns = await AddOn.find({}).lean();
-    const availableAddOns: AddOnOption[] = addOns.map((a: any) => ({
+    const [office, addOns] = await Promise.all([
+      Office.findById(booking.officeId).lean(),
+      AddOn.find({}).lean(),
+    ]);
+    const officeName = (office as any)?.name || "Selected Office";
+
+    const availableAddOns: AddOnOption[] = (addOns as any[]).map((a: any) => ({
       _id: a._id.toString(),
       name: a.name,
       description: a.description,
@@ -742,7 +1176,7 @@ async function handleVoiceBooking(
 ): Promise<FastAgentResponse> {
   console.log("🎤 [Fast Agent] Processing voice booking input:", voiceInput);
 
-  const offices = await Office.find({}).lean();
+  const offices = await getCachedOffices();
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
 
@@ -816,6 +1250,12 @@ Examples of date parsing:
     newBooking.startDate &&
     newBooking.endDate &&
     newBooking.driverAge;
+  console.log(
+    "✅ [Fast Agent] Booking completeness:",
+    isComplete,
+    "missing:",
+    result.missingFields
+  );
 
   if (isComplete) {
     // Calculate price

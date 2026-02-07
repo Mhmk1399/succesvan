@@ -167,6 +167,7 @@ export default function FastAgentModal({
     selectCategory,
     submitBooking,
     voiceBooking,
+    voiceParsed,
     voicePhone,
     confirmAddOns,
     selectGear,
@@ -217,11 +218,19 @@ export default function FastAgentModal({
       // Use different handler based on current phase
       let response;
       if (phaseRef.current === "collect_booking") {
-        response = await voiceBooking(result.transcript);
+        if (result?.data) {
+          response = await voiceParsed(result.transcript, result.data);
+        } else {
+          response = await voiceBooking(result.transcript);
+        }
       } else if (phaseRef.current === "verify_phone") {
         response = await voicePhone(result.transcript);
       } else {
-        response = await sendMessage(result.transcript);
+        if (result?.data) {
+          response = await voiceParsed(result.transcript, result.data);
+        } else {
+          response = await sendMessage(result.transcript);
+        }
       }
 
       if (response?.isComplete && response.state.reservationId) {

@@ -4,13 +4,93 @@ import connect from "@/lib/data";
 import Office from "@/model/office";
 import Category from "@/model/category";
 
+const CACHE_TTL_MS = 5 * 60 * 1000;
+let cachedOffices: { data: any[]; expiresAt: number } | null = null;
+let cachedCategories: { data: any[]; expiresAt: number } | null = null;
+
+async function getCachedOffices() {
+  const now = Date.now();
+  if (cachedOffices && cachedOffices.expiresAt > now) return cachedOffices.data;
+  const data = await Office.find({}).select("_id name").lean();
+  cachedOffices = { data, expiresAt: now + CACHE_TTL_MS };
+  return data;
+}
+
+async function getCachedCategories() {
+  const now = Date.now();
+  if (cachedCategories && cachedCategories.expiresAt > now) return cachedCategories.data;
+  const data = await Category.find({}).select("_id name").lean();
+  cachedCategories = { data, expiresAt: now + CACHE_TTL_MS };
+  return data;
+}
+
+function parseRelativeDate(input: string, now: Date) {
+  const text = input.toLowerCase();
+  if (text.includes("tomorrow")) {
+    const d = new Date(now.getTime() + 86400000);
+    return d.toISOString().split("T")[0];
+  }
+  const weekdays = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+  ];
+  const nextMatch = text.match(/next\s+(sunday|monday|tuesday|wednesday|thursday|friday|saturday)/);
+  const dayMatch = text.match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/);
+  const targetDay = (nextMatch?.[1] || dayMatch?.[1]) as string | undefined;
+  if (targetDay) {
+    const targetIdx = weekdays.indexOf(targetDay);
+    if (targetIdx >= 0) {
+      const d = new Date(now);
+      let delta = (targetIdx - d.getDay() + 7) % 7;
+      if (nextMatch) delta = delta === 0 ? 7 : delta;
+      if (!nextMatch && delta === 0) delta = 7;
+      d.setDate(d.getDate() + delta);
+      return d.toISOString().split("T")[0];
+    }
+  }
+  const iso = text.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
+  if (iso) return iso[0];
+  return null;
+}
+
+function parseTime(input: string) {
+  const text = input.toLowerCase();
+  const match = text.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/);
+  if (match) {
+    let hour = parseInt(match[1], 10);
+    const min = match[2] ? parseInt(match[2], 10) : 0;
+    const mer = match[3];
+    if (mer === "pm" && hour < 12) hour += 12;
+    if (mer === "am" && hour === 12) hour = 0;
+    return `${String(hour).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+  }
+  return null;
+}
+
+function parseDriverAge(input: string) {
+  const text = input.toLowerCase();
+  const ageMatch = text.match(/\b(i'?m|i am|age)\s*(\d{2})\b/);
+  if (ageMatch) return parseInt(ageMatch[2], 10);
+  return null;
+}
+
+function matchByName(input: string, items: any[]) {
+  const text = input.toLowerCase();
+  return items.find((i) => text.includes(String(i.name).toLowerCase()));
+}
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   console.log("🎙️ [API] Voice parse request received");
 
   try {
-    // Initialize OpenAI client
-    const openai = getOpenAI();
+    // Initialize OpenAI client (lazy)
+    let openai: ReturnType<typeof getOpenAI> | null = null;
 
     // Parse request - support both JSON (old) and FormData (new with audio)
     const contentType = request.headers.get("content-type");
@@ -38,6 +118,7 @@ export async function POST(request: NextRequest) {
       console.log("🎙️ [API] Transcribing with Whisper...");
 
       // Transcribe audio using Whisper
+      if (!openai) openai = getOpenAI();
       const transcription = await openai.audio.transcriptions.create({
         file: audioFile,
         model: "whisper-1",
@@ -53,18 +134,70 @@ export async function POST(request: NextRequest) {
       autoSubmit = body.autoSubmit || false;
     }
 
-    // Connect to DB and fetch available offices and categories
-    console.log("📊 [API] Fetching offices and categories from DB...");
+    // Fast heuristic extraction to avoid GPT when possible
+    const now = new Date();
     await connect();
     const [offices, categories] = await Promise.all([
-      Office.find({}).select("_id name").lean(),
-      Category.find({}).select("_id name").lean(),
+      getCachedOffices(),
+      getCachedCategories(),
     ]);
+
+    const officeMatch = matchByName(transcript, offices);
+    const categoryMatch = matchByName(transcript, categories);
+    const startDate = parseRelativeDate(transcript, now);
+    const endDate = parseRelativeDate(transcript.replace(/return|back/gi, "next"), now);
+    const parsedStartTime = parseTime(transcript);
+    const parsedEndTime = parseTime(transcript.replace(/return|back/gi, "at"));
+    const driverAge = parseDriverAge(transcript);
+
+    const fastParsed = {
+      office: officeMatch?._id || null,
+      category: categoryMatch?._id || null,
+      startDate,
+      endDate,
+      startTime: parsedStartTime || "10:00",
+      endTime: parsedEndTime || "10:00",
+      driverAge: driverAge || null,
+      message: transcript || "",
+    };
+
+    const hasAnyFastField =
+      fastParsed.office ||
+      fastParsed.category ||
+      fastParsed.startDate ||
+      fastParsed.endDate ||
+      fastParsed.driverAge;
+
+    if (hasAnyFastField) {
+      console.log("⚡ [API] Fast parse matched fields, skipping GPT");
+      const requiredFields: (keyof typeof fastParsed)[] = [
+        "office",
+        "category",
+        "startDate",
+        "endDate",
+        "driverAge",
+      ];
+      const missingFields = requiredFields.filter(
+        (field) => !fastParsed[field],
+      );
+      console.log("📋 [API] Fast parsed data:", fastParsed);
+      console.log(`⏱️ [API] Total processing time: ${Date.now() - startTime}ms`);
+      return NextResponse.json({
+        success: true,
+        transcript,
+        data: fastParsed,
+        missingFields,
+        autoSubmit: false,
+      });
+    }
+
+    console.log("📊 [API] Fetching offices and categories from cache...");
     console.log(
       `✅ [API] Found ${offices.length} offices and ${categories.length} categories`,
     );
 
     // Extract structured data using GPT-4
+    if (!openai) openai = getOpenAI();
     const systemPrompt = `You are a helpful assistant that extracts reservation details from natural language.
 
 Available offices: ${offices

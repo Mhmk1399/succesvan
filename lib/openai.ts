@@ -236,7 +236,7 @@ export async function conversationalReservation(
   offices: Array<{ _id: string; name: string }>,
   categories: Array<{ _id: string; name: string }>,
   conversationHistory: Array<{ role: string; content: string }> = [],
-  ragContext?: string
+  ragContext?: string 
 ) {
   console.log("💬 [Conversational Agent] Starting conversation turn");
   console.log("📝 [Conversational Agent] User said:", transcript);

@@ -266,8 +266,10 @@ export function useFastAgent() {
   const sendMessage = useCallback(
     async (
       message: string,
-      action?: string
+      action?: string,
+      parsedData?: any
     ): Promise<FastAgentResponse | null> => {
+      const startedAt = Date.now();
       setIsLoading(true);
       stopAudio();
 
@@ -277,6 +279,10 @@ export function useFastAgent() {
       }
 
       try {
+        console.log(
+          "📤 [useFastAgent] Sending",
+          JSON.stringify({ message, action, phase: stateRef.current.phase })
+        );
         const res = await fetch("/api/fast-agent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -284,6 +290,7 @@ export function useFastAgent() {
             message,
             state: stateRef.current,
             action,
+            parsedData,
             includeAudio: true,
           }),
         });
@@ -295,6 +302,18 @@ export function useFastAgent() {
         }
 
         const response: FastAgentResponse = data.data;
+        console.log(
+          "📥 [useFastAgent] Received response",
+          JSON.stringify({
+            phase: response.state.phase,
+            showSuggestions: response.showSuggestions,
+            needsBookingForm: response.needsBookingForm,
+            needsPhoneInput: response.needsPhoneInput,
+            needsCodeInput: response.needsCodeInput,
+            isComplete: response.isComplete,
+            elapsedMs: Date.now() - startedAt,
+          })
+        );
 
         // Save current state so we can return to it later
         console.log("💾 [sendMessage] Saving current phase before transition:", stateRef.current.phase, "-> new phase:", response.state.phase);
@@ -355,6 +374,14 @@ export function useFastAgent() {
   const voiceBooking = useCallback(
     async (voiceInput: string) => {
       return sendMessage(voiceInput, "voice_booking");
+    },
+    [sendMessage]
+  );
+
+  // Voice parsed - send transcript + structured data (skips LLM parsing)
+  const voiceParsed = useCallback(
+    async (transcript: string, parsedData: any) => {
+      return sendMessage(transcript, "voice_parsed", parsedData);
     },
     [sendMessage]
   );
@@ -435,6 +462,7 @@ export function useFastAgent() {
     selectCategory,
     submitBooking,
     voiceBooking,
+    voiceParsed,
     voicePhone,
     confirmAddOns,
     selectGear,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import {
   processAgentTurn,
   createInitialState,
@@ -10,19 +11,27 @@ import { textToSpeech } from "@/lib/openai";
 import connect from "@/lib/data";
 
 export async function POST(request: NextRequest) {
-  console.log("🤖 [AI Agent API] Received request");
+  const reqId = crypto.randomUUID();
+  const startedAt = Date.now();
+  console.log(`🤖 [AI Agent API] (${reqId}) Received request`);
 
   try {
+    const parseStart = Date.now();
     const body = await request.json();
     const { transcript, currentState, conversationHistory = [] } = body;
-
-    console.log("📝 [AI Agent API] Transcript:", transcript);
     console.log(
-      "📍 [AI Agent API] Current phase:",
+      `⏱️ [AI Agent API] (${reqId}) Parsed JSON in ${
+        Date.now() - parseStart
+      }ms`
+    );
+
+    console.log(`📝 [AI Agent API] (${reqId}) Transcript:`, transcript);
+    console.log(
+      `📍 [AI Agent API] (${reqId}) Current phase:`,
       currentState?.phase || "new"
     );
     console.log(
-      "💬 [AI Agent API] History length:",
+      `💬 [AI Agent API] (${reqId}) History length:`,
       conversationHistory.length
     );
 
@@ -36,8 +45,14 @@ export async function POST(request: NextRequest) {
     ) {
       console.log("👋 [AI Agent API] Sending initial greeting");
 
+      const ttsStart = Date.now();
       const greeting = await getInitialGreeting();
       const audioBuffer = await textToSpeech(greeting);
+      console.log(
+        `🔊 [AI Agent API] (${reqId}) Greeting TTS in ${
+          Date.now() - ttsStart
+        }ms`
+      );
 
       return NextResponse.json({
         success: true,
@@ -60,22 +75,35 @@ export async function POST(request: NextRequest) {
     const state: ConversationState = currentState || createInitialState();
 
     // Process the conversation turn
+    const agentStart = Date.now();
     const response = await processAgentTurn(
       transcript,
       state,
       conversationHistory as ConversationMessage[]
     );
+    console.log(
+      `⏱️ [AI Agent API] (${reqId}) Agent processed in ${
+        Date.now() - agentStart
+      }ms`
+    );
 
-    console.log("✅ [AI Agent API] Response:", response.message);
-    console.log("📍 [AI Agent API] New phase:", response.state.phase);
-    console.log("🎯 [AI Agent API] Complete:", response.isComplete);
+    console.log(`✅ [AI Agent API] (${reqId}) Response:`, response.message);
+    console.log(
+      `📍 [AI Agent API] (${reqId}) New phase:`,
+      response.state.phase
+    );
+    console.log(`🎯 [AI Agent API] (${reqId}) Complete:`, response.isComplete);
 
     // Generate speech
-    console.log("🔊 [AI Agent API] Generating speech...");
+    console.log(`🔊 [AI Agent API] (${reqId}) Generating speech...`);
+    const ttsStart = Date.now();
     const audioBuffer = await textToSpeech(response.message);
+    console.log(
+      `🔊 [AI Agent API] (${reqId}) TTS in ${Date.now() - ttsStart}ms`
+    );
 
     console.log(
-      "✅ [AI Agent API] Speech generated:",
+      `✅ [AI Agent API] (${reqId}) Speech generated:`,
       audioBuffer.length,
       "bytes"
     );
@@ -91,7 +119,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.log("❌ [AI Agent API] Stack:", message);
+    console.log(`❌ [AI Agent API] (${reqId}) Stack:`, message);
 
     return NextResponse.json(
       {
@@ -99,6 +127,12 @@ export async function POST(request: NextRequest) {
         error: message || "Failed to process request",
       },
       { status: 500 }
+    );
+  } finally {
+    console.log(
+      `✅ [AI Agent API] (${reqId}) Total time: ${
+        Date.now() - startedAt
+      }ms`
     );
   }
 }
