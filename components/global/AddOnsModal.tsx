@@ -110,10 +110,10 @@ export default function AddOnsModal({
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10001]"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-10001"
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-10002 flex items-center justify-center p-4">
         <div className="bg-[#1a2847] rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-white/10">
           <div className="flex items-center justify-between p-6 border-b border-white/10">
             <div>
@@ -155,8 +155,7 @@ export default function AddOnsModal({
               });
               
               // Max quantity is 1
-              const isMaxQuantity = isSelected && isSelected.quantity >= 1;
-
+ 
               return (
                 <div
                   key={addon._id}

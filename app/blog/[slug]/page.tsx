@@ -1,5 +1,6 @@
 import { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import Script from "next/script";
 import {
   fetchBlogBySlug,
@@ -9,6 +10,7 @@ import {
   generateOrganizationSchema,
 } from "@/lib/blog-utils";
 import BlogDetailClient from "@/components/blog/BlogDetailClient";
+import BlogDetailSkeleton from "@/components/blog/BlogDetailSkeleton";
 import { FiArrowLeft, FiCalendar, FiUser, FiClock } from "react-icons/fi";
 import Link from "next/link";
 
@@ -101,7 +103,7 @@ export async function generateMetadata(
     twitter: {
       card: "summary_large_image",
       title: blog.seoTitle || blog.title,
-      description: blog.excerpt,
+      description: blog.seo?.seoDescription || blog.excerpt,
       images: [blog.image],
       creator: "@successvanhire",
       site: "@successvanhire",
@@ -140,12 +142,6 @@ export default async function BlogDetailPage({ params }: Props) {
     day: "numeric",
   });
 
-  const modifiedDate = new Date(blog.updatedAt).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
   return (
     <>
       <Script
@@ -168,87 +164,93 @@ export default async function BlogDetailPage({ params }: Props) {
       />
 
       <main className="min-h-screen bg-linear-to-br from-[#0f172b] via-slate-900 to-[#0f172b]">
-     
+        <Suspense
+          fallback={
+            <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 lg:pb-20">
+              <BlogDetailSkeleton />
+            </article>
+          }
+        >
+          {/* Blog Detail Content */}
+          <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 lg:pb-20">
+            {/* Header Section */}
+            <header className="mb-12 pt-26">
+              <h1 className="text-2xl lg:text-5xl font-black text-white mb-6 leading-tight">
+                {blog.seoTitle}
+              </h1>
 
-        {/* Blog Detail Content */}
-        <article className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12  lg:pb-20">
-          {/* Header Section */}
-          <header className="mb-12 pt-26">
-            <h1 className="text-2xl lg:text-5xl font-black text-white mb-6 leading-tight">
-              {blog.seoTitle}
-            </h1>
-
-            {/* Meta Information */}
-            <div className="flex flex-wrap items-center gap-3 md:gap-6 text-gray-400 pb-6 border-b border-white/20 text-sm md:text-base">
-              <div className="flex items-center gap-2">
-                <FiCalendar className="w-5 h-5 text-[#fe9a00]" />
-                <span>
-                  Published:{" "}
-                  <span className="text-white font-semibold">
-                    {publishedDate}
+              {/* Meta Information */}
+              <div className="flex flex-wrap items-center gap-3 md:gap-6 text-gray-400 pb-6 border-b border-white/20 text-sm md:text-base">
+                <div className="flex items-center gap-2">
+                  <FiCalendar className="w-5 h-5 text-[#fe9a00]" />
+                  <span>
+                    Published:{" "}
+                    <span className="text-white font-semibold">
+                      {publishedDate}
+                    </span>
                   </span>
-                </span>
-              </div>
+                </div>
 
-              <div className="flex items-center gap-2">
-                <FiUser className="w-5 h-5 text-[#fe9a00]" />
-                <span>
-                  By:{" "}
-                  <span className="text-white font-semibold">
-                    {blog.author}
+                <div className="flex items-center gap-2">
+                  <FiUser className="w-5 h-5 text-[#fe9a00]" />
+                  <span>
+                    By:{" "}
+                    <span className="text-white font-semibold">
+                      {blog.author}
+                    </span>
                   </span>
-                </span>
-              </div>
+                </div>
 
-              <div className="flex items-center gap-2">
-                <FiClock className="w-5 h-5 text-[#fe9a00]" />
-                <span>
-                  <span className="text-white font-semibold">
-                    {blog.readTime}
-                  </span>{" "}
-                  min read
-                </span>
-              </div>
-            </div>
-          </header>
-
-          {/* Featured Image */}
-          <div className="mb-12 rounded-2xl overflow-hidden">
-            <img
-              src={blog.image}
-              alt={blog.title}
-              className="w-full h-auto object-cover rounded-2xl shadow-2xl"
-              loading="lazy"
-            />
-          </div>
-
-          {/* Blog Content */}
-          {(!blog.content || blog.content.trim() === "") && (
-            <div className="mb-6 p-4 rounded-lg bg-yellow-900/20 border border-yellow-800 text-yellow-200">
-              ⚠️ This article has no compiled HTML. Showing available
-              summary/sections instead.
-            </div>
-          )}
-
-          <BlogDetailClient content={blog.content || blog.excerpt || ""} />
-
-          {/* Tags Section */}
-          {blog.tags && blog.tags.length > 0 && (
-            <div className="mt-12 pt-8 border-t border-white/20">
-              <h4 className="text-white font-bold text-lg mb-4">Tags</h4>
-              <div className="flex flex-wrap gap-2">
-                {blog.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="bg-[#fe9a00]/20 text-[#fe9a00] px-3 py-1 rounded-full text-sm font-medium"
-                  >
-                    #{tag}
+                <div className="flex items-center gap-2">
+                  <FiClock className="w-5 h-5 text-[#fe9a00]" />
+                  <span>
+                    <span className="text-white font-semibold">
+                      {blog.readTime}
+                    </span>{" "}
+                    min read
                   </span>
-                ))}
+                </div>
               </div>
+            </header>
+
+            {/* Featured Image */}
+            <div className="mb-12 rounded-2xl overflow-hidden">
+              <img
+                src={blog.image}
+                alt={blog.title}
+                className="w-full h-auto object-cover rounded-2xl shadow-2xl"
+                loading="lazy"
+              />
             </div>
-          )}
-        </article>
+
+            {/* Blog Content */}
+            {(!blog.content || blog.content.trim() === "") && (
+              <div className="mb-6 p-4 rounded-lg bg-yellow-900/20 border border-yellow-800 text-yellow-200">
+                ⚠️ This article has no compiled HTML. Showing available
+                summary/sections instead.
+              </div>
+            )}
+
+            <BlogDetailClient content={blog.content || blog.excerpt || ""} />
+
+            {/* Tags Section */}
+            {blog.tags && blog.tags.length > 0 && (
+              <div className="mt-12 pt-8 border-t border-white/20">
+                <h4 className="text-white font-bold text-lg mb-4">Tags</h4>
+                <div className="flex flex-wrap gap-2">
+                  {blog.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="bg-[#fe9a00]/20 text-[#fe9a00] px-3 py-1 rounded-full text-sm font-medium"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </article>
+        </Suspense>
 
         {/* Related Articles Section */}
         <section className="bg-white/5 backdrop-blur-xl border-t border-white/10 py-16 mt-20">

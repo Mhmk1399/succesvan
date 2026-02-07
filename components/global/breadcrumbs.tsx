@@ -41,10 +41,12 @@ export default function Breadcrumbs() {
       href: "/" + arr.slice(0, index + 1).join("/"),
     }));
 
+  // Hide on dashboard pages
   if (
-    pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/blog/edit") ||
     pathname === "/customerDashboard" ||
-    pathname === "/register"
+    pathname === "/register" ||
+    pathname === "/dashboard"
   ) {
     return null;
   }

@@ -281,6 +281,9 @@ interface BlogPostFormatted {
   date: string;
   readTime: number;
   seoTitle?: string;
+  seo: {
+    seoDescription?: string;
+  };
   tags: string[];
   createdAt: string;
   updatedAt: string;
@@ -338,6 +341,11 @@ export const convertApiToBlogPost = (apiData: BlogPost): BlogPostFormatted => {
       (apiData as any).readingTime ||
       Math.max(1, estimateReadTime(contentStr || "")),
     seoTitle: (apiData as any).seoTitle || (apiData as any).title || "",
+    seo: {
+      seoDescription:
+        (apiData as any).seo?.seoDescription ||
+        getExcerpt(contentStr || apiData.description || "", 160),
+    },
     tags: (apiData as any).seo?.tags || [],
     createdAt: apiData.createdAt || "",
     updatedAt: apiData.updatedAt || "",
@@ -352,9 +360,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 export const fetchAllBlogs = async (): Promise<BlogPostFormatted[]> => {
   try {
-    const res = await fetch(`${baseUrl}/api/blog?limit=100`, {
-      next: { revalidate: 3600 }, // Cache for 1 hour
-    });
+    const res = await fetch(`${baseUrl}/api/blog?limit=100`);
     const data = await res.json();
     return (data.blogs || []).map((b: any) => convertApiToBlogPost(b));
   } catch (error) {
@@ -396,7 +402,6 @@ export const fetchBlogBySlug = async (
       for (const candidate of Array.from(new Set(candidates))) {
         const res = await fetch(
           `${baseUrl}/api/blog/${encodeURIComponent(candidate)}`,
-          { next: { revalidate: 3600 } },
         );
 
         if (!res.ok) {
@@ -436,6 +441,9 @@ export const fetchBlogBySlug = async (
             excerpt: getExcerpt(contentStr || b.excerpt || "", 160),
             content: contentStr || b.content || "",
             image,
+            seo: {
+              seoDescription: b.seo?.seoDescription || "",
+            },
             author: b.author || "Success Van",
             category: b.category || "Blog",
             date: new Date(b.createdAt).toLocaleDateString("en-US", {

@@ -1693,7 +1693,7 @@ const RichTextEditor = ({
       TextStyle,
       FontSize,
       InlineTextAlign,
-      Color,
+      Color ,
       Underline,
       Subscript,
       Superscript,
@@ -1838,7 +1838,7 @@ const RichTextEditor = ({
     editorProps: {
       attributes: {
         class:
-          "prose prose-invert max-w-none focus:outline-none text-sm text-slate-300 leading-relaxed",
+          "prose prose-invert prose-p:text-white prose-headings:text-white max-w-none focus:outline-none text-sm leading-relaxed",
         style: `min-height: ${minHeight}`,
       },
     },
@@ -3791,7 +3791,7 @@ export default function AIBlogBuilder({
                     }}
                     placeholder="Write a compelling summary..."
                     minHeight="80px"
-                    showFullToolbar={false}
+                    showFullToolbar={true}
                   />
                   <div className="text-[10px] text-slate-500 mt-1">
                     {stripHtml(data.summary || "").length} characters

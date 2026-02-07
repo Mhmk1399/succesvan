@@ -10,7 +10,6 @@ import {
   FiCalendar,
   FiPhone,
   FiUsers,
-  FiPackage,
   FiLoader,
   FiPlus,
   FiMinus,
@@ -24,8 +23,7 @@ import {
   CategorySuggestion,
   FastPhase,
   AddOnOption,
-  SelectedAddOn,     
-
+  SelectedAddOn,
 } from "@/hooks/useFastAgent";
 import TimeSelect from "@/components/ui/TimeSelect";
 import CustomSelect from "@/components/ui/CustomSelect";
@@ -35,6 +33,7 @@ import { DateRange, Range } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { datePickerStyles } from "./DatePickerStyles";
+import { MdDoorSliding } from "react-icons/md";
 
 interface FastAgentModalProps {
   isOpen: boolean;
@@ -184,7 +183,6 @@ export default function FastAgentModal({
 
   // Use ref to track current phase for voice callback
   const phaseRef = useRef(agentState.phase);
-
 
   useEffect(() => {
     phaseRef.current = agentState.phase;
@@ -446,7 +444,6 @@ export default function FastAgentModal({
     return offices?.find((o) => o._id === bookingForm.officeId);
   }; // Generate return time slots based on office working hours
 
-  
   const returnTimeSlots = useMemo(() => {
     if (!bookingForm.officeId || !bookingForm.endDate) return [];
     const office = offices?.find((o) => o._id === bookingForm.officeId) as any;
@@ -628,8 +625,30 @@ export default function FastAgentModal({
     return 0;
   };
 
-  const handleAddOnQuantityChange = (addOnId: string, delta: number) => {
+  const handleAddOnQuantityChange = (
+    addOnId: string,
+    delta: number,
+    addonType?: string,
+  ) => {
     setAddOnQuantities((prev) => {
+      // If adding (+1) and addon has a type, check if another addon of same type is already selected
+      if (delta > 0 && addonType) {
+        const currentAddonType = addonType;
+        const hasSameTypeSelected = Object.entries(prev).some(([id, qty]) => {
+          if (qty > 0 && id !== addOnId) {
+            const selectedAddon = agentState.availableAddOns?.find(
+              (a) => a._id === id,
+            );
+            return (selectedAddon as any)?.type === currentAddonType;
+          }
+          return false;
+        });
+
+        if (hasSameTypeSelected) {
+          return prev; // Don't allow selecting another addon of the same type
+        }
+      }
+
       const current = prev[addOnId] || 0;
       const newVal = Math.max(0, current + delta);
       return { ...prev, [addOnId]: newVal };
@@ -897,7 +916,7 @@ export default function FastAgentModal({
         </div>
 
         {/* --- Scrollable Content --- */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-5 pb-32 md:pb-24 bg-linear-to-b from-[#0f172b] to-[#1e293b]">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 mb-8 space-y-5 pb-32 md:pb-24 bg-linear-to-b from-[#0f172b] to-[#1e293b]">
           {/* Chat Messages */}
           <div className="space-y-6">
             {messages.map((msg, i) => (
@@ -975,7 +994,7 @@ export default function FastAgentModal({
           {/* 1. Suggestion Cards */}
           {agentState.phase === "show_suggestions" &&
             agentState.suggestions && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-fade-in py-8 pt-2">
                 {agentState.suggestions.map((category) => (
                   <SuggestionCard
                     key={category._id}
@@ -1036,13 +1055,17 @@ export default function FastAgentModal({
                             const { startDate, endDate } = item.selection;
                             setDateRange([
                               {
-                                startDate: startDate || new Date(),
-                                endDate: endDate || new Date(),
+                                startDate:
+                                  startDate ||
+                                  new Date(Date.now() + 48 * 60 * 60 * 1000),
+                                endDate:
+                                  endDate ||
+                                  new Date(Date.now() + 48 * 60 * 60 * 1000),
                                 key: "selection",
                               },
                             ]);
                           }}
-                          minDate={new Date()}
+                          minDate={new Date(Date.now() + 48 * 60 * 60 * 1000)}
                           rangeColors={["#f97316"]}
                           disabledDates={
                             bookingForm.officeId
@@ -1074,7 +1097,7 @@ export default function FastAgentModal({
                     <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">
                       Pickup Time
                     </label>
-                    <div className="bg-[#0f172b] border border-white/10 rounded-xl overflow-hidden h-12">
+                    <div className="bg-[#0f172b] border border-white/10 rounded-xl h-12">
                       {bookingForm.startDate && (
                         <TimeSelect
                           value={bookingForm.startTime}
@@ -1094,7 +1117,7 @@ export default function FastAgentModal({
                     <label className="text-gray-400 text-xs font-bold uppercase tracking-wider ml-1">
                       Return Time
                     </label>
-                    <div className="bg-[#0f172b] border border-white/10 rounded-xl overflow-hidden h-12">
+                    <div className="bg-[#0f172b] border border-white/10 rounded-xl h-12">
                       {bookingForm.endDate && (
                         <TimeSelect
                           value={bookingForm.endTime}
@@ -1122,10 +1145,14 @@ export default function FastAgentModal({
                     <input
                       type="number"
                       value={bookingForm.driverAge}
+                      placeholder="23-80"
+                      min={23}
+                      max={80}
+
                       onChange={(e) =>
                         setBookingForm((p) => ({
                           ...p,
-                          driverAge: parseInt(e.target.value) || 25,
+                          driverAge: parseInt(e.target.value) || 23,
                         }))
                       }
                       className="w-full bg-[#0f172b] border border-white/10 rounded-xl px-4 py-3.5 pl-11 text-white focus:outline-none focus:border-orange-500 transition-colors"
@@ -1237,10 +1264,36 @@ export default function FastAgentModal({
                     const price = getAddOnPrice(addOn);
                     const isActive = quantity > 0;
 
+                    // Check if another addon with the same type is already selected
+                    const addonType = (addOn as any).type;
+                    const isTypeDisabled =
+                      addonType &&
+                      Object.entries(addOnQuantities).some(([id, qty]) => {
+                        if (qty > 0 && id !== addOn._id) {
+                          const selectedAddon =
+                            agentState.availableAddOns?.find(
+                              (a) => a._id === id,
+                            );
+                          return (selectedAddon as any)?.type === addonType;
+                        }
+                        return false;
+                      });
+
                     return (
                       <div
                         key={addOn._id}
-                        className={`p-4 rounded-xl border transition-all ${isActive ? "bg-orange-500/5 border-orange-500/50" : "bg-[#0f172b] border-white/5"}`}
+                        className={`p-4 rounded-xl border transition-all ${
+                          isActive
+                            ? "bg-orange-500/5 border-orange-500/50"
+                            : isTypeDisabled
+                              ? "bg-white/5 border-red-500/30 opacity-60"
+                              : "bg-[#0f172b] border-white/5"
+                        }`}
+                        onClick={() =>
+                          !isActive &&
+                          !isTypeDisabled &&
+                          handleAddOnQuantityChange(addOn._id, 1, addonType)
+                        }
                       >
                         <div className="flex justify-between items-start mb-3">
                           <div>
@@ -1248,8 +1301,19 @@ export default function FastAgentModal({
                             <p className="text-gray-400 text-xs mt-1 max-w-[90%]">
                               {addOn.description}
                             </p>
+                            {isTypeDisabled && (
+                              <p className="text-red-400 text-xs mt-1">
+                                Another option of this type is already selected
+                              </p>
+                            )}
                           </div>
-                          <span className="text-orange-400 font-bold whitespace-nowrap">
+                          <span
+                            className={`font-bold whitespace-nowrap ${
+                              isTypeDisabled
+                                ? "text-gray-500"
+                                : "text-orange-400"
+                            }`}
+                          >
                             £{price.toFixed(2)}
                           </span>
                         </div>
@@ -1269,9 +1333,13 @@ export default function FastAgentModal({
                             </span>
                             <button
                               onClick={() =>
-                                handleAddOnQuantityChange(addOn._id, 1)
+                                handleAddOnQuantityChange(
+                                  addOn._id,
+                                  1,
+                                  addonType,
+                                )
                               }
-                              disabled={quantity >= 1}
+                              disabled={quantity >= 1 || isTypeDisabled}
                               className="w-8 h-8 flex items-center justify-center bg-orange-500 rounded hover:bg-orange-600 text-white disabled:bg-gray-700 disabled:opacity-50"
                             >
                               <FiPlus />
@@ -1353,7 +1421,7 @@ export default function FastAgentModal({
                         onChange={(e) =>
                           setDiscountCode(e.target.value.toUpperCase())
                         }
-                        placeholder="PROMO CODE"
+                        placeholder="DISCOUNT CODE"
                         className="flex-1 bg-[#0f172b] border border-white/10 rounded-lg px-3 py-2.5 text-white text-sm focus:border-orange-500 outline-none"
                       />
                       <button
@@ -1473,16 +1541,16 @@ export default function FastAgentModal({
 
         {/* --- Bottom Action Bar (Fixed) --- */}
         {(isInputPhase || canReturn) && (
-          <div className="absolute bottom-0 left-0 right-0 bg-[#0f172b]/95 backdrop-blur-md border-t border-white/5 p-4 z-30 pb-6 md:pb-4">
+          <div className="absolute bottom-0 -mb-3 left-0 right-0 bg-[#0f172b]/50 backdrop-blur-md border-t border-white/5 p-4 z-30 pb-6 md:pb-4">
             <div className="flex items-center gap-4 max-w-lg mx-auto relative">
               {/* Back Button */}
               {canReturn && (
                 <button
                   onClick={goBack}
                   disabled={isLoading}
-                  className="absolute left-0 p-3 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                  className="absolute left-0 p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
                 >
-                  <span className="text-[10px] font-bold tracking-widest uppercase">
+                  <span className="text-xs font-bold   uppercase">
                     Back
                   </span>
                 </button>
@@ -1590,7 +1658,7 @@ function SuggestionCard({
             src={category.image}
             alt={category.name}
             fill
-            className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
             unoptimized
           />
         ) : (
@@ -1618,7 +1686,7 @@ function SuggestionCard({
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1 no-scrollbar">
           <Badge icon={<FiUsers />} text={category.seats} />
           <Badge icon={<BsFuelPump />} text={category.fuel} />
-          <Badge icon={<FiPackage />} text={`${category.doors}dr`} />
+          <Badge icon={<MdDoorSliding />} text={`${category.doors}`} />
         </div>
 
         <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/5">
