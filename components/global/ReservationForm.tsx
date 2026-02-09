@@ -71,6 +71,7 @@ export default function ReservationForm({
 
   // Tooltip visibility for same-day reservations
   const [showSameDayTooltip, setShowSameDayTooltip] = useState<boolean>(true);
+  const [ageError, setAgeError] = useState<string>("");
 
   // Initialize with undefined to avoid hydration mismatch
   const [dateRange, setDateRange] = useState<Range[]>([
@@ -563,6 +564,9 @@ export default function ReservationForm({
     >,
   ) => {
     const { name, value } = e.target;
+    if (name === "driverAge" && ageError) {
+      setAgeError("");
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -715,14 +719,43 @@ export default function ReservationForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const age = parseInt(formData.driverAge, 10);
 
-    // Validation for age
+    // Validation for all required fields
+    if (!formData.office) {
+      showToast.error("Please select an office");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!formData.type) {
+      showToast.error("Please select a type");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!formData.pickupTime) {
+      showToast.error("Please select pickup time");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!formData.returnTime) {
+      showToast.error("Please select return time");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!formData.driverAge) {
+      setAgeError("You should enter your age");
+      showToast.error("Please enter your age");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const age = parseInt(formData.driverAge, 10);
     if (isNaN(age) || age < 23 || age > 80) {
+      setAgeError("Driver age must be between 23 and 80");
       showToast.error("Driver age must be between 23 and 80 years");
       setIsSubmitting(false);
       return;
     }
+    setAgeError("");
 
     // Validation: if pickup and return dates are the same, ensure minimum 6 hours
     if (
@@ -1119,6 +1152,11 @@ export default function ReservationForm({
             }`}
           >
             <FiUser className="text-amber-400 text-lg" /> Age
+            {ageError && (
+              <span className="text-red-500 text-xs font-normal ml-1">
+                {ageError}
+              </span>
+            )}
           </label>
           <input
             type="number"
@@ -1158,14 +1196,7 @@ export default function ReservationForm({
             <button
               type="submit"
               id="gtm-reservation-submit-inline"
-              disabled={
-                isSubmitting ||
-                !formData.office ||
-                !formData.type ||
-                !formData.pickupTime ||
-                !formData.returnTime ||
-                !formData.driverAge
-              }
+              disabled={isSubmitting}
               className="bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 disabled:opacity-50 px-4 py-1 text-xs"
             >
               {isSubmitting ? "Booking..." : "BOOK"}
@@ -1191,14 +1222,7 @@ export default function ReservationForm({
             <button
               type="submit"
               id="gtm-reservation-submit"
-              disabled={
-                isSubmitting ||
-                !formData.office ||
-                !formData.type ||
-                !formData.pickupTime ||
-                !formData.returnTime ||
-                !formData.driverAge
-              }
+              disabled={isSubmitting}
               className="w-full bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 disabled:opacity-50 px-8 py-3 text-sm"
             >
               {isSubmitting ? "Booking..." : "RESERVE NOW"}
@@ -1506,14 +1530,7 @@ export default function ReservationForm({
         <button
           type="submit"
           id="gtm-reservation-submit-mobile"
-          disabled={
-            isSubmitting ||
-            !formData.office ||
-            !formData.type ||
-            !formData.pickupTime ||
-            !formData.returnTime ||
-            !formData.driverAge
-          }
+          disabled={isSubmitting}
           className="w-full px-4 py-2.5 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 text-sm disabled:opacity-50"
         >
           {isSubmitting ? "Booking..." : "RESERVE NOW"}
