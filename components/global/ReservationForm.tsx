@@ -71,7 +71,7 @@ export default function ReservationForm({
 
   // Tooltip visibility for same-day reservations
   const [showSameDayTooltip, setShowSameDayTooltip] = useState<boolean>(true);
-  const [ageError, setAgeError] = useState<string>("");
+  const [showAgeTooltip, setShowAgeTooltip] = useState<boolean>(false);
 
   // Initialize with undefined to avoid hydration mismatch
   const [dateRange, setDateRange] = useState<Range[]>([
@@ -564,8 +564,8 @@ export default function ReservationForm({
     >,
   ) => {
     const { name, value } = e.target;
-    if (name === "driverAge" && ageError) {
-      setAgeError("");
+    if (name === "driverAge") {
+      setShowAgeTooltip(false);
     }
     setFormData((prev) => ({
       ...prev,
@@ -613,6 +613,11 @@ export default function ReservationForm({
             showToast.error("Minimum reservation on the same day is 6 hours");
           }
         }
+      }
+
+      // Show age tooltip when return time is selected and age is empty
+      if (name === "returnTime" && time && !formData.driverAge) {
+        setShowAgeTooltip(true);
       }
 
       return next;
@@ -719,43 +724,14 @@ export default function ReservationForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    // Validation for all required fields
-    if (!formData.office) {
-      showToast.error("Please select an office");
-      setIsSubmitting(false);
-      return;
-    }
-    if (!formData.type) {
-      showToast.error("Please select a type");
-      setIsSubmitting(false);
-      return;
-    }
-    if (!formData.pickupTime) {
-      showToast.error("Please select pickup time");
-      setIsSubmitting(false);
-      return;
-    }
-    if (!formData.returnTime) {
-      showToast.error("Please select return time");
-      setIsSubmitting(false);
-      return;
-    }
-    if (!formData.driverAge) {
-      setAgeError("You should enter your age");
-      showToast.error("Please enter your age");
-      setIsSubmitting(false);
-      return;
-    }
-
     const age = parseInt(formData.driverAge, 10);
+
+    // Validation for age
     if (isNaN(age) || age < 23 || age > 80) {
-      setAgeError("Driver age must be between 23 and 80");
       showToast.error("Driver age must be between 23 and 80 years");
       setIsSubmitting(false);
       return;
     }
-    setAgeError("");
 
     // Validation: if pickup and return dates are the same, ensure minimum 6 hours
     if (
@@ -1145,19 +1121,19 @@ export default function ReservationForm({
         </div>
 
         {/* Driver Age */}
-        <div>
+        <div className="relative">
           <label
             className={`text-white font-semibold mb-2 flex items-center gap-2 ${
               isInline ? "text-xs mb-1" : "text-sm"
             }`}
           >
             <FiUser className="text-amber-400 text-lg" /> Age
-            {ageError && (
-              <span className="text-red-500 text-xs font-normal ml-1">
-                {ageError}
-              </span>
-            )}
           </label>
+          {showAgeTooltip && (
+            <div className="absolute -top-1 right-0 text-red-500 text-xs font-normal whitespace-nowrap">
+              Enter your age
+            </div>
+          )}
           <input
             type="number"
             name="driverAge"
@@ -1196,7 +1172,14 @@ export default function ReservationForm({
             <button
               type="submit"
               id="gtm-reservation-submit-inline"
-              disabled={isSubmitting}
+              disabled={
+                isSubmitting ||
+                !formData.office ||
+                !formData.type ||
+                !formData.pickupTime ||
+                !formData.returnTime ||
+                !formData.driverAge
+              }
               className="bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 disabled:opacity-50 px-4 py-1 text-xs"
             >
               {isSubmitting ? "Booking..." : "BOOK"}
@@ -1222,7 +1205,14 @@ export default function ReservationForm({
             <button
               type="submit"
               id="gtm-reservation-submit"
-              disabled={isSubmitting}
+              disabled={
+                isSubmitting ||
+                !formData.office ||
+                !formData.type ||
+                !formData.pickupTime ||
+                !formData.returnTime ||
+                !formData.driverAge
+              }
               className="w-full bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 disabled:opacity-50 px-8 py-3 text-sm"
             >
               {isSubmitting ? "Booking..." : "RESERVE NOW"}
@@ -1530,7 +1520,14 @@ export default function ReservationForm({
         <button
           type="submit"
           id="gtm-reservation-submit-mobile"
-          disabled={isSubmitting}
+          disabled={
+            isSubmitting ||
+            !formData.office ||
+            !formData.type ||
+            !formData.pickupTime ||
+            !formData.returnTime ||
+            !formData.driverAge
+          }
           className="w-full px-4 py-2.5 bg-linear-to-r from-amber-500 to-amber-600 text-slate-900 font-bold rounded-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/50 text-sm disabled:opacity-50"
         >
           {isSubmitting ? "Booking..." : "RESERVE NOW"}
