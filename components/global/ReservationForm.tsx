@@ -71,6 +71,7 @@ export default function ReservationForm({
 
   // Tooltip visibility for same-day reservations
   const [showSameDayTooltip, setShowSameDayTooltip] = useState<boolean>(true);
+  const [showAgeTooltip, setShowAgeTooltip] = useState<boolean>(false);
 
   // Initialize with undefined to avoid hydration mismatch
   const [dateRange, setDateRange] = useState<Range[]>([
@@ -563,6 +564,9 @@ export default function ReservationForm({
     >,
   ) => {
     const { name, value } = e.target;
+    if (name === "driverAge") {
+      setShowAgeTooltip(false);
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -609,6 +613,11 @@ export default function ReservationForm({
             showToast.error("Minimum reservation on the same day is 6 hours");
           }
         }
+      }
+
+      // Show age tooltip when return time is selected and age is empty
+      if (name === "returnTime" && time && !formData.driverAge) {
+        setShowAgeTooltip(true);
       }
 
       return next;
@@ -1112,7 +1121,7 @@ export default function ReservationForm({
         </div>
 
         {/* Driver Age */}
-        <div>
+        <div className="relative">
           <label
             className={`text-white font-semibold mb-2 flex items-center gap-2 ${
               isInline ? "text-xs mb-1" : "text-sm"
@@ -1120,6 +1129,11 @@ export default function ReservationForm({
           >
             <FiUser className="text-amber-400 text-lg" /> Age
           </label>
+          {showAgeTooltip && (
+            <div className="absolute -top-1 right-0 text-red-500 text-xs font-normal whitespace-nowrap">
+              Enter your age
+            </div>
+          )}
           <input
             type="number"
             name="driverAge"

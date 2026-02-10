@@ -20,6 +20,43 @@ interface Message {
 }
 
 const CHATBOT_DISMISSED_KEY = "chatbot_popup_dismissed";
+const CHAT_HISTORY_KEY = "chatbot_messages";
+const DEVICE_ID_KEY = "chatbot_device_id";
+
+function getOrCreateDeviceId(): string {
+  if (typeof window === "undefined") return "";
+  let deviceId = localStorage.getItem(DEVICE_ID_KEY);
+  if (!deviceId) {
+    deviceId = "device_" + crypto.randomUUID();
+    localStorage.setItem(DEVICE_ID_KEY, deviceId);
+  }
+  return deviceId;
+}
+
+function loadMessages(): Message[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(CHAT_HISTORY_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.log("Failed to load chat history:", e);
+  }
+  return [];
+}
+
+function saveMessages(messages: Message[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+  } catch (e) {
+    console.log("Failed to save chat history:", e);
+  }
+}
 
 export default function FloatingActionMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,13 +65,14 @@ export default function FloatingActionMenu() {
   const [showSmallPopup, setShowSmallPopup] = useState(false);
   const [popupAnimated, setPopupAnimated] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "Hi! I'm niki your Success Van Hire assistant. How can I help you today? I can answer questions about our vehicles, pricing, locations, or booking process!",
-    },
-  ]);
+  const defaultMessage: Message = {
+    role: "assistant",
+    content:
+      "Hi! I'm niki your Success Van Hire assistant. How can I help you today? I can answer questions about our vehicles, pricing, locations, or booking process!",
+  };
+
+  const [messages, setMessages] = useState<Message[]>([defaultMessage]);
+  const [deviceId, setDeviceId] = useState<string>("");
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -42,7 +80,7 @@ export default function FloatingActionMenu() {
 
   const menuItems = [
     {
-      id: "ai-chat",
+      id: "gtm-ai-chat-floating",
       icon: BsRobot,
       color: "#fff",
       onClick: () => {
@@ -54,16 +92,16 @@ export default function FloatingActionMenu() {
       label: "AI Assistant",
     },
     {
-      id: "call",
+      id: "gtm-call-us-floating",
       icon: FiPhone,
       color: "#0891b2",
       href: "tel:+442030111198",
       label: "Call Us",
     },
     {
-      id: "whatsapp",
+      id: "gtm-whatsapp-floating",
       icon: FaWhatsapp,
-      color: "#25D366",
+      color: "#25D366  ",
       href: "https://wa.me/442030111198",
       label: "WhatsApp",
     },
@@ -117,6 +155,27 @@ export default function FloatingActionMenu() {
       window.removeEventListener("scroll", handleScroll);
     };
   }, [isClient, isChatOpen, isDismissed, showSmallPopup]);
+
+  // Load device ID and chat history from localStorage on mount
+  useEffect(() => {
+    if (!isClient) return;
+    const id = getOrCreateDeviceId();
+    setDeviceId(id);
+
+    const stored = loadMessages();
+    if (stored.length > 0) {
+      setMessages(stored);
+    }
+  }, [isClient]);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (!isClient) return;
+    // Only save if we have more than just the default message
+    if (messages.length > 0) {
+      saveMessages(messages);
+    }
+  }, [messages, isClient]);
 
   // Reset popup state when pathname changes
   useEffect(() => {
@@ -194,6 +253,7 @@ export default function FloatingActionMenu() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           transcript: userMessage,
+          deviceId: deviceId,
           conversationHistory: messages.map((m) => ({
             role: m.role,
             content: m.content,
@@ -466,6 +526,7 @@ export default function FloatingActionMenu() {
               >
                 {item.onClick ? (
                   <button
+                    id={item.id}
                     onClick={item.onClick}
                     onMouseEnter={() => setHoveredItem(item.id)}
                     onMouseLeave={() => setHoveredItem(null)}
@@ -484,6 +545,7 @@ export default function FloatingActionMenu() {
                 ) : (
                   <a
                     href={item.href}
+                    id={item.id}
                     target={item.id === "whatsapp" ? "_blank" : undefined}
                     rel={
                       item.id === "whatsapp" ? "noopener noreferrer" : undefined
@@ -492,7 +554,9 @@ export default function FloatingActionMenu() {
                     onMouseLeave={() => setHoveredItem(null)}
                     aria-label={item.label}
                     className={`group relative w-12 h-12 ${
-                      item.id === "whatsapp" ? "bg-[#25D366]" : "bg-[#0891b2]"
+                      item.id === "gtm-whatsapp-floating"
+                        ? "bg-[#25D366]"
+                        : "bg-[#0891b2]"
                     } rounded-2xl flex items-center justify-center 
                                shadow-2xl transition-all duration-300 hover:scale-110 
                                hover:shadow-[0_0_30px_rgba(254,154,0,0.4)]`}
@@ -630,12 +694,25 @@ export default function FloatingActionMenu() {
                     </div>
 
                     {/* Close Button */}
-                    <button
-                      onClick={() => setIsChatOpen(false)}
-                      className="p-2.5 sm:p-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/30 transition-all duration-300 text-gray-200 hover:text-white hover:rotate-90"
-                    >
-                      <FiX className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          const fresh = [defaultMessage];
+                          setMessages(fresh);
+                          saveMessages(fresh);
+                        }}
+                        className="px-3 py-2 rounded-xl bg-white/5 hover:bg-red-500/20 border border-white/10 hover:border-red-400/30 transition-all duration-300 text-gray-300 hover:text-red-300 text-xs font-medium"
+                        title="Clear chat history"
+                      >
+                        Clear
+                      </button>
+                      <button
+                        onClick={() => setIsChatOpen(false)}
+                        className="p-2.5 sm:p-3 rounded-xl bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/30 transition-all duration-300 text-gray-200 hover:text-white hover:rotate-90"
+                      >
+                        <FiX className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -669,7 +746,15 @@ export default function FloatingActionMenu() {
                             U
                           </span>
                         ) : (
-                          <BsRobot className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />
+                          <div className="w-full h-full rounded-full bg-white/90 overflow-hidden">
+                            <Image
+                              src="/assets/images/bot.jpeg"
+                              alt="AI Assistant"
+                              width={56}
+                              height={56}
+                              className="w-full h-full object-cover rounded-full"
+                            />
+                          </div>
                         )}
                       </div>
 
@@ -708,7 +793,15 @@ export default function FloatingActionMenu() {
                   {isLoading && (
                     <div className="flex items-end gap-2 sm:gap-3">
                       <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-linear-to-br from-slate-600 to-slate-700 border border-white/10 flex items-center justify-center shadow-lg">
-                        <BsRobot className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />
+                        <div className="w-full h-full rounded-full bg-white/90 overflow-hidden">
+                          <Image
+                            src="/assets/images/bot.jpeg"
+                            alt="AI Assistant"
+                            width={56}
+                            height={56}
+                            className="w-full h-full object-cover rounded-full"
+                          />
+                        </div>{" "}
                       </div>
                       <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl rounded-bl-sm px-5 py-4 shadow-lg">
                         <div className="flex items-center gap-1.5">

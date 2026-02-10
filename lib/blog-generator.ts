@@ -1,6 +1,6 @@
 /**
  * AI Blog Content Generator
- * 
+ *
  * Generates comprehensive blog content using OpenAI GPT-4
  * - SEO-optimized titles and descriptions
  * - Structured content sections with headings (H2-H6)
@@ -15,7 +15,7 @@ import {
   calculateReadingTime,
   stripHtml,
   countWords,
-  getCurrentYear
+  getCurrentYear,
 } from "./blog-utils";
 import { getOpenAI } from "./openai";
 
@@ -89,7 +89,9 @@ interface BlogPostData {
  * @param topic - The blog topic to generate content for
  * @returns Complete blog post data structure
  */
-export async function generateBlogContent(topic: string): Promise<BlogPostData> {
+export async function generateBlogContent(
+  topic: string,
+): Promise<BlogPostData> {
   console.log("🤖 [Blog Generator] Starting content generation for:", topic);
 
   const currentYear = getCurrentYear();
@@ -151,14 +153,19 @@ Return ONLY valid JSON, no markdown formatting.`;
   const outlineCompletion = await client.chat.completions.create({
     model: "gpt-4o",
     messages: [
-      { role: "system", content: "You are an expert SEO blog content strategist." },
-      { role: "user", content: outlinePrompt }
+      {
+        role: "system",
+        content: "You are an expert SEO blog content strategist.",
+      },
+      { role: "user", content: outlinePrompt },
     ],
     response_format: { type: "json_object" },
     temperature: 0.8,
   });
 
-  const outline = JSON.parse(outlineCompletion.choices[0].message.content || "{}");
+  const outline = JSON.parse(
+    outlineCompletion.choices[0].message.content || "{}",
+  );
   console.log("✅ [Blog Generator] Outline generated:", outline.seoTitle);
 
   // ========================================================================
@@ -169,11 +176,12 @@ Return ONLY valid JSON, no markdown formatting.`;
   const summaryPrompt = `Write an engaging, SEO-optimized introduction paragraph (100-150 words) for a blog post titled "${outline.seoTitle}".
 
 The introduction should:
-- Hook the reader immediately
-- Clearly state what the article covers
+- Hook the reader immediately with a question or statement that grabs attention
+- Be clear and concise, stating what the article will cover
+- Use a conversational but professional tone, as if written by a real person
 - Include the focus keyword: "${outline.focusKeyword}"
 - Be written in HTML format with proper tags (<p>, <strong>, <em>, etc.)
-- Use a conversational but professional tone
+ - Keep it short (100-150 words), but impactful
 
 Return ONLY the HTML content, no markdown or explanations.`;
 
@@ -182,7 +190,7 @@ Return ONLY the HTML content, no markdown or explanations.`;
     model: "gpt-4o",
     messages: [
       { role: "system", content: "You are an expert blog content writer." },
-      { role: "user", content: summaryPrompt }
+      { role: "user", content: summaryPrompt },
     ],
     temperature: 0.7,
   });
@@ -199,7 +207,7 @@ Return ONLY the HTML content, no markdown or explanations.`;
 
   for (const section of outline.outline) {
     // Generate main section content
-    const sectionPrompt = `Write detailed, high-quality content (200-300 words) for the section: "${section.heading}"
+    const sectionPrompt = `Write detailed, high-quality content (300-400 words) for the section: "${section.heading}"
 
 Context: This is part of a blog post about "${topic}"
 
@@ -209,11 +217,12 @@ ${section.keyPoints.map((p: string, i: number) => `${i + 1}. ${p}`).join("\n")}
 Requirements:
 - Write in HTML format with proper tags (<p>, <ul>, <li>, <strong>, <em>, etc.)
 - Include the focus keyword "${outline.focusKeyword}" naturally if relevant
-- Use short paragraphs (2-3 sentences each)
+- Write in a way that feels natural, with short, conversational paragraphs (2-3 sentences each)
 - Include bullet points or numbered lists where appropriate
 - Be informative and actionable
+- Avoid overuse of keywords or robotic phrasing
 - Use a professional but conversational tone
-- Include specific examples or data points where relevant
+- Provide actionable insights, examples, and relatable information
 
 Return ONLY the HTML content, no heading tags (those are separate), no markdown.`;
 
@@ -222,7 +231,7 @@ Return ONLY the HTML content, no heading tags (those are separate), no markdown.
       model: "gpt-4o",
       messages: [
         { role: "system", content: "You are an expert blog content writer." },
-        { role: "user", content: sectionPrompt }
+        { role: "user", content: sectionPrompt },
       ],
       temperature: 0.7,
     });
@@ -231,7 +240,7 @@ Return ONLY the HTML content, no heading tags (those are separate), no markdown.
       id: generateId(),
       level: section.level,
       text: section.heading,
-      content: sectionCompletion.choices[0].message.content || ""
+      content: sectionCompletion.choices[0].message.content || "",
     });
 
     // Generate subsection content if exists
@@ -258,8 +267,11 @@ Return ONLY HTML content.`;
         const subCompletion = await client4.chat.completions.create({
           model: "gpt-4o",
           messages: [
-            { role: "system", content: "You are an expert blog content writer." },
-            { role: "user", content: subPrompt }
+            {
+              role: "system",
+              content: "You are an expert blog content writer.",
+            },
+            { role: "user", content: subPrompt },
           ],
           temperature: 0.7,
         });
@@ -268,7 +280,7 @@ Return ONLY HTML content.`;
           id: generateId(),
           level: subsection.level,
           text: subsection.heading,
-          content: subCompletion.choices[0].message.content || ""
+          content: subCompletion.choices[0].message.content || "",
         });
       }
     }
@@ -286,11 +298,11 @@ Return ONLY HTML content.`;
   const conclusionPrompt = `Write a powerful conclusion (100-150 words) for the blog post titled "${outline.seoTitle}".
 
 The conclusion should:
-- Summarize the key takeaways (2-3 main points)
-- Include a call-to-action or next steps
-- End on an inspiring or actionable note
-- Include the focus keyword: "${outline.focusKeyword}"
-- Be in HTML format with proper tags
+- Summarize the key takeaways in a way that feels natural and not forced
+- Include a call-to-action or next steps for the reader
+- End on a positive, actionable note
+- Include the focus keyword: "${outline.focusKeyword}" naturally
+- Write in HTML format with proper tags
 
 Return ONLY the HTML content.`;
 
@@ -299,7 +311,7 @@ Return ONLY the HTML content.`;
     model: "gpt-4o",
     messages: [
       { role: "system", content: "You are an expert blog content writer." },
-      { role: "user", content: conclusionPrompt }
+      { role: "user", content: conclusionPrompt },
     ],
     temperature: 0.7,
   });
@@ -320,10 +332,10 @@ Return ONLY the HTML content.`;
 Context: This is for a blog post about "${topic}"
 
 Requirements:
-- Direct and helpful answer
+- Provide a direct, helpful answer without being overly technical
 - Plain text (no HTML needed for FAQs)
 - Include the focus keyword "${outline.focusKeyword}" if naturally relevant
-- Be informative and accurate
+- Be informative, accurate, and specific, without sounding robotic
 
 Return ONLY the answer text.`;
 
@@ -331,8 +343,12 @@ Return ONLY the answer text.`;
     const faqCompletion = await client6.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: "You are an expert answering questions clearly and concisely." },
-        { role: "user", content: faqPrompt }
+        {
+          role: "system",
+          content:
+            "You are an expert answering questions clearly and concisely.",
+        },
+        { role: "user", content: faqPrompt },
       ],
       temperature: 0.6,
     });
@@ -340,7 +356,7 @@ Return ONLY the answer text.`;
     faqs.push({
       id: generateId(),
       question: question,
-      answer: faqCompletion.choices[0].message.content || ""
+      answer: faqCompletion.choices[0].message.content || "",
     });
 
     console.log(`   ✓ FAQ: ${question}`);
@@ -369,7 +385,7 @@ Return ONLY the answer text.`;
   compiledHtml += `  <h3 class="font-bold mb-3">📑 Table of Contents</h3>\n`;
   compiledHtml += `  <ul class="space-y-2">\n`;
   headings.forEach((h, i) => {
-    const indent = h.level > 2 ? 'class="ml-4"' : '';
+    const indent = h.level > 2 ? 'class="ml-4"' : "";
     compiledHtml += `    <li ${indent}><a href="#section-${i + 1}" class="text-orange-600 hover:underline">${stripHtml(h.text)}</a></li>\n`;
   });
   compiledHtml += `  </ul>\n</nav>\n\n`;
@@ -390,7 +406,7 @@ Return ONLY the answer text.`;
   compiledHtml += `<div class="mt-10">\n`;
   compiledHtml += `  <h3 class="font-bold text-2xl mb-6">❓ Frequently Asked Questions</h3>\n`;
   compiledHtml += `  <div class="space-y-4">\n`;
-  faqs.forEach(faq => {
+  faqs.forEach((faq) => {
     compiledHtml += `    <details class="bg-gray-50 rounded-lg p-4">\n`;
     compiledHtml += `      <summary class="font-semibold cursor-pointer">${faq.question}</summary>\n`;
     compiledHtml += `      <p class="mt-3 text-gray-600">${faq.answer}</p>\n`;
@@ -411,19 +427,21 @@ Return ONLY the answer text.`;
   const anchors: Anchor[] = outline.suggestedAnchors.map((anchor: any) => ({
     id: generateId(),
     keyword: anchor.keyword,
-    url: "" // User will need to fill these in
+    url: "", // User will need to fill these in
   }));
 
   // ========================================================================
   // STEP 8: Generate featured image data
   // ========================================================================
-  const mediaLibrary: MediaItem[] = [{
-    id: generateId(),
-    type: "image",
-    url: `https://placehold.co/1200x600/fe9a00/fff?text=${encodeURIComponent(outline.imageSearchTerms[0] || topic)}`,
-    alt: `${topic} - Featured Image`,
-    caption: `Illustration for ${outline.seoTitle}`
-  }];
+  const mediaLibrary: MediaItem[] = [
+    {
+      id: generateId(),
+      type: "image",
+      url: `https://placehold.co/1200x600/fe9a00/fff?text=${encodeURIComponent(outline.imageSearchTerms[0] || topic)}`,
+      alt: `${topic} - Featured Image`,
+      caption: `Illustration for ${outline.seoTitle}`,
+    },
+  ];
 
   // ========================================================================
   // STEP 9: Calculate metrics
@@ -443,7 +461,7 @@ Return ONLY the answer text.`;
       conclusion,
       faqs,
       tableOfContents: true,
-      compiledHtml
+      compiledHtml,
     },
     seo: {
       seoTitle: outline.seoTitle,
@@ -453,16 +471,16 @@ Return ONLY the answer text.`;
       tags: outline.tags,
       author: "AI Content Generator",
       publishDate: currentDate,
-      anchors
+      anchors,
     },
     media: {
       mediaLibrary,
-      featuredImage: mediaLibrary[0].url
+      featuredImage: mediaLibrary[0].url,
     },
     status: "draft",
     wordCount,
     readingTime,
-    seoScore: 0 // Will be calculated by model
+    seoScore: 0, // Will be calculated by model
   };
 
   console.log("✅ [Blog Generator] Content generation complete!");

@@ -12,7 +12,7 @@ const toc = [
 
 export default function PolicyPage() {
   return (
-    <main className="min-h-screen bg-[#0f172b] text-white py-12">
+    <main className="min-h-screen bg-[#0f172b] text-white py-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white/5 border border-white/10 rounded-2xl p-8 md:p-12 mt-10 shadow-xl">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-6">

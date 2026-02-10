@@ -1,12 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import {
-  FiX,
-  FiAlertCircle,
-  FiExternalLink,
-  FiChevronRight,
-} from "react-icons/fi";
+import { FiAlertCircle, FiExternalLink, FiChevronRight } from "react-icons/fi";
 import { useState, useEffect, createContext, useContext, useRef } from "react";
 import { usePathname } from "next/navigation";
 
@@ -62,7 +57,7 @@ export default function AnnouncementBar() {
     {
       revalidateOnFocus: false,
       dedupingInterval: 60000,
-    }
+    },
   );
   const pathname = usePathname();
 
@@ -123,10 +118,10 @@ export default function AnnouncementBar() {
 
   const announcements = data?.data || [];
   const activeAnnouncements = announcements.filter(
-    (a: Announcement) => a.isActive
+    (a: Announcement) => a.isActive,
   );
   const active = activeAnnouncements.filter(
-    (a: Announcement) => !dismissed.includes(a._id)
+    (a: Announcement) => !dismissed.includes(a._id),
   );
 
   if (!mounted || isLoading) {
@@ -137,13 +132,13 @@ export default function AnnouncementBar() {
     return <ErrorState />;
   }
 
-if (active.length === 0) {
-  return (
-    <AnnouncementContext.Provider value={{ hasAnnouncement: false }}>
-      {null}
-    </AnnouncementContext.Provider>
-  );
-}
+  if (active.length === 0) {
+    return (
+      <AnnouncementContext.Provider value={{ hasAnnouncement: false }}>
+        {null}
+      </AnnouncementContext.Provider>
+    );
+  }
 
   const announcement = active[0];
 
@@ -152,6 +147,7 @@ if (active.length === 0) {
       {announcement.link ? (
         <a
           href={announcement.link}
+          id="gtm-announcement-learn-more"
           target="_blank"
           rel="noopener noreferrer"
           className="group inline-flex items-center gap-2 text-white text-sm md:text-base font-medium hover:text-white/90 transition-colors"
@@ -235,6 +231,7 @@ if (active.length === 0) {
           {announcement.link && (
             <a
               href={announcement.link}
+              id="gtm-announcement-learn-more"
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Learn more about ${announcement.text}`}

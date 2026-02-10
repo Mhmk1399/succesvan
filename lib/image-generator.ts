@@ -76,28 +76,27 @@ async function generateImagePrompt(
 Create a detailed, visual prompt that will generate a professional, relevant image for a blog section.
 
 Requirements:
-- Professional and clean style
-- Relevant to the topic
-- Modern and appealing
-- Suitable for blog header/section image
-- No text or words in the image
-- Avoid abstract concepts, focus on concrete visuals
+- The image must visually represent the blog section and be relevant to its content
+- Focus on creating an image that reflects the tone and subject of the section (e.g., a tech-focused blog post should feature clean, modern visuals)
+- Use modern, clean, and minimalist art styles, with bright colors to invite engagement
+- Avoid abstract concepts; focus on concrete and actionable visuals
+- The image must be suitable for use as a blog section or header image
 
 Style guidelines:
-- "Professional illustration"
-- "Modern digital art style"
-- "Clean and minimalist"
-- "Bright, inviting colors"
-- "High detail"
+- "Professional digital art"
+- "Minimalist and clean"
+- "Bright and inviting colors"
+- "High detail, clear and straightforward"
+- Avoid any text or words within the image
 
 Return ONLY the DALL-E prompt text, no explanation.`;
 
-  const userPrompt = `Create a DALL-E prompt for this blog section:
+  const userPrompt = `Create a DALL-E prompt for the following blog section:
 
 Blog Topic: ${topic}
 Section Heading: ${headingText}
 
-The image should visually represent this section in a professional, engaging way.`;
+Make the image visually represent the content of this section in an appealing and professional way.`;
 
   const client2 = getOpenAI();
   const completion = await client2.chat.completions.create({

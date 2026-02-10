@@ -86,6 +86,7 @@ export default function RootLayout({
         />
         <meta name="apple-mobile-web-app-title" content="SuccessVan" />
         <meta name="msapplication-TileColor" content="#fe9a00" />
+        <CanonicalUrl />
         <Script
           id="gtm-script"
           strategy="afterInteractive"
@@ -115,7 +116,6 @@ export default function RootLayout({
           <AnnouncementBar />
           <Breadcrumbs />
           <Navbar />
-          <CanonicalUrl />
           <Toaster position="bottom-center" />
           <MobileAppPrompt />
 

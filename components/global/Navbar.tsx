@@ -412,6 +412,7 @@ export default function Navbar() {
 
               {/* CTA Button - Phone */}
               <Link
+                id="gtm-navbar-call"
                 href="tel:+442030111198"
                 className="flex items-center gap-2 px-4 md:px-6 py-2.5 md:py-3 bg-linear-to-r from-[#fe9a00] to-amber-500 text-slate-900 font-bold rounded-xl transition-transform duration-200 shadow-lg shadow-amber-500/25 hover:scale-[1.02] text-sm"
               >

@@ -1,6 +1,6 @@
 /**
  * Step-by-Step Blog Content Generator
- * 
+ *
  * Generates blog content in discrete steps with user approval gates:
  * 1. Headings tree
  * 2. Section content (one at a time)
@@ -42,9 +42,10 @@ REQUIREMENTS:
 - Create 5-7 main sections (H2 level)
 - Each H2 can have 2-3 subsections (H3 level)
 - Focus keyword should appear in title
-- Headings should flow logically
-- Cover topic comprehensively
-- Be specific and actionable
+- The headings should flow logically and cover the topic comprehensively
+- Make the headings specific, actionable, and intriguing for readers
+- Ensure that the content and headings are completely unique and not derived from existing sources.
+- Write in a natural, conversational tone that feels human-like.
 
 Return ONLY valid JSON.`;
 
@@ -53,7 +54,7 @@ Return ONLY valid JSON.`;
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: `Create blog outline for: ${prompt}` }
+      { role: "user", content: `Create blog outline for: ${prompt}` },
     ],
     response_format: { type: "json_object" },
     temperature: 0.8,
@@ -66,11 +67,13 @@ Return ONLY valid JSON.`;
     result.headings = result.headings.map((h: any) => ({
       ...h,
       id: h.id || generateId(),
-      content: ""
+      content: "",
     }));
   }
 
-  console.log(`✅ [Step Generator] Generated ${result.headings?.length || 0} headings`);
+  console.log(
+    `✅ [Step Generator] Generated ${result.headings?.length || 0} headings`,
+  );
 
   return result;
 }
@@ -83,7 +86,7 @@ export async function generateSectionContent(
   topic: string,
   headingText: string,
   level: number,
-  focusKeyword: string
+  focusKeyword: string,
 ): Promise<string> {
   console.log(`📝 [Step Generator] Generating content for: ${headingText}`);
 
@@ -93,13 +96,15 @@ export async function generateSectionContent(
 
 Requirements:
 - Write ${wordCount} words
-- HTML format with proper tags (<p>, <ul>, <li>, <strong>, <em>, etc.)
+- The content must feel natural and human-like, as if written by a real person
+- Avoid overly complex sentences or unnatural phrasing
+- Use proper HTML format with appropriate tags (<p>, <ul>, <li>, <strong>, <em>, etc.)
 - Include focus keyword "${focusKeyword}" naturally if relevant
-- Short paragraphs (2-3 sentences)
-- Use bullet points or lists where appropriate
-- Be informative and actionable
-- Professional but conversational tone
-- Include specific examples or data
+- Keep the writing concise, engaging, and free of repetition
+- Write in a conversational yet professional tone
+- Use bullet points or lists where appropriate, but keep them natural and not forced
+- Provide real-life examples, data, and actionable insights
+- Ensure the content is unique, not copied from other sources
 
 Return ONLY the HTML content (no heading tags).`;
 
@@ -115,14 +120,16 @@ Make it engaging, informative, and valuable to the reader.`;
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
+      { role: "user", content: userPrompt },
     ],
     temperature: 0.7,
   });
 
   const content = completion.choices[0].message.content || "";
 
-  console.log(`✅ [Step Generator] Content generated (${content.length} chars)`);
+  console.log(
+    `✅ [Step Generator] Content generated (${content.length} chars)`,
+  );
 
   return content;
 }
@@ -134,7 +141,7 @@ Make it engaging, informative, and valuable to the reader.`;
 export async function generateSummary(
   topic: string,
   title: string,
-  focusKeyword: string
+  focusKeyword: string,
 ): Promise<string> {
   console.log(`📋 [Step Generator] Generating summary for: ${topic}`);
 
@@ -142,18 +149,17 @@ export async function generateSummary(
 
 Requirements:
 - 120-180 words
-- Hook the reader immediately with a question or intriguing statement
-- Clearly state what the article covers
+- The summary should be interesting and make the reader want to continue
 - Include focus keyword: "${focusKeyword}" naturally
-- Use proper HTML tags: <p>, <strong>, <em>
-- Write 2-3 short paragraphs maximum
-- Conversational but professional tone
+- Write it in a conversational tone that feels human, as if written by a person
+- Avoid any robotic or unnatural phrasing
+- Use HTML tags: <p>, <strong>, <em>
+- Keep it informative and to the point, but engaging
 
 IMPORTANT:
 - Return ONLY the HTML content (no \`\`\`html wrapper)
-- Do NOT include <!DOCTYPE>, <html>, <head>, <body>, or <title> tags
-- Start directly with <p> tags
-- End with closing </p> tag
+- Do NOT include any HTML boilerplate tags like <!DOCTYPE>, <html>, <head>, or <title>.
+- Start directly with <p> tags and end with closing </p> tags.
 
 Example:
 <p>Have you ever wondered about...? In this comprehensive guide, we'll explore <strong>keyword</strong>.</p>
@@ -170,7 +176,7 @@ Make it compelling and encourage readers to continue.`;
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
+      { role: "user", content: userPrompt },
     ],
     temperature: 0.7,
   });
@@ -178,17 +184,19 @@ Make it compelling and encourage readers to continue.`;
   let summary = completion.choices[0].message.content || "";
 
   // Clean up any markdown wrappers or document tags
-  summary = summary.replace(/```html\n?/g, '');
-  summary = summary.replace(/```\n?/g, '');
-  summary = summary.replace(/<!DOCTYPE[^>]*>/gi, '');
-  summary = summary.replace(/<\/?html[^>]*>/gi, '');
-  summary = summary.replace(/<\/?head[^>]*>/gi, '');
-  summary = summary.replace(/<\/?body[^>]*>/gi, '');
-  summary = summary.replace(/<title>[^<]*<\/title>/gi, '');
-  summary = summary.replace(/<meta[^>]*>/gi, '');
+  summary = summary.replace(/```html\n?/g, "");
+  summary = summary.replace(/```\n?/g, "");
+  summary = summary.replace(/<!DOCTYPE[^>]*>/gi, "");
+  summary = summary.replace(/<\/?html[^>]*>/gi, "");
+  summary = summary.replace(/<\/?head[^>]*>/gi, "");
+  summary = summary.replace(/<\/?body[^>]*>/gi, "");
+  summary = summary.replace(/<title>[^<]*<\/title>/gi, "");
+  summary = summary.replace(/<meta[^>]*>/gi, "");
   summary = summary.trim();
 
-  console.log(`✅ [Step Generator] Summary generated (${summary.length} chars)`);
+  console.log(
+    `✅ [Step Generator] Summary generated (${summary.length} chars)`,
+  );
 
   return summary;
 }
@@ -201,34 +209,31 @@ export async function generateConclusion(
   topic: string,
   title: string,
   focusKeyword: string,
-  headings: any[]
+  headings: any[],
 ): Promise<string> {
   console.log(`🎯 [Step Generator] Generating conclusion`);
 
   const mainPoints = headings
-    .filter(h => h.level === 2)
+    .filter((h) => h.level === 2)
     .slice(0, 3)
-    .map(h => h.text)
+    .map((h) => h.text)
     .join(", ");
 
   const systemPrompt = `You are an expert blog writer. Write a powerful conclusion.
 
 Requirements:
 - 120-150 words
-- Summarize key takeaways from the article
-- Include call-to-action or next steps for readers
-- End on inspiring or actionable note
+- Summarize the key takeaways from the article
+- Provide a clear call to action or next steps for the reader
+- End with a motivational or actionable note
 - Include focus keyword: "${focusKeyword}" naturally
 - Use proper HTML tags: <p>, <strong>, <em>
-- Write 2-3 short paragraphs
-- Professional and motivating tone
+- Keep it engaging and professional, without sounding robotic or generic
 
 IMPORTANT:
 - Return ONLY the HTML content (no \`\`\`html wrapper)
-- Do NOT include heading tags (<h1>, <h2>, etc.)
-- Do NOT include <!DOCTYPE>, <html>, <head>, <body> tags
-- Start directly with <p> tags
-- End with closing </p> tag
+- Do NOT include heading tags (<h1>, <h2>, etc.) or document structure tags (<html>, <head>, etc.)
+- Start directly with <p> tags and end with closing </p> tags.
 
 Example output:
 <p>As we've explored throughout this guide, <strong>keyword</strong> is essential for success. The key takeaways are clear...</p>
@@ -246,7 +251,7 @@ Make it memorable and actionable.`;
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
+      { role: "user", content: userPrompt },
     ],
     temperature: 0.7,
   });
@@ -254,18 +259,20 @@ Make it memorable and actionable.`;
   let conclusion = completion.choices[0].message.content || "";
 
   // Clean up any markdown wrappers, heading tags, or document structure
-  conclusion = conclusion.replace(/```html\n?/g, '');
-  conclusion = conclusion.replace(/```\n?/g, '');
-  conclusion = conclusion.replace(/<!DOCTYPE[^>]*>/gi, '');
-  conclusion = conclusion.replace(/<\/?html[^>]*>/gi, '');
-  conclusion = conclusion.replace(/<\/?head[^>]*>/gi, '');
-  conclusion = conclusion.replace(/<\/?body[^>]*>/gi, '');
-  conclusion = conclusion.replace(/<title>[^<]*<\/title>/gi, '');
-  conclusion = conclusion.replace(/<meta[^>]*>/gi, '');
-  conclusion = conclusion.replace(/<\/?h[1-6][^>]*>/gi, ''); // Remove any heading tags
+  conclusion = conclusion.replace(/```html\n?/g, "");
+  conclusion = conclusion.replace(/```\n?/g, "");
+  conclusion = conclusion.replace(/<!DOCTYPE[^>]*>/gi, "");
+  conclusion = conclusion.replace(/<\/?html[^>]*>/gi, "");
+  conclusion = conclusion.replace(/<\/?head[^>]*>/gi, "");
+  conclusion = conclusion.replace(/<\/?body[^>]*>/gi, "");
+  conclusion = conclusion.replace(/<title>[^<]*<\/title>/gi, "");
+  conclusion = conclusion.replace(/<meta[^>]*>/gi, "");
+  conclusion = conclusion.replace(/<\/?h[1-6][^>]*>/gi, ""); // Remove any heading tags
   conclusion = conclusion.trim();
 
-  console.log(`✅ [Step Generator] Conclusion generated (${conclusion.length} chars)`);
+  console.log(
+    `✅ [Step Generator] Conclusion generated (${conclusion.length} chars)`,
+  );
 
   return conclusion;
 }
@@ -277,31 +284,37 @@ Make it memorable and actionable.`;
 export async function generateFAQs(
   topic: string,
   focusKeyword: string,
-  headings: any[]
+  headings: any[],
 ): Promise<any[]> {
   console.log(`❓ [Step Generator] Generating FAQs`);
-  console.log(`   Total headings with content: ${headings.filter(h => h.content).length}`);
+  console.log(
+    `   Total headings with content: ${headings.filter((h) => h.content).length}`,
+  );
 
   // Extract main topics from H2 headings
   const mainTopics = headings
-    .filter(h => h.level === 2)
-    .map(h => h.text)
+    .filter((h) => h.level === 2)
+    .map((h) => h.text)
     .join(", ");
 
   // Extract full content from all headings to provide context
   const fullContent = headings
-    .filter(h => h.content)
-    .map(h => {
+    .filter((h) => h.content)
+    .map((h) => {
       // Strip HTML tags for cleaner context
-      const cleanContent = h.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      const cleanContent = h.content
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
       return `${h.text}: ${cleanContent}`;
     })
-    .join('\n\n');
+    .join("\n\n");
 
   // Limit content length to avoid token limits (keep first 3000 chars)
-  const contentContext = fullContent.length > 3000 
-    ? fullContent.substring(0, 3000) + '...' 
-    : fullContent;
+  const contentContext =
+    fullContent.length > 3000
+      ? fullContent.substring(0, 3000) + "..."
+      : fullContent;
 
   console.log(`   Content context length: ${contentContext.length} characters`);
 
@@ -351,14 +364,16 @@ Create FAQs that directly address information in the content above. Make questio
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
+      { role: "user", content: userPrompt },
     ],
     response_format: { type: "json_object" },
     temperature: 0.7,
   });
 
-  const result = JSON.parse(completion.choices[0].message.content || '{"faqs":[]}');
-  
+  const result = JSON.parse(
+    completion.choices[0].message.content || '{"faqs":[]}',
+  );
+
   // Handle both {faqs: [...]} and direct array formats
   let faqsArray = [];
   if (Array.isArray(result)) {
@@ -368,23 +383,27 @@ Create FAQs that directly address information in the content above. Make questio
   } else if (result.faq && Array.isArray(result.faq)) {
     faqsArray = result.faq;
   }
-  
+
   // Ensure we have at least 5 FAQs and at most 9
   if (faqsArray.length < 5) {
-    console.warn(`⚠️ Only ${faqsArray.length} FAQs generated, expected minimum 5`);
+    console.warn(
+      `⚠️ Only ${faqsArray.length} FAQs generated, expected minimum 5`,
+    );
   }
   if (faqsArray.length > 9) {
     console.warn(`⚠️ ${faqsArray.length} FAQs generated, limiting to 9`);
     faqsArray = faqsArray.slice(0, 9);
   }
-  
+
   const faqs = faqsArray.map((faq: any, index: number) => ({
     ...faq,
-    id: faq.id || `faq-${index + 1}`
+    id: faq.id || `faq-${index + 1}`,
   }));
 
   console.log(`✅ [Step Generator] Generated ${faqs.length} FAQs`);
-  console.log(`   Questions: ${faqs.map((f: any) => f.question.substring(0, 50)).join(', ')}`);
+  console.log(
+    `   Questions: ${faqs.map((f: any) => f.question.substring(0, 50)).join(", ")}`,
+  );
 
   return faqs;
 }
@@ -399,15 +418,17 @@ export async function generateSEOMetadata(
   headings: any[],
   faqs: any[],
   summary?: string,
-  conclusion?: string
+  conclusion?: string,
 ): Promise<any> {
   console.log(`🔍 [Step Generator] Generating SEO metadata`);
 
   const systemPrompt = `You are an SEO expert. Generate comprehensive SEO metadata.
 
 Requirements:
-- Meta description: 140-155 characters, compelling, includes main keyword
+- Meta description: 140-155 characters, compelling, includes main keyword, and reads naturally
 - Tags: 7-10 relevant, searchable tags (mix of broad and specific terms)
+- The metadata should not feel robotic or formulaic but should read as if written by a human.
+- Ensure all generated content is unique and original, with no repetition or overuse of key phrases.
 
 Return JSON:
 {
@@ -418,21 +439,25 @@ Return JSON:
 Return ONLY valid JSON.`;
 
   const mainTopics = headings
-    .filter(h => h.level === 2)
+    .filter((h) => h.level === 2)
     .slice(0, 3)
-    .map(h => h.text)
+    .map((h) => h.text)
     .join(", ");
 
   // Extract summary and conclusion text for context
-  const summaryText = summary ? summary.replace(/<[^>]*>/g, ' ').substring(0, 200) : '';
-  const conclusionText = conclusion ? conclusion.replace(/<[^>]*>/g, ' ').substring(0, 200) : '';
+  const summaryText = summary
+    ? summary.replace(/<[^>]*>/g, " ").substring(0, 200)
+    : "";
+  const conclusionText = conclusion
+    ? conclusion.replace(/<[^>]*>/g, " ").substring(0, 200)
+    : "";
 
   const userPrompt = `Generate SEO metadata for: "${title}"
 
 Topic: ${topic}
 Main sections: ${mainTopics}
-${summaryText ? `\nSummary: ${summaryText}` : ''}
-${conclusionText ? `\nConclusion: ${conclusionText}` : ''}
+${summaryText ? `\nSummary: ${summaryText}` : ""}
+${conclusionText ? `\nConclusion: ${conclusionText}` : ""}
 
 Make it SEO-optimized and compelling.`;
 
@@ -441,7 +466,7 @@ Make it SEO-optimized and compelling.`;
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
+      { role: "user", content: userPrompt },
     ],
     response_format: { type: "json_object" },
     temperature: 0.7,
@@ -451,7 +476,7 @@ Make it SEO-optimized and compelling.`;
 
   // Set default author
   if (!result.author) {
-    result.author = 'admin';
+    result.author = "admin";
   }
 
   // Set publish date to now
