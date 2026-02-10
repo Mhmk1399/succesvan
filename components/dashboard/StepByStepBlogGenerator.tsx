@@ -123,16 +123,16 @@ const STEPS: StepInfo[] = [
     description: "Create blog outline with headings",
   },
   {
-    key: "images",
-    title: "Generate Images",
-    icon: <FiImage size={16} />,
-    description: "Create images for headings",
-  },
-  {
     key: "content",
     title: "Generate Content",
     icon: <FiFileText size={16} />,
     description: "Write section content",
+  },
+  {
+    key: "images",
+    title: "Generate Images",
+    icon: <FiImage size={16} />,
+    description: "Create images for headings",
   },
   {
     key: "summary",
@@ -315,8 +315,8 @@ export default function StepByStepBlogGenerator({
     // Validate prerequisite steps
     const stepOrder: StepKey[] = [
       "headings",
-      "images",
       "content",
+      "images",
       "summary",
       "conclusion",
       "faq",
@@ -646,7 +646,7 @@ export default function StepByStepBlogGenerator({
     const isLastImage = currentImageIndex >= headingsForImages.length - 1;
 
     if (isLastImage) {
-      // All images done, move to content step
+      // All images done, move to summary step
       const currentIndex = STEPS.findIndex((s) => s.key === "images");
       const nextStep = STEPS[currentIndex + 1].key;
       setCurrentStep(nextStep);
@@ -659,7 +659,7 @@ export default function StepByStepBlogGenerator({
       setCurrentImageIndex(0);
       setGeneratedData(null);
 
-      toast.success("All images generated! Moving to content step...");
+      toast.success("All images generated! Moving to summary step...");
     } else {
       // Move to next image
       const nextIndex = currentImageIndex + 1;
@@ -800,17 +800,27 @@ export default function StepByStepBlogGenerator({
           result.isLastHeading || currentHeadingIndex >= allHeadings.length - 1;
 
         if (isLastHeading) {
-          // All headings done, move to next step
+          // All headings done, prepare headings for images and move to images step
           console.log(
-            `✅ All ${allHeadings.length} headings completed. Moving to summary step...`,
+            `✅ All ${allHeadings.length} headings completed. Preparing headings for images...`,
           );
+
+          // Prepare headings for images (H2-H4)
+          const headingsWithImages =
+            allHeadings.filter((h) => h.level >= 2 && h.level <= 4) || [];
+          setHeadingsForImages(headingsWithImages);
+          newProgress.imageApproved = new Array(headingsWithImages.length).fill(
+            false,
+          );
+
+          // Move to images step
           const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
-          const nextStep = STEPS[currentIndex + 1].key;
+          const nextStep = "images";
           setCurrentStep(nextStep);
           newProgress.currentStep = nextStep;
-          setCurrentHeadingIndex(0); // Reset for potential future use
+          setCurrentHeadingIndex(0);
           setGeneratedData(null);
-          toast.success("All content generated! Moving to summary step...");
+          toast.success("All content generated! Moving to images step...");
         } else {
           // Move to next heading
           const nextIndex = currentHeadingIndex + 1;
@@ -828,15 +838,6 @@ export default function StepByStepBlogGenerator({
         // Other steps - standard flow
         if (currentStep === "headings") {
           newProgress.headingsApproved = true;
-          // When headings are approved, prepare headings for images (H2-H4)
-          const headingsWithImages =
-            result.data.headings?.filter(
-              (h: any) => h.level >= 2 && h.level <= 4,
-            ) || [];
-          setHeadingsForImages(headingsWithImages);
-          newProgress.imageApproved = new Array(headingsWithImages.length).fill(
-            false,
-          );
         } else if (currentStep === "images") newProgress.imagesApproved = true;
         else if (currentStep === "summary") newProgress.summaryApproved = true;
         else if (currentStep === "conclusion")
@@ -851,27 +852,8 @@ export default function StepByStepBlogGenerator({
           setCurrentStep(nextStep);
           newProgress.currentStep = nextStep;
 
-          // When moving from headings to images, ensure we start at image 0
-          if (currentStep === "headings" && nextStep === "images") {
-            setCurrentImageIndex(0);
-            newProgress.currentHeadingIndex = 0;
-            setGeneratedData(null);
-            console.log(
-              `🎨 Starting image generation for ${headingsForImages.length} headings`,
-            );
-          }
-          // When moving from headings to content (skipping images), ensure we start at heading 0
-          else if (currentStep === "headings" && nextStep === "content") {
-            setCurrentHeadingIndex(0);
-            newProgress.currentHeadingIndex = 0;
-            setGeneratedData(null);
-            console.log(
-              `🎯 Starting content generation at heading index 0 of ${allHeadings.length}`,
-            );
-          } else {
-            // For other transitions, clear generated data
-            setGeneratedData(null);
-          }
+          // For other transitions, clear generated data
+          setGeneratedData(null);
           toast.success("Moving to next step...");
         } else {
           // All steps complete
@@ -1314,6 +1296,7 @@ export default function StepByStepBlogGenerator({
                     : "bg-slate-700"
               }`}
               title={step.title}
+              suppressHydrationWarning
             />
           ))}
         </div>

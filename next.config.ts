@@ -14,6 +14,8 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+    // Enable modern formats (AVIF, WebP)
+    formats: ["image/avif", "image/webp"],
   },
   experimental: {
     optimizePackageImports: ["react-icons"],

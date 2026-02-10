@@ -83,10 +83,23 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
         });
 
         // Process mark elements to apply background-color from data-color attribute
-        const processed = sanitized.replace(
+        let processed = sanitized.replace(
           /<mark\s+data-color="([^"]*)"[^>]*>/gi,
           (match, color) => {
             return `<mark style="background-color: ${color};" data-color="${color}">`;
+          },
+        );
+
+        // Add loading="lazy" and decoding="async" to img tags that don't have them
+        processed = processed.replace(
+          /<img([^>]*)src="([^"]*)"([^>]*)>/gi,
+          (match, before, src, after) => {
+            // Check if loading or decoding attributes already exist
+            if (match.includes('loading="') || match.includes("loading='")) {
+              return match;
+            }
+            // Add loading and decoding attributes
+            return `<img${before}src="${src}" loading="lazy" decoding="async"${after}>`;
           },
         );
 
@@ -129,6 +142,21 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
           .blog-content li:not([style*="color"]) {
             color: #d1d5db !important;
           }
+        }
+        /* Image CLS prevention */
+        .blog-content img {
+          aspect-ratio: 16 / 9;
+          width: 100%;
+          height: auto;
+          object-fit: cover;
+          min-height: 200px;
+          background-color: #1e293b;
+        }
+        .blog-content img[src*=".svg"],
+        .blog-content img[style*="width"],
+        .blog-content img[style*="height"] {
+          aspect-ratio: unset;
+          min-height: unset;
         }
         .blog-content h1 {
           color: white !important;

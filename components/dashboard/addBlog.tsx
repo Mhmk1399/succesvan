@@ -999,8 +999,9 @@ const MENTION_SUGGESTIONS = [
 // UTILITY FUNCTIONS
 // ============================================================================
 
-const generateId = () =>
-  `id-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+// Use a simple counter for stable IDs across server/client
+let idCounter = 0;
+const generateId = () => `id-${++idCounter}`;
 
 const calculateReadingTime = (text: string): number => {
   const words = text.trim().split(/\s+/).length;

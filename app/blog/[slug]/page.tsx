@@ -1,4 +1,5 @@
 import { Metadata, ResolvingMetadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import Script from "next/script";
@@ -214,12 +215,17 @@ export default async function BlogDetailPage({ params }: Props) {
             </header>
 
             {/* Featured Image */}
-            <div className="mb-12 rounded-2xl overflow-hidden">
-              <img
+            <div className="mb-12 rounded-2xl overflow-hidden bg-slate-800/50">
+              <Image
                 src={blog.image}
                 alt={blog.title}
                 className="w-full h-auto object-cover rounded-2xl shadow-2xl"
-                loading="lazy"
+                style={{ aspectRatio: "16/9", minHeight: "200px" }}
+                loading="eager"
+                width={1000}
+                height={1000}
+                decoding="async"
+                fetchPriority="high"
               />
             </div>
 
@@ -274,3 +280,4 @@ export default async function BlogDetailPage({ params }: Props) {
     </>
   );
 }
+
