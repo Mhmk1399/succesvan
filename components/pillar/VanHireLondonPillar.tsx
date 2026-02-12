@@ -99,7 +99,10 @@ export function VanHireLondonHero() {
       <div
         className="absolute inset-0 opacity-[0.02]"
         style={{
-          backgroundImage: `linear-linear(rgba(255,255,255,0.1) 1px, transparent 1px), linear-linear(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundImage: `
+  linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+`,
           backgroundSize: "60px 60px",
         }}
       />
@@ -119,11 +122,13 @@ export function VanHireLondonHero() {
             </h1>
 
             <p className="text-sm md:text-base text-slate-300/90 mb-10 leading-relaxed max-w-xl">
-              Need a van in London today? Success Van Hire provides quick,
-              flexible and affordable van rental services across London. Whether
-              you need a van for house moving, business deliveries, airport
-              transport, or furniture collection, we offer a simple booking
-              process and trusted vans ready to go.
+              Looking for van hire in London? Success Van Hire provides fast,
+              flexible and affordable van rental in London and across Greater
+              London. Whether you want to book a van in London for moving house,
+              business deliveries, airport transport, or furniture collection,
+              our London van hire service makes it easy to hire a van in London
+              and reserve a van online with trusted vans available today —
+              including cheap van hire London options when you book early.
             </p>
 
             {/* CTA Buttons */}
@@ -283,8 +288,10 @@ export function WhyChooseSection() {
             </span>
           </h2>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
-            Reliability, transparency, and exceptional service — everything you
-            need for van hire in London.
+            Reliability, transparent pricing, and exceptional service —
+            everything you need for van hire in London. Our London van rental
+            service delivers trusted vans across all areas with competitive
+            rates and easy online van booking.
           </p>
         </div>
 
@@ -429,13 +436,15 @@ export function VanTypesSection() {
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-5">
             Find the{" "}
             <span className="bg-linear-to-r from-[#fe9a00] to-amber-400 bg-clip-text text-transparent">
-              Perfect Van
+              Perfect Van In London
             </span>{" "}
             for Your Job
           </h2>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            Choose the right size — avoid extra trips with too small, or
-            overpaying with too large.
+            Choose the right van size for your London move — avoid extra trips
+            with a van that’s too small, or overpaying for a van that’s too
+            large. Our van hire London fleet and van rental London options make
+            it simple to book the right vehicle for every job.
           </p>
         </div>
 
@@ -443,7 +452,7 @@ export function VanTypesSection() {
         <div className="relative aspect-21/9 rounded-2xl overflow-hidden mb-12 border border-white/5">
           <Image
             src="/assets/images/van-hire-london2.png"
-            alt="Van Fleet London"
+            alt="Van hire London"
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 80vw"
@@ -639,8 +648,10 @@ export function CoverageAreasSection() {
               </span>
             </h2>
             <p className="text-slate-400 text-lg mb-10 leading-relaxed">
-              From Central London to every borough — we deliver and pick up vans
-              wherever you need them. No area is too far.
+              Van hire across all London areas — from Central London to every
+              borough, our van hire London service makes it easy to hire a van
+              in London with flexible pickup and drop-off. No London area is too
+              far for our London van rental service.
             </p>
 
             {/* Accordion Style Areas */}
@@ -717,8 +728,9 @@ export function CoverageAreasSection() {
                     Greater London Coverage
                   </h3>
                   <p className="text-slate-400 mb-8">
-                    We serve all 32 London boroughs plus the City of London.
-                    Flexible pickup and drop-off locations available.
+                    Our van hire London service covers all 32 London boroughs
+                    plus the City of London. Van hire with flexible pickup and
+                    drop-off locations available across Greater London.
                   </p>
 
                   <div className="grid grid-cols-2 gap-4 text-left">
@@ -758,7 +770,7 @@ export function UseCasesSection() {
       title: "Moving House in London",
       icon: FiTruck,
       description:
-        "Moving in London can be stressful with parking restrictions and narrow roads. A van is the easiest and cheapest way to relocate.",
+        "Moving in London can be stressful with parking restrictions and narrow roads. A moving van rental in London is often the easiest and most cost-effective way to relocate.",
       items: [
         "Flat & house moves",
         "Student accommodation",
@@ -773,7 +785,7 @@ export function UseCasesSection() {
       title: "Business Deliveries",
       icon: FiPackage,
       description:
-        "London businesses rely on vans daily. Renting is more cost-effective than buying or leasing a fleet.",
+        "London businesses rely on vans daily. Commercial van hire in London is often more flexible and cost-effective than buying or leasing a fleet.",
       items: [
         "Courier & parcels",
         "Retail deliveries",
@@ -788,7 +800,7 @@ export function UseCasesSection() {
       title: "Furniture & IKEA Pickups",
       icon: FiBox,
       description:
-        "Picking up from IKEA, Facebook Marketplace, or Gumtree? Don't pay for delivery — hire a van instead.",
+        "Picking up from IKEA, Facebook Marketplace, or Gumtree? Book a van in London and avoid expensive delivery fees — reserve a van for a few hours or a day.",
       items: [
         "Sofas & beds",
         "Wardrobes & desks",
@@ -913,7 +925,8 @@ export function BookingStepsSection() {
             </span>
           </h2>
           <p className="text-slate-400 text-lg">
-            From selection to driving away — it takes just minutes.
+            From selection to checkout — book a van in London in minutes with
+            fast confirmation and simple online van booking.
           </p>
         </div>
 
@@ -998,12 +1011,12 @@ export function FAQSection() {
     {
       question: "How much does it cost to hire a van in London?",
       answer:
-        "Van hire prices depend on van size, duration, and location. Small vans start from competitive daily rates, while Luton vans are priced higher due to their larger capacity. Contact Success Van Hire for a quick, personalised quote.",
+        "Van hire prices in London depend on van size, duration, and location. Small van rental in London is usually the most affordable option, while Luton van hire London costs more due to its larger capacity. Contact Success Van Hire to get a quick quote and reserve a van in London with transparent pricing.",
     },
     {
       question: "Can I hire a van in London for one day?",
       answer:
-        "Yes! We offer flexible daily van hire options, as well as weekend and weekly packages to suit every need.",
+        "Yes! You can book a van in London for one day, a weekend, or longer. We offer flexible daily van rental London options plus weekly packages.",
     },
     {
       question: "Do you offer van hire in Central London?",
@@ -1076,10 +1089,12 @@ export function FinalCTASection() {
             </span>
           </h2>
 
-          <p className="text-lg md:text-xl text-slate-300/90 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Whether it's a quick IKEA run or a full house move, Success Van Hire
-            delivers fast booking, fair pricing, and reliable vans across
-            London.
+          <p className="text-sm md:text-base text-slate-300/90 mb-10 max-w-2xl mx-auto leading-relaxed">
+            Whether it’s a quick IKEA run or a full house move, Success Van Hire
+            offers fast van booking in London, fair pricing, and reliable vans
+            across Greater London. Book a van in London in minutes or reserve a
+            van today with flexible daily and weekly van rental options from a
+            trusted London van hire service.
           </p>
 
           {/* Benefits Grid */}
