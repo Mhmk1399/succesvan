@@ -139,7 +139,7 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
         const config = JSON.parse(match[1]);
         configs.push(config);
       } catch (e) {
-        console.error("Failed to parse van config:", e);
+        console.log("Failed to parse van config:", e);
       }
     }
     return configs;
@@ -154,7 +154,7 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
         const cats = data?.data?.data || data?.data || data?.categories || [];
         setCategories(Array.isArray(cats) ? cats : []);
       })
-      .catch((err) => console.error("Failed to fetch categories:", err))
+      .catch((err) => console.log("Failed to fetch categories:", err))
       .finally(() => setIsLoadingCategories(false));
   }, []);
 

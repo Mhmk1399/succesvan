@@ -745,7 +745,7 @@ export async function POST(request: NextRequest) {
           seoData.anchors = generatedAnchors;
           console.log(`   Generated ${generatedAnchors.length} anchor links`);
         } catch (error) {
-          console.error(`   ⚠️ Anchor generation failed:`, error);
+          console.log(`   ⚠️ Anchor generation failed:`, error);
           seoData.anchors = []; // Fallback to empty array
         }
 
@@ -855,7 +855,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ [Blog Generator API] Error:", message);
+    console.log("❌ [Blog Generator API] Error:", message);
 
     return NextResponse.json(
       { success: false, error: message },

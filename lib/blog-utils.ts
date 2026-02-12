@@ -400,7 +400,7 @@ export const fetchAllBlogs = async (): Promise<BlogPostFormatted[]> => {
     const data = await res.json();
     return (data.blogs || []).map((b: any) => convertApiToBlogPost(b));
   } catch (error) {
-    console.error("Error fetching all blogs:", error);
+    console.log("Error fetching all blogs:", error);
     return [];
   }
 };
@@ -529,7 +529,7 @@ export const fetchBlogBySlug = async (
       ) || null
     );
   } catch (error) {
-    console.error("Error fetching blog by slug:", error);
+    console.log("Error fetching blog by slug:", error);
     return null;
   }
 };

@@ -551,7 +551,7 @@ export default function ReservationModal({
           address: parsed.address || "",
         };
       } catch (e) {
-        console.error("Failed to parse user from localStorage");
+        console.log("Failed to parse user from localStorage");
       }
     }
     // fallback به formData
