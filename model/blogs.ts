@@ -10,6 +10,23 @@ const HeadingItemSchema = new mongoose.Schema({
   level: { type: Number, required: true, min: 2, max: 6 }, // H2-H6
   text: { type: String, required: true }, // Heading text (can contain HTML)
   content: { type: String, default: "" }, // Section content (full HTML)
+  type: { type: String, enum: ["normal", "cta", "vanlist"], default: "normal" }, // Section type
+  ctaConfig: {
+    title: { type: String, default: "" },
+    subtitle: { type: String, default: "" },
+    buttonText: { type: String, default: "" },
+    buttonColor: { type: String, default: "" },
+    backgroundColor: { type: String, default: "" },
+    textColor: { type: String, default: "" },
+    link: { type: String, default: "" },
+    phoneNumber: { type: String, default: "" },
+  },
+  vanConfig: {
+    title: { type: String, default: "" },
+    subtitle: { type: String, default: "" },
+    selectedVans: { type: [String], default: [] },
+    showReservation: { type: Boolean, default: false },
+  },
 }, { _id: false });
 
 // Media Item Schema
