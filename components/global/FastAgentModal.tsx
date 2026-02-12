@@ -1098,19 +1098,46 @@ export default function FastAgentModal({
                       Pickup Time
                     </label>
                     <div className="bg-[#0f172b] border border-white/10 rounded-xl h-12">
-                      {bookingForm.startDate && (
-                        <TimeSelect
-                          value={bookingForm.startTime}
-                          onChange={(time) =>
-                            setBookingForm((p) => ({ ...p, startTime: time }))
-                          }
-                          slots={pickupTimeSlots}
-                          reservedSlots={startDateReservedSlots}
-                          selectedDate={new Date(bookingForm.startDate)}
-                          isStartTime={true}
-                          isInline={false}
-                        />
-                      )}
+                      {bookingForm.startDate &&
+                        (() => {
+                          const office = getSelectedOffice();
+                          const date = new Date(bookingForm.startDate);
+                          const dayName = [
+                            "sunday",
+                            "monday",
+                            "tuesday",
+                            "wednesday",
+                            "thursday",
+                            "friday",
+                            "saturday",
+                          ][date.getDay()];
+                          const workingDay = office?.workingTime?.find(
+                            (w: any) => w.day === dayName && w.isOpen,
+                          );
+                          const extensionTimes = workingDay?.pickupExtension
+                            ? {
+                                start: pickupTimeSlots[0],
+                                end: pickupTimeSlots[pickupTimeSlots.length - 1],
+                                normalStart: workingDay.startTime || "00:00",
+                                normalEnd: workingDay.endTime || "23:59",
+                                price: workingDay.pickupExtension.flatPrice,
+                              }
+                            : undefined;
+                          return (
+                            <TimeSelect
+                              value={bookingForm.startTime}
+                              onChange={(time) =>
+                                setBookingForm((p) => ({ ...p, startTime: time }))
+                              }
+                              slots={pickupTimeSlots}
+                              reservedSlots={startDateReservedSlots}
+                              selectedDate={date}
+                              isStartTime={true}
+                              isInline={false}
+                              extensionTimes={extensionTimes}
+                            />
+                          );
+                        })()}
                     </div>
                   </div>
                   <div className="space-y-1.5">
@@ -1118,19 +1145,46 @@ export default function FastAgentModal({
                       Return Time
                     </label>
                     <div className="bg-[#0f172b] border border-white/10 rounded-xl h-12">
-                      {bookingForm.endDate && (
-                        <TimeSelect
-                          value={bookingForm.endTime}
-                          onChange={(time) =>
-                            setBookingForm((p) => ({ ...p, endTime: time }))
-                          }
-                          slots={returnTimeSlots}
-                          reservedSlots={endDateReservedSlots}
-                          selectedDate={new Date(bookingForm.endDate)}
-                          isStartTime={false}
-                          isInline={false}
-                        />
-                      )}
+                      {bookingForm.endDate &&
+                        (() => {
+                          const office = getSelectedOffice();
+                          const date = new Date(bookingForm.endDate);
+                          const dayName = [
+                            "sunday",
+                            "monday",
+                            "tuesday",
+                            "wednesday",
+                            "thursday",
+                            "friday",
+                            "saturday",
+                          ][date.getDay()];
+                          const workingDay = office?.workingTime?.find(
+                            (w: any) => w.day === dayName && w.isOpen,
+                          );
+                          const extensionTimes = workingDay?.returnExtension
+                            ? {
+                                start: returnTimeSlots[0],
+                                end: returnTimeSlots[returnTimeSlots.length - 1],
+                                normalStart: workingDay.startTime || "00:00",
+                                normalEnd: workingDay.endTime || "23:59",
+                                price: workingDay.returnExtension.flatPrice,
+                              }
+                            : undefined;
+                          return (
+                            <TimeSelect
+                              value={bookingForm.endTime}
+                              onChange={(time) =>
+                                setBookingForm((p) => ({ ...p, endTime: time }))
+                              }
+                              slots={returnTimeSlots}
+                              reservedSlots={endDateReservedSlots}
+                              selectedDate={date}
+                              isStartTime={false}
+                              isInline={false}
+                              extensionTimes={extensionTimes}
+                            />
+                          );
+                        })()}
                     </div>
                   </div>
                 </div>
