@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://successvanhire.co.uk/images/van-hire-london.png",
+        url: "https://successvanhire.co.uk/assets/images/van-hire-london.png",
         width: 1200,
         height: 630,
         alt: "Van Hire London - Success Van Hire",
@@ -54,7 +54,7 @@ export default function VanHireLondonPage() {
         id="van-hire-london-schema"
         type="application/ld+json"
         strategy="beforeInteractive"
-        
+
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(vanHireLondonSchema),
         }}
