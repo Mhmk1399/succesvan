@@ -631,26 +631,34 @@ export default function FastAgentModal({
     addonType?: string,
   ) => {
     setAddOnQuantities((prev) => {
-      // If adding (+1) and addon has a type, check if another addon of same type is already selected
-      if (delta > 0 && addonType) {
-        const currentAddonType = addonType;
-        const hasSameTypeSelected = Object.entries(prev).some(([id, qty]) => {
-          if (qty > 0 && id !== addOnId) {
-            const selectedAddon = agentState.availableAddOns?.find(
-              (a) => a._id === id,
-            );
-            return (selectedAddon as any)?.type === currentAddonType;
-          }
-          return false;
-        });
+      const current = prev[addOnId] || 0;
+      
+      // If adding (+1)
+      if (delta > 0) {
+        // Check if already at max quantity (1)
+        if (current >= 1) {
+          return prev;
+        }
+        
+        // If addon has a type, check if another addon of same type is already selected
+        if (addonType) {
+          const hasSameTypeSelected = Object.entries(prev).some(([id, qty]) => {
+            if (qty > 0 && id !== addOnId) {
+              const selectedAddon = agentState.availableAddOns?.find(
+                (a) => a._id === id,
+              );
+              return (selectedAddon as any)?.type === addonType;
+            }
+            return false;
+          });
 
-        if (hasSameTypeSelected) {
-          return prev; // Don't allow selecting another addon of the same type
+          if (hasSameTypeSelected) {
+            return prev;
+          }
         }
       }
 
-      const current = prev[addOnId] || 0;
-      const newVal = Math.max(0, current + delta);
+      const newVal = Math.max(0, Math.min(1, current + delta));
       return { ...prev, [addOnId]: newVal };
     });
   };
@@ -1338,16 +1346,16 @@ export default function FastAgentModal({
                         key={addOn._id}
                         className={`p-4 rounded-xl border transition-all ${
                           isActive
-                            ? "bg-orange-500/5 border-orange-500/50"
+                            ? "bg-orange-500/5 border-orange-500/50 cursor-default"
                             : isTypeDisabled
-                              ? "bg-white/5 border-red-500/30 opacity-60"
-                              : "bg-[#0f172b] border-white/5"
+                              ? "bg-white/5 border-red-500/30 opacity-60 cursor-not-allowed"
+                              : "bg-[#0f172b] border-white/5 cursor-pointer"
                         }`}
-                        onClick={() =>
-                          !isActive &&
-                          !isTypeDisabled &&
-                          handleAddOnQuantityChange(addOn._id, 1, addonType)
-                        }
+                        onClick={() => {
+                          if (!isActive && !isTypeDisabled) {
+                            handleAddOnQuantityChange(addOn._id, 1, addonType);
+                          }
+                        }}
                       >
                         <div className="flex justify-between items-start mb-3">
                           <div>
@@ -1374,9 +1382,10 @@ export default function FastAgentModal({
                         <div className="flex justify-end">
                           <div className="flex items-center gap-3 bg-[#1e293b] rounded-lg p-1 border border-white/10">
                             <button
-                              onClick={() =>
-                                handleAddOnQuantityChange(addOn._id, -1)
-                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddOnQuantityChange(addOn._id, -1);
+                              }}
                               disabled={quantity === 0}
                               className="w-8 h-8 flex items-center justify-center bg-white/5 rounded hover:bg-white/10 text-white disabled:opacity-30"
                             >
@@ -1386,13 +1395,14 @@ export default function FastAgentModal({
                               {quantity}
                             </span>
                             <button
-                              onClick={() =>
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 handleAddOnQuantityChange(
                                   addOn._id,
                                   1,
                                   addonType,
-                                )
-                              }
+                                );
+                              }}
                               disabled={quantity >= 1 || isTypeDisabled}
                               className="w-8 h-8 flex items-center justify-center bg-orange-500 rounded hover:bg-orange-600 text-white disabled:bg-gray-700 disabled:opacity-50"
                             >
@@ -1406,9 +1416,10 @@ export default function FastAgentModal({
                 </div>
                 <button
                   onClick={handleConfirmAddOns}
-                  className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-xl mt-2 shadow-lg"
+                  disabled={isLoading}
+                  className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-xl mt-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Confirm Add-ons
+                  {isLoading ? "Processing..." : "Confirm Add-ons"}
                 </button>
               </div>
             )}

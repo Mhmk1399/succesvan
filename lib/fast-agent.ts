@@ -82,6 +82,7 @@ export interface AddOnOption {
   _id: string;
   name: string;
   description?: string;
+  type?: string;
   pricingType: "flat" | "tiered";
   flatPrice?: {
     amount: number;
@@ -614,6 +615,7 @@ async function handleVoiceParsed(
     _id: a._id.toString(),
     name: a.name,
     description: a.description,
+    type: a.type,
     pricingType: a.pricingType,
     flatPrice: a.flatPrice,
     tieredPrice: a.tieredPrice,
@@ -1119,6 +1121,7 @@ async function handleSubmitBooking(
       _id: a._id.toString(),
       name: a.name,
       description: a.description,
+      type: a.type,
       pricingType: a.pricingType,
       flatPrice: a.flatPrice,
       tieredPrice: a.tieredPrice,
@@ -1293,6 +1296,7 @@ Examples of date parsing:
       _id: a._id.toString(),
       name: a.name,
       description: a.description,
+      type: a.type,
       pricingType: a.pricingType,
       flatPrice: a.flatPrice,
       tieredPrice: a.tieredPrice,
