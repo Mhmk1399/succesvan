@@ -27,10 +27,6 @@ export default function Breadcrumbs() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (hiddenPaths.includes(pathname)) {
-    return null;
-  }
-
   const segments = pathname
     .split("/")
     .filter(Boolean)
@@ -41,7 +37,40 @@ export default function Breadcrumbs() {
       href: "/" + arr.slice(0, index + 1).join("/"),
     }));
 
-  // Hide on dashboard pages
+  useEffect(() => {
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: typeof window !== "undefined" ? window.location.origin : "",
+        },
+        ...segments.map((segment, index) => ({
+          "@type": "ListItem",
+          position: index + 2,
+          name: segment.label,
+          item: typeof window !== "undefined" ? `${window.location.origin}${segment.href}` : "",
+        })),
+      ],
+    };
+
+    let script = document.getElementById("breadcrumb-schema") as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement("script");
+      script.id = "breadcrumb-schema";
+      script.type = "application/ld+json";
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(breadcrumbSchema);
+  }, [pathname, segments]);
+
+  if (hiddenPaths.includes(pathname)) {
+    return null;
+  }
+
   if (
     pathname.startsWith("/dashboard/blog/edit") ||
     pathname === "/customerDashboard" ||

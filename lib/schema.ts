@@ -580,3 +580,230 @@ export const vanHireLondonSchema = {
     "Looking for van hire in London? Success Van Hire offers affordable van rental in London with small, medium, large & Luton vans. Fast booking, flexible hire, same-day availability.",
   url: "https://successvanhire.co.uk/van-hire-london",
 };
+
+export const vanHireLondonFAQSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "How much does it cost to hire a van in London?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Van hire prices in London depend on van size, duration, and location. Small vans are usually the most affordable option, while Luton vans cost more due to their larger capacity. Contact Success Van Hire for a quick, personalised quote.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can I hire a van in London for one day?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. We offer flexible daily van hire options, as well as weekend and weekly packages to suit every need.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Do you offer van hire in Central London?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. We provide comprehensive coverage across Central London, including Westminster, Paddington, Kings Cross, and major areas throughout Greater London.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What size van do I need for moving house?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "For a studio or 1-bedroom flat, a medium van is typically sufficient. For 2+ bedroom homes or large amounts of furniture, we recommend a large or Luton van. Our team can help you choose the right size.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can I hire a van in London for business deliveries?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. We offer both short-term and long-term business rental options with competitive rates and flexible packages designed for commercial use.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is van hire available on weekends?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, weekend van hire is available. We recommend booking in advance to guarantee availability, especially during busy periods.",
+      },
+    },
+  ],
+};
+
+export const homeSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Van Hire London - Success Van Hire",
+  serviceType: "Van Hire Service",
+  provider: {
+    "@type": "AutoRental",
+    "@id": "https://successvanhire.co.uk/",
+    name: "Success Van Hire",
+    url: "https://successvanhire.co.uk/",
+    telephone: "+44 20 3011 1198",
+    email: "Info@successvanhire.com",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Strata House, Waterloo Road, London, NW2 7UH",
+      addressLocality: "London",
+      addressRegion: "Greater London",
+      postalCode: "NW2 7UH",
+      addressCountry: "GB",
+    },
+    image: "https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png",
+    sameAs: [
+      "https://www.facebook.com/topvanhire",
+      "https://www.instagram.com/success.van.hire",
+      "https://twitter.com/MatinDiba?t=GKR1BWNSQK6yB2Rj4W5Jhg&s=09",
+    ],
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.9",
+      ratingCount: "5000",
+    },
+  },
+  areaServed: [
+    {
+      "@type": "City",
+      name: "London",
+    },
+    {
+      "@type": "AdministrativeArea",
+      name: "Greater London",
+    },
+  ],
+  availableChannel: {
+    "@type": "ServiceChannel",
+    serviceUrl: "https://successvanhire.co.uk/",
+    availableLanguage: ["en"],
+  },
+  description:
+    "Van hire London - affordable van rental with small, medium, large & Luton vans. Fast booking, flexible hire, same-day availability across all London areas.",
+  url: "https://successvanhire.co.uk/",
+  image: "https://svh-bucket-s3.s3.eu-west-2.amazonaws.com/images/newww.png",
+  offers: [
+    {
+      "@type": "Offer",
+      name: "Small Van Hire",
+      description: "City van hire for small deliveries and furniture pickups",
+      priceCurrency: "GBP",
+      price: "From £25",
+    },
+    {
+      "@type": "Offer",
+      name: "Medium Van Hire",
+      description:
+        "Transit van hire for 1-bed flat moves and business deliveries",
+      priceCurrency: "GBP",
+      price: "From £35",
+    },
+    {
+      "@type": "Offer",
+      name: "Large Van Hire",
+      description: "Long wheelbase van hire for house removals",
+      priceCurrency: "GBP",
+      price: "From £45",
+    },
+    {
+      "@type": "Offer",
+      name: "Luton Van Hire",
+      description:
+        "Box van hire for full house removals and commercial logistics",
+      priceCurrency: "GBP",
+      price: "From £55",
+    },
+  ],
+};
+
+export const homeFAQSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What types of vans do you offer for rental?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We offer a range of vans including Small Vans for compact and efficient light deliveries, Medium Vans for versatile cargo space and comfortable seating, Large Vans for heavy-duty major relocations with maximum load capacity and tail lift options, and Luton Vans as a premium choice for house moves with the largest capacity, tail lift included, and climate control.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How long has Success Van Hire been in business?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We have been London's trusted van rental specialist for over 15 years, with 10+ years of experience specializing in long-term and short-term business van rentals.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What driving licences do you accept?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We accept full UK and EU driving licences with a quick and easy verification process.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Are your vans eco-friendly?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, all our vans meet EU6 emission standards and are part of our eco-friendly fleet, as we are committed to environmental protection.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What insurance and guarantees are provided?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Your rental reservation is 100% secure with comprehensive insurance coverage. All vans are fully insured for self-drive with complete peace of mind.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What is your pricing policy?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We offer the best value for money with a wide range of prices to fit every budget. Our pricing is transparent with no hidden charges.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How many vehicles are in your fleet?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We have a modern fleet of 50+ vehicles, all maintained to the highest standards.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What are your availability and support options?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We provide 24/7 availability, so you can book anytime and pick up anytime. We offer round-the-clock support for all your needs.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What services do you provide for different needs?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "From small deliveries to house moves, we offer flexible solutions with comprehensive van rental options, including self-drive rentals with exceptional customer service.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How can I contact you to book or get more information?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "You can reserve your van online or call us at +44 20 3011 1198. We're always here to help with round-the-clock support.",
+      },
+    },
+  ],
+};

@@ -10,7 +10,7 @@ import {
   FAQSection,
   FinalCTASection,
 } from "@/components/pillar/VanHireLondonPillar";
-import { vanHireLondonSchema } from "@/lib/schema";
+import { vanHireLondonFAQSchema, vanHireLondonSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://successvanhire.co.uk"),
@@ -50,13 +50,23 @@ export const metadata: Metadata = {
 export default function VanHireLondonPage() {
   return (
     <main className="bg-slate-950">
+      {/* Service/Business Schema */}
       <Script
         id="van-hire-london-schema"
         type="application/ld+json"
         strategy="beforeInteractive"
-
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(vanHireLondonSchema),
+        }}
+      />
+
+      {/* FAQ Schema */}
+      <Script
+        id="van-hire-london-faq-schema"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(vanHireLondonFAQSchema),
         }}
       />
 
