@@ -287,7 +287,7 @@ export default function BlogManagement() {
         hasMore: data.pagination.hasMore,
       }));
     } catch (error) {
-      console.log("Fetch blogs error:", error);
+      console.error("Fetch blogs error:", error);
       showToast.error("Failed to load blogs");
     } finally {
       setLoading(false);
@@ -361,7 +361,7 @@ export default function BlogManagement() {
       setBlogForStatus(null);
       fetchBlogs();
     } catch (error: any) {
-      console.log("Toggle publish error:", error);
+      console.error("Toggle publish error:", error);
       showToast.error(error.message || "Failed to update blog status");
     } finally {
       setUpdatingStatus(false);
@@ -405,7 +405,7 @@ export default function BlogManagement() {
       setBlogToDelete(null);
       fetchBlogs();
     } catch (error: any) {
-      console.log("Delete blog error:", error);
+      console.error("Delete blog error:", error);
       showToast.error(error.message || "Failed to delete blog");
     } finally {
       setDeletingId(null);

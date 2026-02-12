@@ -237,7 +237,7 @@ export default function StepByStepBlogGenerator({
         setGeneratedData(result.data);
         return result;
       } catch (error: any) {
-        console.log("Step API Error:", error);
+        console.error("Step API Error:", error);
         toast.error(error.message || "Failed to generate content");
         throw error;
       } finally {
@@ -479,7 +479,7 @@ export default function StepByStepBlogGenerator({
       }
     } catch (error: any) {
       // Better error handling
-      console.log("Generation error:", error);
+      console.error("Generation error:", error);
       if (error.message?.includes("Blog ID")) {
         toast.error(
           'Please complete "Generate Structure" step first to get a Blog ID.',
@@ -635,7 +635,7 @@ export default function StepByStepBlogGenerator({
 
       toast.success(`Image generated for: ${headingForImage.text}`);
     } catch (error: any) {
-      console.log("Image generation error:", error);
+      console.error("Image generation error:", error);
       toast.error(error.message || "Failed to generate image");
     } finally {
       setLoading(false);
@@ -814,7 +814,6 @@ export default function StepByStepBlogGenerator({
           );
 
           // Move to images step
-          const currentIndex = STEPS.findIndex((s) => s.key === currentStep);
           const nextStep = "images";
           setCurrentStep(nextStep);
           newProgress.currentStep = nextStep;

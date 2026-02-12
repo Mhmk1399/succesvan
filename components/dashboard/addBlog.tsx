@@ -3392,7 +3392,7 @@ const VanListSettings = ({
           const cats = data?.data?.data || data?.data || data?.categories || [];
           setVanCategories(Array.isArray(cats) ? cats : []);
         })
-        .catch((err) => console.log("Failed to fetch categories:", err))
+        .catch((err) => console.error("Failed to fetch categories:", err))
         .finally(() => setIsLoadingVans(false));
     }
   }, [showVanSelector, vanCategories.length]);
@@ -3676,7 +3676,7 @@ export default function AIBlogBuilder({
 
         showToast.success("Blog loaded successfully!");
       } catch (error) {
-        console.log("❌ [AIBlogBuilder] Error loading blog:", error);
+        console.error("❌ [AIBlogBuilder] Error loading blog:", error);
         showToast.error("Failed to load blog data");
       } finally {
         setLoading(false);
@@ -3804,7 +3804,7 @@ export default function AIBlogBuilder({
         });
       }
     } catch (error: any) {
-      console.log("Save error:", error);
+      console.error("Save error:", error);
       showToast.error(error.message || "Failed to save blog");
     } finally {
       setSaving(false);
@@ -4092,7 +4092,7 @@ export default function AIBlogBuilder({
 
       showToast.success("Image deleted");
     } catch (error) {
-      console.log("Error deleting media:", error);
+      console.error("Error deleting media:", error);
       showToast.error("Failed to delete image");
     }
   };

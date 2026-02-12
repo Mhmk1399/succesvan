@@ -183,12 +183,22 @@ function assembleContentFromObject(contentObj: any): string {
       // Handle CTA Block
       if (h.type === "cta" && h.ctaConfig) {
         const cta = h.ctaConfig;
-        parts.push(`<div id="section-${h.id || ""}" class="cta-block my-8 rounded-2xl p-8  text-center" style="background-color: ${cta.backgroundColor}">`);
-        parts.push(`  <h2 class="font-bold text-2xl mb-3" style="color: ${cta.textColor}">${cta.title}</h2>`);
-        parts.push(`  <p class="text-sm mb-6 opacity-90" style="color: ${cta.textColor}">${cta.subtitle}</p>`);
-        parts.push(`  <a href="${cta.link}" class="inline-block px-8 py-3 rounded-xl font-semibold text-sm transition-transform hover:scale-105" style="background-color: ${cta.buttonColor}; color: ${cta.backgroundColor}">${cta.buttonText}</a>`);
+        parts.push(
+          `<div id="section-${h.id || ""}" class="cta-block my-8 rounded-2xl p-8  text-center" style="background-color: ${cta.backgroundColor}">`,
+        );
+        parts.push(
+          `  <h2 class="font-bold text-2xl mb-3" style="color: ${cta.textColor}">${cta.title}</h2>`,
+        );
+        parts.push(
+          `  <p class="text-sm mb-6 opacity-90" style="color: ${cta.textColor}">${cta.subtitle}</p>`,
+        );
+        parts.push(
+          `  <a href="${cta.link}" class="inline-block px-8 py-3 rounded-xl font-semibold text-sm transition-transform hover:scale-105" style="background-color: ${cta.buttonColor}; color: ${cta.backgroundColor}">${cta.buttonText}</a>`,
+        );
         if (cta.phoneNumber) {
-          parts.push(`  <p class="text-xs mt-4 opacity-75" style="color: ${cta.textColor}">${cta.phoneNumber}</p>`);
+          parts.push(
+            `  <p class="text-xs mt-4 opacity-75" style="color: ${cta.textColor}">${cta.phoneNumber}</p>`,
+          );
         }
         parts.push(`</div>`);
         return;
@@ -197,17 +207,31 @@ function assembleContentFromObject(contentObj: any): string {
       // Handle Van List Block
       if (h.type === "vanlist" && h.vanConfig) {
         const vanConfig = h.vanConfig;
-        parts.push(`<div id="section-${h.id || ""}" class="van-list-block my-8 rounded-2xl p-8 border border-slate-700" style="background-color: #0f172b">`);
+        parts.push(
+          `<div id="section-${h.id || ""}" class="van-list-block my-8 rounded-2xl p-1 border border-slate-700" style="background-color: #0f172b">`,
+        );
         parts.push(`  <div class="text-center mb-8">`);
-        parts.push(`    <h2 class="font-bold text-2xl mb-2 text-white">${vanConfig.title}</h2>`);
-        parts.push(`    <p class="text-sm text-slate-400">${vanConfig.subtitle}</p>`);
+        parts.push(
+          `    <h2 class="font-bold text-2xl mb-2 text-[#0f172b]">${vanConfig.title}</h2>`,
+        );
+        parts.push(
+          `    <p class="text-sm text-slate-400">${vanConfig.subtitle}</p>`,
+        );
         parts.push(`  </div>`);
-        parts.push(`  <div class="van-listing-container" data-van-config='${JSON.stringify(vanConfig)}'>`);
+        parts.push(
+          `  <div class="van-listing-container" data-van-config='${JSON.stringify(vanConfig)}'>`,
+        );
         parts.push(`    <!-- Van listing will be rendered here -->`);
         if (vanConfig.showReservation) {
-          parts.push(`    <div class="reservation-panel-placeholder mt-8 p-6 bg-slate-800/50 rounded-xl text-center">`);
-          parts.push(`      <p class="text-slate-400 mb-4">Ready to book? Select your van above and complete your reservation.</p>`);
-          parts.push(`      <button class="px-6 py-3 bg-[#fe9a00] text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors">Start Reservation</button>`);
+          parts.push(
+            `    <div class="reservation-panel-placeholder mt-8 p-6 bg-slate-800/50 rounded-xl text-center">`,
+          );
+          parts.push(
+            `      <p class="text-slate-400 mb-4">Ready to book? Select your van above and complete your reservation.</p>`,
+          );
+          parts.push(
+            `      <button class="px-6 py-3 bg-[#fe9a00] text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors">Start Reservation</button>`,
+          );
           parts.push(`    </div>`);
         }
         parts.push(`  </div>`);
@@ -233,7 +257,7 @@ function assembleContentFromObject(contentObj: any): string {
       anchors,
     );
     parts.push(
-      `<div class="p-8 rounded-2xl mb-16 border border-slate-700 shadow-xl">`,
+      `<div class="p-8 rounded-2xl my-16 border border-slate-700 shadow-xl">`,
     );
     parts.push(`<h2 class="font-bold text-2xl text-white">🎯 Conclusion</h2>`);
     parts.push(`  <div class="flex items-start gap-4">`);
@@ -400,7 +424,7 @@ export const fetchAllBlogs = async (): Promise<BlogPostFormatted[]> => {
     const data = await res.json();
     return (data.blogs || []).map((b: any) => convertApiToBlogPost(b));
   } catch (error) {
-    console.log("Error fetching all blogs:", error);
+    console.error("Error fetching all blogs:", error);
     return [];
   }
 };
@@ -529,7 +553,7 @@ export const fetchBlogBySlug = async (
       ) || null
     );
   } catch (error) {
-    console.log("Error fetching blog by slug:", error);
+    console.error("Error fetching blog by slug:", error);
     return null;
   }
 };

@@ -87,7 +87,7 @@ export const GET = async (req: NextRequest) => {
       },
     }, { status: 200 });
   } catch (error) {
-    console.log("GET_BLOGS_ERROR", error);
+    console.error("GET_BLOGS_ERROR", error);
     return NextResponse.json(
       { message: "Error fetching blogs", error },
       { status: 500 },

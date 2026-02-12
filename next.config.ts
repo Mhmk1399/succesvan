@@ -13,9 +13,23 @@ const nextConfig: NextConfig = {
         hostname: "svh-bucket-s3.s3.eu-west-2.amazonaws.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "*.s3.amazonaws.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.s3.eu-west-2.amazonaws.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.s3.eu-north-1.amazonaws.com",
+        pathname: "/**",
+      },
     ],
-    // Enable modern formats (AVIF, WebP)
-    formats: ["image/avif", "image/webp"],
+    
   },
   experimental: {
     optimizePackageImports: ["react-icons"],

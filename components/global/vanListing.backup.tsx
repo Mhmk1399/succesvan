@@ -58,7 +58,7 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-interface Category extends VanData {
+export interface Category extends VanData {
   expert?: string;
   properties?: { key: string; value: string }[];
   purpose?: string;

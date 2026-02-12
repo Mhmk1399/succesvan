@@ -56,7 +56,7 @@ async function fetchBlogCanonicalURLs(): Promise<Array<{ url: string; title: str
       };
     });
   } catch (error) {
-    console.log('Error fetching blog URLs:', error);
+    console.error('Error fetching blog URLs:', error);
     return [];
   }
 }
@@ -178,7 +178,7 @@ Focus on specific, actionable terms rather than generic headings.`;
     aiAnchors = result.anchors || [];
     console.log(`   🤖 AI generated ${aiAnchors.length} anchor keywords`);
   } catch (error) {
-    console.log('   ⚠️ AI keyword generation failed:', error);
+    console.error('   ⚠️ AI keyword generation failed:', error);
     // Fall back to initial anchors
     aiAnchors = initialAnchors.map(a => ({ keyword: a.keyword }));
   }
@@ -290,7 +290,7 @@ Provide trustworthy, relevant external links that add credibility.`;
         }
       }
     } catch (error) {
-      console.log('   ⚠️ External link generation failed:', error);
+      console.error('   ⚠️ External link generation failed:', error);
       // Add fallbacks for failed external links
       for (const need of needsExternalLinks) {
         updatedAnchors.push({

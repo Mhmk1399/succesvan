@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.log("❌ [Image Generator API] Error:", message);
+    console.error("❌ [Image Generator API] Error:", message);
 
     return NextResponse.json(
       {
@@ -266,7 +266,7 @@ export async function PUT(request: NextRequest) {
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         errors.push({ headingId, error: message });
-        console.log(`   ❌ Failed for heading ${headingId}:`, message);
+        console.error(`   ❌ Failed for heading ${headingId}:`, message);
       }
     }
 
@@ -295,7 +295,7 @@ export async function PUT(request: NextRequest) {
 
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.log("❌ [Image Generator API] Batch error:", message);
+    console.error("❌ [Image Generator API] Batch error:", message);
 
     return NextResponse.json(
       { success: false, error: message },
@@ -354,7 +354,7 @@ export async function DELETE(request: NextRequest) {
         await deleteImage(mediaItem.s3Key);
         console.log(`✅ [Image Generator] Deleted from S3: ${mediaItem.s3Key}`);
       } catch (s3Error) {
-        console.log("❌ [Image Generator] Failed to delete from S3:", s3Error);
+        console.error("❌ [Image Generator] Failed to delete from S3:", s3Error);
         // Continue anyway - we still want to remove from database
       }
     }
@@ -378,7 +378,7 @@ export async function DELETE(request: NextRequest) {
 
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.log("❌ [Image Generator API] Delete error:", message);
+    console.error("❌ [Image Generator API] Delete error:", message);
 
     return NextResponse.json(
       { success: false, error: message },

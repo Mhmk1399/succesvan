@@ -71,7 +71,7 @@ export default function BlogListing() {
         setBlogPosts(data.blogs || []);
         setTotalPosts(data.total || (data.blogs ? data.blogs.length : 0));
       } catch (err) {
-        console.log("Error fetching blogs:", err);
+        console.error("Error fetching blogs:", err);
         setError("Failed to load blogs. Please try again later.");
       } finally {
         // Add a tiny artificial delay if fetch is too fast to prevent flashing
