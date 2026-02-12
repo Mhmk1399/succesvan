@@ -24,7 +24,7 @@ export default function VanHireNorthWestLondon() {
       <Script
         id="north-west-london-schema"
         type="application/ld+json"
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(northWestLondon),
         }}

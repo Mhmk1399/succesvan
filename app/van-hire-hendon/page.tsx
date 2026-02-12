@@ -24,7 +24,7 @@ export default function VanHireHendon() {
       <Script
         id="hendon-schema"
         type="application/ld+json"
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(hendon),
         }}

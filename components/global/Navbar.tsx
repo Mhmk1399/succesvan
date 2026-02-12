@@ -39,6 +39,7 @@ const menuItems: MenuItem[] = [
     href: "#services",
     children: [
       { label: "Reservation", href: "/reservation" },
+      { label: "Van Hire London", href: "/van-hire-london" },
       { label: "Automatic Van Rental", href: "/automatic-van-hire-london" },
     ],
   },

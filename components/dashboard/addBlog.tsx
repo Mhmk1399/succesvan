@@ -88,7 +88,12 @@ import {
   FiGrid,
   FiSmile,
   FiArrowLeft,
+  FiFileText,
+  FiPhone,
+  FiChevronRight,
+  FiTruck,
 } from "react-icons/fi";
+import { GiTruck } from "react-icons/gi";
 import { showToast } from "@/lib/toast";
 
 // ============================================================================
@@ -489,6 +494,27 @@ interface HeadingItem {
   level: number;
   text: string;
   content: string;
+  type?: "normal" | "cta" | "vanlist";
+  ctaConfig?: CTAConfig;
+  vanConfig?: VanListConfig;
+}
+
+interface CTAConfig {
+  title: string;
+  subtitle: string;
+  phoneNumber: string;
+  buttonText: string;
+  link: string;
+  backgroundColor: string;
+  textColor: string;
+  buttonColor: string;
+}
+
+interface VanListConfig {
+  title: string;
+  subtitle: string;
+  selectedVans: string[]; // Array of van category IDs
+  showReservation: boolean;
 }
 
 interface FAQItem {
@@ -2500,6 +2526,90 @@ const Tag = ({ text, onDelete }: { text: string; onDelete: () => void }) => (
 );
 
 // ============================================================================
+// SECTION TYPE MODAL
+// ============================================================================
+
+interface SectionTypeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectType: (type: "normal" | "cta" | "vanlist") => void;
+}
+
+const SectionTypeModal = ({ isOpen, onClose, onSelectType }: SectionTypeModalProps) => {
+  if (!isOpen) return null;
+
+  const sectionTypes = [
+    {
+      type: "normal" as const,
+      title: "Normal Section",
+      description: "Add a regular content section with heading and text",
+      icon: <FiFileText size={24} />,
+      color: "bg-blue-500",
+    },
+    {
+      type: "cta" as const,
+      title: "Call to Action",
+      description: "Add a CTA block with phone number and link",
+      icon: <FiPhone size={24} />,
+      color: "bg-orange-500",
+    },
+    {
+      type: "vanlist" as const,
+      title: "Van List",
+      description: "Display available vans with booking functionality",
+      icon: <GiTruck size={24} />,
+      color: "bg-green-500",
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative bg-[#0f172b] border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold text-white">Add Section</h3>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
+          >
+            <FiX size={20} />
+          </button>
+        </div>
+        
+        <div className="space-y-3">
+          {sectionTypes.map((item) => (
+            <button
+              key={item.type}
+              onClick={() => {
+                onSelectType(item.type);
+                onClose();
+              }}
+              className="w-full flex items-center gap-4 p-4 bg-[#1e293b] border border-slate-700 rounded-xl hover:border-[#fe9a00] hover:bg-[#252d3d] transition-all text-left group"
+            >
+              <div className={`w-12 h-12 rounded-xl ${item.color} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform`}>
+                {item.icon}
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-white group-hover:text-[#fe9a00] transition-colors">
+                  {item.title}
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {item.description}
+                </p>
+              </div>
+              <FiChevronRight size={18} className="text-slate-500 group-hover:text-[#fe9a00] transition-colors" />
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
 // CONTENT ISSUES ANALYZER
 // ============================================================================
 
@@ -2807,9 +2917,10 @@ const ContentSection = ({
     console.log(`📝 ContentSection ${index} received heading:`, {
       id: heading.id,
       text: heading.text,
+      type: heading.type,
       contentLength: heading.content?.length || 0,
     });
-  }, [heading.id, heading.content, index, heading.text]);
+  }, [heading.id, heading.content, index, heading.text, heading.type]);
 
   const handleInsertMedia = (type: "image" | "video" | "all") => {
     onOpenMediaPicker(type, (media) => {
@@ -2821,6 +2932,234 @@ const ContentSection = ({
     });
   };
 
+  // Render CTA Block
+  const renderCTABlock = () => {
+    if (heading.type !== "cta") return null;
+    const config = heading.ctaConfig || {
+      title: "Book Your Van Today",
+      subtitle: "Ready to hit the road? Call us now for the best deals!",
+      phoneNumber: "+44 20 3011 1198",
+      buttonText: "Call Now",
+      link: "tel:+442012345678",
+      backgroundColor: "#fe9a00",
+      textColor: "#ffffff",
+      buttonColor: "#ffffff",
+    };
+
+    return (
+      <div 
+        className="rounded-xl p-6 text-center"
+        style={{ backgroundColor: config.backgroundColor }}
+      >
+        <h4 
+          className="text-xl font-bold mb-2"
+          style={{ color: config.textColor }}
+        >
+          {config.title}
+        </h4>
+        <p 
+          className="text-sm mb-4 opacity-90"
+          style={{ color: config.textColor }}
+        >
+          {config.subtitle}
+        </p>
+        <a
+          href={config.link}
+          className="inline-block px-6 py-2 rounded-lg font-semibold text-sm"
+          style={{ 
+            backgroundColor: config.buttonColor,
+            color: config.backgroundColor 
+          }}
+        >
+          {config.buttonText}
+        </a>
+        <p 
+          className="text-xs mt-3 opacity-75"
+          style={{ color: config.textColor }}
+        >
+          {config.phoneNumber}
+        </p>
+      </div>
+    );
+  };
+
+  // Render Van List Block
+  const renderVanListBlock = () => {
+    if (heading.type !== "vanlist") return null;
+    const config = heading.vanConfig || {
+      title: "Choose Your Perfect Van",
+      subtitle: "Browse our fleet and book online",
+      selectedVans: [],
+      showReservation: true,
+    };
+
+    return (
+      <div className="bg-[#0f172b] rounded-xl p-6 border border-slate-700">
+        <div className="text-center mb-6">
+          <h4 className="text-xl font-bold text-white mb-2">{config.title}</h4>
+          <p className="text-sm text-slate-400">{config.subtitle}</p>
+        </div>
+        <div className="bg-slate-800/50 rounded-lg p-8 text-center">
+          <FiTruck size={48} className="mx-auto text-slate-600 mb-4" />
+          <p className="text-slate-400 mb-2">Van listing preview</p>
+          <p className="text-xs text-slate-500">
+            {config.selectedVans.length > 0 
+              ? `${config.selectedVans.length} vans selected`
+              : "No vans selected yet"
+            }
+          </p>
+          <button
+            onClick={() => {
+              // In a real implementation, this would open a van selection modal
+              alert("Van selection would open here");
+            }}
+            className="mt-4 px-4 py-2 bg-[#fe9a00] text-white rounded-lg text-sm font-medium hover:bg-orange-600 transition-colors"
+          >
+            Select Vans
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Show CTA or Van List block if those types
+  if (heading.type === "cta") {
+    return (
+      <div className="bg-[#1e293b]/50 rounded-xl border border-slate-700 hover:border-[#fe9a00]/30 transition-all overflow-hidden">
+        <div className="flex items-center gap-2 p-3 bg-[#0f172b]/50 border-b border-slate-700">
+          <div className="flex flex-col gap-0.5">
+            <button
+              onClick={() => onMove("up")}
+              disabled={isFirst}
+              className="text-slate-500 hover:text-white disabled:opacity-30 p-0.5"
+            >
+              <FiChevronUp size={12} />
+            </button>
+            <button
+              onClick={() => onMove("down")}
+              disabled={isLast}
+              className="text-slate-500 hover:text-white disabled:opacity-30 p-0.5"
+            >
+              <FiChevronDown size={12} />
+            </button>
+          </div>
+
+          <div className="w-7 h-7 rounded-lg bg-orange-500/20 text-orange-500 flex items-center justify-center text-xs font-bold">
+            {index + 1}
+          </div>
+
+          <span className="bg-orange-500/20 text-orange-500 text-xs font-bold px-2 py-1 rounded-lg">
+            CTA
+          </span>
+
+          <div className="flex-1">
+            <HeadingEditor
+              text={heading.text}
+              onChange={(text) => onUpdate({ text })}
+              level={heading.level}
+            />
+          </div>
+
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-700"
+          >
+            {isCollapsed ? (
+              <FiChevronDown size={14} />
+            ) : (
+              <FiChevronUp size={14} />
+            )}
+          </button>
+          <button
+            onClick={onDelete}
+            className="p-1.5 rounded-md text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+          >
+            <FiTrash2 size={14} />
+          </button>
+        </div>
+
+        {!isCollapsed && (
+          <div className="p-4">
+            {renderCTABlock()}
+            <CTASettings
+              config={heading.ctaConfig}
+              onUpdate={(ctaConfig) => onUpdate({ ctaConfig })}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (heading.type === "vanlist") {
+    return (
+      <div className="bg-[#1e293b]/50 rounded-xl border border-slate-700 hover:border-[#fe9a00]/30 transition-all overflow-hidden">
+        <div className="flex items-center gap-2 p-3 bg-[#0f172b]/50 border-b border-slate-700">
+          <div className="flex flex-col gap-0.5">
+            <button
+              onClick={() => onMove("up")}
+              disabled={isFirst}
+              className="text-slate-500 hover:text-white disabled:opacity-30 p-0.5"
+            >
+              <FiChevronUp size={12} />
+            </button>
+            <button
+              onClick={() => onMove("down")}
+              disabled={isLast}
+              className="text-slate-500 hover:text-white disabled:opacity-30 p-0.5"
+            >
+              <FiChevronDown size={12} />
+            </button>
+          </div>
+
+          <div className="w-7 h-7 rounded-lg bg-green-500/20 text-green-500 flex items-center justify-center text-xs font-bold">
+            {index + 1}
+          </div>
+
+          <span className="bg-green-500/20 text-green-500 text-xs font-bold px-2 py-1 rounded-lg">
+            VAN LIST
+          </span>
+
+          <div className="flex-1">
+            <HeadingEditor
+              text={heading.text}
+              onChange={(text) => onUpdate({ text })}
+              level={heading.level}
+            />
+          </div>
+
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-700"
+          >
+            {isCollapsed ? (
+              <FiChevronDown size={14} />
+            ) : (
+              <FiChevronUp size={14} />
+            )}
+          </button>
+          <button
+            onClick={onDelete}
+            className="p-1.5 rounded-md text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+          >
+            <FiTrash2 size={14} />
+          </button>
+        </div>
+
+        {!isCollapsed && (
+          <div className="p-4">
+            {renderVanListBlock()}
+            <VanListSettings
+              config={heading.vanConfig}
+              onUpdate={(vanConfig) => onUpdate({ vanConfig })}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Default: Normal section
   return (
     <div className="bg-[#1e293b]/50 rounded-xl border border-slate-700 hover:border-[#fe9a00]/30 transition-all overflow-hidden">
       <div className="flex items-center gap-2 p-3 bg-[#0f172b]/50 border-b border-slate-700">
@@ -2901,8 +3240,288 @@ const ContentSection = ({
 };
 
 // ============================================================================
-// FAQ SECTION
+// CTA SETTINGS COMPONENT
 // ============================================================================
+
+const CTASettings = ({
+  config,
+  onUpdate,
+}: {
+  config?: CTAConfig;
+  onUpdate: (config: CTAConfig) => void;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const defaultConfig: CTAConfig = {
+    title: "Book Your Van Today",
+    subtitle: "Ready to hit the road? Call us now for the best deals!",
+    phoneNumber: "+44 20 3011 1198",
+    buttonText: "Call Now",
+    link: "tel:+442012345678",
+    backgroundColor: "#fe9a00",
+    textColor: "#ffffff",
+    buttonColor: "#ffffff",
+  };
+  const cta = config || defaultConfig;
+
+  const updateField = (field: keyof CTAConfig, value: string) => {
+    onUpdate({ ...cta, [field]: value });
+  };
+
+  return (
+    <div className="mt-4 p-4 bg-slate-800/50 rounded-lg">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between text-sm text-slate-400 hover:text-white transition-colors"
+      >
+        <span>CTA Settings</span>
+        <FiChevronDown className={`transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+      </button>
+      
+      {isExpanded && (
+        <div className="mt-4 space-y-3">
+          <div>
+            <Label>Title</Label>
+            <Input
+              value={cta.title}
+              onChange={(e) => updateField("title", e.target.value)}
+              placeholder="CTA title"
+            />
+          </div>
+          <div>
+            <Label>Subtitle</Label>
+            <Input
+              value={cta.subtitle}
+              onChange={(e) => updateField("subtitle", e.target.value)}
+              placeholder="CTA subtitle"
+            />
+          </div>
+          <div>
+            <Label>Phone Number</Label>
+            <Input
+              value={cta.phoneNumber}
+              onChange={(e) => updateField("phoneNumber", e.target.value)}
+              placeholder="+44 20 3011 1198"
+            />
+          </div>
+          <div>
+            <Label>Button Text</Label>
+            <Input
+              value={cta.buttonText}
+              onChange={(e) => updateField("buttonText", e.target.value)}
+              placeholder="Call Now"
+            />
+          </div>
+          <div>
+            <Label>Link/URL</Label>
+            <Input
+              value={cta.link}
+              onChange={(e) => updateField("link", e.target.value)}
+              placeholder="tel:+442012345678"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label>Background</Label>
+              <input
+                type="color"
+                value={cta.backgroundColor}
+                onChange={(e) => updateField("backgroundColor", e.target.value)}
+                className="w-full h-10 rounded-lg cursor-pointer"
+              />
+            </div>
+            <div>
+              <Label>Text Color</Label>
+              <input
+                type="color"
+                value={cta.textColor}
+                onChange={(e) => updateField("textColor", e.target.value)}
+                className="w-full h-10 rounded-lg cursor-pointer"
+              />
+            </div>
+            <div>
+              <Label>Button Color</Label>
+              <input
+                type="color"
+                value={cta.buttonColor}
+                onChange={(e) => updateField("buttonColor", e.target.value)}
+                className="w-full h-10 rounded-lg cursor-pointer"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// VAN LIST SETTINGS COMPONENT
+// ============================================================================
+
+const VanListSettings = ({
+  config,
+  onUpdate,
+}: {
+  config?: VanListConfig;
+  onUpdate: (config: VanListConfig) => void;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isLoadingVans, setIsLoadingVans] = useState(false);
+  const [vanCategories, setVanCategories] = useState<any[]>([]);
+  const [showVanSelector, setShowVanSelector] = useState(false);
+  
+  const defaultConfig: VanListConfig = {
+    title: "Choose Your Perfect Van",
+    subtitle: "Browse our fleet and book online",
+    selectedVans: [],
+    showReservation: true,
+  };
+  const vanConfig = config || defaultConfig;
+
+  const updateField = (field: keyof VanListConfig, value: any) => {
+    onUpdate({ ...vanConfig, [field]: value });
+  };
+
+  // Fetch van categories when selector opens
+  useEffect(() => {
+    if (showVanSelector && vanCategories.length === 0) {
+      setIsLoadingVans(true);
+      fetch("/api/categories?status=active")
+        .then((res) => res.json())
+        .then((data) => {
+          const cats = data?.data?.data || data?.data || data?.categories || [];
+          setVanCategories(Array.isArray(cats) ? cats : []);
+        })
+        .catch((err) => console.log("Failed to fetch categories:", err))
+        .finally(() => setIsLoadingVans(false));
+    }
+  }, [showVanSelector, vanCategories.length]);
+
+  const toggleVanSelection = (vanId: string) => {
+    const currentSelected = vanConfig.selectedVans || [];
+    const isSelected = currentSelected.includes(vanId);
+    if (isSelected) {
+      updateField("selectedVans", currentSelected.filter((id) => id !== vanId));
+    } else {
+      updateField("selectedVans", [...currentSelected, vanId]);
+    }
+  };
+
+  const selectAllVans = () => {
+    const allVanIds = vanCategories.map((cat) => cat._id).filter(Boolean);
+    updateField("selectedVans", allVanIds);
+  };
+
+  const clearAllVans = () => {
+    updateField("selectedVans", []);
+  };
+
+  return (
+    <div className="mt-4 p-4 bg-slate-800/50 rounded-lg">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between text-sm text-slate-400 hover:text-white transition-colors"
+      >
+        <span>Van List Settings</span>
+        <FiChevronDown className={`transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+      </button>
+      
+      {isExpanded && (
+        <div className="mt-4 space-y-3">
+          <div>
+            <Label>Title</Label>
+            <Input
+              value={vanConfig.title}
+              onChange={(e) => updateField("title", e.target.value)}
+              placeholder="Section title"
+            />
+          </div>
+          <div>
+            <Label>Subtitle</Label>
+            <Input
+              value={vanConfig.subtitle}
+              onChange={(e) => updateField("subtitle", e.target.value)}
+              placeholder="Section subtitle"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={vanConfig.showReservation}
+              onChange={(e) => updateField("showReservation", e.target.checked)}
+              className="rounded border-slate-600 bg-slate-700 text-[#fe9a00]"
+            />
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Show Reservation Panel</span>
+          </div>
+          
+          {/* Van Selection */}
+          <div className="p-3 bg-slate-700/50 rounded-lg">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                {vanConfig.selectedVans?.length > 0 
+                  ? `${vanConfig.selectedVans.length} vans selected`
+                  : "No vans selected"
+                }
+              </p>
+              <button
+                onClick={() => setShowVanSelector(!showVanSelector)}
+                className="text-xs text-[#fe9a00] hover:text-orange-400"
+              >
+                {showVanSelector ? "Hide Selector" : "Select Vans →"}
+              </button>
+            </div>
+            
+            {showVanSelector && (
+              <div className="mt-3 space-y-2">
+                {isLoadingVans ? (
+                  <p className="text-xs text-slate-500">Loading vans...</p>
+                ) : vanCategories.length > 0 ? (
+                  <>
+                    <div className="flex gap-2 mb-2">
+                      <button
+                        onClick={selectAllVans}
+                        className="text-xs text-[#fe9a00] hover:text-orange-400"
+                      >
+                        Select All
+                      </button>
+                      <span className="text-slate-600">|</span>
+                      <button
+                        onClick={clearAllVans}
+                        className="text-xs text-slate-400 hover:text-white"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto space-y-1">
+                      {vanCategories.map((cat) => (
+                        <label
+                          key={cat._id}
+                          className="flex items-center gap-2 p-2 rounded hover:bg-slate-600/50 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={vanConfig.selectedVans?.includes(cat._id) || false}
+                            onChange={() => toggleVanSelection(cat._id)}
+                            className="rounded border-slate-600 bg-slate-700 text-[#fe9a00]"
+                          />
+                          <span className="text-xs text-slate-300 truncate">
+                            {cat.name || cat.title || "Unnamed Van"}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-500">No vans available</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const FAQSection = ({
   faqs,
@@ -2985,6 +3604,7 @@ export default function AIBlogBuilder({
     "content",
   );
   const [generationMode, setGenerationMode] = useState<"full" | "step">("step");
+  const [showSectionModal, setShowSectionModal] = useState(false);
 
   const [data, setData] = useState<BlogPostData>({
     topic: "",
@@ -2995,7 +3615,7 @@ export default function AIBlogBuilder({
     tags: [],
     author: "",
     publishDate: new Date().toISOString().split("T")[0],
-    headings: [{ id: generateId(), level: 2, text: "", content: "" }],
+    headings: [{ id: generateId(), level: 2, text: "", content: "", type: "normal" }],
     mediaLibrary: [],
     featuredImage: "",
     anchors: [],
@@ -3056,7 +3676,7 @@ export default function AIBlogBuilder({
 
         showToast.success("Blog loaded successfully!");
       } catch (error) {
-        console.error("❌ [AIBlogBuilder] Error loading blog:", error);
+        console.log("❌ [AIBlogBuilder] Error loading blog:", error);
         showToast.error("Failed to load blog data");
       } finally {
         setLoading(false);
@@ -3184,7 +3804,7 @@ export default function AIBlogBuilder({
         });
       }
     } catch (error: any) {
-      console.error("Save error:", error);
+      console.log("Save error:", error);
       showToast.error(error.message || "Failed to save blog");
     } finally {
       setSaving(false);
@@ -3237,7 +3857,45 @@ export default function AIBlogBuilder({
     }
 
     data.headings.forEach((heading, index) => {
-      if (!heading.text && !heading.content) return;
+      // Skip empty normal sections
+      if (heading.type !== "cta" && heading.type !== "vanlist" && !heading.text && !heading.content) return;
+
+      // Handle CTA Block
+      if (heading.type === "cta" && heading.ctaConfig) {
+        const cta = heading.ctaConfig;
+        html += `<div id="section-${index + 1}" class="cta-block my-8 rounded-2xl p-8 text-center" style="background-color: ${cta.backgroundColor}">\n`;
+        html += `  <h2 class="font-bold text-2xl mb-3" style="color: ${cta.textColor}">${cta.title}</h2>\n`;
+        html += `  <p class="text-sm mb-6 opacity-90" style="color: ${cta.textColor}">${cta.subtitle}</p>\n`;
+        html += `  <a href="${cta.link}" class="inline-block px-8 py-3 rounded-xl font-semibold text-sm transition-transform hover:scale-105" style="background-color: ${cta.buttonColor}; color: ${cta.backgroundColor}">${cta.buttonText}</a>\n`;
+        if (cta.phoneNumber) {
+          html += `  <p class="text-xs mt-4 opacity-75" style="color: ${cta.textColor}">${cta.phoneNumber}</p>\n`;
+        }
+        html += `</div>\n\n`;
+        return;
+      }
+
+      // Handle Van List Block
+      if (heading.type === "vanlist" && heading.vanConfig) {
+        const vanConfig = heading.vanConfig;
+        html += `<div id="section-${index + 1}" class="van-list-block my-8 rounded-2xl p-8 border border-slate-700" style="background-color: #0f172b">\n`;
+        html += `  <div class="text-center mb-8">\n`;
+        html += `    <h2 class="font-bold text-2xl mb-2 text-white">${vanConfig.title}</h2>\n`;
+        html += `    <p class="text-sm text-slate-400">${vanConfig.subtitle}</p>\n`;
+        html += `  </div>\n`;
+        html += `  <div class="van-listing-container" data-van-config='${JSON.stringify(vanConfig)}'>\n`;
+        html += `    <!-- Van listing will be rendered here by the VanListing component -->\n`;
+        if (vanConfig.showReservation) {
+          html += `    <div class="reservation-panel-placeholder mt-8 p-6 bg-slate-800/50 rounded-xl text-center">\n`;
+          html += `      <p class="text-slate-400 mb-4">Ready to book? Select your van above and complete your reservation.</p>\n`;
+          html += `      <button class="px-6 py-3 bg-[#fe9a00] text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors">Start Reservation</button>\n`;
+          html += `    </div>\n`;
+        }
+        html += `  </div>\n`;
+        html += `</div>\n\n`;
+        return;
+      }
+
+      // Normal section
       const tag = `h${heading.level}`;
       const sizes: Record<number, string> = {
         2: "text-2xl",
@@ -3434,7 +4092,7 @@ export default function AIBlogBuilder({
 
       showToast.success("Image deleted");
     } catch (error) {
-      console.error("Error deleting media:", error);
+      console.log("Error deleting media:", error);
       showToast.error("Failed to delete image");
     }
   };
@@ -3448,14 +4106,46 @@ export default function AIBlogBuilder({
     setShowMediaPicker(true);
   };
 
-  const addSection = () =>
+  const addSection = (type: "normal" | "cta" | "vanlist" = "normal") => {
+    const newHeading: HeadingItem = {
+      id: generateId(),
+      level: 2,
+      text: "",
+      content: "",
+      type,
+    };
+
+    if (type === "cta") {
+      newHeading.text = "CTA Section";
+      newHeading.ctaConfig = {
+        title: "Book Your Van Today",
+        subtitle: "Ready to hit the road? Call us now for the best deals!",
+        phoneNumber: "+44 20 3011 1198",
+        buttonText: "Call Now",
+        link: "tel:+442012345678",
+        backgroundColor: "#fe9a00",
+        textColor: "#ffffff",
+        buttonColor: "#ffffff",
+      };
+    } else if (type === "vanlist") {
+      newHeading.text = "Available Vans";
+      newHeading.vanConfig = {
+        title: "Choose Your Perfect Van",
+        subtitle: "Browse our fleet and book online",
+        selectedVans: [],
+        showReservation: true,
+      };
+    }
+
     setData({
       ...data,
-      headings: [
-        ...data.headings,
-        { id: generateId(), level: 2, text: "", content: "" },
-      ],
+      headings: [...data.headings, newHeading],
     });
+  };
+
+  const handleSectionTypeSelect = (type: "normal" | "cta" | "vanlist") => {
+    addSection(type);
+  };
 
   const updateSection = (i: number, updates: Partial<HeadingItem>) => {
     const newHeadings = [...data.headings];
@@ -3837,7 +4527,7 @@ export default function AIBlogBuilder({
                       />
                     ))}
                     <button
-                      onClick={addSection}
+                      onClick={() => setShowSectionModal(true)}
                       className="w-full py-3 border-2 border-dashed border-slate-700 rounded-xl text-sm text-slate-400 hover:text-[#fe9a00] hover:border-[#fe9a00] flex items-center justify-center gap-2"
                     >
                       <FiPlus size={16} /> Add Section
@@ -4165,6 +4855,11 @@ export default function AIBlogBuilder({
         }}
         onUpload={handleMediaUpload}
         mediaType={mediaPickerType}
+      />
+      <SectionTypeModal
+        isOpen={showSectionModal}
+        onClose={() => setShowSectionModal(false)}
+        onSelectType={handleSectionTypeSelect}
       />
     </div>
   );

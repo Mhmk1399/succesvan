@@ -83,7 +83,7 @@ export async function GET(
 
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ [Blog API] Error:", message);
+    console.log("❌ [Blog API] Error:", message);
 
     return NextResponse.json(
       { success: false, error: message },
@@ -136,7 +136,7 @@ export async function PATCH(
 
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ [Blog API] Error:", message);
+    console.log("❌ [Blog API] Error:", message);
 
     return NextResponse.json(
       { success: false, error: message },

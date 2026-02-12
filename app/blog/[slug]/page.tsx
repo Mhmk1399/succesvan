@@ -149,19 +149,19 @@ export default async function BlogDetailPage({ params }: Props) {
         id="blog-schema"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }}
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
       />
       <Script
         id="breadcrumb-schema"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
       />
       <Script
         id="organization-schema"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
       />
 
       <main className="min-h-screen bg-linear-to-br from-[#0f172b] via-slate-900 to-[#0f172b]">

@@ -1,6 +1,6 @@
 /**
  * DALL-E Image Generator for Blog Content
- * 
+ *
  * Generates relevant, high-quality images for blog sections using OpenAI DALL-E
  */
 
@@ -16,7 +16,7 @@ import { getOpenAI } from "./openai";
 export async function generateBlogImage(
   topic: string,
   headingText: string,
-  userDescription?: string
+  userDescription?: string,
 ): Promise<{ url: string; revisedPrompt: string }> {
   console.log(`🎨 [Image Generator] Generating image for: ${headingText}`);
 
@@ -34,7 +34,7 @@ export async function generateBlogImage(
 
   // Generate image with DALL-E
   console.log(`   Creating image with DALL-E...`);
-  
+
   const client = getOpenAI();
   const response = await client.images.generate({
     model: "dall-e-3",
@@ -43,9 +43,8 @@ export async function generateBlogImage(
     size: "1792x1024", // Wide format, good for blog headers
     quality: "standard", // Use "hd" for higher quality but slower/more expensive
     style: "natural", // "vivid" or "natural"
-    
   });
-if (!response || !response.data || response.data.length === 0) {
+  if (!response || !response.data || response.data.length === 0) {
     throw new Error("Failed to generate image - no data returned");
   }
   const imageUrl = response.data[0].url;
@@ -69,50 +68,49 @@ if (!response || !response.data || response.data.length === 0) {
  */
 async function generateImagePrompt(
   topic: string,
-  headingText: string
+  headingText: string,
 ): Promise<string> {
-  const systemPrompt = `You are an expert at creating DALL-E prompts for blog illustrations.
+  const systemPrompt = `You are an expert at writing photorealistic prompts for DALL·E blog header images.
 
-Create a detailed, visual prompt that will generate a professional, relevant image for a blog section.
+Goal: generate a REALISTIC, sharp, high-resolution PHOTO (not illustration).
 
-Requirements:
-- The image must visually represent the blog section and be relevant to its content
-- Focus on creating an image that reflects the tone and subject of the section (e.g., a tech-focused blog post should feature clean, modern visuals)
-- Use modern, clean, and minimalist art styles, with bright colors to invite engagement
-- Avoid abstract concepts; focus on concrete and actionable visuals
-- The image must be suitable for use as a blog section or header image
+Hard requirements:
+- Photorealistic, natural lighting, real-world materials and textures
+- Sharp focus, high clarity, realistic colors (no neon/cartoon palette)
+- Documentary / commercial photography look
+- No illustration, no 3D render, no cartoon, no anime, no vector, no CGI
+- No text, no letters, no logos, no watermarks in the image
+- Suitable as a wide blog header (16:9 vibe)
 
-Style guidelines:
-- "Professional digital art"
-- "Minimalist and clean"
-- "Bright and inviting colors"
-- "High detail, clear and straightforward"
-- Avoid any text or words within the image
+Prompt structure:
+1) Scene subject and setting (concrete, not abstract)
+2) Camera/lens/lighting (e.g. 35mm, soft daylight, shallow depth of field)
+3) Composition (wide header, negative space for title overlay)
+4) Quality tags (ultra-detailed, high resolution, crisp)
 
-Return ONLY the DALL-E prompt text, no explanation.`;
+Return ONLY the final prompt text, nothing else.`;
 
-  const userPrompt = `Create a DALL-E prompt for the following blog section:
+  const userPrompt = `Write a photorealistic DALL·E prompt for a blog header image.
 
 Blog Topic: ${topic}
 Section Heading: ${headingText}
 
-Make the image visually represent the content of this section in an appealing and professional way.`;
+Make it a REAL photo-like scene that represents this section. Avoid any illustration styles. Include composition with some negative space for overlay text.`;
 
   const client2 = getOpenAI();
   const completion = await client2.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
+      { role: "user", content: userPrompt },
     ],
     temperature: 0.8,
     max_tokens: 200,
   });
 
-  const prompt = completion.choices[0].message.content?.trim() || 
+  const prompt =
+    completion.choices[0].message.content?.trim() ||
     `Professional illustration of ${headingText}, modern digital art style, clean and minimalist, relevant to ${topic}`;
-
-  console.log(`   Generated prompt: ${prompt}`);
 
   return prompt;
 }
@@ -123,7 +121,7 @@ Make the image visually represent the content of this section in an appealing an
 export function generatePlaceholderImage(
   headingText: string,
   width: number = 1200,
-  height: number = 600
+  height: number = 600,
 ): string {
   const text = encodeURIComponent(headingText.substring(0, 50));
   return `https://placehold.co/${width}x${height}/fe9a00/fff?text=${text}`;
@@ -135,9 +133,11 @@ export function generatePlaceholderImage(
 export async function generateBatchImages(
   topic: string,
   headings: Array<{ id: string; text: string; level: number }>,
-  descriptions?: Record<string, string>
+  descriptions?: Record<string, string>,
 ): Promise<Array<{ headingId: string; url: string; error?: string }>> {
-  console.log(`🎨 [Image Generator] Batch generating ${headings.length} images`);
+  console.log(
+    `🎨 [Image Generator] Batch generating ${headings.length} images`,
+  );
 
   const results = [];
 
@@ -150,8 +150,12 @@ export async function generateBatchImages(
 
     try {
       const description = descriptions?.[heading.id];
-      const imageData = await generateBlogImage(topic, heading.text, description);
-      
+      const imageData = await generateBlogImage(
+        topic,
+        heading.text,
+        description,
+      );
+
       results.push({
         headingId: heading.id,
         url: imageData.url,
@@ -160,12 +164,14 @@ export async function generateBatchImages(
       console.log(`   ✅ Generated image for: ${heading.text}`);
 
       // Rate limiting: wait 1 second between requests
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      console.error(`   ❌ Failed to generate image for ${heading.text}:`, message);
-      
+      console.log(
+        `   ❌ Failed to generate image for ${heading.text}:`,
+        message,
+      );
+
       results.push({
         headingId: heading.id,
         url: "",
@@ -174,7 +180,9 @@ export async function generateBatchImages(
     }
   }
 
-  console.log(`✅ [Image Generator] Batch complete: ${results.filter(r => !r.error).length}/${headings.length} succeeded`);
+  console.log(
+    `✅ [Image Generator] Batch complete: ${results.filter((r) => !r.error).length}/${headings.length} succeeded`,
+  );
 
   return results;
 }

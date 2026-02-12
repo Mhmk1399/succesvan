@@ -25,7 +25,7 @@ export default function VanHireHampstead() {
       <Script
         id="hampstead-schema"
         type="application/ld+json"
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(hampstead),
         }}

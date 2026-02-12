@@ -24,7 +24,7 @@ export default function VanHireCricklewood() {
       <Script
         id="Cricklewood-schema"
         type="application/ld+json"
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(cricklewood),
         }}
