@@ -7,8 +7,7 @@
 import Office from "@/model/office";
 import Category from "@/model/category";
 import Reservation from "@/model/reservation";
-import Type from "@/model/type";
-
+ 
 interface OfficeData {
   _id: string;
   name: string;
