@@ -67,9 +67,10 @@ interface Category extends VanData {
 
 interface VanListingProps {
   vans?: VanData[];
+  showHeader?: boolean;
 }
 
-export default function VanListingHome({ vans = [] }: VanListingProps) {
+export default function VanListingHome({ vans = [], showHeader = true }: VanListingProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const [isLoading, setIsLoading] = useState(vans.length === 0);
@@ -147,16 +148,18 @@ export default function VanListingHome({ vans = [] }: VanListingProps) {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-12 lg:mb-16">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-4">
-            Choose Your
-            <br />
-            <span className="text-[#fe9a00]">Perfect Van</span>
-          </h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Find the ideal van for your needs from our modern fleet
-          </p>
-        </div>
+        {showHeader && (
+          <div className="text-center mb-12 lg:mb-16">
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-4">
+              Choose Your
+              <br />
+              <span className="text-[#fe9a00]">Perfect Van</span>
+            </h2>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              Find the ideal van for your needs from our modern fleet
+            </p>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
