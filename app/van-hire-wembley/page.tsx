@@ -25,7 +25,7 @@ export default function VanHireWembley() {
       <Script
         id="wembley-schema"
         type="application/ld+json"
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(wembleySchema),
         }}

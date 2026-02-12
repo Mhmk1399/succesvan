@@ -130,11 +130,11 @@ export default function FAQComponent({
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12 lg:mb-16">
-          <h2 className="text-2xl   lg:text-7xl font-black text-white mb-4 leading-tight">
+          <h2 className="text-2xl   lg:text-6xl font-black text-white mb-4 leading-tight">
             {title}
           </h2>
 
-          <p className="text-gray-400 text-base md:text-xl max-w-2xl mx-auto">
+          <p className="text-gray-400 text-base md:text-lg max-w-2xl mx-auto">
             {subtitle}
           </p>
         </div>

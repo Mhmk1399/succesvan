@@ -12,7 +12,7 @@ export const aboutUsSchema = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -46,7 +46,7 @@ export const automaticVanHireSchema = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -80,7 +80,7 @@ export const blogSchema = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -114,7 +114,7 @@ export const carHireNwLondonSchema = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -148,7 +148,7 @@ export const contactSchema = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -182,7 +182,7 @@ export const ReservationPageSchema = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -216,7 +216,7 @@ export const VanHireBrentCrossSchema = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -250,7 +250,7 @@ export const termsSchema = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -284,7 +284,7 @@ export const cricklewood = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -318,7 +318,7 @@ export const goldersGreen = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -352,7 +352,7 @@ export const hampstead = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -386,7 +386,7 @@ export const hendon = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -420,7 +420,7 @@ export const millHill = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -454,7 +454,7 @@ export const northWestLondon = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -488,7 +488,7 @@ export const wembleySchema = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -522,7 +522,7 @@ export const camdenSchema = {
     streetAddress: "Strata House, Waterloo Road,London, NW2 7UH",
     addressLocality: "London",
     addressRegion: "London",
-    postalCode: "Your Postal Code",
+    postalCode: "NW2 7UH",
     addressCountry: "GB",
   },
   sameAs: [
@@ -540,4 +540,43 @@ export const camdenSchema = {
     "North West London",
   ],
   serviceType: "Automatic Van Rental",
+};
+
+export const vanHireLondonSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Van Hire London",
+  serviceType: "Van Hire Service",
+  provider: {
+    "@type": "AutoRental",
+    name: "Success Van Hire",
+    url: "https://successvanhire.co.uk/",
+    telephone: "+44 20 3011 1198",
+    email: "Info@successvanhire.com",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Strata House, Waterloo Road, London, NW2 7UH",
+      addressLocality: "London",
+      addressRegion: "London",
+      postalCode: "NW2 7UH",
+      addressCountry: "GB",
+    },
+    sameAs: [
+      "https://www.facebook.com/topvanhire",
+      "https://www.instagram.com/success.van.hire",
+      "https://twitter.com/MatinDiba?t=GKR1BWNSQK6yB2Rj4W5Jhg&s=09",
+    ],
+  },
+  areaServed: {
+    "@type": "City",
+    name: "London",
+  },
+  availableChannel: {
+    "@type": "ServiceChannel",
+    serviceUrl: "https://successvanhire.co.uk/van-hire-london",
+    availableLanguage: ["en"],
+  },
+  description:
+    "Looking for van hire in London? Success Van Hire offers affordable van rental in London with small, medium, large & Luton vans. Fast booking, flexible hire, same-day availability.",
+  url: "https://successvanhire.co.uk/van-hire-london",
 };

@@ -116,7 +116,7 @@ export default function ContactUs() {
       <Script
         id="contact-us-schema"
         type="application/ld+json"
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(contactSchema),
         }}

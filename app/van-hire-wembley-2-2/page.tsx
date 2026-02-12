@@ -24,7 +24,7 @@ export default function VanHireCamden() {
       <Script
         id="camden-schema"
         type="application/ld+json"
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(camdenSchema),
         }}

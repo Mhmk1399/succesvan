@@ -27,7 +27,7 @@ export default function AboutUs() {
       <Script
         id="about-us-schema"
         type="application/ld+json"
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(aboutUsSchema),
         }}

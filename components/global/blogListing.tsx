@@ -9,6 +9,7 @@ import {
   FiArrowRight,
   FiChevronLeft,
   FiChevronRight,
+  FiFileText,
 } from "react-icons/fi";
 import Image from "next/image";
 import Link from "next/link";
@@ -133,7 +134,7 @@ export default function BlogListing() {
       </div>
 
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="text-center mb-16">
+        <div className="text-center my-16 md:my-8">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Our <span className="text-[#fe9a00] ">Blog</span>
           </h2>
@@ -165,8 +166,17 @@ export default function BlogListing() {
           </div>
         ) : blogPosts.length === 0 ? (
           // 3. EMPTY STATE
-          <div className="text-center text-slate-400 py-12 bg-slate-900/50 rounded-2xl border border-slate-800">
-            <p className="text-lg font-medium">No blog posts found.</p>
+          <div className="flex flex-col items-center justify-center py-20 px-6   rounded-3xl   backdrop-blur-sm">
+            <div className="mb-6 p-4 rounded-full bg-slate-800/50 border border-slate-700/50">
+              <FiFileText className="w-12 h-12 text-[#fe9a00]" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">
+              No Blog Posts Yet
+            </h3>
+            <p className="text-slate-400 text-center max-w-md mb-6">
+              We're working on creating amazing content for you. Check back
+              soon!
+            </p>
           </div>
         ) : (
           // 4. ACTUAL DATA GRID
