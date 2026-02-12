@@ -51,6 +51,7 @@ export interface AddOnOption {
     amount: number;
     isPerDay: boolean;
   };
+  type:String
   tieredPrice?: {
     isPerDay: boolean;
     tiers: Array<{
