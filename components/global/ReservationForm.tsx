@@ -36,6 +36,7 @@ import {
   SpecialDay,
   TimeSlotInfo,
 } from "../../types/reservation-form";
+import { getLondonTime } from "@/lib/englandTime";
 
 export default function ReservationForm({
   isModal = false,
@@ -82,20 +83,30 @@ export default function ReservationForm({
     },
   ]);
 
-  // Set dates on client-side only to avoid hydration mismatch
-  useEffect(() => {
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 2);
-    tomorrow.setHours(0, 0, 0, 0);
+  
 
-    const dayAfter = new Date(tomorrow);
-    dayAfter.setDate(dayAfter.getDate() + 1);
+  // *** تغییر: تنظیم dates بر اساس زمان انگلیس (برای جلوگیری از رزرو امروز و فردا اگر بعد 16:00 باشد) ***
+  useEffect(() => {
+    const londonNow = getLondonTime();
+     const hours = londonNow.getUTCHours();
+    console.log(hours, "london time");
+
+    let minDaysToAdd = 1;
+    if (hours >= 16) {
+      minDaysToAdd = 2;
+    }
+
+    const start = new Date(londonNow);
+    start.setDate(start.getDate() + minDaysToAdd);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
 
     setDateRange([
       {
-        startDate: tomorrow,
-        endDate: dayAfter,
+        startDate: start,
+        endDate: end,
         key: "selection",
       },
     ]);
@@ -118,6 +129,7 @@ export default function ReservationForm({
     const office = offices?.find((o) => o._id === formData.office);
     if (!office) return [];
 
+    // *** تغییر جزئی: استفاده از getLondonTime برای consistency، اما اینجا لازم نیست چون dateRange قبلاً تنظیم شده ***
     const date = dateRange[0].startDate;
     const month = date.getMonth() + 1;
     const day = date.getDate();
@@ -632,6 +644,7 @@ export default function ReservationForm({
     const office = getSelectedOffice();
     if (!office) return false;
 
+    // *** تغییر جزئی: استفاده از getLondonTime برای محاسبه ماه/روز، اما اینجا لازم نیست چون date ورودی است ***
     const month = date.getMonth() + 1;
     const day = date.getDate();
     const dayName = [
@@ -759,8 +772,10 @@ export default function ReservationForm({
     }
 
     try {
-      // Store rental details in sessionStorage with time included
-      const pickupDateTime = new Date(dateRange[0].startDate || new Date());
+      // *** تغییر: استفاده از زمان انگلیس برای pickupDateTime و returnDateTime ***
+      const londonNow = getLondonTime(); // برای consistency
+
+      const pickupDateTime = new Date(dateRange[0].startDate || londonNow);
       const [pickupHour, pickupMinute] = formData.pickupTime.split(":");
       pickupDateTime.setHours(
         parseInt(pickupHour),
@@ -769,7 +784,7 @@ export default function ReservationForm({
         0,
       );
 
-      const returnDateTime = new Date(dateRange[0].endDate || new Date());
+      const returnDateTime = new Date(dateRange[0].endDate || londonNow);
       const [returnHour, returnMinute] = formData.returnTime.split(":");
       returnDateTime.setHours(
         parseInt(returnHour),
@@ -786,11 +801,18 @@ export default function ReservationForm({
         if (formData.office) {
           const office = offices?.find((o) => o._id === formData.office);
           if (office) {
+            // *** تغییر جزئی: استفاده از toLocaleDateString با timezone انگلیس ***
             const pickupDay = pickupDateTime
-              .toLocaleDateString("en-US", { weekday: "long" })
+              .toLocaleDateString("en-GB", {
+                weekday: "long",
+                timeZone: "Europe/London",
+              })
               .toLowerCase();
             const returnDay = returnDateTime
-              .toLocaleDateString("en-US", { weekday: "long" })
+              .toLocaleDateString("en-GB", {
+                weekday: "long",
+                timeZone: "Europe/London",
+              })
               .toLowerCase();
 
             const pickupDaySchedule = office.workingTime?.find(
@@ -958,7 +980,27 @@ export default function ReservationForm({
                       },
                     ]);
                   }}
-                  minDate={new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)}
+                  // *** تغییر: minDate پویا بر اساس زمان انگلیس ***
+                  minDate={(() => {
+                    try {
+                      const londonNow = getLondonTime();
+                      const hours = londonNow.getUTCHours();
+
+                      let minDaysToAdd = 1;
+                      if (hours >= 16) minDaysToAdd = 2;
+
+                      const min = new Date(londonNow);
+                      min.setDate(min.getDate() + minDaysToAdd);
+                      min.setHours(0, 0, 0, 0);
+                      return min;
+                    } catch (err) {
+                      // fallback: فردا بر اساس زمان محلی
+                      const fallback = new Date();
+                      fallback.setDate(fallback.getDate() + 1);
+                      fallback.setHours(0, 0, 0, 0);
+                      return fallback;
+                    }
+                  })()}
                   rangeColors={["#fbbf24"]}
                   disabledDates={
                     formData.office
@@ -1304,7 +1346,27 @@ export default function ReservationForm({
                     },
                   ]);
                 }}
-                minDate={new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)}
+                // *** تغییر: minDate پویا بر اساس زمان انگلیس (مشابه desktop) ***
+                minDate={(() => {
+                  try {
+                    const londonNow = getLondonTime();
+                    const hours = londonNow.getUTCHours();
+
+                    let minDaysToAdd = 1;
+                    if (hours >= 16) minDaysToAdd = 2;
+
+                    const min = new Date(londonNow);
+                    min.setDate(min.getDate() + minDaysToAdd);
+                    min.setHours(0, 0, 0, 0);
+                    return min;
+                  } catch (err) {
+                    // fallback: فردا بر اساس زمان محلی
+                    const fallback = new Date();
+                    fallback.setDate(fallback.getDate() + 1);
+                    fallback.setHours(0, 0, 0, 0);
+                    return fallback;
+                  }
+                })()}
                 rangeColors={["#fbbf24"]}
                 disabledDates={
                   formData.office

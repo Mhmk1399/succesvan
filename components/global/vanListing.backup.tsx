@@ -53,6 +53,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format } from "date-fns";
 import Link from "next/link";
+import { getLondonTime } from "@/lib/englandTime";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -70,7 +71,10 @@ interface VanListingProps {
   showHeader?: boolean;
 }
 
-export default function VanListingHome({ vans = [], showHeader = true }: VanListingProps) {
+export default function VanListingHome({
+  vans = [],
+  showHeader = true,
+}: VanListingProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
   const [isLoading, setIsLoading] = useState(vans.length === 0);
@@ -273,8 +277,8 @@ function ReservationPanel({
 
   const [dateRange, setDateRange] = useState<Range[]>([
     {
-      startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      startDate: undefined,
+      endDate: undefined,
       key: "selection",
     },
   ]);
@@ -359,6 +363,31 @@ function ReservationPanel({
       discountAmount,
     };
   }, [basePriceCalc, appliedDiscount]);
+
+  useEffect(() => {
+    const londonNow = getLondonTime();
+    const hours = londonNow.getUTCHours(); // همیشه از UTC استفاده کن
+
+    let minDaysToAdd = 1; // حداقل فردا
+    if (hours >= 16) {
+      minDaysToAdd = 2; // پس‌فردا اگر بعد از ۱۶:۰۰ لندن باشه
+    }
+
+    const start = new Date(londonNow);
+    start.setUTCDate(start.getUTCDate() + minDaysToAdd); // استفاده از UTC برای دقت
+    start.setUTCHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setUTCDate(end.getUTCDate() + 1);
+
+    setDateRange([
+      {
+        startDate: start,
+        endDate: end,
+        key: "selection",
+      },
+    ]);
+  }, []);
 
   // Fetch offices
   useEffect(() => {
@@ -650,7 +679,8 @@ function ReservationPanel({
     if (
       dateRange[0].endDate &&
       dateRange[0].startDate &&
-      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+      dateRange[0].startDate.toDateString() ===
+        dateRange[0].endDate.toDateString() &&
       formData.returnTime
     ) {
       const [retHour, retMin] = formData.returnTime.split(":").map(Number);
@@ -738,7 +768,8 @@ function ReservationPanel({
     if (
       dateRange[0].startDate &&
       dateRange[0].endDate &&
-      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+      dateRange[0].startDate.toDateString() ===
+        dateRange[0].endDate.toDateString() &&
       formData.pickupTime
     ) {
       const [pickHour, pickMin] = formData.pickupTime.split(":").map(Number);
@@ -883,7 +914,8 @@ function ReservationPanel({
       ...(name === "pickupTime" &&
         dateRange[0].startDate &&
         dateRange[0].endDate &&
-        dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() && {
+        dateRange[0].startDate.toDateString() ===
+          dateRange[0].endDate.toDateString() && {
           returnTime: "",
         }),
     }));
@@ -1031,10 +1063,13 @@ function ReservationPanel({
     if (
       dateRange[0].startDate &&
       dateRange[0].endDate &&
-      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString()
+      dateRange[0].startDate.toDateString() ===
+        dateRange[0].endDate.toDateString()
     ) {
       if (!formData.pickupTime || !formData.returnTime) {
-        setErrors({ submit: "Please select pickup and return times (minimum 6 hours)" });
+        setErrors({
+          submit: "Please select pickup and return times (minimum 6 hours)",
+        });
         return;
       }
       const [pickH, pickM] = formData.pickupTime.split(":").map(Number);
@@ -1136,11 +1171,14 @@ function ReservationPanel({
   };
 
   const isDateDisabled = (date: Date) => {
-    const office = getSelectedOffice();
-    if (!office) return false;
+    const londonNow = getLondonTime(); // برای consistency
+    const londonDate = new Date(date); // کپی
+    londonDate.setTime(
+      date.getTime() + londonNow.getTimezoneOffset() * 60 * 1000,
+    ); // تنظیم تقریبی
 
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
+    const month = londonDate.getMonth() + 1;
+    const day = londonDate.getDate();
     const dayName = [
       "sunday",
       "monday",
@@ -1149,7 +1187,10 @@ function ReservationPanel({
       "thursday",
       "friday",
       "saturday",
-    ][date.getDay()];
+    ][londonDate.getDay()];
+
+    const office = getSelectedOffice();
+    if (!office) return false;
 
     const specialDay = office.specialDays?.find(
       (sd) => sd.month === month && sd.day === day,
@@ -1682,9 +1723,19 @@ function ReservationPanel({
                               ),
                             }));
                           }}
-                          minDate={
-                            new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
-                          }
+                          // minDate پویا بر اساس زمان فعلی لندن
+                          minDate={(() => {
+                            const londonNow = getLondonTime();
+                            const hours = londonNow.getUTCHours();
+
+                            let minDays = 1;
+                            if (hours >= 16) minDays = 2;
+
+                            const min = new Date(londonNow);
+                            min.setUTCDate(min.getUTCDate() + minDays);
+                            min.setUTCHours(0, 0, 0, 0);
+                            return min;
+                          })()}
                           rangeColors={["#fe9a00"]}
                           disabledDates={
                             formData.office
@@ -1759,11 +1810,16 @@ function ReservationPanel({
                   </div>
                   <div className="relative">
                     {/* Tooltip for same-day reservation info */}
-                    {dateRange[0].startDate && dateRange[0].endDate &&
-                      dateRange[0].startDate.toDateString() === dateRange[0].endDate.toDateString() &&
+                    {dateRange[0].startDate &&
+                      dateRange[0].endDate &&
+                      dateRange[0].startDate.toDateString() ===
+                        dateRange[0].endDate.toDateString() &&
                       showSameDayTooltip && (
                         <div className="absolute -top-7 left-0 z-20 px-1 py-1 bg-slate-900 border border-amber-400/30 rounded text-amber-300 text-xs whitespace-nowrap shadow-lg pointer-events-auto flex items-center gap-2">
-                          <span>Reservations less than 24 hours <br/> are calculated as <b>1 day</b>.</span>
+                          <span>
+                            Reservations less than 24 hours <br /> are
+                            calculated as <b>1 day</b>.
+                          </span>
                           <button
                             type="button"
                             onClick={() => setShowSameDayTooltip(false)}
@@ -2476,7 +2532,7 @@ function CategoryCard({
 
           {/* Book Button */}
           <button
-          id="gtm-sidebar-Book-now"
+            id="gtm-sidebar-Book-now"
             onClick={(e) => {
               e.stopPropagation();
               onView();
