@@ -2,16 +2,82 @@
  * DALL-E Image Generator for Blog Content
  *
  * Generates relevant, high-quality images for blog sections using OpenAI DALL-E
+ * ✅ Van preference:
+ * - If the scene involves vans, prefer Mercedes Sprinter or Ford Transit (no logos/text)
+ * ✅ London Visual Style:
+ * - UK/London streets, architecture, lighting, and realistic commercial photography vibe
  */
 
 import { getOpenAI } from "./openai";
 
+// ============================================================================
+// IMAGE CONTEXT RULES
+// ============================================================================
+
+const IMAGE_RULES = {
+  preferredVans: [
+    "a modern Mercedes Sprinter-style cargo van (generic, no logos, no badges)",
+    "a modern Ford Transit-style cargo van (generic, no logos, no badges)",
+  ],
+
+  globalMustNots: [
+    "no text",
+    "no letters",
+    "no logos",
+    "no watermarks",
+    "no readable license plates",
+    "no visible brand marks on vehicles",
+    "no signage with readable text",
+  ],
+
+  londonVisualStyle: `
+LONDON VISUAL STYLE (IMPORTANT):
+- The environment should feel like London / United Kingdom
+- Use realistic London street atmosphere: brick buildings, modern UK architecture, narrow streets, industrial areas, business parks
+- Subtle UK urban details: wet pavement, cloudy sky, soft diffused daylight, realistic street perspective
+- Photorealistic commercial photography look, like a real UK fleet rental website header
+- Background should include negative space for title overlay (sky/building blur/road blur)
+- Avoid iconic copyrighted landmarks (do NOT use Big Ben, Tower Bridge, London Eye)
+- Keep it modern, clean, professional, premium business vibe
+`.trim(),
+};
+
+/**
+ * Quick heuristic: does this heading/topic likely need a van in the image?
+ */
+function isVanRelated(
+  topic: string,
+  headingText: string,
+  userDescription?: string,
+) {
+  const t = `${topic} ${headingText} ${userDescription || ""}`.toLowerCase();
+
+  const keywords = [
+    "van",
+    "van hire",
+    "rental",
+    "rent a van",
+    "cargo",
+    "delivery",
+    "moving",
+    "removal",
+    "fleet",
+    "courier",
+    "logistics",
+    "transport",
+    "b2b",
+    "commercial vehicle",
+    "business van",
+    "london",
+    "uk",
+    "ulez",
+  ];
+
+  return keywords.some((k) => t.includes(k));
+}
+
 /**
  * Generate an image for a blog heading using DALL-E
- * @param topic - Overall blog topic
- * @param headingText - The specific heading to create an image for
- * @param userDescription - Optional custom description from user
- * @returns Image URL and metadata
  */
 export async function generateBlogImage(
   topic: string,
@@ -22,17 +88,26 @@ export async function generateBlogImage(
 
   let imagePrompt: string;
 
-  // If user provided a description, use it
+  // If user provided a description, use it (but add London + van preference if relevant)
   if (userDescription && userDescription.trim()) {
-    imagePrompt = userDescription;
-    console.log(`   Using user description: ${imagePrompt}`);
+    const vanRelated = isVanRelated(topic, headingText, userDescription);
+
+    imagePrompt = `
+${userDescription.trim()}
+
+${IMAGE_RULES.londonVisualStyle}
+
+${vanRelated ? `If a van is visible, prefer: ${IMAGE_RULES.preferredVans.join(" OR ")}.` : ""}
+
+Hard rules: ${IMAGE_RULES.globalMustNots.join(", ")}.
+`.trim();
+
+    console.log(`   Using user description + London style`);
   } else {
-    // Otherwise, use GPT to create an optimized DALL-E prompt
     console.log(`   Generating optimized DALL-E prompt...`);
     imagePrompt = await generateImagePrompt(topic, headingText);
   }
 
-  // Generate image with DALL-E
   console.log(`   Creating image with DALL-E...`);
 
   const client = getOpenAI();
@@ -40,13 +115,15 @@ export async function generateBlogImage(
     model: "dall-e-3",
     prompt: imagePrompt,
     n: 1,
-    size: "1792x1024", // Wide format, good for blog headers
-    quality: "standard", // Use "hd" for higher quality but slower/more expensive
-    style: "natural", // "vivid" or "natural"
+    size: "1792x1024",
+    quality: "standard",
+    style: "natural",
   });
+
   if (!response || !response.data || response.data.length === 0) {
     throw new Error("Failed to generate image - no data returned");
   }
+
   const imageUrl = response.data[0].url;
   const revisedPrompt = response.data[0].revised_prompt || imagePrompt;
 
@@ -70,6 +147,19 @@ async function generateImagePrompt(
   topic: string,
   headingText: string,
 ): Promise<string> {
+  const vanRelated = isVanRelated(topic, headingText);
+
+  const vanDirective = vanRelated
+    ? `
+VAN PREFERENCE (IMPORTANT):
+- The image should include a modern cargo van if it fits naturally.
+- Prefer either:
+  1) Mercedes Sprinter-style cargo van (generic, no logos/badges)
+  2) Ford Transit-style cargo van (generic, no logos/badges)
+- Keep vehicle branding invisible: no logos, no badges, no readable plates.
+`
+    : "";
+
   const systemPrompt = `You are an expert at writing photorealistic prompts for DALL·E blog header images.
 
 Goal: generate a REALISTIC, sharp, high-resolution PHOTO (not illustration).
@@ -80,7 +170,13 @@ Hard requirements:
 - Documentary / commercial photography look
 - No illustration, no 3D render, no cartoon, no anime, no vector, no CGI
 - No text, no letters, no logos, no watermarks in the image
+- Avoid readable license plates or signage text
 - Suitable as a wide blog header (16:9 vibe)
+- Composition should include negative space for title overlay
+
+${IMAGE_RULES.londonVisualStyle}
+
+${vanDirective}
 
 Prompt structure:
 1) Scene subject and setting (concrete, not abstract)
@@ -105,14 +201,20 @@ Make it a REAL photo-like scene that represents this section. Avoid any illustra
       { role: "user", content: userPrompt },
     ],
     temperature: 0.8,
-    max_tokens: 200,
+    max_tokens: 220,
   });
 
   const prompt =
     completion.choices[0].message.content?.trim() ||
-    `Professional illustration of ${headingText}, modern digital art style, clean and minimalist, relevant to ${topic}`;
+    `Photorealistic commercial photo scene representing "${headingText}" related to "${topic}", London UK street atmosphere, wide composition with negative space, natural diffused daylight, ultra-detailed, sharp focus, no text, no logos, no watermarks.`;
 
-  return prompt;
+  // Final safety nudge
+  const finalMustNots = IMAGE_RULES.globalMustNots.join(", ");
+  const finalVanHint = vanRelated
+    ? ` If a van is visible, prefer: ${IMAGE_RULES.preferredVans.join(" OR ")}.`
+    : "";
+
+  return `${prompt}${finalVanHint} ${finalMustNots}.`;
 }
 
 /**
@@ -139,7 +241,7 @@ export async function generateBatchImages(
     `🎨 [Image Generator] Batch generating ${headings.length} images`,
   );
 
-  const results = [];
+  const results: Array<{ headingId: string; url: string; error?: string }> = [];
 
   for (const heading of headings) {
     // Only generate for H1 and H2
@@ -181,7 +283,9 @@ export async function generateBatchImages(
   }
 
   console.log(
-    `✅ [Image Generator] Batch complete: ${results.filter((r) => !r.error).length}/${headings.length} succeeded`,
+    `✅ [Image Generator] Batch complete: ${
+      results.filter((r) => !r.error).length
+    }/${headings.length} succeeded`,
   );
 
   return results;

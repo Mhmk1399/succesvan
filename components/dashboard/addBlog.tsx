@@ -2542,7 +2542,7 @@ const SectionTypeModal = ({ isOpen, onClose, onSelectType }: SectionTypeModalPro
     {
       type: "normal" as const,
       title: "Normal Section",
-      description: "Add a regular content section with heading and text",
+      description: "Add a regular content section with editor",
       icon: <FiFileText size={24} />,
       color: "bg-blue-500",
     },
@@ -2556,7 +2556,7 @@ const SectionTypeModal = ({ isOpen, onClose, onSelectType }: SectionTypeModalPro
     {
       type: "vanlist" as const,
       title: "Van List",
-      description: "Display available vans with booking functionality",
+      description: "Display available vans with booking",
       icon: <GiTruck size={24} />,
       color: "bg-green-500",
     },

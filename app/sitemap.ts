@@ -12,7 +12,7 @@ async function getBlogs(): Promise<Blog[]> {
   try {
     const baseUrl =
       process.env.NEXT_PUBLIC_BASE_URL || "https://successvanhire.co.uk";
-    const res = await fetch(`${baseUrl}/api/blog`, {
+    const res = await fetch(`${baseUrl}/api/blog?status=published`, {
       next: { revalidate: 3600 }, // Cache for 1 hour
     });
 

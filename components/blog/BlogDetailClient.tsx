@@ -232,6 +232,10 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
           margin-bottom: 1rem !important;
           margin-top: 2rem !important;
         }
+        .blog-content h1::before {
+          content: attr(data-text);
+          display: block;
+        }
         .blog-content h2 {
           color: white !important;
           font-weight: 700 !important;
@@ -239,12 +243,20 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
           margin-bottom: 0.75rem !important;
           margin-top: 1.5rem !important;
         }
+        .blog-content h2::before {
+          content: attr(data-text);
+          display: block;
+        }
         .blog-content h3 {
           color: white !important;
           font-weight: 700 !important;
           font-size: 1.25rem !important;
           margin-bottom: 0.75rem !important;
           margin-top: 1.25rem !important;
+        }
+        .blog-content h3::before {
+          content: attr(data-text);
+          display: block;
         }
         .van-list-wrapper > section {
           background: transparent !important;

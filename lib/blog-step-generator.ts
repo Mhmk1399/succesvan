@@ -8,10 +8,129 @@
  * 4. Conclusion
  * 5. FAQs
  * 6. SEO metadata
+ *
+ * ✅ Brand-aware (Success Van Hire):
+ * - Brand name + contact details used naturally (no spam)
+ * - Brand features injected where relevant (B2B, licensing, pricing, eco, fleet, booking)
  */
 
 import { generateId, getCurrentYear } from "./blog-utils";
 import { getOpenAI } from "./openai";
+
+// ============================================================================
+// BRAND CONFIG (Success Van Hire)
+// ============================================================================
+
+const BRAND = {
+  name: "Success Van Hire",
+  phone: "+44 20 3011 1198",
+  address: "Strata House, Waterloo Road, London, NW2 7UH",
+};
+
+const BRAND_FEATURES = {
+  expertise:
+    "Expert in long-term and short-term business van rental with a modern fleet of 50+ vehicles",
+  licenses:
+    "UK & EU driving licences accepted with a fast and simple verification process",
+  guarantee:
+    "100% secure booking with guaranteed reservations and full insurance coverage",
+  pricing:
+    "Prices fit every budget with a wide range of options and no hidden fees",
+  eco: "Eco-friendly fleet meeting EU6 emission standards (Clean Air Standard focus)",
+  service:
+    "Friendly & professional service, including business insurance support for B2B clients",
+};
+
+/**
+ * Lightweight relevance detector:
+ * If the prompt/topic smells like van hire/moving/logistics, we allow service CTAs & brand details.
+ */
+function isServiceRelatedTopic(topic: string): boolean {
+  const t = (topic || "").toLowerCase();
+  const keywords = [
+    "van",
+    "van hire",
+    "hire a van",
+    "rent",
+    "rental",
+    "moving",
+    "removal",
+    "delivery",
+    "courier",
+    "transport",
+    "logistics",
+    "man and van",
+    "london",
+    "uk",
+    "pickup",
+    "drop off",
+    "book",
+    "booking",
+    "quote",
+    "price",
+    "pricing",
+    "b2b",
+    "business",
+    "fleet",
+    "emissions",
+    "ulez",
+    "clean air",
+  ];
+  return keywords.some((k) => t.includes(k));
+}
+
+function buildBrandContext(allowContact: boolean): string {
+  return `
+BRAND IDENTITY:
+- Brand name: ${BRAND.name}
+- Phone: ${BRAND.phone}
+- Address: ${BRAND.address}
+
+BRAND FEATURES (use selectively, only when relevant):
+1) Expertise: ${BRAND_FEATURES.expertise}
+2) Licences: ${BRAND_FEATURES.licenses}
+3) Guarantee & Insurance: ${BRAND_FEATURES.guarantee}
+4) Pricing: ${BRAND_FEATURES.pricing}
+5) Eco/Compliance: ${BRAND_FEATURES.eco}
+6) Service Delivery (B2B-friendly): ${BRAND_FEATURES.service}
+
+USAGE RULES (STRICT):
+- Be natural and useful. Never sound like an ad.
+- Mention "${BRAND.name}" when it helps the reader (typically intro or conclusion, or provider-selection sections).
+- Use features as "proof points" only in sections that match them:
+  - Pricing/budget/value sections => feature #4
+  - Booking/reservation/how to rent sections => feature #3 (secure booking/insurance)
+  - Licence/eligibility/requirements sections => feature #2
+  - Fleet/vehicle types/availability sections => feature #1 (50+ vehicles)
+  - Environmental/ULEZ/emissions/compliance sections => feature #5 (EU6)
+  - B2B/companies/contracts/service quality sections => feature #6
+- Avoid repetition:
+  - Do NOT repeat the same feature more than once across the whole article unless the topic is specifically about that feature.
+- Contact details policy:
+  - Phone/address are ${allowContact ? "ALLOWED only in explicit contact/booking contexts" : "NOT ALLOWED (topic not service-related)"}.
+  - Phone max once and address max once across the whole article.
+- If topic is NOT service-related:
+  - At most one brief mention of "${BRAND.name}".
+  - Do NOT include phone/address.
+  - Do NOT force brand features.
+
+STYLE:
+- Human, conversational, professional.
+- Unique phrasing, no robotic patterns.
+`.trim();
+}
+
+/**
+ * One reusable system message builder for all steps
+ */
+function buildSystemMessage(brandContext: string) {
+  return {
+    role: "system" as const,
+    content:
+      "You are an expert SEO content strategist and blog writer. Follow the BRAND IDENTITY, FEATURES, and USAGE RULES strictly. Write unique, human-like content. Avoid spam and repetition.\n\n" +
+      brandContext,
+  };
+}
 
 // ============================================================================
 // STEP 1: GENERATE HEADINGS TREE
@@ -22,7 +141,11 @@ export async function generateHeadingsTree(prompt: string) {
 
   const currentYear = getCurrentYear();
 
-  const systemPrompt = `You are an expert SEO content strategist. Create a comprehensive blog post outline.
+  const allowContact = isServiceRelatedTopic(prompt);
+  const brandContext = buildBrandContext(allowContact);
+  const systemMessage = buildSystemMessage(brandContext);
+
+  const systemPrompt = `Create a comprehensive blog post outline.
 
 Generate a JSON response with:
 {
@@ -44,8 +167,15 @@ REQUIREMENTS:
 - Focus keyword should appear in title
 - The headings should flow logically and cover the topic comprehensively
 - Make the headings specific, actionable, and intriguing for readers
-- Ensure that the content and headings are completely unique and not derived from existing sources.
-- Write in a natural, conversational tone that feels human-like.
+- Ensure uniqueness and original structure (no copying)
+- Natural, conversational tone
+
+BRAND STRUCTURE RULE:
+- If topic is service-related, include ONE heading that could naturally support:
+  (a) booking/reservation steps OR
+  (b) choosing a provider / comparing options
+  and allow light brand proof points (secure booking, no hidden fees, EU6, UK/EU licences, fleet size, B2B insurance).
+- If topic is not service-related, do not include booking/contact/provider-comparison headings.
 
 Return ONLY valid JSON.`;
 
@@ -53,8 +183,9 @@ Return ONLY valid JSON.`;
   const completion = await client.chat.completions.create({
     model: "gpt-4o",
     messages: [
-      { role: "system", content: systemPrompt },
+      systemMessage,
       { role: "user", content: `Create blog outline for: ${prompt}` },
+      { role: "user", content: systemPrompt },
     ],
     response_format: { type: "json_object" },
     temperature: 0.8,
@@ -92,19 +223,33 @@ export async function generateSectionContent(
 
   const wordCount = level === 2 ? "250-350" : "150-200";
 
-  const systemPrompt = `You are an expert blog content writer. Write high-quality, SEO-optimized content.
+  const allowContact = isServiceRelatedTopic(topic);
+  const brandContext = buildBrandContext(allowContact);
+  const systemMessage = buildSystemMessage(brandContext);
+
+  const systemPrompt = `Write high-quality, SEO-optimized content.
 
 Requirements:
 - Write ${wordCount} words
-- The content must feel natural and human-like, as if written by a real person
-- Avoid overly complex sentences or unnatural phrasing
-- Use proper HTML format with appropriate tags (<p>, <ul>, <li>, <strong>, <em>, etc.)
+- Natural and human-like; no robotic phrasing
+- HTML only with proper tags (<p>, <ul>, <li>, <strong>, <em>, etc.)
 - Include focus keyword "${focusKeyword}" naturally if relevant
-- Keep the writing concise, engaging, and free of repetition
-- Write in a conversational yet professional tone
-- Use bullet points or lists where appropriate, but keep them natural and not forced
-- Provide real-life examples, data, and actionable insights
-- Ensure the content is unique, not copied from other sources
+- Concise, engaging, no repetition
+- Real-life examples, data, actionable insights
+- Unique content
+
+BRAND & FEATURES USAGE:
+- Mention "${BRAND.name}" ONLY if it naturally helps this specific section (max once).
+- Use at most ONE brand feature proof point if it fits the section:
+  - Pricing => "${BRAND_FEATURES.pricing}"
+  - Booking/security/insurance => "${BRAND_FEATURES.guarantee}"
+  - Licences/requirements => "${BRAND_FEATURES.licenses}"
+  - Fleet/availability => "${BRAND_FEATURES.expertise}"
+  - Eco/ULEZ/emissions => "${BRAND_FEATURES.eco}"
+  - B2B/service quality => "${BRAND_FEATURES.service}"
+- Contact details:
+  - Include phone/address ONLY if this section is explicitly about contacting/booking AND contact is allowed for this topic.
+  - Phone max once and address max once across the whole article (assume they might have already been used).
 
 Return ONLY the HTML content (no heading tags).`;
 
@@ -119,7 +264,8 @@ Make it engaging, informative, and valuable to the reader.`;
   const completion = await client3.chat.completions.create({
     model: "gpt-4o",
     messages: [
-      { role: "system", content: systemPrompt },
+      systemMessage,
+      { role: "user", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
     temperature: 0.7,
@@ -145,25 +291,26 @@ export async function generateSummary(
 ): Promise<string> {
   console.log(`📋 [Step Generator] Generating summary for: ${topic}`);
 
-  const systemPrompt = `You are an expert blog writer. Write an engaging introduction/summary.
+  const allowContact = isServiceRelatedTopic(topic);
+  const brandContext = buildBrandContext(allowContact);
+  const systemMessage = buildSystemMessage(brandContext);
+
+  const systemPrompt = `Write an engaging introduction/summary.
 
 Requirements:
 - 120-180 words
-- The summary should be interesting and make the reader want to continue
+- Interesting hook + clear promise of what the article covers
 - Include focus keyword: "${focusKeyword}" naturally
-- Write it in a conversational tone that feels human, as if written by a person
-- Avoid any robotic or unnatural phrasing
-- Use HTML tags: <p>, <strong>, <em>
-- Keep it informative and to the point, but engaging
+- Conversational and human tone
+- HTML tags: <p>, <strong>, <em>
+- No boilerplate/document tags
 
-IMPORTANT:
-- Return ONLY the HTML content (no \`\`\`html wrapper)
-- Do NOT include any HTML boilerplate tags like <!DOCTYPE>, <html>, <head>, or <title>.
-- Start directly with <p> tags and end with closing </p> tags.
+BRAND USAGE:
+- If topic is service-related, you MAY mention "${BRAND.name}" naturally once.
+- Do NOT include phone/address in the summary.
+- Do NOT list features like a brochure; if you include a proof point, weave it into a sentence naturally (max one).
 
-Example:
-<p>Have you ever wondered about...? In this comprehensive guide, we'll explore <strong>keyword</strong>.</p>
-<p>Whether you're new or experienced, this article covers everything you need to know...</p>`;
+Return ONLY HTML starting with <p> and ending with </p>.`;
 
   const userPrompt = `Write an introduction for a blog post titled: "${title}"
 
@@ -175,7 +322,8 @@ Make it compelling and encourage readers to continue.`;
   const completion = await client3.chat.completions.create({
     model: "gpt-4o",
     messages: [
-      { role: "system", content: systemPrompt },
+      systemMessage,
+      { role: "user", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
     temperature: 0.7,
@@ -183,7 +331,6 @@ Make it compelling and encourage readers to continue.`;
 
   let summary = completion.choices[0].message.content || "";
 
-  // Clean up any markdown wrappers or document tags
   summary = summary.replace(/```html\n?/g, "");
   summary = summary.replace(/```\n?/g, "");
   summary = summary.replace(/<!DOCTYPE[^>]*>/gi, "");
@@ -213,31 +360,32 @@ export async function generateConclusion(
 ): Promise<string> {
   console.log(`🎯 [Step Generator] Generating conclusion`);
 
+  const allowContact = isServiceRelatedTopic(topic);
+  const brandContext = buildBrandContext(allowContact);
+  const systemMessage = buildSystemMessage(brandContext);
+
   const mainPoints = headings
     .filter((h) => h.level === 2)
     .slice(0, 3)
     .map((h) => h.text)
     .join(", ");
 
-  const systemPrompt = `You are an expert blog writer. Write a powerful conclusion.
+  const systemPrompt = `Write a powerful conclusion.
 
 Requirements:
 - 120-150 words
-- Summarize the key takeaways from the article
-- Provide a clear call to action or next steps for the reader
-- End with a motivational or actionable note
+- Summarize key takeaways
+- Clear next step / CTA
 - Include focus keyword: "${focusKeyword}" naturally
-- Use proper HTML tags: <p>, <strong>, <em>
-- Keep it engaging and professional, without sounding robotic or generic
+- HTML tags: <p>, <strong>, <em>
+- No heading tags, no document tags
 
-IMPORTANT:
-- Return ONLY the HTML content (no \`\`\`html wrapper)
-- Do NOT include heading tags (<h1>, <h2>, etc.) or document structure tags (<html>, <head>, etc.)
-- Start directly with <p> tags and end with closing </p> tags.
+BRAND USAGE:
+- If topic is service-related, mention "${BRAND.name}" naturally once.
+- You MAY include one relevant brand proof point (max one) if it fits the CTA.
+- Do NOT include phone/address unless the article is explicitly about booking/contact (and even then: include only phone OR address, not both).
 
-Example output:
-<p>As we've explored throughout this guide, <strong>keyword</strong> is essential for success. The key takeaways are clear...</p>
-<p>Now it's your turn to take action. Start by implementing these strategies and watch your results improve.</p>`;
+Return ONLY HTML starting with <p> and ending with </p>.`;
 
   const userPrompt = `Write a conclusion for: "${title}"
 
@@ -250,7 +398,8 @@ Make it memorable and actionable.`;
   const completion = await client4.chat.completions.create({
     model: "gpt-4o",
     messages: [
-      { role: "system", content: systemPrompt },
+      systemMessage,
+      { role: "user", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
     temperature: 0.7,
@@ -258,7 +407,6 @@ Make it memorable and actionable.`;
 
   let conclusion = completion.choices[0].message.content || "";
 
-  // Clean up any markdown wrappers, heading tags, or document structure
   conclusion = conclusion.replace(/```html\n?/g, "");
   conclusion = conclusion.replace(/```\n?/g, "");
   conclusion = conclusion.replace(/<!DOCTYPE[^>]*>/gi, "");
@@ -267,7 +415,7 @@ Make it memorable and actionable.`;
   conclusion = conclusion.replace(/<\/?body[^>]*>/gi, "");
   conclusion = conclusion.replace(/<title>[^<]*<\/title>/gi, "");
   conclusion = conclusion.replace(/<meta[^>]*>/gi, "");
-  conclusion = conclusion.replace(/<\/?h[1-6][^>]*>/gi, ""); // Remove any heading tags
+  conclusion = conclusion.replace(/<\/?h[1-6][^>]*>/gi, "");
   conclusion = conclusion.trim();
 
   console.log(
@@ -291,17 +439,18 @@ export async function generateFAQs(
     `   Total headings with content: ${headings.filter((h) => h.content).length}`,
   );
 
-  // Extract main topics from H2 headings
+  const allowContact = isServiceRelatedTopic(topic);
+  const brandContext = buildBrandContext(allowContact);
+  const systemMessage = buildSystemMessage(brandContext);
+
   const mainTopics = headings
     .filter((h) => h.level === 2)
     .map((h) => h.text)
     .join(", ");
 
-  // Extract full content from all headings to provide context
   const fullContent = headings
     .filter((h) => h.content)
     .map((h) => {
-      // Strip HTML tags for cleaner context
       const cleanContent = h.content
         .replace(/<[^>]*>/g, " ")
         .replace(/\s+/g, " ")
@@ -310,7 +459,6 @@ export async function generateFAQs(
     })
     .join("\n\n");
 
-  // Limit content length to avoid token limits (keep first 3000 chars)
   const contentContext =
     fullContent.length > 3000
       ? fullContent.substring(0, 3000) + "..."
@@ -318,37 +466,31 @@ export async function generateFAQs(
 
   console.log(`   Content context length: ${contentContext.length} characters`);
 
-  const systemPrompt = `You are an expert at creating helpful, relevant FAQs based on actual blog content. Generate questions that readers would commonly ask after reading the article.
+  const systemPrompt = `You are an expert at creating helpful, relevant FAQs based on actual blog content.
 
 Requirements:
-- Generate exactly 5-9 FAQ pairs (minimum 5, maximum 9)
-- Questions should be directly related to the content provided
-- Cover different aspects: basics, how-to, benefits, common concerns, best practices
-- Answers should be clear, concise, and informative (50-100 words each)
+- Generate exactly 5-9 FAQ pairs
+- Questions directly tied to the content
+- Mix of basics, how-to, benefits, concerns, best practices
+- Answers 50-100 words each
 - Include focus keyword "${focusKeyword}" naturally in 2-3 FAQs
-- Use plain text for both questions and answers (no HTML)
-- Questions should sound natural and conversational
-- Answers should provide value and actionable information
+- Plain text only (no HTML)
+- Natural, conversational Q&A
+- Value-focused and actionable
 
-Question types to consider:
-- "What is/are...?" (definition questions)
-- "How do I/can I...?" (practical how-to questions)  
-- "Why should I...?" (benefit-focused questions)
-- "When is the best time to...?" (timing questions)
-- "What are the common mistakes/challenges with...?" (problem-solving)
+BRAND USAGE:
+- Do NOT include phone/address.
+- Only mention "${BRAND.name}" if it genuinely helps (max once across all FAQs).
+- Do NOT list brand features; keep FAQs educational.
 
-Return JSON object with "faqs" array:
+Return JSON:
 {
   "faqs": [
-    {
-      "id": "faq-1",
-      "question": "Question text ending with?",
-      "answer": "Detailed answer providing value and insights."
-    }
+    { "id": "faq-1", "question": "...?", "answer": "..." }
   ]
 }
 
-IMPORTANT: Return ONLY valid JSON. No additional text or explanation.`;
+Return ONLY valid JSON.`;
 
   const userPrompt = `Generate 5-9 FAQs for a blog about: "${topic}"
 
@@ -357,13 +499,14 @@ Main sections covered: ${mainTopics}
 Blog content summary:
 ${contentContext}
 
-Create FAQs that directly address information in the content above. Make questions specific and answers helpful.`;
+Create FAQs that directly address information in the content above.`;
 
   const client5 = getOpenAI();
   const completion = await client5.chat.completions.create({
     model: "gpt-4o",
     messages: [
-      { role: "system", content: systemPrompt },
+      systemMessage,
+      { role: "user", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
     response_format: { type: "json_object" },
@@ -374,17 +517,11 @@ Create FAQs that directly address information in the content above. Make questio
     completion.choices[0].message.content || '{"faqs":[]}',
   );
 
-  // Handle both {faqs: [...]} and direct array formats
-  let faqsArray = [];
-  if (Array.isArray(result)) {
-    faqsArray = result;
-  } else if (Array.isArray(result.faqs)) {
-    faqsArray = result.faqs;
-  } else if (result.faq && Array.isArray(result.faq)) {
-    faqsArray = result.faq;
-  }
+  let faqsArray: any[] = [];
+  if (Array.isArray(result)) faqsArray = result;
+  else if (Array.isArray(result.faqs)) faqsArray = result.faqs;
+  else if (result.faq && Array.isArray(result.faq)) faqsArray = result.faq;
 
-  // Ensure we have at least 5 FAQs and at most 9
   if (faqsArray.length < 5) {
     console.warn(
       `⚠️ Only ${faqsArray.length} FAQs generated, expected minimum 5`,
@@ -401,9 +538,6 @@ Create FAQs that directly address information in the content above. Make questio
   }));
 
   console.log(`✅ [Step Generator] Generated ${faqs.length} FAQs`);
-  console.log(
-    `   Questions: ${faqs.map((f: any) => f.question.substring(0, 50)).join(", ")}`,
-  );
 
   return faqs;
 }
@@ -422,13 +556,21 @@ export async function generateSEOMetadata(
 ): Promise<any> {
   console.log(`🔍 [Step Generator] Generating SEO metadata`);
 
-  const systemPrompt = `You are an SEO expert. Generate comprehensive SEO metadata.
+  const allowContact = isServiceRelatedTopic(topic);
+  const brandContext = buildBrandContext(allowContact);
+  const systemMessage = buildSystemMessage(brandContext);
+
+  const systemPrompt = `You are an SEO expert. Generate SEO metadata.
 
 Requirements:
-- Meta description: 140-155 characters, compelling, includes main keyword, and reads naturally
-- Tags: 7-10 relevant, searchable tags (mix of broad and specific terms)
-- The metadata should not feel robotic or formulaic but should read as if written by a human.
-- Ensure all generated content is unique and original, with no repetition or overuse of key phrases.
+- Meta description: 140-155 characters, compelling, natural
+- Tags: 7-10 relevant searchable tags
+- Unique, non-robotic
+
+BRAND USAGE:
+- You MAY include "${BRAND.name}" in meta description only if topic is service-related and it fits naturally.
+- Do NOT include phone/address in SEO metadata.
+- Do NOT list features; keep metadata clean.
 
 Return JSON:
 {
@@ -444,7 +586,6 @@ Return ONLY valid JSON.`;
     .map((h) => h.text)
     .join(", ");
 
-  // Extract summary and conclusion text for context
   const summaryText = summary
     ? summary.replace(/<[^>]*>/g, " ").substring(0, 200)
     : "";
@@ -457,15 +598,14 @@ Return ONLY valid JSON.`;
 Topic: ${topic}
 Main sections: ${mainTopics}
 ${summaryText ? `\nSummary: ${summaryText}` : ""}
-${conclusionText ? `\nConclusion: ${conclusionText}` : ""}
-
-Make it SEO-optimized and compelling.`;
+${conclusionText ? `\nConclusion: ${conclusionText}` : ""}`;
 
   const client6 = getOpenAI();
   const completion = await client6.chat.completions.create({
     model: "gpt-4o",
     messages: [
-      { role: "system", content: systemPrompt },
+      systemMessage,
+      { role: "user", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
     response_format: { type: "json_object" },
@@ -474,20 +614,11 @@ Make it SEO-optimized and compelling.`;
 
   const result = JSON.parse(completion.choices[0].message.content || "{}");
 
-  // Set default author
-  if (!result.author) {
-    result.author = "admin";
-  }
-
-  // Set publish date to now
+  if (!result.author) result.author = "admin";
   result.publishDate = new Date();
-
-  // Initialize empty anchors array (will be populated by anchor generator)
   result.anchors = [];
 
   console.log(`✅ [Step Generator] SEO metadata generated`);
-  console.log(`   - Tags: ${result.tags?.length || 0}`);
-  console.log(`   - Description: ${result.seoDescription?.length || 0} chars`);
 
   return result;
 }
