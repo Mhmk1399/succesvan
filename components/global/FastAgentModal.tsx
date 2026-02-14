@@ -34,6 +34,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { datePickerStyles } from "./DatePickerStyles";
 import { MdDoorSliding } from "react-icons/md";
+import { getLondonTime } from "@/lib/englandTime";
 
 interface FastAgentModalProps {
   isOpen: boolean;
@@ -130,8 +131,8 @@ export default function FastAgentModal({
   const [showDateRange, setShowDateRange] = useState(false);
   const [dateRange, setDateRange] = useState<Range[]>([
     {
-      startDate: new Date(),
-      endDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+      startDate: undefined,
+      endDate: undefined,
       key: "selection",
     },
   ]);
@@ -272,6 +273,32 @@ export default function FastAgentModal({
       setIsAuthenticated(true);
       setExistingUserToken(token);
     }
+  }, []);
+
+  // Initialize date range based on London time (16:00 hour check)
+  useEffect(() => {
+    const londonNow = getLondonTime();
+    const hours = londonNow.getUTCHours();
+
+    let minDaysToAdd = 1;
+    if (hours >= 16) {
+      minDaysToAdd = 2;
+    }
+
+    const start = new Date(londonNow);
+    start.setDate(start.getDate() + minDaysToAdd);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    setDateRange([
+      {
+        startDate: start,
+        endDate: end,
+        key: "selection",
+      },
+    ]);
   }, []);
 
   useEffect(() => {
@@ -1063,17 +1090,31 @@ export default function FastAgentModal({
                             const { startDate, endDate } = item.selection;
                             setDateRange([
                               {
-                                startDate:
-                                  startDate ||
-                                  new Date(Date.now() + 48 * 60 * 60 * 1000),
-                                endDate:
-                                  endDate ||
-                                  new Date(Date.now() + 48 * 60 * 60 * 1000),
+                                startDate: startDate || new Date(),
+                                endDate: endDate || new Date(),
                                 key: "selection",
                               },
                             ]);
                           }}
-                          minDate={new Date(Date.now() + 48 * 60 * 60 * 1000)}
+                          minDate={(() => {
+                            try {
+                              const londonNow = getLondonTime();
+                              const hours = londonNow.getUTCHours();
+
+                              let minDaysToAdd = 1;
+                              if (hours >= 16) minDaysToAdd = 2;
+
+                              const min = new Date(londonNow);
+                              min.setDate(min.getDate() + minDaysToAdd);
+                              min.setHours(0, 0, 0, 0);
+                              return min;
+                            } catch (err) {
+                              const fallback = new Date();
+                              fallback.setDate(fallback.getDate() + 1);
+                              fallback.setHours(0, 0, 0, 0);
+                              return fallback;
+                            }
+                          })()}
                           rangeColors={["#f97316"]}
                           disabledDates={
                             bookingForm.officeId
