@@ -128,7 +128,14 @@ export function VanHireLondonHero() {
               business deliveries, airport transport, or furniture collection,
               our London van hire service makes it easy to hire a van in London
               and reserve a van online with trusted vans available today —
-              including cheap van hire London options when you book early.
+              including{" "}
+              <Link
+                href="/cheap-van-hire-london"
+                className="text-green-400 hover:text-green-300 underline"
+              >
+                cheap van hire London
+              </Link>{" "}
+              options when you book early.
             </p>
 
             {/* CTA Buttons */}

@@ -41,6 +41,10 @@ const menuItems: MenuItem[] = [
       { label: "Reservation", href: "/reservation" },
       { label: "Van Hire London", href: "/van-hire-london" },
       { label: "Automatic Van Rental", href: "/automatic-van-hire-london" },
+      { label: "Cheap van Hire London", href: "/cheap-van-hire-london" },
+      { label: "Van Hire London prices", href: "/van-hire-london-prices" },
+      { label: "Removal van Hire London ", href: "/removal-van-hire-london" },
+
     ],
   },
   {
