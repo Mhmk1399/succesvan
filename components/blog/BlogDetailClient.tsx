@@ -262,7 +262,7 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
           padding: 0 !important;
           width: 100% !important;
           max-width: 100% !important;
-        }
+         }
         .van-list-wrapper section .grid {
           gap: 0.75rem !important;
           grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
@@ -309,9 +309,7 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
           {renderContent()}
         </div>
 
-        <div className="lg:hidden">
-          <TableOfContents contentRef={contentRef} />
-        </div>
+       
       </div>
     </>
   );

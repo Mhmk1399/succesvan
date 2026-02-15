@@ -206,14 +206,14 @@ function assembleContentFromObject(contentObj: any): string {
       if (h.type === "vanlist" && h.vanConfig) {
         const vanConfig = h.vanConfig;
         parts.push(
-          `<div id="section-${h.id || ""}" class="van-list-block my-8 rounded-2xl p-1 border border-slate-700" style="background-color: #0f172b">`,
+          `<div id="section-${h.id || ""}" class="van-list-block mt-8   p-1  "  >`,
         );
-        parts.push(`  <div class="text-center mb-8">`);
+        parts.push(`  <div class="text-center   bg-[#fe9a00] p-2 rounded-2xl  ">`);
         parts.push(
-          `    <h2 class="font-bold text-2xl mb-2 text-[#0f172b]">${vanConfig.title}</h2>`,
+          `    <h6 class="font-bold text-base md:text-2xl mt-4 text-white">${vanConfig.title}</h6>`,
         );
         parts.push(
-          `    <p class="text-sm text-slate-400">${vanConfig.subtitle}</p>`,
+          `    <span class="text-sm mb-2 bg-black/20 text-black px-2 rounded-2xl">${vanConfig.subtitle}</span>`,
         );
         parts.push(`  </div>`);
         parts.push(
@@ -284,14 +284,14 @@ function assembleContentFromObject(contentObj: any): string {
         );
         parts.push(`    <div class="flex items-start gap-4">`);
         parts.push(
-          `      <div class="shrink-0 w-10 h-10 bg-[#fe9a00]/20 rounded-xl flex items-center justify-center text-[#fe9a00] text-lg font-bold">${index + 1}</div>`,
+          `      <div class="shrink-0 hidden  w-6 h-6 bg-[#fe9a00]/20 rounded-xl md:flex items-center justify-center text-[#fe9a00] text-lg font-bold">${index + 1}</div>`,
         );
         parts.push(`      <div class="flex-1">`);
         parts.push(
-          `        <h3 class="text-white font-semibold text-lg mb-3">${faq.question}</h3>`,
+          `        <h5 class="text-white font-semibold text-base md:text-lg mb-3">${faq.question}</h5>`,
         );
         parts.push(
-          `        <p class="text-gray-300 leading-relaxed text-base">${answerWithAnchors}</p>`,
+          `        <p class="text-gray-300 leading-relaxed text-xs md:text-base">${answerWithAnchors}</p>`,
         );
         parts.push(`      </div>`);
         parts.push(`    </div>`);

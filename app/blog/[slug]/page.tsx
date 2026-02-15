@@ -175,7 +175,7 @@ export default async function BlogDetailPage({ params }: Props) {
           {/* Blog Detail Content */}
           <article className="bg-linear-to-b from-[#0f172b] via-slate-900 to-[#20283a]">
             {/* Header Section */}
-            <header className="mb-12 pt-36  ">
+            <header className=" pt-36  ">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 lg:pb-20">
                 <h1 className="text-2xl lg:text-5xl font-black text-white mb-6 leading-tight">
                   {blog.seoTitle}
@@ -215,17 +215,18 @@ export default async function BlogDetailPage({ params }: Props) {
                 </div>
               </div>
             </header>
-            <div 
-              className="max-w-7xl mx-auto rounded-xl px-4 sm:px-6 lg:px-8 pb-12"
+            <div
+              className="max-w-7xl mx-auto rounded-xl px-4 sm:px-6 lg:px-8 pb-12 pt-6 md:pt-0"
               style={{
                 backgroundColor: "rgba(255, 255, 255, 0.95)",
-                backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px)",
+                backgroundImage:
+                  "linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px)",
                 backgroundSize: "20px 20px",
               }}
             >
               {" "}
               {/* Featured Image */}
-              <div className="mb-12 rounded-2xl overflow-hidden bg-slate-800/50">
+              <div className="md:mb-12 mb-6 rounded-2xl overflow-hidden bg-slate-800/50">
                 <Image
                   src={blog.image}
                   alt={blog.title}
@@ -265,25 +266,6 @@ export default async function BlogDetailPage({ params }: Props) {
             </div>
           </article>
         </Suspense>
-
-        {/* Related Articles Section */}
-        <section className="bg-linear-to-t from-[#0f172b] via-slate-900 to-[#20283a] backdrop-blur-xl  py-16 flex">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-black text-white mb-2">
-              More Articles
-            </h2>
-            <p className="text-gray-400 mb-8">
-              Explore more blog posts from our collection
-            </p>
-            <Link
-              href="/blog"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#fe9a00] text-white font-bold hover:bg-[#e68900] transition-colors duration-300"
-            >
-              Browse All Articles
-              <FiArrowLeft className="w-5 h-5 rotate-180" />
-            </Link>
-          </div>
-        </section>
       </main>
     </>
   );
