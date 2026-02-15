@@ -7,6 +7,7 @@ import {
   RemovalFAQSection,
   RemovalFinalCTA,
 } from "@/components/pillar/RemovalVanHireLondonPillar";
+import RemovalVanListing from "@/components/pillar/RemovalVanListing";
 
 export const metadata: Metadata = {
   title: "Removal Van Hire London | Moving Van Hire from £78/Day",
@@ -130,6 +131,7 @@ export default function RemovalVanHireLondonPage() {
         <RemovalVanHireLondonHero />
         <WhyChooseRemovalSection />
         <VanSizesForMovingSection />
+        <RemovalVanListing />
         <MovingTipsSection />
         <RemovalFAQSection />
         <RemovalFinalCTA />
