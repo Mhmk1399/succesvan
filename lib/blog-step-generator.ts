@@ -11,7 +11,8 @@
  *
  * ✅ Brand-aware (Success Van Hire):
  * - Brand name + contact details used naturally (no spam)
- * - Brand features injected where relevant (B2B, licensing, pricing, eco, fleet, booking)
+ * - Brand features injected where relevant
+ * - Van fleet data for smart recommendations
  */
 
 import { generateId, getCurrentYear } from "./blog-utils";
@@ -41,9 +42,188 @@ const BRAND_FEATURES = {
     "Friendly & professional service, including business insurance support for B2B clients",
 };
 
+// ============================================================================
+// VAN FLEET DATA (Simple format for AI)
+// ============================================================================
+
+const VAN_FLEET = [
+  {
+    name: "Short Wheel Base",
+    type: "Van",
+    seats: 3,
+    fuel: "Diesel",
+    priceFrom: 60,
+    idealFor: "Small moves, trades and tools, city driving, small furniture",
+    loadVolume: "6.0-6.5 m³",
+    payload: "800-1,100 kg",
+  },
+  {
+    name: "Medium Wheel Base",
+    type: "Van",
+    seats: 3,
+    fuel: "Diesel",
+    priceFrom: 78,
+    idealFor: "Furniture moves, trade jobs, pallets up to 3m long",
+    loadVolume: "10.0 m³",
+    payload: "900-1,200 kg",
+  },
+  {
+    name: "Long Wheel Base",
+    type: "Van",
+    seats: 3,
+    fuel: "Diesel",
+    priceFrom: 72,
+    idealFor:
+      "Furniture and office relocations, trade equipment, up to 4 Euro pallets",
+    loadVolume: "11.5 m³",
+    payload: "1.1-1.3 tonnes",
+  },
+  {
+    name: "Extra Long Wheel Base",
+    type: "Van",
+    seats: 3,
+    fuel: "Diesel",
+    priceFrom: 108,
+    idealFor:
+      "Large/long loads (4m+), long timber, pipes, up to 5 Euro pallets, event transport",
+    loadVolume: "15.1 m³",
+    payload: "1.0-1.35 tonnes",
+  },
+  {
+    name: "Luton With Tail-Lift",
+    type: "Van",
+    seats: 3,
+    fuel: "Diesel",
+    priceFrom: 100,
+    idealFor:
+      "House moves, office relocations, heavy/bulky items, appliances, pallets",
+    loadVolume: "16-18.5 m³",
+    payload: "600-1,000 kg",
+    special: "Hydraulic tail-lift for easy loading",
+  },
+  {
+    name: "CrewCab Van",
+    type: "Van",
+    seats: 6,
+    fuel: "Diesel",
+    priceFrom: 72,
+    idealFor:
+      "Work crews + equipment, construction teams, trade and maintenance jobs",
+    loadVolume: "3.1-3.7 m³",
+    payload: "700-900 kg",
+    special: "Carries team AND tools together",
+  },
+  {
+    name: "Fridge Van",
+    type: "Van",
+    seats: 3,
+    fuel: "Diesel",
+    priceFrom: 120,
+    idealFor: "Food delivery, perishable goods, catering, pharmaceuticals",
+    loadVolume: "9.3-10 m³",
+    payload: "900-1,030 kg",
+    special: "Temperature controlled (0°C to +5°C, optional freezer to -18°C)",
+  },
+  {
+    name: "Tipper Van",
+    type: "Van",
+    seats: 2,
+    fuel: "Diesel",
+    priceFrom: 120,
+    idealFor:
+      "Construction waste, gravel, sand, soil, landscaping, site clearance",
+    payload: "up to 1.5 tonnes",
+    special: "Hydraulic tipping for quick unloading",
+  },
+  {
+    name: "Flat Bed Pickup Van",
+    type: "Van",
+    seats: 2,
+    fuel: "Diesel",
+    priceFrom: 108,
+    idealFor:
+      "Oversized/awkward loads, construction, landscaping, crane/forklift loading",
+    payload: "up to 2.2 tonnes",
+    special: "Open flatbed with drop sides",
+  },
+  {
+    name: "8 Seater Tourneo",
+    type: "Minibus",
+    seats: 8,
+    fuel: "Diesel",
+    priceFrom: 120,
+    idealFor:
+      "Family trips, group travel, small corporate events, airport transfers",
+    license: "Standard B license",
+  },
+  {
+    name: "14 Seater Minibus",
+    type: "Minibus",
+    seats: 14,
+    fuel: "Diesel",
+    priceFrom: 150,
+    idealFor: "Large groups, corporate events, school trips, sightseeing tours",
+    license: "Standard B license",
+  },
+  {
+    name: "17 Seater Minibus",
+    type: "Minibus",
+    seats: 17,
+    fuel: "Diesel",
+    priceFrom: 180,
+    idealFor: "Maximum group capacity, large corporate events, extended tours",
+    license: "D/D1 license required",
+  },
+];
+
 /**
- * Lightweight relevance detector:
- * If the prompt/topic smells like van hire/moving/logistics, we allow service CTAs & brand details.
+ * Build van fleet context string for AI
+ */
+function buildVanFleetContext(): string {
+  const vanList = VAN_FLEET.map((van) => {
+    let info = `• ${van.name} (${van.type}) - ${van.seats} seats, ${van.fuel}, from £${van.priceFrom}/day`;
+    info += `\n  Best for: ${van.idealFor}`;
+    if (van.loadVolume) info += ` | Volume: ${van.loadVolume}`;
+    if (van.payload) info += ` | Payload: ${van.payload}`;
+    if (van.special) info += `\n  Special: ${van.special}`;
+    if (van.license) info += ` | License: ${van.license}`;
+    return info;
+  }).join("\n\n");
+
+  return `
+AVAILABLE VAN FLEET (use this to recommend vehicles):
+${vanList}
+
+VAN RECOMMENDATION RULES:
+When the content discusses specific tasks, use cases, or vehicle selection, you SHOULD insert a van recommendation marker.
+
+FORMAT (use exactly this):
+**SHOW_VANS: Van Name 1, Van Name 2, Van Name 3**
+
+EXAMPLES:
+- For house moving content: **SHOW_VANS: Long Wheel Base, Luton With Tail-Lift, Extra Long Wheel Base**
+- For small deliveries: **SHOW_VANS: Short Wheel Base, Medium Wheel Base**
+- For group travel: **SHOW_VANS: 8 Seater Tourneo, 14 Seater Minibus, 17 Seater Minibus**
+- For construction/trade: **SHOW_VANS: Tipper Van, Flat Bed Pickup Van, CrewCab Van**
+- For food/catering: **SHOW_VANS: Fridge Van**
+
+WHEN TO INSERT:
+✅ After discussing a specific use case (moving, delivery, construction, etc.)
+✅ When comparing van sizes or types
+✅ In "choosing the right van" sections
+✅ At the end of practical advice sections
+✅ Maximum 2-3 times per article (don't overdo it)
+
+WHEN NOT TO INSERT:
+❌ In introduction/summary
+❌ In conclusion
+❌ In FAQ answers
+❌ When topic is not directly about van selection
+`.trim();
+}
+
+/**
+ * Lightweight relevance detector
  */
 function isServiceRelatedTopic(topic: string): boolean {
   const t = (topic || "").toLowerCase();
@@ -75,6 +255,13 @@ function isServiceRelatedTopic(topic: string): boolean {
     "emissions",
     "ulez",
     "clean air",
+    "minibus",
+    "group",
+    "travel",
+    "construction",
+    "trade",
+    "fridge",
+    "refrigerated",
   ];
   return keywords.some((k) => t.includes(k));
 }
@@ -97,22 +284,12 @@ BRAND FEATURES (use selectively, only when relevant):
 USAGE RULES (STRICT):
 - Be natural and useful. Never sound like an ad.
 - Mention "${BRAND.name}" when it helps the reader (typically intro or conclusion, or provider-selection sections).
-- Use features as "proof points" only in sections that match them:
-  - Pricing/budget/value sections => feature #4
-  - Booking/reservation/how to rent sections => feature #3 (secure booking/insurance)
-  - Licence/eligibility/requirements sections => feature #2
-  - Fleet/vehicle types/availability sections => feature #1 (50+ vehicles)
-  - Environmental/ULEZ/emissions/compliance sections => feature #5 (EU6)
-  - B2B/companies/contracts/service quality sections => feature #6
-- Avoid repetition:
-  - Do NOT repeat the same feature more than once across the whole article unless the topic is specifically about that feature.
-- Contact details policy:
-  - Phone/address are ${allowContact ? "ALLOWED only in explicit contact/booking contexts" : "NOT ALLOWED (topic not service-related)"}.
-  - Phone max once and address max once across the whole article.
-- If topic is NOT service-related:
-  - At most one brief mention of "${BRAND.name}".
-  - Do NOT include phone/address.
-  - Do NOT force brand features.
+- Use features as "proof points" only in sections that match them.
+- Avoid repetition of the same feature.
+- Contact details: ${allowContact ? "ALLOWED only in explicit contact/booking contexts (max once each)" : "NOT ALLOWED"}.
+- If topic is NOT service-related: At most one brief mention of "${BRAND.name}".
+
+${buildVanFleetContext()}
 
 STYLE:
 - Human, conversational, professional.
@@ -127,7 +304,7 @@ function buildSystemMessage(brandContext: string) {
   return {
     role: "system" as const,
     content:
-      "You are an expert SEO content strategist and blog writer. Follow the BRAND IDENTITY, FEATURES, and USAGE RULES strictly. Write unique, human-like content. Avoid spam and repetition.\n\n" +
+      "You are an expert SEO content strategist and blog writer. Follow the BRAND IDENTITY, FEATURES, VAN FLEET DATA, and USAGE RULES strictly. Write unique, human-like content. Avoid spam and repetition. Insert van recommendation markers where appropriate using the exact format specified.\n\n" +
       brandContext,
   };
 }
@@ -140,7 +317,6 @@ export async function generateHeadingsTree(prompt: string) {
   console.log("📋 [Step Generator] Generating headings tree for:", prompt);
 
   const currentYear = getCurrentYear();
-
   const allowContact = isServiceRelatedTopic(prompt);
   const brandContext = buildBrandContext(allowContact);
   const systemMessage = buildSystemMessage(brandContext);
@@ -173,8 +349,8 @@ REQUIREMENTS:
 BRAND STRUCTURE RULE:
 - If topic is service-related, include ONE heading that could naturally support:
   (a) booking/reservation steps OR
-  (b) choosing a provider / comparing options
-  and allow light brand proof points (secure booking, no hidden fees, EU6, UK/EU licences, fleet size, B2B insurance).
+  (b) choosing a provider / comparing options OR
+  (c) which van/vehicle is right for you
 - If topic is not service-related, do not include booking/contact/provider-comparison headings.
 
 Return ONLY valid JSON.`;
@@ -193,7 +369,6 @@ Return ONLY valid JSON.`;
 
   const result = JSON.parse(completion.choices[0].message.content || "{}");
 
-  // Add IDs to headings if not present
   if (result.headings) {
     result.headings = result.headings.map((h: any) => ({
       ...h,
@@ -222,7 +397,6 @@ export async function generateSectionContent(
   console.log(`📝 [Step Generator] Generating content for: ${headingText}`);
 
   const wordCount = level === 2 ? "250-350" : "150-200";
-
   const allowContact = isServiceRelatedTopic(topic);
   const brandContext = buildBrandContext(allowContact);
   const systemMessage = buildSystemMessage(brandContext);
@@ -240,16 +414,15 @@ Requirements:
 
 BRAND & FEATURES USAGE:
 - Mention "${BRAND.name}" ONLY if it naturally helps this specific section (max once).
-- Use at most ONE brand feature proof point if it fits the section:
-  - Pricing => "${BRAND_FEATURES.pricing}"
-  - Booking/security/insurance => "${BRAND_FEATURES.guarantee}"
-  - Licences/requirements => "${BRAND_FEATURES.licenses}"
-  - Fleet/availability => "${BRAND_FEATURES.expertise}"
-  - Eco/ULEZ/emissions => "${BRAND_FEATURES.eco}"
-  - B2B/service quality => "${BRAND_FEATURES.service}"
-- Contact details:
-  - Include phone/address ONLY if this section is explicitly about contacting/booking AND contact is allowed for this topic.
-  - Phone max once and address max once across the whole article (assume they might have already been used).
+- Use at most ONE brand feature proof point if it fits the section.
+- Contact details: Include phone/address ONLY if this section is explicitly about contacting/booking AND contact is allowed.
+
+VAN RECOMMENDATIONS:
+- If this section discusses tasks, use cases, or vehicle types, insert ONE van marker at an appropriate place.
+- Format: **SHOW_VANS: Van Name 1, Van Name 2**
+- Place it on its OWN LINE after the relevant paragraph.
+- Choose vans that match the topic being discussed.
+- Maximum 1 marker per section.
 
 Return ONLY the HTML content (no heading tags).`;
 
@@ -308,7 +481,7 @@ Requirements:
 BRAND USAGE:
 - If topic is service-related, you MAY mention "${BRAND.name}" naturally once.
 - Do NOT include phone/address in the summary.
-- Do NOT list features like a brochure; if you include a proof point, weave it into a sentence naturally (max one).
+- Do NOT include van recommendation markers (**SHOW_VANS:**) in summary.
 
 Return ONLY HTML starting with <p> and ending with </p>.`;
 
@@ -383,7 +556,8 @@ Requirements:
 BRAND USAGE:
 - If topic is service-related, mention "${BRAND.name}" naturally once.
 - You MAY include one relevant brand proof point (max one) if it fits the CTA.
-- Do NOT include phone/address unless the article is explicitly about booking/contact (and even then: include only phone OR address, not both).
+- Do NOT include phone/address unless the article is explicitly about booking/contact.
+- Do NOT include van recommendation markers (**SHOW_VANS:**) in conclusion.
 
 Return ONLY HTML starting with <p> and ending with </p>.`;
 
@@ -482,6 +656,7 @@ BRAND USAGE:
 - Do NOT include phone/address.
 - Only mention "${BRAND.name}" if it genuinely helps (max once across all FAQs).
 - Do NOT list brand features; keep FAQs educational.
+- Do NOT include van recommendation markers (**SHOW_VANS:**) in FAQs.
 
 Return JSON:
 {
@@ -622,3 +797,51 @@ ${conclusionText ? `\nConclusion: ${conclusionText}` : ""}`;
 
   return result;
 }
+
+// ============================================================================
+// HELPER: Parse van markers from content
+// ============================================================================
+
+export interface VanMarker {
+  fullMatch: string;
+  vanNames: string[];
+}
+
+/**
+ * Extract all **SHOW_VANS: ...** markers from content
+ */
+export function parseVanMarkers(content: string): VanMarker[] {
+  const regex = /\*\*SHOW_VANS:\s*([^*]+)\*\*/g;
+  const markers: VanMarker[] = [];
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    const vanNames = match[1]
+      .split(",")
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
+
+    markers.push({
+      fullMatch: match[0],
+      vanNames,
+    });
+  }
+
+  return markers;
+}
+
+/**
+ * Get van data by names (for rendering)
+ */
+export function getVansByNames(names: string[]): typeof VAN_FLEET {
+  return VAN_FLEET.filter((van) =>
+    names.some(
+      (name) =>
+        van.name.toLowerCase().includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(van.name.toLowerCase()),
+    ),
+  );
+}
+
+// Export van fleet for external use
+export { VAN_FLEET };

@@ -147,7 +147,7 @@ export function RemovalVanHireLondonHero() {
                     <AnimatedCounter
                       end={stat.value}
                       suffix={stat.suffix}
-                      prefix={stat.prefix}
+                      // prefix={stat.prefix}
                     />
                   </div>
                   <div className="text-xs sm:text-sm text-slate-400 font-medium">
