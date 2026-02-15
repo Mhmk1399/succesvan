@@ -562,7 +562,7 @@ export default function DynamicTableView<
                           try {
                             await Promise.resolve(onStatusToggle(item));
                           } catch (err) {
-                            console.error("Status toggle failed:", err);
+                            console.log("Status toggle failed:", err);
                           } finally {
                             stopToggling(itemId);
                           }

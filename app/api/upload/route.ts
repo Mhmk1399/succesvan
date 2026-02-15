@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const bucket = "svh-bucket-s3";
 
     if (!accessKey || !secretKey || !bucket) {
-      console.error("Missing AWS configuration");
+      console.log("Missing AWS configuration");
       return NextResponse.json(
         { error: "Server configuration error: Missing AWS configuration" },
         { status: 500 }

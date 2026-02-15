@@ -269,7 +269,7 @@ export async function generateBatchImages(
       await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      console.error(
+      console.log(
         `   ❌ Failed to generate image for ${heading.text}:`,
         message,
       );

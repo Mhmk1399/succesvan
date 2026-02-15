@@ -18,7 +18,7 @@ export const getLondonTime = (): Date => {
 
   const [datePart, timePart] = londonStr.split(", ");
   if (!datePart || !timePart) {
-    console.error("Failed to split London time string");
+    console.log("Failed to split London time string");
     return new Date(); // fallback
   }
 

@@ -38,7 +38,7 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
         const cats = data?.data?.data || data?.data || data?.categories || [];
         setCategories(Array.isArray(cats) ? cats : []);
       })
-      .catch((err) => console.error("Failed to fetch categories:", err));
+      .catch((err) => console.log("Failed to fetch categories:", err));
   }, []);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
           try {
             configs.push(JSON.parse(match[1]));
           } catch (e) {
-            console.error("Failed to parse:", e);
+            console.log("Failed to parse:", e);
           }
         }
 

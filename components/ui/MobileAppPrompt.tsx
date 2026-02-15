@@ -41,7 +41,7 @@ export default function MobileAppPrompt() {
           (isiOS ? "iOS device" : isAndroid ? "Android device" : "Unknown");
       }
     } catch (e) {
-      console.error("Error parsing device name:", e);
+      console.log("Error parsing device name:", e);
     }
 
     // show modal if mobile and not dismissed

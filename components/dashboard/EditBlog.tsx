@@ -364,7 +364,7 @@ export default function EditBlog({
 
       showToast.success("Blog saved successfully!");
     } catch (error: any) {
-      console.error("Save error:", error);
+      console.log("Save error:", error);
       showToast.error(error.message || "Failed to save blog");
     }
   };
@@ -379,7 +379,7 @@ export default function EditBlog({
         setMediaLibrary((prev) => prev.filter((m) => m.id !== mediaId));
         showToast.success("Media deleted from library");
       } catch (error) {
-        console.error("Delete media error:", error);
+        console.log("Delete media error:", error);
         showToast.error("Failed to delete media");
       }
     },

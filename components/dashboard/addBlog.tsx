@@ -1027,7 +1027,8 @@ const MENTION_SUGGESTIONS = [
 
 // Use a simple counter for stable IDs across server/client
 let idCounter = 0;
-const generateId = () => `id-${++idCounter}`;
+const generateId = () =>
+  `id-${Date.now()}-${++idCounter}-${Math.random().toString(36).substring(2, 9)}`;
 
 const calculateReadingTime = (text: string): number => {
   const words = text.trim().split(/\s+/).length;
@@ -1211,6 +1212,7 @@ const MediaPickerModal = ({
   onSelect,
   onUpload,
   mediaType = "all",
+  isUploading = false,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -1218,6 +1220,7 @@ const MediaPickerModal = ({
   onSelect: (media: MediaItem) => void;
   onUpload: (file: File) => void;
   mediaType?: "image" | "video" | "all";
+  isUploading?: boolean;
 }) => {
   const [activeTab, setActiveTab] = useState<"library" | "upload">("library");
   const [dragActive, setDragActive] = useState(false);
@@ -1228,12 +1231,6 @@ const MediaPickerModal = ({
   );
 
   if (!isOpen) return null;
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragActive(false);
-    if (e.dataTransfer.files?.[0]) onUpload(e.dataTransfer.files[0]);
-  };
 
   return (
     <ModalBackdrop onClose={onClose}>
@@ -1324,41 +1321,64 @@ const MediaPickerModal = ({
             <div
               onDragEnter={(e) => {
                 e.preventDefault();
-                setDragActive(true);
+                if (!isUploading) setDragActive(true);
               }}
               onDragLeave={(e) => {
                 e.preventDefault();
                 setDragActive(false);
               }}
               onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+                if (!isUploading && e.dataTransfer.files?.[0])
+                  onUpload(e.dataTransfer.files[0]);
+              }}
               className={`border-2 border-dashed rounded-2xl p-12 text-center ${
                 dragActive
                   ? "border-[#fe9a00] bg-[#fe9a00]/10"
                   : "border-slate-700"
               }`}
             >
-              <FiUpload
-                size={48}
-                className={`mx-auto mb-4 ${dragActive ? "text-[#fe9a00]" : "text-slate-500"}`}
-              />
-              <p className="text-lg text-white mb-2">Drag & drop files here</p>
-              <p className="text-sm text-slate-400 mb-6">or click to browse</p>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,video/*"
-                onChange={(e) =>
-                  e.target.files?.[0] && onUpload(e.target.files[0])
-                }
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-3 bg-[#fe9a00] text-white rounded-xl font-medium"
-              >
-                Browse Files
-              </button>
+              {isUploading ? (
+                <>
+                  <div className="animate-spin mx-auto mb-4 w-12 h-12 border-4 border-[#fe9a00] border-t-transparent rounded-full" />
+                  <p className="text-lg text-white mb-2">
+                    Uploading to server...
+                  </p>
+                  <p className="text-sm text-slate-400">
+                    Please wait while your file is being uploaded
+                  </p>
+                </>
+              ) : (
+                <>
+                  <FiUpload
+                    size={48}
+                    className={`mx-auto mb-4 ${dragActive ? "text-[#fe9a00]" : "text-slate-500"}`}
+                  />
+                  <p className="text-lg text-white mb-2">
+                    Drag & drop files here
+                  </p>
+                  <p className="text-sm text-slate-400 mb-6">
+                    or click to browse
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    onChange={(e) =>
+                      e.target.files?.[0] && onUpload(e.target.files[0])
+                    }
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-6 py-3 bg-[#fe9a00] text-white rounded-xl font-medium"
+                  >
+                    Browse Files
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -1720,7 +1740,7 @@ const RichTextEditor = ({
       TextStyle,
       FontSize,
       InlineTextAlign,
-      Color ,
+      Color,
       Underline,
       Subscript,
       Superscript,
@@ -2535,7 +2555,11 @@ interface SectionTypeModalProps {
   onSelectType: (type: "normal" | "cta" | "vanlist") => void;
 }
 
-const SectionTypeModal = ({ isOpen, onClose, onSelectType }: SectionTypeModalProps) => {
+const SectionTypeModal = ({
+  isOpen,
+  onClose,
+  onSelectType,
+}: SectionTypeModalProps) => {
   if (!isOpen) return null;
 
   const sectionTypes = [
@@ -2564,21 +2588,21 @@ const SectionTypeModal = ({ isOpen, onClose, onSelectType }: SectionTypeModalPro
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div 
+      <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
       <div className="relative bg-[#0f172b] border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-white">Add Section</h3>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
           >
             <FiX size={20} />
           </button>
         </div>
-        
+
         <div className="space-y-3">
           {sectionTypes.map((item) => (
             <button
@@ -2589,7 +2613,9 @@ const SectionTypeModal = ({ isOpen, onClose, onSelectType }: SectionTypeModalPro
               }}
               className="w-full flex items-center gap-4 p-4 bg-[#1e293b] border border-slate-700 rounded-xl hover:border-[#fe9a00] hover:bg-[#252d3d] transition-all text-left group"
             >
-              <div className={`w-12 h-12 rounded-xl ${item.color} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform`}>
+              <div
+                className={`w-12 h-12 rounded-xl ${item.color} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform`}
+              >
                 {item.icon}
               </div>
               <div className="flex-1">
@@ -2600,7 +2626,10 @@ const SectionTypeModal = ({ isOpen, onClose, onSelectType }: SectionTypeModalPro
                   {item.description}
                 </p>
               </div>
-              <FiChevronRight size={18} className="text-slate-500 group-hover:text-[#fe9a00] transition-colors" />
+              <FiChevronRight
+                size={18}
+                className="text-slate-500 group-hover:text-[#fe9a00] transition-colors"
+              />
             </button>
           ))}
         </div>
@@ -2947,17 +2976,17 @@ const ContentSection = ({
     };
 
     return (
-      <div 
+      <div
         className="rounded-xl p-6 text-center"
         style={{ backgroundColor: config.backgroundColor }}
       >
-        <h4 
+        <h4
           className="text-xl font-bold mb-2"
           style={{ color: config.textColor }}
         >
           {config.title}
         </h4>
-        <p 
+        <p
           className="text-sm mb-4 opacity-90"
           style={{ color: config.textColor }}
         >
@@ -2966,14 +2995,14 @@ const ContentSection = ({
         <a
           href={config.link}
           className="inline-block px-6 py-2 rounded-lg font-semibold text-sm"
-          style={{ 
+          style={{
             backgroundColor: config.buttonColor,
-            color: config.backgroundColor 
+            color: config.backgroundColor,
           }}
         >
           {config.buttonText}
         </a>
-        <p 
+        <p
           className="text-xs mt-3 opacity-75"
           style={{ color: config.textColor }}
         >
@@ -3003,10 +3032,9 @@ const ContentSection = ({
           <FiTruck size={48} className="mx-auto text-slate-600 mb-4" />
           <p className="text-slate-400 mb-2">Van listing preview</p>
           <p className="text-xs text-slate-500">
-            {config.selectedVans.length > 0 
+            {config.selectedVans.length > 0
               ? `${config.selectedVans.length} vans selected`
-              : "No vans selected yet"
-            }
+              : "No vans selected yet"}
           </p>
           <button
             onClick={() => {
@@ -3274,9 +3302,11 @@ const CTASettings = ({
         className="w-full flex items-center justify-between text-sm text-slate-400 hover:text-white transition-colors"
       >
         <span>CTA Settings</span>
-        <FiChevronDown className={`transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+        <FiChevronDown
+          className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
+        />
       </button>
-      
+
       {isExpanded && (
         <div className="mt-4 space-y-3">
           <div>
@@ -3369,7 +3399,7 @@ const VanListSettings = ({
   const [isLoadingVans, setIsLoadingVans] = useState(false);
   const [vanCategories, setVanCategories] = useState<any[]>([]);
   const [showVanSelector, setShowVanSelector] = useState(false);
-  
+
   const defaultConfig: VanListConfig = {
     title: "Choose Your Perfect Van",
     subtitle: "Browse our fleet and book online",
@@ -3392,7 +3422,7 @@ const VanListSettings = ({
           const cats = data?.data?.data || data?.data || data?.categories || [];
           setVanCategories(Array.isArray(cats) ? cats : []);
         })
-        .catch((err) => console.error("Failed to fetch categories:", err))
+        .catch((err) => console.log("Failed to fetch categories:", err))
         .finally(() => setIsLoadingVans(false));
     }
   }, [showVanSelector, vanCategories.length]);
@@ -3401,7 +3431,10 @@ const VanListSettings = ({
     const currentSelected = vanConfig.selectedVans || [];
     const isSelected = currentSelected.includes(vanId);
     if (isSelected) {
-      updateField("selectedVans", currentSelected.filter((id) => id !== vanId));
+      updateField(
+        "selectedVans",
+        currentSelected.filter((id) => id !== vanId),
+      );
     } else {
       updateField("selectedVans", [...currentSelected, vanId]);
     }
@@ -3423,9 +3456,11 @@ const VanListSettings = ({
         className="w-full flex items-center justify-between text-sm text-slate-400 hover:text-white transition-colors"
       >
         <span>Van List Settings</span>
-        <FiChevronDown className={`transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+        <FiChevronDown
+          className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}
+        />
       </button>
-      
+
       {isExpanded && (
         <div className="mt-4 space-y-3">
           <div>
@@ -3451,17 +3486,18 @@ const VanListSettings = ({
               onChange={(e) => updateField("showReservation", e.target.checked)}
               className="rounded border-slate-600 bg-slate-700 text-[#fe9a00]"
             />
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Show Reservation Panel</span>
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Show Reservation Panel
+            </span>
           </div>
-          
+
           {/* Van Selection */}
           <div className="p-3 bg-slate-700/50 rounded-lg">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                {vanConfig.selectedVans?.length > 0 
+                {vanConfig.selectedVans?.length > 0
                   ? `${vanConfig.selectedVans.length} vans selected`
-                  : "No vans selected"
-                }
+                  : "No vans selected"}
               </p>
               <button
                 onClick={() => setShowVanSelector(!showVanSelector)}
@@ -3470,7 +3506,7 @@ const VanListSettings = ({
                 {showVanSelector ? "Hide Selector" : "Select Vans →"}
               </button>
             </div>
-            
+
             {showVanSelector && (
               <div className="mt-3 space-y-2">
                 {isLoadingVans ? (
@@ -3500,7 +3536,9 @@ const VanListSettings = ({
                         >
                           <input
                             type="checkbox"
-                            checked={vanConfig.selectedVans?.includes(cat._id) || false}
+                            checked={
+                              vanConfig.selectedVans?.includes(cat._id) || false
+                            }
                             onChange={() => toggleVanSelection(cat._id)}
                             className="rounded border-slate-600 bg-slate-700 text-[#fe9a00]"
                           />
@@ -3591,6 +3629,7 @@ export default function AIBlogBuilder({
 }: { blogId?: string; onBack?: () => void } = {}) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [tagInput, setTagInput] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
@@ -3615,7 +3654,9 @@ export default function AIBlogBuilder({
     tags: [],
     author: "",
     publishDate: new Date().toISOString().split("T")[0],
-    headings: [{ id: generateId(), level: 2, text: "", content: "", type: "normal" }],
+    headings: [
+      { id: generateId(), level: 2, text: "", content: "", type: "normal" },
+    ],
     mediaLibrary: [],
     featuredImage: "",
     anchors: [],
@@ -3676,7 +3717,7 @@ export default function AIBlogBuilder({
 
         showToast.success("Blog loaded successfully!");
       } catch (error) {
-        console.error("❌ [AIBlogBuilder] Error loading blog:", error);
+        console.log("❌ [AIBlogBuilder] Error loading blog:", error);
         showToast.error("Failed to load blog data");
       } finally {
         setLoading(false);
@@ -3694,7 +3735,9 @@ export default function AIBlogBuilder({
       return;
     }
     if (!data.canonicalUrl || data.canonicalUrl.trim() === "") {
-      showToast.error("Canonical URL is required. Please enter a Canonical URL.");
+      showToast.error(
+        "Canonical URL is required. Please enter a Canonical URL.",
+      );
       return;
     }
 
@@ -3777,7 +3820,6 @@ export default function AIBlogBuilder({
         throw new Error(errorData.error || "Failed to save blog");
       }
 
- 
       if (blogId) {
         showToast.success("Blog updated successfully!");
       } else {
@@ -3804,7 +3846,7 @@ export default function AIBlogBuilder({
         });
       }
     } catch (error: any) {
-      console.error("Save error:", error);
+      console.log("Save error:", error);
       showToast.error(error.message || "Failed to save blog");
     } finally {
       setSaving(false);
@@ -3858,7 +3900,13 @@ export default function AIBlogBuilder({
 
     data.headings.forEach((heading, index) => {
       // Skip empty normal sections
-      if (heading.type !== "cta" && heading.type !== "vanlist" && !heading.text && !heading.content) return;
+      if (
+        heading.type !== "cta" &&
+        heading.type !== "vanlist" &&
+        !heading.text &&
+        !heading.content
+      )
+        return;
 
       // Handle CTA Block
       if (heading.type === "cta" && heading.ctaConfig) {
@@ -4048,27 +4096,62 @@ export default function AIBlogBuilder({
     }
   };
 
-  const handleMediaUpload = (file: File) => {
-    const isVideo = file.type.startsWith("video/");
-    const url = URL.createObjectURL(file);
-    const newMedia: MediaItem = {
-      id: generateId(),
-      type: isVideo ? "video" : "image",
-      url,
-      alt: file.name,
-      filename: file.name,
-      size: file.size,
-    };
-    setData((prev) => ({
-      ...prev,
-      mediaLibrary: [...prev.mediaLibrary, newMedia],
-    }));
-    showToast.success(`${isVideo ? "Video" : "Image"} uploaded!`);
+  const handleMediaUpload = async (file: File) => {
+    try {
+      setIsUploading(true);
+      const isVideo = file.type.startsWith("video/");
+
+      // Upload to S3 bucket
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        let errorMessage = "Upload failed";
+        try {
+          const errorData = await response.json();
+          errorMessage =
+            errorData.error ||
+            errorData.message ||
+            `Upload failed with status ${response.status}`;
+        } catch {
+          errorMessage = `Upload failed with status ${response.status}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const { url: s3Url } = await response.json();
+
+      const newMedia: MediaItem = {
+        id: generateId(),
+        type: isVideo ? "video" : "image",
+        url: s3Url,
+        alt: file.name,
+        filename: file.name,
+        size: file.size,
+      };
+      setData((prev) => ({
+        ...prev,
+        mediaLibrary: [...prev.mediaLibrary, newMedia],
+      }));
+      showToast.success(`${isVideo ? "Video" : "Image"} uploaded!`);
+    } catch (error) {
+      console.log("Upload error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to upload file";
+      showToast.error(errorMessage);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDeleteMedia = async (media: MediaItem) => {
     try {
-      // If it has an s3Key, delete from S3 and database
+      // If it has an s3Key and blogId, delete from database
       if ("s3Key" in media && media.s3Key && blogId) {
         const response = await fetch("/api/blog/generate-image", {
           method: "DELETE",
@@ -4084,6 +4167,20 @@ export default function AIBlogBuilder({
         }
       }
 
+      // If the URL is from S3, delete from bucket
+      if (media.url && media.url.includes("svh-bucket-s3")) {
+        const deleteUrl = `/api/upload/delete?url=${encodeURIComponent(media.url)}`;
+        const deleteResponse = await fetch(deleteUrl, {
+          method: "DELETE",
+        });
+
+        if (!deleteResponse.ok) {
+          const errorData = await deleteResponse.json();
+          console.log("S3 delete error:", errorData);
+          // Continue with local deletion even if S3 deletion fails
+        }
+      }
+
       // Update local state
       setData({
         ...data,
@@ -4092,7 +4189,7 @@ export default function AIBlogBuilder({
 
       showToast.success("Image deleted");
     } catch (error) {
-      console.error("Error deleting media:", error);
+      console.log("Error deleting media:", error);
       showToast.error("Failed to delete image");
     }
   };
@@ -4328,7 +4425,7 @@ export default function AIBlogBuilder({
         <div className="col-span-12 lg:col-span-3 h-[calc(100vh-5rem)] overflow-hidden">
           <div className="h-full overflow-y-auto pr-2 space-y-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
             {/* Topic Input - Shared by both modes */}
-            <Card title="Blog Topic" icon={<FiCpu size={16}  />}>
+            <Card title="Blog Topic" icon={<FiCpu size={16} />}>
               <div className="space-y-2">
                 <Label hint="What's your blog about?">Topic</Label>
                 <TextArea
@@ -4855,6 +4952,7 @@ export default function AIBlogBuilder({
         }}
         onUpload={handleMediaUpload}
         mediaType={mediaPickerType}
+        isUploading={isUploading}
       />
       <SectionTypeModal
         isOpen={showSectionModal}
