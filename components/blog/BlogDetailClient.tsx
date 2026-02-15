@@ -4,7 +4,6 @@ import { JSX, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import TableOfContents from "./TableOfContents";
-import { VanData } from "@/types/type";
 import VanListing, { Category } from "@/components/global/vanListing.backup";
 
 if (typeof window !== "undefined") {
