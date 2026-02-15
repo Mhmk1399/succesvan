@@ -52,12 +52,17 @@ export default function Breadcrumbs() {
           "@type": "ListItem",
           position: index + 2,
           name: segment.label,
-          item: typeof window !== "undefined" ? `${window.location.origin}${segment.href}` : "",
+          item:
+            typeof window !== "undefined"
+              ? `${window.location.origin}${segment.href}`
+              : "",
         })),
       ],
     };
 
-    let script = document.getElementById("breadcrumb-schema") as HTMLScriptElement | null;
+    let script = document.getElementById(
+      "breadcrumb-schema",
+    ) as HTMLScriptElement | null;
     if (!script) {
       script = document.createElement("script");
       script.id = "breadcrumb-schema";
@@ -101,13 +106,19 @@ export default function Breadcrumbs() {
             <div key={segment.href} className="flex items-center gap-2">
               <FiChevronRight className="text-gray-600" />
               {index === segments.length - 1 ? (
-                <span className="text-white font-semibold">
-                  {segment.label}
-                </span>
+                <>
+                  {" "}
+                  <span className="text-white font-semibold sm:hidden">
+                    {segment.label.slice(0, 26)}
+                  </span>
+                  <span className="text-white font-semibold hidden sm:block">
+                    {segment.label}
+                  </span>
+                </>
               ) : (
                 <Link
                   href={segment.href}
-                  className="text-gray-400 hover:text-[#fe9a00] transition-colors"
+                  className="text-gray-400 hover:text-[#fe9a00]  transition-colors"
                 >
                   {segment.label}
                 </Link>

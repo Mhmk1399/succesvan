@@ -158,17 +158,15 @@ function assembleContentFromObject(contentObj: any): string {
       contentObj.summary,
       anchors,
     );
+    
     parts.push(
-      `<h2 class="font-bold text-2xl mb-4 mt-8 text-white">📝 Summary</h2>`,
-    );
-    parts.push(
-      `<div class="bg-linear-to-r from-orange-500/10 to-gray-800/10 p-8 rounded-2xl mb-8 border border-orange-500/20 backdrop-blur-sm">`,
+      `<div class="bg-linear-to-r from-[#fe9a00] to-amber-600 p-8 rounded-2xl mb-8 border border-orange-500/20 backdrop-blur-sm">`,
     );
     parts.push(`  <div class="flex items-start gap-4">`);
 
     parts.push(`    <div class="flex-1">`);
     parts.push(
-      `      <h3 class="text-white font-bold text-lg mb-2">Quick Overview</h3>`,
+      `      <h3 class="text-black font-bold text-lg mb-2">Quick Overview</h3>`,
     );
     parts.push(
       `      <p class="text-gray-300 text-xs leading-relaxed italic">${summaryWithAnchors}</p>`,
@@ -257,9 +255,9 @@ function assembleContentFromObject(contentObj: any): string {
       anchors,
     );
     parts.push(
-      `<div class="p-8 rounded-2xl my-16 border border-slate-700 shadow-xl">`,
+      `<div class="p-8 rounded-2xl my-16 border bg-[#fe9a00] border-slate-700 shadow-xl">`,
     );
-    parts.push(`<h2 class="font-bold text-2xl text-white">🎯 Conclusion</h2>`);
+    parts.push(`<h2 class="font-bold text-2xl text-black"> Conclusion</h2>`);
     parts.push(`  <div class="flex items-start gap-4">`);
 
     parts.push(`    <div class="flex-1">`);
@@ -275,14 +273,14 @@ function assembleContentFromObject(contentObj: any): string {
   // FAQ section with heading
   if (Array.isArray(contentObj.faqs) && contentObj.faqs.length > 0) {
     parts.push(
-      `<h2 class="font-bold text-lg md:text-2xl mb-6 mt-10 text-white">❓ FAQ</h2>`,
+      `<h2 class="font-bold text-lg md:text-2xl w-full md:w-fit mb-6 py-6 px-2 mt-10 bg-[#0f172b] rounded-xl text-black"> FAQ ...</h2>`,
     );
     parts.push(`<div class="grid gap-4">`);
     contentObj.faqs.forEach((faq: any, index: number) => {
       if (faq.question && faq.answer) {
         const answerWithAnchors = applyAnchorsToContent(faq.answer, anchors);
         parts.push(
-          `  <div class="bg-slate-900/50 rounded-2xl border border-gray-700 p-6 hover:border-[#fe9a00]/30 transition-all duration-300">`,
+          `  <div class="bg-slate-900/95 rounded-2xl border border-gray-700 p-6 hover:border-[#fe9a00]/30 transition-all duration-300">`,
         );
         parts.push(`    <div class="flex items-start gap-4">`);
         parts.push(

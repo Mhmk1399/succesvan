@@ -112,7 +112,7 @@ export default function TableOfContents({ contentRef }: TableOfContentsProps) {
   if (headings.length === 0) return null;
 
   return (
-    <div className="sticky top-24 max-w-sm">
+    <div className="sticky top-24 max-w-sm bg-linear-to-br from-[#0f172b] via-slate-900 rounded-2xl to-[#0f172b]">
       {/* Mobile Collapsible */}
       <div className="lg:hidden  ">
         <button

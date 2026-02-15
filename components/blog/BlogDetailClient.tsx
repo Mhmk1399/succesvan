@@ -237,9 +237,9 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
         }
         .blog-content h2 {
           color: white !important;
-          font-weight: 700 !important;
-          font-size: 1.5rem !important;
-          margin-bottom: 0.75rem !important;
+          font-weight: 800 !important;
+          font-size: 1.8rem !important;
+          margin-bottom: 1.3rem !important;
           margin-top: 1.5rem !important;
         }
         .blog-content h2::before {
@@ -249,7 +249,7 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
         .blog-content h3 {
           color: white !important;
           font-weight: 700 !important;
-          font-size: 1.25rem !important;
+          font-size: 1.5rem !important;
           margin-bottom: 0.75rem !important;
           margin-top: 1.25rem !important;
         }
@@ -270,6 +270,10 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
         @media (min-width: 1024px) {
           .van-list-wrapper section .grid {
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+          /* Make last item full width when there's an odd number of items */
+          .van-list-wrapper section .grid > *:last-child:nth-child(odd) {
+            grid-column: span 2 !important;
           }
         }
         .van-list-wrapper section .max-w-7xl {
@@ -296,7 +300,7 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
 
         <div
           ref={contentRef}
-          className="blog-content prose prose-invert max-w-none lg:col-span-3
+          className="blog-content prose leading-6.5 prose-invert max-w-none lg:col-span-3
             prose-a:text-[#fe9a00] hover:prose-a:text-white
             prose-img:rounded-xl prose-img:shadow-xl prose-img:my-8
             prose-code:bg-slate-800 prose-code:text-[#fe9a00]
