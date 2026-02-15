@@ -9,6 +9,7 @@ import {
   FAQSection,
   FinalCTASection,
 } from "@/components/pillar/CheapVanHireLondonPillar";
+import CheapVanListing from "@/components/pillar/CheapVanListing";
 
 const cheapVanHireLondonSchema = {
   "@context": "https://schema.org",
@@ -124,7 +125,9 @@ export default function CheapVanHireLondonPage() {
       <CheapVanHireLondonHero />
       <PricingBenefitsSection />
       <WhyCheapSection />
+      
       <PricingTableSection />
+      <CheapVanListing />
       <SavingTipsSection />
       <FAQSection />
       <FinalCTASection />
