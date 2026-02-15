@@ -9,6 +9,7 @@ import {
   LutonFAQSection,
   LutonFinalCTA,
 } from "@/components/pillar/LutonVanHireLondonPillar";
+import LutonVanListing from "@/components/pillar/LutonVanListing";
 
 const lutonVanHireLondonSchema = {
   "@context": "https://schema.org",
@@ -147,6 +148,7 @@ export default function LutonVanHireLondonPage() {
 
       <LutonVanHireLondonHero />
       <WhyChooseLutonSection />
+      <LutonVanListing />
       <LutonSpecificationsSection />
       <TailLiftBenefitsSection />
       <LutonUseCasesSection />

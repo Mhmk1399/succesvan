@@ -69,11 +69,13 @@ export interface Category extends VanData {
 interface VanListingProps {
   vans?: VanData[];
   showHeader?: boolean;
+  gridCols?: number;
 }
 
 export default function VanListingHome({
   vans = [],
   showHeader = true,
+  gridCols = 3,
 }: VanListingProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -175,7 +177,7 @@ export default function VanListingHome({
           </div>
         ) : categories.length > 0 ? (
           <div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-4">
+            <div className={`grid grid-cols-1 lg:grid-cols-${gridCols} gap-3 lg:gap-4`}>
               {categories.map((category, index) => (
                 <div key={category._id} ref={(el) => setCardRef(index, el)}>
                   <CategoryCard

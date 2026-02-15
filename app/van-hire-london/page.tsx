@@ -11,6 +11,7 @@ import {
   FinalCTASection,
 } from "@/components/pillar/VanHireLondonPillar";
 import { vanHireLondonFAQSchema, vanHireLondonSchema } from "@/lib/schema";
+import AllVanListing from "@/components/pillar/AllVanListing";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://successvanhire.co.uk"),
@@ -73,6 +74,7 @@ export default function VanHireLondonPage() {
       <VanHireLondonHero />
       <WhyChooseSection />
       <VanTypesSection />
+      <AllVanListing />
       <CoverageAreasSection />
       <UseCasesSection />
       <BookingStepsSection />
