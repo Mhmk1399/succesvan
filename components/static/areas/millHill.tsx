@@ -15,7 +15,6 @@ import {
 import Link from "next/link";
 import FAQComponent from "../fAQSection";
 import { features, useCases } from "@/lib/areas";
-
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -242,7 +241,7 @@ export default function MillHillVanHire() {
               Your trusted partner for affordable van rental in Mill Hill
             </p>
           </div>
-                  <video src="../../public/assets/video/choose success van hire.mp4"></video>
+                  <video src="/assets/video/choose success van hire.mp4" className="rounded-lg mx-auto my-5" autoPlay muted loop></video>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
               <div
