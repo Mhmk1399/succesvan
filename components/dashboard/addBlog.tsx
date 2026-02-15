@@ -3879,7 +3879,7 @@ export default function AIBlogBuilder({
       html += `  <div class="flex items-start gap-4">\n`;
       html += `    <div class=" shrink-0 w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-2xl shadow-lg shadow-orange-500/30">📝</div>\n`;
       html += `    <div class="flex-1">\n`;
-      html += `      <h3 class="text-white font-bold text-lg mb-2">Quick Overview</h3>\n`;
+      html += `      <h3 class="text-black font-bold text-lg mb-2">Quick Overview</h3>\n`;
       html += `      <p class="text-gray-300 leading-relaxed italic">${data.summary}</p>\n`;
       html += `    </div>\n`;
       html += `  </div>\n`;
