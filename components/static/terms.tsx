@@ -559,7 +559,7 @@ export default function TermsAndConditions() {
   };
 
   return (
-    <section ref={sectionRef} className="relative w-full bg-[#0f172b] py-20  ">
+    <section ref={sectionRef} className="relative w-full bg-[#0f172b] py-28  ">
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#fe9a00]/10 rounded-full blur-3xl"></div>
@@ -569,7 +569,7 @@ export default function TermsAndConditions() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="terms-header text-center mb-16">
-          <h1 className="text-4xl  lg:text-5xl font-black text-white mb-6 leading-tight">
+          <h1 className="text-3xl  lg:text-5xl font-black text-white mb-6 leading-tight">
             Terms & Conditions
           </h1>
 

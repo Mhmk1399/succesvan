@@ -47,6 +47,21 @@ export default function ReservationForm({
   const router = useRouter();
   const [showDateRange, setShowDateRange] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Prevent background scroll when date picker is open (desktop only)
+  useEffect(() => {
+    if (showDateRange) {
+      // Only lock scroll on desktop (md breakpoint and above)
+      if (window.innerWidth >= 768) {
+        document.body.style.overflow = 'hidden';
+      }
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showDateRange]);
   const [offices, setOffices] = useState<Office[]>([]);
   const [types, setTypes] = useState<Type[]>([]);
   const [filteredTypes, setFilteredTypes] = useState<Type[]>([]);
@@ -83,12 +98,10 @@ export default function ReservationForm({
     },
   ]);
 
-  
-
   // *** تغییر: تنظیم dates بر اساس زمان انگلیس (برای جلوگیری از رزرو امروز و فردا اگر بعد 16:00 باشد) ***
   useEffect(() => {
     const londonNow = getLondonTime();
-     const hours = londonNow.getUTCHours();
+    const hours = londonNow.getUTCHours();
     console.log(hours, "london time");
 
     let minDaysToAdd = 1;
@@ -1291,7 +1304,7 @@ export default function ReservationForm({
               className="w-full px-4 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all text-sm bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
             >
               <FiCpu className="text-lg" />
-                AI Van Consultant - Tell Me What You Need!
+              AI Van Consultant - Tell Me What You Need!
             </button>
           </div>
         )}
@@ -1353,10 +1366,16 @@ export default function ReservationForm({
           </button>
           {showDateRange && (
             <div
-              className={`absolute left-0 -mt-20 md:mt-20 z-50 bg-slate-800 w-full max-w-[320px] backdrop-blur-xl border border-white/20 rounded-lg p-2 ${
-                isInline ? "-top-72" : "-top-10"
-              }`}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm md:hidden"
+              style={{
+                animation: 'fadeIn 0.2s ease-out'
+              }}
+              onClick={() => setShowDateRange(false)}
             >
+              <div
+                className="bg-slate-800 w-full max-w-87.5 backdrop-blur-xl border border-white/20 rounded-xl p-4 relative"
+                onClick={(e) => e.stopPropagation()}
+              >
               <DateRange
                 className="w-full"
                 ranges={dateRange}
@@ -1431,6 +1450,7 @@ export default function ReservationForm({
               >
                 Done
               </button>
+              </div>
             </div>
           )}
         </div>
@@ -1649,7 +1669,7 @@ export default function ReservationForm({
           className="w-full px-4 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition-all text-sm bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
         >
           <FiCpu className="text-lg" />
-            AI Van Consultant
+          AI Van Consultant
         </button>
       </div>
 

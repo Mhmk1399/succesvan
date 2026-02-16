@@ -158,7 +158,7 @@ export default function Contact() {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full bg-[#0f172b] py-20 overflow-hidden"
+      className="relative w-full bg-[#0f172b] py-28 overflow-hidden"
     >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="bg-orb-contact-1 absolute top-1/4 right-1/4 w-150 h-150 rounded-full blur-3xl opacity-20 bg-[#fe9a00]"></div>
@@ -169,8 +169,7 @@ export default function Contact() {
         <div className="text-center mb-16 lg:mb-20">
           <h2 className="text-2xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
             Contact
-            <br />
-            <span
+             <span
               className="text-[#fe9a00]"
               style={{
                 textShadow: "0 0 40px rgba(254, 154, 0, 0.3)",

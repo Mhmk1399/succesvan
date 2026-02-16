@@ -5,7 +5,7 @@ import VanListingHome from "../global/vanListing.backup";
 
 export function ReservationContent() {
   return (
-    <div className="min-h-screen bg-[#0f172b]">
+    <div className="min-h-screen bg-[#0f172b] py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <VanListingHome />
       </div>

@@ -69,6 +69,9 @@ export const datePickerStyles = `
     padding: 4px 6px !important;
   }
   .rdrDayDisabled {
+    display: none !important;
+  }
+  /*.rdrDayDisabled {
     background-color: transparent !important;
     cursor: not-allowed !important;
   }
@@ -76,7 +79,7 @@ export const datePickerStyles = `
     color: #4b5563 !important;
     text-decoration: line-through !important;
     font-weight: 400 !important;
-  }
+  }*/
   .rdrDayInRange {
     background-color: rgba(251, 191, 36, 0.15) !important;
   }

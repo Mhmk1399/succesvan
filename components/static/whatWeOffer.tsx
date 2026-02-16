@@ -153,7 +153,7 @@ export default function WhatWeOffer() {
   return (
     <section
       ref={sectionRef}
-      className="relative w-full   bg-[#0f172b]     py-20   overflow-hidden"
+      className="relative w-full   bg-[#0f172b]     py-28   overflow-hidden"
     >
       {/* Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
