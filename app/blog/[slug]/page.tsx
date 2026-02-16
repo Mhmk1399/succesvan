@@ -218,10 +218,13 @@ export default async function BlogDetailPage({ params }: Props) {
             <div
               className="max-w-7xl mx-auto rounded-xl px-4 sm:px-6 lg:px-8 pb-12 pt-6 md:pt-0"
               style={{
-                backgroundColor: "rgba(255, 255, 255, 0.95)",
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
                 backgroundImage:
                   "linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px)",
                 backgroundSize: "20px 20px",
+                boxShadow:
+                  "0 8px 32px 0 rgba(31, 38, 135, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.3)",
+                border: "1px solid rgba(255, 255, 255, 0.4)",
               }}
             >
               {" "}

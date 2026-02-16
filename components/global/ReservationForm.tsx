@@ -438,12 +438,12 @@ export default function ReservationForm({
   }, [formData.office, dateRange[0].endDate]);
 
   const handleGlobalVoice = () => {
-    console.log("🎤 [Form] Voice button clicked");
+    console.log("  [Form] Voice button clicked");
     toggleRecording();
   };
 
   const handleAIAgentMode = () => {
-    console.log("🤖 [Form] Starting Fast AI Agent mode");
+    console.log("  [Form] Starting Fast AI Agent mode");
     setShowFastAgentModal(true);
   };
 
@@ -1268,7 +1268,7 @@ export default function ReservationForm({
               className="w-full px-4 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all text-sm bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
             >
               <FiCpu className="text-lg" />
-              🤖 AI Van Consultant - Tell Me What You Need!
+                AI Van Consultant - Tell Me What You Need!
             </button>
           </div>
         )}
@@ -1603,7 +1603,7 @@ export default function ReservationForm({
           className="w-full px-4 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition-all text-sm bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:from-indigo-400 hover:via-purple-400 hover:to-pink-400 shadow-lg shadow-purple-500/50"
         >
           <FiCpu className="text-lg" />
-          🤖 AI Van Consultant
+            AI Van Consultant
         </button>
       </div>
 
