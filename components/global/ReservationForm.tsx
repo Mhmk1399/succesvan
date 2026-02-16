@@ -964,11 +964,12 @@ export default function ReservationForm({
             </button>
             {showDateRange && (
               <div
-                className={`absolute left-0 -mt-20 md:mt-20 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 ${
+                className={`absolute left-0 -mt-20 md:mt-20 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 w-70 sm:w-[320px] ${
                   isInline ? "-top-72" : "-top-50"
                 }`}
               >
                 <DateRange
+                  className="w-full"
                   ranges={dateRange}
                   onChange={(item) => {
                     const { startDate, endDate } = item.selection;
@@ -1001,7 +1002,29 @@ export default function ReservationForm({
                       return fallback;
                     }
                   })()}
+                  // *** جدید: maxDate تا 40 روز آینده ***
+                  maxDate={(() => {
+                    try {
+                      const londonNow = getLondonTime();
+                      const hours = londonNow.getUTCHours();
+
+                      let minDaysToAdd = 1;
+                      if (hours >= 16) minDaysToAdd = 2;
+
+                      const max = new Date(londonNow);
+                      max.setDate(max.getDate() + minDaysToAdd + 40);
+                      max.setHours(23, 59, 59, 999);
+                      return max;
+                    } catch (err) {
+                      const fallback = new Date();
+                      fallback.setDate(fallback.getDate() + 41);
+                      fallback.setHours(23, 59, 59, 999);
+                      return fallback;
+                    }
+                  })()}
                   rangeColors={["#fbbf24"]}
+                  months={1}
+                  scroll={{ enabled: true }}
                   disabledDates={
                     formData.office
                       ? (Array.from({ length: 365 }, (_, i) => {
@@ -1307,7 +1330,7 @@ export default function ReservationForm({
           />
         </div>
 
-        <div>
+        <div className="w-full">
           <label className="text-white text-xs font-semibold mb-1 flex items-center gap-1">
             <FiCalendar className="text-amber-400" /> Select Dates
           </label>
@@ -1330,11 +1353,12 @@ export default function ReservationForm({
           </button>
           {showDateRange && (
             <div
-              className={`absolute left-0 -mt-20 md:mt-20 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 ${
+              className={`absolute left-0 -mt-20 md:mt-20 z-50 bg-slate-800 w-full max-w-[320px] backdrop-blur-xl border border-white/20 rounded-lg p-2 ${
                 isInline ? "-top-72" : "-top-10"
               }`}
             >
               <DateRange
+                className="w-full"
                 ranges={dateRange}
                 onChange={(item) => {
                   const { startDate, endDate } = item.selection;
@@ -1367,7 +1391,29 @@ export default function ReservationForm({
                     return fallback;
                   }
                 })()}
+                // *** جدید: maxDate تا 40 روز آینده ***
+                maxDate={(() => {
+                  try {
+                    const londonNow = getLondonTime();
+                    const hours = londonNow.getUTCHours();
+
+                    let minDaysToAdd = 1;
+                    if (hours >= 16) minDaysToAdd = 2;
+
+                    const max = new Date(londonNow);
+                    max.setDate(max.getDate() + minDaysToAdd + 40);
+                    max.setHours(23, 59, 59, 999);
+                    return max;
+                  } catch (err) {
+                    const fallback = new Date();
+                    fallback.setDate(fallback.getDate() + 41);
+                    fallback.setHours(23, 59, 59, 999);
+                    return fallback;
+                  }
+                })()}
                 rangeColors={["#fbbf24"]}
+                months={1}
+                scroll={{ enabled: true }}
                 disabledDates={
                   formData.office
                     ? (Array.from({ length: 365 }, (_, i) => {

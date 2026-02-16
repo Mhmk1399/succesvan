@@ -17,9 +17,23 @@ export const datePickerStyles = `
   .rdrCalendarWrapper {
     background-color: transparent !important;
     border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
   .rdrMonth {
     width: 100%;
+  }
+  .rdrMonths {
+    width: 100% !important;
+    flex-direction: column !important;
+  }
+  /* Hide days from previous/next months to save space */
+  .rdrDayPassive {
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  .rdrDayPassive .rdrDayNumber {
+    display: none !important;
   }
   .rdrMonthAndYearPickers {
     color: white !important;
@@ -46,7 +60,7 @@ export const datePickerStyles = `
     font-size: 13px !important;
   }
   .rdrDayPassive .rdrDayNumber span {
-    color: rgba(255, 255, 255, 0.25) !important;
+    color: transparent !important;
   }
   .rdrDayToday .rdrDayNumber span {
      font-weight: 700 !important;
@@ -100,5 +114,9 @@ export const datePickerStyles = `
   }
   .rdrDay {
     padding: 2px !important;
+  }
+  /* Scrollable container styles */
+  .rdrDateInput {
+    width: 100% !important;
   }
 `;
