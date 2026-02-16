@@ -258,6 +258,22 @@ function ReservationPanel({
     },
   ]);
   const [showDateRange, setShowDateRange] = useState(false);
+
+  // Prevent background scroll when date picker is open (desktop only)
+  useEffect(() => {
+    if (showDateRange) {
+      // Only lock scroll on desktop (md breakpoint and above)
+      if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+        document.body.style.overflow = 'hidden';
+      }
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showDateRange]);
+
   const [offices, setOffices] = useState<Office[]>([]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -1685,7 +1701,23 @@ function ReservationPanel({
                         <DateRange
                           ranges={dateRange}
                           onChange={(item) => {
-                            setDateRange([item.selection]);
+                            const { startDate, endDate } = item.selection;
+                            
+                            // Validate: max 40 days rental period
+                            let validEndDate = endDate;
+                            if (startDate && endDate) {
+                              const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+                              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                              if (diffDays > 40) {
+                                validEndDate = new Date(startDate);
+                                validEndDate.setDate(validEndDate.getDate() + 40);
+                              }
+                            }
+                            
+                            setDateRange([{
+                              ...item.selection,
+                              endDate: validEndDate
+                            }]);
                             setFormData((prev) => ({
                               ...prev,
                               pickupDate: format(
@@ -1711,7 +1743,22 @@ function ReservationPanel({
                             min.setUTCHours(0, 0, 0, 0);
                             return min;
                           })()}
+                          // maxDate تا 40 روز آینده
+                          maxDate={(() => {
+                            const londonNow = getLondonTime();
+                            const hours = londonNow.getUTCHours();
+
+                            let minDaysToAdd = 1;
+                            if (hours >= 16) minDaysToAdd = 2;
+
+                            const max = new Date(londonNow);
+                            max.setDate(max.getDate() + minDaysToAdd + 40);
+                            max.setHours(23, 59, 59, 999);
+                            return max;
+                          })()}
                           rangeColors={["#fe9a00"]}
+                          months={2}
+                          scroll={{ enabled: false }}
                           disabledDates={
                             formData.office
                               ? (Array.from({ length: 365 }, (_, i) => {

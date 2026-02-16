@@ -129,6 +129,22 @@ export default function FastAgentModal({
 
   // Date range state
   const [showDateRange, setShowDateRange] = useState(false);
+
+  // Prevent background scroll when date picker is open (desktop only)
+  useEffect(() => {
+    if (showDateRange) {
+      // Only lock scroll on desktop (md breakpoint and above)
+      if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+        document.body.style.overflow = 'hidden';
+      }
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showDateRange]);
+
   const [dateRange, setDateRange] = useState<Range[]>([
     {
       startDate: undefined,
@@ -1088,10 +1104,22 @@ export default function FastAgentModal({
                           ranges={dateRange}
                           onChange={(item) => {
                             const { startDate, endDate } = item.selection;
+                            
+                            // Validate: max 40 days rental period
+                            let validEndDate = endDate || new Date();
+                            if (startDate && endDate) {
+                              const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+                              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                              if (diffDays > 40) {
+                                validEndDate = new Date(startDate);
+                                validEndDate.setDate(validEndDate.getDate() + 40);
+                              }
+                            }
+                            
                             setDateRange([
                               {
                                 startDate: startDate || new Date(),
-                                endDate: endDate || new Date(),
+                                endDate: validEndDate,
                                 key: "selection",
                               },
                             ]);
@@ -1115,7 +1143,29 @@ export default function FastAgentModal({
                               return fallback;
                             }
                           })()}
+                          // maxDate تا 40 روز آینده
+                          maxDate={(() => {
+                            try {
+                              const londonNow = getLondonTime();
+                              const hours = londonNow.getUTCHours();
+
+                              let minDaysToAdd = 1;
+                              if (hours >= 16) minDaysToAdd = 2;
+
+                              const max = new Date(londonNow);
+                              max.setDate(max.getDate() + minDaysToAdd + 40);
+                              max.setHours(23, 59, 59, 999);
+                              return max;
+                            } catch (err) {
+                              const fallback = new Date();
+                              fallback.setDate(fallback.getDate() + 41);
+                              fallback.setHours(23, 59, 59, 999);
+                              return fallback;
+                            }
+                          })()}
                           rangeColors={["#f97316"]}
+                          months={2}
+                          scroll={{ enabled: true }}
                           disabledDates={
                             bookingForm.officeId
                               ? (Array.from({ length: 365 }, (_, i) => {
