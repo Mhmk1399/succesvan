@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://successvanhire.co.uk/assets/images/van-hire-london.png",
+        url: "",
         width: 1200,
         height: 630,
         alt: "Van Hire London - Success Van Hire",

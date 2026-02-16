@@ -9,7 +9,7 @@ import {
   FiCheckCircle,
   FiTruck,
   FiStar,
-   FiExternalLink,
+  FiExternalLink,
   FiNavigation,
 } from "react-icons/fi";
 import Link from "next/link";

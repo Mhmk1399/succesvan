@@ -164,7 +164,7 @@ export function LutonVanHireLondonHero() {
               <div className="absolute -inset-4 bg-linear-to-r from-orange-500/10 via-transparent to-amber-500/10 rounded-3xl blur-2xl" />
               <div className="relative h-54 md:h-100 rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/40">
                 <Image
-                  src="/assets/images/van-hire-london.png"
+                  src="/assets/images/luton van .jpg"
                   alt="Luton Van Hire London"
                   fill
                   className="object-cover"
@@ -237,7 +237,7 @@ export function WhyChooseLutonSection() {
             Success Van Hire offers the best Luton van hire London service with spacious vans, tail lift options, and transparent pricing. Whether you're moving a 4-bedroom house or making commercial deliveries, our Luton van rental London fleet provides maximum capacity and reliability for your needs.
           </p>
         </div>
-
+        <video src="/assets/video/luton van video.mp4"autoPlay muted loop className="rounded-lg mx-auto my-5"></video>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {benefits.map((benefit, i) => (
             <div

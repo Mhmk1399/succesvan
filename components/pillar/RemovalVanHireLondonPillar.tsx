@@ -163,7 +163,7 @@ export function RemovalVanHireLondonHero() {
               <div className="absolute -inset-4 bg-linear-to-r from-orange-500/10 via-transparent to-amber-500/10 rounded-3xl blur-2xl" />
               <div className="relative h-54 md:h-100 rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/40">
                 <Image
-                  src="/assets/images/van-hire-london.png"
+                  src="/assets/images/crew cab van removal van hire.png"
                   alt="Removal Van Hire London"
                   fill
                   className="object-cover"
@@ -269,7 +269,7 @@ export function VanSizesForMovingSection() {
     {
       name: "Medium Van (MWB)",
       size: "Studio - 1 Bed Flat",
-      price: "£96",
+      price: " from £96",
       capacity: "~10-12 cubic meters",
       ideal: "Studio flats, 1-bedroom apartments, small moves",
       features: [
@@ -278,12 +278,12 @@ export function VanSizesForMovingSection() {
         "Fuel efficient for city moves",
         "Fits through narrow streets",
       ],
-      image: "/assets/images/van-hire-london.png",
+      image: "/assets/images/removal van hire medium wheel base.jpg",
     },
     {
       name: "Large Van (LWB)",
       size: "2 Bedroom Flat",
-      price: "£102",
+      price: " from £102",
       capacity: "~14-16 cubic meters",
       ideal: "2-bedroom flats, small houses, office moves",
       features: [
@@ -292,12 +292,12 @@ export function VanSizesForMovingSection() {
         "Comfortable for long drives",
         "Professional moving choice",
       ],
-      image: "/assets/images/van-hire-london.png",
+      image: "/assets/images/removan van hire large van.jpg",
     },
     {
       name: "Luton Van",
       size: "3-4 Bedroom House",
-      price: "£132",
+      price: " from £132",
       capacity: "~18-20 cubic meters",
       ideal: "Full house moves, large furniture, office relocations",
       features: [
@@ -306,7 +306,7 @@ export function VanSizesForMovingSection() {
         "Perfect for full house moves",
         "Over-cab storage space",
       ],
-      image: "/assets/images/van-hire-london.png",
+      image: "/assets/images/removal van hire luton.jpg",
     },
   ];
 

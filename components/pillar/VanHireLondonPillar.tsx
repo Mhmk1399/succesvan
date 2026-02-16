@@ -190,7 +190,7 @@ export function VanHireLondonHero() {
               <div className="absolute -inset-4 bg-linear-to-r from-orange-500/10 via-transparent to-amber-500/10 rounded-3xl blur-2xl" />
               <div className="relative h-54 md:h-100 rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/40">
                 <Image
-                  src="/assets/images/van-hire-london.png"
+                  src="/assets/images/van-hire-london.jpg"
                   alt="Van Hire London - Success Van Hire"
                   fill
                   className="object-cover"

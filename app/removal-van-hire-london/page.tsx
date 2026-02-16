@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/assets/images/van-hire-london.png",
+        url: "/assets/images/van-hire-london.jpg",
         width: 1200,
         height: 630,
         alt: "Removal Van Hire London",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     title: "Removal Van Hire London | Moving Van Hire from £78/Day",
     description:
       "Professional removal van hire London for house moves from £78/day.",
-    images: ["/assets/images/van-hire-london.png"],
+    images: ["/assets/images/van-hire-london.jpg"],
   },
   alternates: {
     canonical: "https://successvanhire.com/removal-van-hire-london",
