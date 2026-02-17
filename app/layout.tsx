@@ -11,6 +11,7 @@ import MobileAppPrompt from "@/components/ui/MobileAppPrompt";
 import CanonicalUrl from "@/components/global/CanonicalUrl";
 import Script from "next/script";
 import Breadcrumbs from "@/components/global/breadcrumbs";
+import ErrorBoundary from "@/components/global/ErrorBoundary";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -23,6 +24,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+  ),
   title: "SuccessVan - Van Hire & Rental in London | Last Minute Bookings",
   description:
     "Premium van hire and rental services in North West London. Book your van today with SuccessVan - serving Cricklewood, Golders Green, Hampstead, Hendon, Mill Hill, Wembley and more.",
@@ -119,7 +123,9 @@ export default function RootLayout({
           <Toaster position="bottom-center" />
           <MobileAppPrompt />
 
-          <main id="main-content">{children}</main>
+          <ErrorBoundary>
+            <main id="main-content">{children}</main>
+          </ErrorBoundary>
           <Footer />
           <FloatingActionMenu />
         </AuthProvider>
