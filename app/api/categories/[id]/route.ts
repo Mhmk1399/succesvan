@@ -1,7 +1,24 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import connect from "@/lib/data";
 import Category from "@/model/category";
 import { successResponse, errorResponse } from "@/lib/api-response";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+function addCorsHeaders(response: NextResponse) {
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}
+
+export async function OPTIONS() {
+  return addCorsHeaders(new NextResponse(null, { status: 204 }));
+}
 
 export async function GET(
   req: NextRequest,
@@ -11,11 +28,11 @@ export async function GET(
     await connect();
     const { id } = await params;
     const category = await Category.findById(id);
-    if (!category) return errorResponse("Category not found", 404);
-    return successResponse(category);
+    if (!category) return addCorsHeaders(errorResponse("Category not found", 404));
+    return addCorsHeaders(successResponse(category));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message, 500);
+    return addCorsHeaders(errorResponse(message, 500));
   }
 }
 
@@ -31,11 +48,11 @@ export async function PATCH(
       new: true,
       runValidators: true,
     });
-    if (!category) return errorResponse("Category not found", 404);
-    return successResponse(category);
+    if (!category) return addCorsHeaders(errorResponse("Category not found", 404));
+    return addCorsHeaders(successResponse(category));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message, 400);
+    return addCorsHeaders(errorResponse(message, 400));
   }
 }
 
@@ -47,10 +64,10 @@ export async function DELETE(
     await connect();
     const { id } = await params;
     const category = await Category.findByIdAndDelete(id);
-    if (!category) return errorResponse("Category not found", 404);
-    return successResponse({ message: "Category deleted" });
+    if (!category) return addCorsHeaders(errorResponse("Category not found", 404));
+    return addCorsHeaders(successResponse({ message: "Category deleted" }));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message, 500);
+    return addCorsHeaders(errorResponse(message, 500));
   }
 }

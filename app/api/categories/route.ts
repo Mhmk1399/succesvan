@@ -1,7 +1,24 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import connect from "@/lib/data";
 import Category from "@/model/category";
  import { successResponse, errorResponse } from "@/lib/api-response";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+function addCorsHeaders(response: NextResponse) {
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}
+
+export async function OPTIONS() {
+  return addCorsHeaders(new NextResponse(null, { status: 204 }));
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -33,7 +50,7 @@ export async function GET(req: NextRequest) {
         // Continue without populated data
       }
 
-      return successResponse({ data: categories });
+      return addCorsHeaders(successResponse({ data: categories }));
     }
 
     const pageNum = parseInt(page || "1");
@@ -62,7 +79,7 @@ export async function GET(req: NextRequest) {
 
     const total = await Category.countDocuments(query);
 
-    return successResponse({
+    return addCorsHeaders(successResponse({
       data: categories,
       pagination: {
         total,
@@ -70,11 +87,11 @@ export async function GET(req: NextRequest) {
         limit: limitNum,
         pages: Math.ceil(total / limitNum),
       },
-    });
+    }));
   } catch (error) {
     console.log("Categories API Error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message, 500);
+    return addCorsHeaders(errorResponse(message, 500));
   }
 }
 
@@ -92,10 +109,10 @@ export async function POST(req: NextRequest) {
       // Continue without populated data
     }
 
-    return successResponse(category, 201);
+    return addCorsHeaders(successResponse(category, 201));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message, 400);
+    return addCorsHeaders(errorResponse(message, 400));
   }
 }
 
@@ -110,7 +127,7 @@ export async function PATCH(req: NextRequest) {
     });
 
     if (!category) {
-      return errorResponse("Category not found", 404);
+      return addCorsHeaders(errorResponse("Category not found", 404));
     }
 
     // Try to populate type field, but don't fail if it doesn't work
@@ -121,10 +138,10 @@ export async function PATCH(req: NextRequest) {
       // Continue without populated data
     }
 
-    return successResponse(category);
+    return addCorsHeaders(successResponse(category));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message, 400);
+    return addCorsHeaders(errorResponse(message, 400));
   }
 }
 
@@ -134,9 +151,9 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     await Category.findByIdAndDelete(id);
-    return successResponse({ message: "Category deleted" });
+    return addCorsHeaders(successResponse({ message: "Category deleted" }));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message, 400);
+    return addCorsHeaders(errorResponse(message, 400));
   }
 }
