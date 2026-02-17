@@ -4439,7 +4439,7 @@ export default function AIBlogBuilder({
             </Card>
 
             {/* Mode Toggle */}
-            <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-3">
+            {/* <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-3">
               <Label hint="Choose your generation method">AI Mode</Label>
               <div className="flex gap-1 bg-slate-900/50 rounded-lg p-1 mt-2">
                 <button
@@ -4463,7 +4463,7 @@ export default function AIBlogBuilder({
                   Full Auto
                 </button>
               </div>
-            </div>
+            </div> */}
 
             {generationMode === "step" ? (
               <StepByStepBlogGenerator

@@ -346,6 +346,12 @@ REQUIREMENTS:
 - Ensure uniqueness and original structure (no copying)
 - Natural, conversational tone
 
+IMPORTANT - DO NOT INCLUDE FAQs:
+- Do NOT create a heading like "Frequently Asked Questions" or "FAQ"
+- Do NOT create a heading about common questions or Q&A
+- FAQs are generated in a SEPARATE step and should NOT be in the headings
+- Only create content sections, not FAQ sections
+
 BRAND STRUCTURE RULE:
 - If topic is service-related, include ONE heading that could naturally support:
   (a) booking/reservation steps OR
@@ -388,20 +394,90 @@ Return ONLY valid JSON.`;
 // STEP 2: GENERATE SECTION CONTENT
 // ============================================================================
 
+/**
+ * Extract a brief summary from previous sections' content (max 150 words per section)
+ * to help the AI understand what's been covered without sending too much data
+ */
+function extractPreviousContentSummaries(
+  headings: any[],
+  currentIndex: number,
+): string {
+  const previousSections = headings.filter(
+    (h, i) => i < currentIndex && h.content,
+  );
+
+  if (previousSections.length === 0) return "";
+
+  return previousSections
+    .map((h) => {
+      // Strip HTML tags and get plain text
+      const plainText = h.content
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      // Take first 150 words
+      const words = plainText.split(/\s+/).slice(0, 150).join(" ");
+      return `Section "${h.text}": ${words}${plainText.split(/\s+/).length > 150 ? "..." : ""}`;
+    })
+    .join("\n\n");
+}
+
 export async function generateSectionContent(
   topic: string,
   headingText: string,
   level: number,
   focusKeyword: string,
+  headings: any[],
+  currentIndex: number,
 ): Promise<string> {
   console.log(`📝 [Step Generator] Generating content for: ${headingText}`);
 
-  const wordCount = level === 2 ? "250-350" : "150-200";
+  const wordCount = level === 2 ? "350-150" : "250-300";
   const allowContact = isServiceRelatedTopic(topic);
   const brandContext = buildBrandContext(allowContact);
   const systemMessage = buildSystemMessage(brandContext);
 
+  // Build context about all headings for the AI to understand the full blog structure
+  const allHeadings = headings
+    .map((h, i) => {
+      const marker =
+        i === currentIndex
+          ? "(CURRENT SECTION - write content for this)"
+          : h.content
+            ? "(already has content)"
+            : "";
+      return `${i + 1}. [H${h.level}] ${h.text} ${marker}`;
+    })
+    .join("\n");
+
+  // Extract summaries from previous sections (max 150 words each)
+  const previousContentSummaries = extractPreviousContentSummaries(
+    headings,
+    currentIndex,
+  );
+  const previousContentContext = previousContentSummaries
+    ? `\n\nPREVIOUS SECTIONS CONTENT (read to avoid repetition):\n${previousContentSummaries}`
+    : "";
+
+  // Get previously covered topics to avoid repetition
+  const previousHeadings = headings
+    .filter((h, i) => i < currentIndex && h.content)
+    .map((h) => h.text);
+  const previousTopicsContext =
+    previousHeadings.length > 0
+      ? `\n\nAlready covered in earlier sections: ${previousHeadings.join(", ")}`
+      : "";
+
   const systemPrompt = `Write high-quality, SEO-optimized content.
+
+CONTEXT - FULL BLOG STRUCTURE:
+You are writing content for ONE section of a complete blog post. Understand the big picture:
+
+COMPLETE HEADINGS LIST:
+${allHeadings}
+${previousTopicsContext}${previousContentContext}
+
+This is section #${currentIndex + 1} of ${headings.length}. The blog flows from the first heading to the last.
 
 Requirements:
 - Write ${wordCount} words
@@ -412,8 +488,21 @@ Requirements:
 - Real-life examples, data, actionable insights
 - Unique content
 
+IMPORTANT - AVOID REPETITION:
+- Do NOT repeat points already covered in other sections
+- Do NOT restate the same information in different words
+- Each section should contribute NEW information to the blog
+- If another section already covers a topic, reference it briefly and move to something new
+- Think about what unique value this section adds to the overall blog
+- Do NOT include FAQs in the content - FAQs are generated separately in a dedicated step
+
+**WRITING STYLE & TONE RULES:**
+- **Vary sentence starters significantly**: Avoid starting consecutive paragraphs or sections with the same patterns (e.g., "When it comes to...", "It's important to...", "Consider...", "Remember..."). Use diverse openings like questions, direct statements, statistics, real scenarios, or benefit-led sentences.
+- **Adopt a confident, professional yet approachable business tone** — slightly more polished and solution-oriented than casual conversation, while remaining friendly and helpful.
+- **Where relevant (especially in practical, decision-making or concluding sections)**, naturally guide the reader toward taking action — subtly encourage booking or contacting a reliable provider (without sounding salesy). End some sections with a gentle, value-focused call-to-action that feels helpful, e.g., "A trusted service can simplify this step for you" or "Getting expert help early often saves time and stress."
+
 BRAND & FEATURES USAGE:
-- Mention "${BRAND.name}" ONLY if it naturally helps this specific section (max once).
+- Mention "${BRAND.name}" ONLY if it naturally helps this specific section (max once per section, max 3 times TOTAL in the entire article).
 - Use at most ONE brand feature proof point if it fits the section.
 - Contact details: Include phone/address ONLY if this section is explicitly about contacting/booking AND contact is allowed.
 
@@ -430,8 +519,10 @@ Return ONLY the HTML content (no heading tags).`;
 
 Blog topic: ${topic}
 Heading level: H${level}
+Section position: ${currentIndex + 1} of ${headings.length} in this blog
 
-Make it engaging, informative, and valuable to the reader.`;
+Make it engaging, informative, and valuable to the reader.
+Ensure this section complements - not duplicates - the other sections.`;
 
   const client3 = getOpenAI();
   const completion = await client3.chat.completions.create({
@@ -446,11 +537,23 @@ Make it engaging, informative, and valuable to the reader.`;
 
   const content = completion.choices[0].message.content || "";
 
+  // Clean up any markdown code blocks or HTML document tags
+  let cleanedContent = content;
+  cleanedContent = cleanedContent.replace(/```html\n?/g, "");
+  cleanedContent = cleanedContent.replace(/```\n?/g, "");
+  cleanedContent = cleanedContent.replace(/<!DOCTYPE[^>]*>/gi, "");
+  cleanedContent = cleanedContent.replace(/<\/html[^>]*>/gi, "");
+  cleanedContent = cleanedContent.replace(/<head[^>]*>[^<]*<\/head>/gi, "");
+  cleanedContent = cleanedContent.replace(/<body[^>]*>|<\/body>/gi, "");
+  cleanedContent = cleanedContent.replace(/<title>[^<]*<\/title>/gi, "");
+  cleanedContent = cleanedContent.replace(/<meta[^>]*>/gi, "");
+  cleanedContent = cleanedContent.trim();
+
   console.log(
-    `✅ [Step Generator] Content generated (${content.length} chars)`,
+    `✅ [Step Generator] Content generated (${cleanedContent.length} chars)`,
   );
 
-  return content;
+  return cleanedContent;
 }
 
 // ============================================================================

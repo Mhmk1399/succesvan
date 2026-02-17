@@ -291,7 +291,9 @@ export async function POST(request: NextRequest) {
           blog.content.topic,
           heading.text,
           heading.level,
-          blog.seo.focusKeyword
+          blog.seo.focusKeyword,
+          blog.content.headings,
+          headingIndex
         );
 
         console.log(`🔍 [Step Generator] Generated content length: ${content?.length || 0} characters`);

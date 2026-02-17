@@ -674,7 +674,7 @@ export default function EditBlog({
                 </div>
 
                 {/* Editor Content */}
-                <div className="p-4 min-h-[400px] max-h-[600px] overflow-y-auto">
+                <div className="p-4 min-h-100 max-h-150 overflow-y-auto">
                   {mounted && editor ? (
                     <EditorContent
                       editor={editor}

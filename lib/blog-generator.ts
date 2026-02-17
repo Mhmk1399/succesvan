@@ -205,11 +205,35 @@ Return ONLY the HTML content, no markdown or explanations.`;
 
   const headings: HeadingItem[] = [];
 
+  // Helper to extract summary from previous content
+  const getPreviousContentSummary = (headings: HeadingItem[]): string => {
+    if (headings.length === 0) return "";
+    return headings.map(h => {
+      const plainText = h.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      const words = plainText.split(/\s+/).slice(0, 100).join(' ');
+      return `• ${h.text}: ${words}${plainText.split(/\s+/).length > 100 ? '...' : ''}`;
+    }).join('\n');
+  };
+
   for (const section of outline.outline) {
     // Generate main section content
+    const allHeadings = outline.outline.map((s: any, i: number) => {
+      const subs = s.subsections ? s.subsections.map((sub: any) => sub.heading).join(", ") : "";
+      const subText = subs ? ` (subsections: ${subs})` : "";
+      return `${s.level === 2 ? "H2" : "H3"}: ${s.heading}${subText}`;
+    }).join("\n");
+
+    // Get summaries of previously generated sections
+    const previousContentSummary = getPreviousContentSummary(headings);
+    const previousContext = previousContentSummary ? `\n\nAlready written in earlier sections:\n${previousContentSummary}` : "";
+
     const sectionPrompt = `Write detailed, high-quality content (300-400 words) for the section: "${section.heading}"
 
-Context: This is part of a blog post about "${topic}"
+CONTEXT - This is ONE section of a complete blog post. Here's the FULL structure:
+${allHeadings}${previousContext}
+
+This section: "${section.heading}"
+Parent topic: "${topic}"
 
 Key points to cover:
 ${section.keyPoints.map((p: string, i: number) => `${i + 1}. ${p}`).join("\n")}
@@ -224,6 +248,13 @@ Requirements:
 - Use a professional but conversational tone
 - Provide actionable insights, examples, and relatable information
 
+IMPORTANT - COHERENCE:
+- This section is part of a larger blog post - ensure content flows naturally
+- Don't repeat what's covered in other sections - add unique value here
+- Reference the overall topic and how this section fits in
+- Do NOT include FAQs in the content - FAQs are generated separately in a dedicated step
+- Brand mentions should be limited - max 3 times TOTAL in the entire article
+
 Return ONLY the HTML content, no heading tags (those are separate), no markdown.`;
 
     const client3 = getOpenAI();
@@ -236,17 +267,42 @@ Return ONLY the HTML content, no heading tags (those are separate), no markdown.
       temperature: 0.7,
     });
 
+    // Clean up any markdown code blocks
+    let sectionContent = sectionCompletion.choices[0].message.content || "";
+    sectionContent = sectionContent.replace(/```html\n?/g, "");
+    sectionContent = sectionContent.replace(/```\n?/g, "");
+    sectionContent = sectionContent.replace(/<!DOCTYPE[^>]*>/gi, "");
+    sectionContent = sectionContent.replace(/<\/html[^>]*>/gi, "");
+    sectionContent = sectionContent.replace(/<head[^>]*>[^<]*<\/head>/gi, "");
+    sectionContent = sectionContent.replace(/<body[^>]*>|<\/body>/gi, "");
+    sectionContent = sectionContent.replace(/<title>[^<]*<\/title>/gi, "");
+    sectionContent = sectionContent.replace(/<meta[^>]*>/gi, "");
+    sectionContent = sectionContent.trim();
+
     headings.push({
       id: generateId(),
       level: section.level,
       text: section.heading,
-      content: sectionCompletion.choices[0].message.content || "",
+      content: sectionContent,
     });
 
     // Generate subsection content if exists
     if (section.subsections) {
       for (const subsection of section.subsections) {
+        const allHeadings = outline.outline.map((s: any) => {
+          const subs = s.subsections ? s.subsections.map((sub: any) => sub.heading).join(", ") : "";
+          const subText = subs ? ` (subsections: ${subs})` : "";
+          return `${s.level === 2 ? "H2" : "H3"}: ${s.heading}${subText}`;
+        }).join("\n");
+
+        // Get summaries of previously generated sections
+        const previousContentSummary = getPreviousContentSummary(headings);
+        const previousContext = previousContentSummary ? `\n\nAlready written in earlier sections:\n${previousContentSummary}` : "";
+
         const subPrompt = `Write focused content (150-200 words) for the subsection: "${subsection.heading}"
+
+CONTEXT - FULL BLOG STRUCTURE:
+${allHeadings}${previousContext}
 
 Parent section: "${section.heading}"
 Blog topic: "${topic}"
@@ -260,6 +316,8 @@ Requirements:
 - Include examples where relevant
 - Short paragraphs
 - Professional tone
+- This subsection is part of section "${section.heading}" - ensure it supports that section
+- Don't repeat what's already covered in other sections
 
 Return ONLY HTML content.`;
 
@@ -276,11 +334,23 @@ Return ONLY HTML content.`;
           temperature: 0.7,
         });
 
+        // Clean up any markdown code blocks
+        let subContent = subCompletion.choices[0].message.content || "";
+        subContent = subContent.replace(/```html\n?/g, "");
+        subContent = subContent.replace(/```\n?/g, "");
+        subContent = subContent.replace(/<!DOCTYPE[^>]*>/gi, "");
+        subContent = subContent.replace(/<\/html[^>]*>/gi, "");
+        subContent = subContent.replace(/<head[^>]*>[^<]*<\/head>/gi, "");
+        subContent = subContent.replace(/<body[^>]*>|<\/body>/gi, "");
+        subContent = subContent.replace(/<title>[^<]*<\/title>/gi, "");
+        subContent = subContent.replace(/<meta[^>]*>/gi, "");
+        subContent = subContent.trim();
+
         headings.push({
           id: generateId(),
           level: subsection.level,
           text: subsection.heading,
-          content: subCompletion.choices[0].message.content || "",
+          content: subContent,
         });
       }
     }
