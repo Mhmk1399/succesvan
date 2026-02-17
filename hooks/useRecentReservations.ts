@@ -14,5 +14,20 @@ export function useRecentReservations() {
     { revalidateOnFocus: false, dedupingInterval: 60000 }
   );
 
-  return { reservations: data?.data || [], isLoading };
+  const { data: allReservations, isLoading: isLoadingCount } = useSWR<{
+    data: Reservation[];
+    total: number;
+  }>("/api/reservations?page=1&limit=100", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  });
+
+  const pendingCount =
+    allReservations?.data?.filter((r) => r.status === "pending").length || 0;
+
+  return {
+    reservations: data?.data || [],
+    pendingCount,
+    isLoading,
+  };
 }

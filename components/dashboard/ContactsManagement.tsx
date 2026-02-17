@@ -25,6 +25,11 @@ interface PhoneData {
   isVerified: boolean;
 }
 
+interface LicenseData {
+  front?: string;
+  back?: string;
+}
+
 type MutateFn = () => Promise<void>;
 
 const roleOptions = [
@@ -117,7 +122,6 @@ export default function ContactsManagement() {
             render: (value: EmailData) => (
               <div className="flex items-center gap-2">
                 <span>{value?.emailAddress || "-"}</span>
-               
               </div>
             ),
           },
@@ -146,6 +150,40 @@ export default function ContactsManagement() {
             label: "Joined",
             render: (value: Date) =>
               new Date(value).toLocaleDateString("en-GB"),
+          },
+          {
+            key: "licenceAttached" as keyof User,
+            label: "License",
+            render: (value: LicenseData) => (
+              <div className="flex items-center gap-2">
+                {value?.front || value?.back ? (
+                  <div className="flex gap-1">
+                    {value?.front && (
+                      <a
+                        href={value.front}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:text-blue-300 text-xs underline"
+                      >
+                        Front
+                      </a>
+                    )}
+                    {value?.back && (
+                      <a
+                        href={value.back}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:text-blue-300 text-xs underline"
+                      >
+                        Back
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-red-400 text-xs">No License</span>
+                )}
+              </div>
+            ),
           },
         ]}
         hiddenColumns={["address"]}
@@ -256,7 +294,6 @@ export default function ContactsManagement() {
                         <p className="text-white font-semibold">
                           {selectedUser.emaildata.emailAddress}
                         </p>
-                      
                       </div>
                       <div>
                         <label className="text-gray-400 text-sm">Phone</label>
@@ -287,9 +324,57 @@ export default function ContactsManagement() {
                     <label className="text-gray-400 text-sm">Joined</label>
                     <p className="text-white font-semibold">
                       {new Date(selectedUser.createdAt).toLocaleDateString(
-                        "en-GB"
+                        "en-GB",
                       )}
                     </p>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-gray-400 text-sm">License</label>
+                    <div className="mt-1 flex gap-4">
+                      {selectedUser.licenceAttached?.front ||
+                      selectedUser.licenceAttached?.back ? (
+                        <div className="flex gap-4">
+                          {selectedUser.licenceAttached?.front && (
+                            <div className="flex-1">
+                              <p className="text-gray-400 text-xs mb-1">
+                                Front
+                              </p>
+                              <a
+                                href={selectedUser.licenceAttached.front}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <img
+                                  src={selectedUser.licenceAttached.front}
+                                  alt="License Front"
+                                  className="w-32 h-20 object-cover rounded-lg border border-white/20 hover:border-[#fe9a00] cursor-pointer transition-colors"
+                                />
+                              </a>
+                            </div>
+                          )}
+                          {selectedUser.licenceAttached?.back && (
+                            <div className="flex-1">
+                              <p className="text-gray-400 text-xs mb-1">Back</p>
+                              <a
+                                href={selectedUser.licenceAttached.back}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <img
+                                  src={selectedUser.licenceAttached.back}
+                                  alt="License Back"
+                                  className="w-32 h-20 object-cover rounded-lg border border-white/20 hover:border-[#fe9a00] cursor-pointer transition-colors"
+                                />
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-red-400 text-sm">
+                          No License Attached
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

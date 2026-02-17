@@ -17,7 +17,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiLogOut,
-   FiMessageSquare,
+  FiMessageSquare,
   FiBarChart2,
   FiGrid,
   FiMessageCircle,
@@ -166,6 +166,7 @@ export default function Dashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const { pendingCount } = useRecentReservations();
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -278,11 +279,21 @@ export default function Dashboard() {
                   <span
                     className={`${
                       activeTab === item.id ? "font-bold" : "font-medium"
-                    } text-sm truncate`}
+                    } text-sm truncate flex items-center gap-2`}
                   >
                     {item.label}
+                    {item.id === "reserves" && pendingCount > 0 && (
+                      <span className="bg-green-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-5 text-center">
+                        {pendingCount}
+                      </span>
+                    )}
                   </span>
                 )}
+                {sidebarCollapsed &&
+                  item.id === "reserves" &&
+                  pendingCount > 0 && (
+                    <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[#111827]"></span>
+                  )}
               </button>
             </div>
           ))}
@@ -455,8 +466,11 @@ interface TodayActivity {
 
 function DashboardContent({ handleTabChange }: DashboardContentProps) {
   const { stats, isLoading: statsLoading } = useStats();
-  const { reservations, isLoading: reservationsLoading } =
-    useRecentReservations();
+  const {
+    reservations,
+    pendingCount,
+    isLoading: reservationsLoading,
+  } = useRecentReservations();
   const { todayActivity, isLoading: fleetLoading } =
     useFleetStatus() as unknown as {
       todayActivity: TodayActivity;

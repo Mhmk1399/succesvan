@@ -288,6 +288,10 @@ export interface User {
   };
   role?: string;
   createdAt: Date;
+  licenceAttached?: {
+    front?: string;
+    back?: string;
+  };
 }
 
 // van --------------------------------------------------------------------------------------------
