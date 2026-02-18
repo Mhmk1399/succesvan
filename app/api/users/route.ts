@@ -2,9 +2,18 @@ import { NextRequest } from "next/server";
 import connect from "@/lib/data";
 import User from "@/model/user";
 import { successResponse, errorResponse } from "@/lib/api-response";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
+    // ✅ Validate authentication token
+    const auth = requireAuth(req);
+
+    // ✅ Check if user is admin
+    if (auth.role !== "admin") {
+      return errorResponse("Unauthorized: Admin access required", 403);
+    }
+
     await connect();
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
@@ -53,6 +62,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message, 500);
+    const statusCode = message === "Unauthorized" ? 401 : 500;
+    return errorResponse(message, statusCode);
   }
 }

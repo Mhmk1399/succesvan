@@ -45,6 +45,15 @@ export default function ContactsManagement() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editData, setEditData] = useState<EditUserData | null>(null);
 
+  // Helper function to get auth headers
+  const getAuthHeaders = (): HeadersInit => {
+    const token = localStorage.getItem("token");
+    return {
+      "Content-Type": "application/json",
+      "Authorization": token ? `Bearer ${token}` : "",
+    };
+  };
+
   const handleViewDetails = (item: User) => {
     setSelectedUser(item);
     setEditData({
@@ -65,15 +74,11 @@ export default function ContactsManagement() {
 
   const handleSaveEdit = async () => {
     if (!selectedUser || !editData) return;
-    const token = localStorage.getItem("token");
     setIsSubmitting(true);
     try {
       const res = await fetch(`/api/users/${selectedUser._id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          authorization: token || "",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           name: editData.name,
           lastName: editData.lastName,
