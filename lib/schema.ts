@@ -807,3 +807,285 @@ export const homeFAQSchema = {
     },
   ],
 };
+
+export const removalVanSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Removal Van Hire London",
+  description:
+    "Professional removal van hire London service for house moves, flat relocations, and office transfers. Spacious vans with insurance and unlimited mileage.",
+  provider: {
+    "@type": "LocalBusiness",
+    name: "Success Van Hire",
+    image: "https://successvanhire.com/logo.png",
+    telephone: "+44 20 3011 1198",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "London",
+      addressCountry: "GB",
+    },
+  },
+  areaServed: {
+    "@type": "City",
+    name: "London",
+  },
+  priceRange: "£78-£132",
+  offers: {
+    "@type": "Offer",
+    priceCurrency: "GBP",
+    price: "78",
+    priceSpecification: {
+      "@type": "UnitPriceSpecification",
+      price: "78",
+      priceCurrency: "GBP",
+      unitText: "DAY",
+    },
+  },
+};
+
+export const removalFAQSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What size removal van do I need for my house move in London?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "For a studio or 1-bed flat, a Medium Van (MWB) is sufficient. A 2-bedroom property needs a Large Van (LWB), while 3-4 bedroom houses require a Luton van. Our removal van hire London team can help you choose the right size based on your inventory.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is removal van hire London cheaper than hiring movers?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, removal van hire London is significantly cheaper than full-service movers. You can save 60-70% by driving yourself. Our moving van hire London rates start from £78/day compared to £400-800 for professional movers.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Do I need a special licence to drive a Luton van in London?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "No, a standard UK driving licence is sufficient for our Luton vans. All our removal van hire London vehicles are under 3.5 tonnes, so you can drive them with a regular car licence.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Are your removal vans ULEZ compliant?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, all our removal van hire London fleet is ULEZ compliant. You can drive anywhere in London without ULEZ charges, making your moving van hire London experience hassle-free.",
+      },
+    },
+  ],
+};
+
+export const lutonVanHireLondonSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Luton Van Hire London",
+  serviceType: "Luton Van Rental Service",
+  provider: {
+    "@type": "AutoRental",
+    name: "Success Van Hire",
+    url: "https://successvanhire.co.uk/",
+    telephone: "+44 20 3011 1198",
+    email: "Info@successvanhire.com",
+  },
+  areaServed: {
+    "@type": "City",
+    name: "London",
+  },
+  description:
+    "Luton van hire London from £132/day. Largest capacity Luton van rental London with 20m³ space, tail lift, and unlimited mileage. Perfect for full house moves and commercial deliveries.",
+  url: "https://successvanhire.co.uk/luton-van-hire-london",
+  priceRange: "£132-£180",
+};
+
+export const lutonVanHireLondonFAQSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Do I need a special licence to drive a Luton van in London?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "No, you can drive our Luton vans with a standard UK driving licence. All our Luton van hire London vehicles are under 3.5 tonnes, so no special licence or training is required. If you passed your test after 1997, you can still drive our Luton vans.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How much can a Luton van carry?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Our Luton van hire London offers 20m³ cargo capacity plus over-cab storage, with a payload of up to 1,000kg. This is enough for a complete 3-4 bedroom house move or substantial commercial deliveries. The Luton van rental London is our largest capacity vehicle.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Are tail lifts included with Luton van hire London?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, our Luton vans come equipped with tail lifts at no extra cost. The 500kg capacity tail lift makes loading heavy furniture and appliances effortless. Perfect for house moves and commercial deliveries with Luton van hire London.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is Luton van hire London more expensive than smaller vans?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Luton van hire London costs £132/day, which is excellent value considering the massive capacity. You'll likely complete your move in one trip instead of multiple trips with smaller vans, actually saving money overall on fuel and time.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can I drive a Luton van in central London?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, all our Luton van hire London fleet is ULEZ compliant, so you can drive anywhere in London without ULEZ charges. However, be aware of congestion charges in central zones and check parking restrictions for larger vehicles.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What's included in Luton van rental London prices?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "All our Luton van hire London prices include comprehensive insurance, unlimited mileage, 24/7 breakdown cover, free additional driver, tail lift, and full tank of fuel. No hidden fees - what you see is what you pay for your Luton van rental London.",
+      },
+    },
+  ],
+};
+
+export const cheapVanHireLondonSchema = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  name: "Cheap Van Hire London",
+  serviceType: "Budget Van Hire Service",
+  provider: {
+    "@type": "AutoRental",
+    name: "Success Van Hire",
+    url: "https://successvanhire.co.uk/",
+    telephone: "+44 20 3011 1198",
+    email: "Info@successvanhire.com",
+  },
+  areaServed: {
+    "@type": "City",
+    name: "London",
+  },
+  description:
+    "Cheap van hire London from £25/day. Budget van hire London with transparent pricing, no hidden fees. Affordable van rental London for all needs.",
+  url: "https://successvanhire.co.uk/cheap-van-hire-london",
+  priceRange: "£25-£75",
+};
+
+export const cheapVanHireLondonFAQSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "How cheap is your van hire in London?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Our cheap van hire London starts from £25/day for small vans. We offer budget van hire London with transparent pricing and no hidden fees. Prices vary by van size and rental duration.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is cheap van hire London reliable?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes! Cheap doesn't mean poor quality. All our vans are well-maintained, fully insured, and regularly serviced. We offer affordable van rental London without compromising on reliability.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Do you have any hidden fees?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "No. What you see is what you pay. Our cheap van hire London pricing includes insurance and standard mileage. No surprise charges at pickup.",
+      },
+    },
+  ],
+};
+
+export const northWestLondonFAQSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What areas do you cover in North West London?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We cover all major areas in North West London including Hendon, Wembley, Brent Cross, Cricklewood, Golders Green, Hampstead, Mill Hill, Camden, Brent, Harrow, Ealing, and surrounding NW postcodes.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How much does van hire cost in North West London?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Our van hire North West London prices start from £25/day for small vans. Prices vary by van size and rental duration. We offer transparent pricing with no hidden fees.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Do you offer same-day van hire in North West London?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, subject to availability. Contact us on 020 3011 1198 for same-day van hire North West London bookings.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Are your vans ULEZ compliant?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, all our van hire North West London fleet is ULEZ compliant. You can drive anywhere in London without ULEZ charges.",
+      },
+    },
+  ],
+};
+
+export const brentCrossFAQSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "Do you offer last minute van hire in Brent Cross?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, we offer last minute van hire in Brent Cross with same-day availability. Call us on 020 3011 1198 to check availability.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Where is Success Van Hire located near Brent Cross?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We're conveniently located near Brent Cross Shopping Centre, serving Brent Cross, Cricklewood, Hendon, and all NW London areas.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Do you have automatic vans available in Brent Cross?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, we offer both automatic and manual transmission vans for hire in Brent Cross. Automatic vans are perfect for stress-free city driving.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is parking available when I hire a van from Brent Cross?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, we provide free on-site car parking while you hire a van from our Brent Cross location.",
+      },
+    },
+  ],
+};

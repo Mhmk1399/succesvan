@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import WelcomePage from "@/components/static/areas/westLondon";
 import Script from "next/script";
-import { northWestLondon } from "@/lib/schema";
+import { northWestLondon, northWestLondonFAQSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title: "Van Hire North West London - Success Van Hire | Local Van Rental",
@@ -20,13 +20,20 @@ export const metadata: Metadata = {
 export default function VanHireNorthWestLondon() {
   return (
     <div>
-      {/* ✅ Schema.org JSON-LD */}
       <Script
         id="north-west-london-schema"
         type="application/ld+json"
         strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(northWestLondon),
+        }}
+      />
+      <Script
+        id="north-west-london-faq-schema"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(northWestLondonFAQSchema),
         }}
       />
       <WelcomePage />

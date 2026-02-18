@@ -10,59 +10,10 @@ import {
   FinalCTASection,
 } from "@/components/pillar/CheapVanHireLondonPillar";
 import CheapVanListing from "@/components/pillar/CheapVanListing";
-
-const cheapVanHireLondonSchema = {
-  "@context": "https://schema.org",
-  "@type": "Service",
-  name: "Cheap Van Hire London",
-  serviceType: "Budget Van Hire Service",
-  provider: {
-    "@type": "AutoRental",
-    name: "Success Van Hire",
-    url: "https://successvanhire.co.uk/",
-    telephone: "+44 20 3011 1198",
-    email: "Info@successvanhire.com",
-  },
-  areaServed: {
-    "@type": "City",
-    name: "London",
-  },
-  description:
-    "Cheap van hire London from £25/day. Budget van hire London with transparent pricing, no hidden fees. Affordable van rental London for all needs.",
-  url: "https://successvanhire.co.uk/cheap-van-hire-london",
-  priceRange: "£25-£75",
-};
-
-const cheapVanHireLondonFAQSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "How cheap is your van hire in London?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Our cheap van hire London starts from £25/day for small vans. We offer budget van hire London with transparent pricing and no hidden fees. Prices vary by van size and rental duration.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Is cheap van hire London reliable?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "Yes! Cheap doesn't mean poor quality. All our vans are well-maintained, fully insured, and regularly serviced. We offer affordable van rental London without compromising on reliability.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "Do you have any hidden fees?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "No. What you see is what you pay. Our cheap van hire London pricing includes insurance and standard mileage. No surprise charges at pickup.",
-      },
-    },
-  ],
-};
+import {
+  cheapVanHireLondonSchema,
+  cheapVanHireLondonFAQSchema,
+} from "@/lib/schema";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://successvanhire.co.uk"),

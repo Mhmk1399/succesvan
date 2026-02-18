@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import VanRentalBrentCross from "@/components/static/areas/BrentCross";
 import Script from "next/script";
-import { VanHireBrentCrossSchema } from "@/lib/schema";
+import { VanHireBrentCrossSchema, brentCrossFAQSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title:
@@ -21,13 +21,20 @@ export const metadata: Metadata = {
 export default function VanHireBrentCross() {
   return (
     <div>
-      {/* ✅ Schema.org JSON-LD */}
       <Script
-        id="about-us-schema"
+        id="brent-cross-schema"
         type="application/ld+json"
         strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(VanHireBrentCrossSchema),
+        }}
+      />
+      <Script
+        id="brent-cross-faq-schema"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(brentCrossFAQSchema),
         }}
       />
       <VanRentalBrentCross />
