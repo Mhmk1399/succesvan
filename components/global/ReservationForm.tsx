@@ -977,7 +977,7 @@ export default function ReservationForm({
                 : "Select Dates"}
             </button>
             {showDateRange && (
-              <div className="absolute left-0 min-h-44 max-h-110 overflow-y-auto -top-44 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 w-70 sm:w-75  ">
+              <div className="absolute left-0 min-h-44 max-h-120 overflow-y-auto -top-44 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 w-70 sm:w-75  ">
                 <DateRange
                   className="w-full"
                   ranges={dateRange}

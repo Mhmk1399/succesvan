@@ -35,7 +35,7 @@ export default function FullScreenMobileCalendar({
     const currentMonth = minDate.getMonth();
     const endYear = maxDate.getFullYear();
     const endMonth = maxDate.getMonth();
-    
+
     if (endYear === currentYear) {
       return endMonth - currentMonth + 1;
     }
@@ -52,27 +52,27 @@ export default function FullScreenMobileCalendar({
   // Handle escape key to close
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
       }
     };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [onClose]);
 
   const calendarContent = (
-    <div 
-      className="fixed inset-0 z-9999 flex flex-col bg-slate-900 md:hidden"
+    <div
+      className="fixed inset-0 z-9999999 flex flex-col bg-slate-700 md:hidden"
       style={{
-        animation: 'fadeInMobile 0.2s ease-out',
-        width: '100vw',
-        height: '100vh',
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        paddingLeft: 'env(safe-area-inset-left, 0px)',
-        paddingRight: 'env(safe-area-inset-right, 0px)',
-        boxSizing: 'border-box',
-        overflow: 'hidden',
+        animation: "fadeInMobile 0.2s ease-out",
+        width: "100vw",
+        height: "100vh",
+        paddingTop: "env(safe-area-inset-top, 0px)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        paddingLeft: "env(safe-area-inset-left, 0px)",
+        paddingRight: "env(safe-area-inset-right, 0px)",
+        boxSizing: "border-box",
+        overflow: "hidden",
       }}
     >
       {/* Header */}
@@ -83,21 +83,31 @@ export default function FullScreenMobileCalendar({
           className="text-white hover:text-amber-400 transition-colors p-2 -ml-2"
           aria-label="Close calendar"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         </button>
         <h2 className="text-white ml-8 font-semibold text-lg">Select Dates</h2>
-        
       </div>
 
       {/* Calendar Container - Vertical Scroll */}
-      <div 
+      <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto px-2 py-4"
         style={{
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain',
+          WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "contain",
         }}
       >
         <DateRange
@@ -113,7 +123,11 @@ export default function FullScreenMobileCalendar({
           showMonthAndYearPickers={false}
           showDateDisplay={false}
           focusedRange={focusedRange as RangeFocus | undefined}
-          onRangeFocusChange={onRangeFocusChange as ((focusedRange: RangeFocus) => void) | undefined}
+          onRangeFocusChange={
+            onRangeFocusChange as
+              | ((focusedRange: RangeFocus) => void)
+              | undefined
+          }
           preventSnapRefocus={true}
         />
       </div>
@@ -130,7 +144,7 @@ export default function FullScreenMobileCalendar({
       </div>
 
       {/* Click outside overlay */}
-      <div 
+      <div
         className="absolute inset-0 -z-10 bg-black/50"
         onClick={onClose}
         aria-hidden="true"
@@ -138,10 +152,16 @@ export default function FullScreenMobileCalendar({
 
       <style jsx global>{`
         @keyframes fadeInMobile {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
-        
+
         /* Override react-date-range styles for full-screen mobile */
         .rdrDateDisplayWrapper {
           display: none !important;
@@ -200,7 +220,7 @@ export default function FullScreenMobileCalendar({
         .rdrDayStartOfMonth .rdrDayNumber span,
         .rdrDayEndOfMonth .rdrDayNumber span {
           font-weight: 700 !important;
-          background-color:  !important;
+          background-color: !important;
           color: #ffffff !important;
           border-radius: 50% !important;
           width: 32px !important;
@@ -255,9 +275,9 @@ export default function FullScreenMobileCalendar({
   );
 
   // Use portal to render at document body level
-  if (typeof document !== 'undefined') {
+  if (typeof document !== "undefined") {
     return createPortal(calendarContent, document.body);
   }
-  
+
   return null;
 }

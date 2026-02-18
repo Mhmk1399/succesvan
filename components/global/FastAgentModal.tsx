@@ -35,6 +35,7 @@ import "react-date-range/dist/theme/default.css";
 import { datePickerStyles } from "./DatePickerStyles";
 import { MdDoorSliding } from "react-icons/md";
 import { getLondonTime } from "@/lib/englandTime";
+import FullScreenMobileCalendar from "./FullScreenMobileCalendar";
 
 interface FastAgentModalProps {
   isOpen: boolean;
@@ -134,14 +135,14 @@ export default function FastAgentModal({
   useEffect(() => {
     if (showDateRange) {
       // Only lock scroll on desktop (md breakpoint and above)
-      if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-        document.body.style.overflow = 'hidden';
+      if (typeof window !== "undefined" && window.innerWidth >= 768) {
+        document.body.style.overflow = "hidden";
       }
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [showDateRange]);
 
@@ -675,14 +676,14 @@ export default function FastAgentModal({
   ) => {
     setAddOnQuantities((prev) => {
       const current = prev[addOnId] || 0;
-      
+
       // If adding (+1)
       if (delta > 0) {
         // Check if already at max quantity (1)
         if (current >= 1) {
           return prev;
         }
-        
+
         // If addon has a type, check if another addon of same type is already selected
         if (addonType) {
           const hasSameTypeSelected = Object.entries(prev).some(([id, qty]) => {
@@ -894,7 +895,7 @@ export default function FastAgentModal({
       <style>{uiStyles}</style>
 
       {/* Main Container */}
-      <div className="bg-[#0f172b] w-full md:w-150 h-[95dvh] md:h-[85vh] md:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300 border border-white/10">
+      <div className="bg-[#0f172b] w-full md:w-150 h-[95dvh] md:h-[95vh] md:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300 border border-white/10">
         {/* --- Header --- */}
         <div className="bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-4 z-20 flex flex-col gap-3 sticky top-0">
           <div className="flex items-center justify-between">
@@ -1099,31 +1100,21 @@ export default function FastAgentModal({
                       </span>
                     </button>
                     {showDateRange && (
-                      <div className="absolute left-0 bottom-full mb-2 z-50 bg-[#1e293b] border border-white/10 rounded-xl shadow-2xl p-2 w-full max-w-xs overflow-hidden">
+                      <div className="absolute hidden md:block left-0 min-h-44 max-h-100 overflow-y-auto -top-44 z-99999 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 w-70 sm:w-75  ">
                         <DateRange
+                          className="w-full"
                           ranges={dateRange}
                           onChange={(item) => {
                             const { startDate, endDate } = item.selection;
-                            
-                            // Validate: max 40 days rental period
-                            let validEndDate = endDate || new Date();
-                            if (startDate && endDate) {
-                              const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-                              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                              if (diffDays > 40) {
-                                validEndDate = new Date(startDate);
-                                validEndDate.setDate(validEndDate.getDate() + 40);
-                              }
-                            }
-                            
                             setDateRange([
                               {
                                 startDate: startDate || new Date(),
-                                endDate: validEndDate,
+                                endDate: endDate || new Date(),
                                 key: "selection",
                               },
                             ]);
                           }}
+                          // *** تغییر: minDate پویا بر اساس زمان انگلیس ***
                           minDate={(() => {
                             try {
                               const londonNow = getLondonTime();
@@ -1137,38 +1128,49 @@ export default function FastAgentModal({
                               min.setHours(0, 0, 0, 0);
                               return min;
                             } catch (err) {
+                              // fallback: فردا بر اساس زمان محلی
                               const fallback = new Date();
                               fallback.setDate(fallback.getDate() + 1);
                               fallback.setHours(0, 0, 0, 0);
                               return fallback;
                             }
                           })()}
-                          // maxDate تا 40 روز آینده
+                          // *** جدید: maxDate تا پایان سال جاری ***
                           maxDate={(() => {
                             try {
                               const londonNow = getLondonTime();
-                              const hours = londonNow.getUTCHours();
-
-                              let minDaysToAdd = 1;
-                              if (hours >= 16) minDaysToAdd = 2;
-
-                              const max = new Date(londonNow);
-                              max.setDate(max.getDate() + minDaysToAdd + 40);
-                              max.setHours(23, 59, 59, 999);
-                              return max;
+                              const endOfYear = new Date(
+                                londonNow.getFullYear(),
+                                11,
+                                31,
+                                23,
+                                59,
+                                59,
+                                999,
+                              );
+                              return endOfYear;
                             } catch (err) {
                               const fallback = new Date();
-                              fallback.setDate(fallback.getDate() + 41);
+                              fallback.setFullYear(
+                                fallback.getFullYear(),
+                                11,
+                                31,
+                              );
                               fallback.setHours(23, 59, 59, 999);
                               return fallback;
                             }
                           })()}
-                          rangeColors={["#f97316"]}
-                          months={2}
+                          rangeColors={["#fbbf24"]}
+                          months={12}
                           scroll={{ enabled: true }}
+                          showMonthAndYearPickers={true}
+                          moveRangeOnFirstSelection={false}
+                          retainEndDateOnFirstSelection={false}
+                          editableDateInputs={true}
+                          dragSelectionEnabled={true}
                           disabledDates={
-                            bookingForm.officeId
-                              ? (Array.from({ length: 365 }, (_, i) => {
+                            offices
+                              ? (Array.from({ length: 400 }, (_, i) => {
                                   const date = new Date();
                                   date.setDate(date.getDate() + i);
                                   return isDateDisabled(date) ? date : null;
@@ -1176,16 +1178,82 @@ export default function FastAgentModal({
                               : []
                           }
                         />
-                        <div className="p-2 border-t border-white/5">
-                          <button
-                            type="button"
-                            onClick={() => setShowDateRange(false)}
-                            className="w-full py-2 bg-orange-500 text-white rounded-lg font-bold text-sm"
-                          >
-                            Done
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowDateRange(false)}
+                          className="w-full sticky -bottom-1 mt-3 px-4 py-2 bg-amber-500 text-slate-900 font-semibold rounded-lg hover:bg-amber-400 transition-colors text-sm"
+                        >
+                          Done
+                        </button>
                       </div>
+                    )}
+                    {showDateRange && (
+                      <FullScreenMobileCalendar
+                        dateRange={dateRange}
+                        onChange={(item) => {
+                          const { startDate, endDate } = item.selection;
+                          setDateRange([
+                            {
+                              startDate: startDate || new Date(),
+                              endDate: endDate || new Date(),
+                              key: "selection",
+                            },
+                          ]);
+                        }}
+                        minDate={(() => {
+                          try {
+                            const londonNow = getLondonTime();
+                            const hours = londonNow.getUTCHours();
+
+                            let minDaysToAdd = 1;
+                            if (hours >= 16) minDaysToAdd = 2;
+
+                            const min = new Date(londonNow);
+                            min.setDate(min.getDate() + minDaysToAdd);
+                            min.setHours(0, 0, 0, 0);
+                            return min;
+                          } catch (err) {
+                            const fallback = new Date();
+                            fallback.setDate(fallback.getDate() + 1);
+                            fallback.setHours(0, 0, 0, 0);
+                            return fallback;
+                          }
+                        })()}
+                        maxDate={(() => {
+                          try {
+                            const londonNow = getLondonTime();
+                            const endOfYear = new Date(
+                              londonNow.getFullYear(),
+                              11,
+                              31,
+                              23,
+                              59,
+                              59,
+                              999,
+                            );
+                            return endOfYear;
+                          } catch (err) {
+                            const fallback = new Date();
+                            fallback.setFullYear(
+                              fallback.getFullYear(),
+                              11,
+                              31,
+                            );
+                            fallback.setHours(23, 59, 59, 999);
+                            return fallback;
+                          }
+                        })()}
+                        disabledDates={
+                          offices
+                            ? (Array.from({ length: 400 }, (_, i) => {
+                                const date = new Date();
+                                date.setDate(date.getDate() + i);
+                                return isDateDisabled(date) ? date : null;
+                              }).filter(Boolean) as Date[])
+                            : []
+                        }
+                        onClose={() => setShowDateRange(false)}
+                      />
                     )}
                   </div>
                 </div>
@@ -1216,7 +1284,9 @@ export default function FastAgentModal({
                           const extensionTimes = workingDay?.pickupExtension
                             ? {
                                 start: pickupTimeSlots[0],
-                                end: pickupTimeSlots[pickupTimeSlots.length - 1],
+                                end: pickupTimeSlots[
+                                  pickupTimeSlots.length - 1
+                                ],
                                 normalStart: workingDay.startTime || "00:00",
                                 normalEnd: workingDay.endTime || "23:59",
                                 price: workingDay.pickupExtension.flatPrice,
@@ -1226,7 +1296,10 @@ export default function FastAgentModal({
                             <TimeSelect
                               value={bookingForm.startTime}
                               onChange={(time) =>
-                                setBookingForm((p) => ({ ...p, startTime: time }))
+                                setBookingForm((p) => ({
+                                  ...p,
+                                  startTime: time,
+                                }))
                               }
                               slots={pickupTimeSlots}
                               reservedSlots={startDateReservedSlots}
@@ -1263,7 +1336,9 @@ export default function FastAgentModal({
                           const extensionTimes = workingDay?.returnExtension
                             ? {
                                 start: returnTimeSlots[0],
-                                end: returnTimeSlots[returnTimeSlots.length - 1],
+                                end: returnTimeSlots[
+                                  returnTimeSlots.length - 1
+                                ],
                                 normalStart: workingDay.startTime || "00:00",
                                 normalEnd: workingDay.endTime || "23:59",
                                 price: workingDay.returnExtension.flatPrice,
@@ -1301,7 +1376,6 @@ export default function FastAgentModal({
                       placeholder="23-80"
                       min={23}
                       max={80}
-
                       onChange={(e) =>
                         setBookingForm((p) => ({
                           ...p,
@@ -1706,9 +1780,7 @@ export default function FastAgentModal({
                   disabled={isLoading}
                   className="absolute left-0 p-2 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
                 >
-                  <span className="text-xs font-bold   uppercase">
-                    Back
-                  </span>
+                  <span className="text-xs font-bold   uppercase">Back</span>
                 </button>
               )}
 
