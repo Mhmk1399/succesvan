@@ -28,13 +28,13 @@ export const datePickerStyles = `
     flex-direction: column !important;
   }
   /* Hide days from previous/next months to save space */
-  .rdrDayPassive {
-    visibility: hidden !important;
-    pointer-events: none !important;
-  }
-  .rdrDayPassive .rdrDayNumber {
-    display: none !important;
-  }
+.rdrDayPassive {
+  opacity: 0 !important;          /* keep the cell, hide it visually */
+  pointer-events: none !important;
+}
+.rdrDayPassive .rdrDayNumber {
+  opacity: 0 !important;
+}
   .rdrMonthAndYearPickers {
     color: white !important;
     margin-bottom: 2px !important;
@@ -68,18 +68,14 @@ export const datePickerStyles = `
     border-radius: 4px !important;
     padding: 4px 6px !important;
   }
-  .rdrDayDisabled {
-    display: none !important;
-  }
-  /*.rdrDayDisabled {
-    background-color: transparent !important;
-    cursor: not-allowed !important;
-  }
-  .rdrDayDisabled .rdrDayNumber span {
-    color: #4b5563 !important;
-    text-decoration: line-through !important;
-    font-weight: 400 !important;
-  }*/
+.rdrDayDisabled {
+  opacity: 0.35 !important;
+  pointer-events: none !important;
+}
+ .rdrDayDisabled .rdrDayNumber span {
+  color: #4b5563 !important;
+  text-decoration: line-through !important;
+}
   .rdrDayInRange {
     background-color: rgba(251, 191, 36, 0.15) !important;
   }

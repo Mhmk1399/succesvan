@@ -37,6 +37,7 @@ import {
   TimeSlotInfo,
 } from "../../types/reservation-form";
 import { getLondonTime } from "@/lib/englandTime";
+import FullScreenMobileCalendar from "./FullScreenMobileCalendar";
 
 export default function ReservationForm({
   isModal = false,
@@ -53,13 +54,13 @@ export default function ReservationForm({
     if (showDateRange) {
       // Only lock scroll on desktop (md breakpoint and above)
       if (window.innerWidth >= 768) {
-        document.body.style.overflow = 'hidden';
+        document.body.style.overflow = "hidden";
       }
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [showDateRange]);
   const [offices, setOffices] = useState<Office[]>([]);
@@ -976,11 +977,7 @@ export default function ReservationForm({
                 : "Select Dates"}
             </button>
             {showDateRange && (
-              <div
-                className={`absolute left-0 -mt-20 md:mt-20 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 w-70 sm:w-[320px] ${
-                  isInline ? "-top-72" : "-top-50"
-                }`}
-              >
+              <div className="absolute left-0 min-h-44 max-h-120 overflow-y-auto -top-44 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 w-70 sm:w-75  ">
                 <DateRange
                   className="w-full"
                   ranges={dateRange}
@@ -1015,32 +1012,38 @@ export default function ReservationForm({
                       return fallback;
                     }
                   })()}
-                  // *** جدید: maxDate تا 40 روز آینده ***
+                  // *** جدید: maxDate تا پایان سال جاری ***
                   maxDate={(() => {
                     try {
                       const londonNow = getLondonTime();
-                      const hours = londonNow.getUTCHours();
-
-                      let minDaysToAdd = 1;
-                      if (hours >= 16) minDaysToAdd = 2;
-
-                      const max = new Date(londonNow);
-                      max.setDate(max.getDate() + minDaysToAdd + 40);
-                      max.setHours(23, 59, 59, 999);
-                      return max;
+                      const endOfYear = new Date(
+                        londonNow.getFullYear(),
+                        11,
+                        31,
+                        23,
+                        59,
+                        59,
+                        999,
+                      );
+                      return endOfYear;
                     } catch (err) {
                       const fallback = new Date();
-                      fallback.setDate(fallback.getDate() + 41);
+                      fallback.setFullYear(fallback.getFullYear(), 11, 31);
                       fallback.setHours(23, 59, 59, 999);
                       return fallback;
                     }
                   })()}
                   rangeColors={["#fbbf24"]}
-                  months={1}
+                  months={12}
                   scroll={{ enabled: true }}
+                  showMonthAndYearPickers={true}
+                  moveRangeOnFirstSelection={false}
+                  retainEndDateOnFirstSelection={false}
+                  editableDateInputs={true}
+                  dragSelectionEnabled={true}
                   disabledDates={
                     formData.office
-                      ? (Array.from({ length: 365 }, (_, i) => {
+                      ? (Array.from({ length: 400 }, (_, i) => {
                           const date = new Date();
                           date.setDate(date.getDate() + i);
                           return isDateDisabled(date) ? date : null;
@@ -1051,7 +1054,7 @@ export default function ReservationForm({
                 <button
                   type="button"
                   onClick={() => setShowDateRange(false)}
-                  className="w-full mt-3 px-4 py-2 bg-amber-500 text-slate-900 font-semibold rounded-lg hover:bg-amber-400 transition-colors text-sm"
+                  className="w-full sticky -bottom-1 mt-3 px-4 py-2 bg-amber-500 text-slate-900 font-semibold rounded-lg hover:bg-amber-400 transition-colors text-sm"
                 >
                   Done
                 </button>
@@ -1365,93 +1368,68 @@ export default function ReservationForm({
               : "Select Dates"}
           </button>
           {showDateRange && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm md:hidden"
-              style={{
-                animation: 'fadeIn 0.2s ease-out'
+            <FullScreenMobileCalendar
+              dateRange={dateRange}
+              onChange={(item) => {
+                const { startDate, endDate } = item.selection;
+                setDateRange([
+                  {
+                    startDate: startDate || new Date(),
+                    endDate: endDate || new Date(),
+                    key: "selection",
+                  },
+                ]);
               }}
-              onClick={() => setShowDateRange(false)}
-            >
-              <div
-                className="bg-slate-800 w-full max-w-87.5 backdrop-blur-xl border border-white/20 rounded-xl p-4 relative"
-                onClick={(e) => e.stopPropagation()}
-              >
-              <DateRange
-                className="w-full"
-                ranges={dateRange}
-                onChange={(item) => {
-                  const { startDate, endDate } = item.selection;
-                  setDateRange([
-                    {
-                      startDate: startDate || new Date(),
-                      endDate: endDate || new Date(),
-                      key: "selection",
-                    },
-                  ]);
-                }}
-                // *** تغییر: minDate پویا بر اساس زمان انگلیس (مشابه desktop) ***
-                minDate={(() => {
-                  try {
-                    const londonNow = getLondonTime();
-                    const hours = londonNow.getUTCHours();
+              minDate={(() => {
+                try {
+                  const londonNow = getLondonTime();
+                  const hours = londonNow.getUTCHours();
 
-                    let minDaysToAdd = 1;
-                    if (hours >= 16) minDaysToAdd = 2;
+                  let minDaysToAdd = 1;
+                  if (hours >= 16) minDaysToAdd = 2;
 
-                    const min = new Date(londonNow);
-                    min.setDate(min.getDate() + minDaysToAdd);
-                    min.setHours(0, 0, 0, 0);
-                    return min;
-                  } catch (err) {
-                    // fallback: فردا بر اساس زمان محلی
-                    const fallback = new Date();
-                    fallback.setDate(fallback.getDate() + 1);
-                    fallback.setHours(0, 0, 0, 0);
-                    return fallback;
-                  }
-                })()}
-                // *** جدید: maxDate تا 40 روز آینده ***
-                maxDate={(() => {
-                  try {
-                    const londonNow = getLondonTime();
-                    const hours = londonNow.getUTCHours();
-
-                    let minDaysToAdd = 1;
-                    if (hours >= 16) minDaysToAdd = 2;
-
-                    const max = new Date(londonNow);
-                    max.setDate(max.getDate() + minDaysToAdd + 40);
-                    max.setHours(23, 59, 59, 999);
-                    return max;
-                  } catch (err) {
-                    const fallback = new Date();
-                    fallback.setDate(fallback.getDate() + 41);
-                    fallback.setHours(23, 59, 59, 999);
-                    return fallback;
-                  }
-                })()}
-                rangeColors={["#fbbf24"]}
-                months={1}
-                scroll={{ enabled: true }}
-                disabledDates={
-                  formData.office
-                    ? (Array.from({ length: 365 }, (_, i) => {
-                        const date = new Date();
-                        date.setDate(date.getDate() + i);
-                        return isDateDisabled(date) ? date : null;
-                      }).filter(Boolean) as Date[])
-                    : []
+                  const min = new Date(londonNow);
+                  min.setDate(min.getDate() + minDaysToAdd);
+                  min.setHours(0, 0, 0, 0);
+                  return min;
+                } catch (err) {
+                  const fallback = new Date();
+                  fallback.setDate(fallback.getDate() + 1);
+                  fallback.setHours(0, 0, 0, 0);
+                  return fallback;
                 }
-              />
-              <button
-                type="button"
-                onClick={() => setShowDateRange(false)}
-                className="w-full mt-3 px-4 py-2 bg-amber-500 text-slate-900 font-semibold rounded-lg hover:bg-amber-400 transition-colors text-sm"
-              >
-                Done
-              </button>
-              </div>
-            </div>
+              })()}
+              maxDate={(() => {
+                try {
+                  const londonNow = getLondonTime();
+                  const endOfYear = new Date(
+                    londonNow.getFullYear(),
+                    11,
+                    31,
+                    23,
+                    59,
+                    59,
+                    999,
+                  );
+                  return endOfYear;
+                } catch (err) {
+                  const fallback = new Date();
+                  fallback.setFullYear(fallback.getFullYear(), 11, 31);
+                  fallback.setHours(23, 59, 59, 999);
+                  return fallback;
+                }
+              })()}
+              disabledDates={
+                formData.office
+                  ? (Array.from({ length: 400 }, (_, i) => {
+                      const date = new Date();
+                      date.setDate(date.getDate() + i);
+                      return isDateDisabled(date) ? date : null;
+                    }).filter(Boolean) as Date[])
+                  : []
+              }
+              onClose={() => setShowDateRange(false)}
+            />
           )}
         </div>
 

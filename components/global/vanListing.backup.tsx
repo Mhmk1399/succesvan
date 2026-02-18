@@ -54,6 +54,7 @@ import "react-date-range/dist/theme/default.css";
 import { format } from "date-fns";
 import Link from "next/link";
 import { getLondonTime } from "@/lib/englandTime";
+import FullScreenMobileCalendar from "./FullScreenMobileCalendar";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -113,8 +114,6 @@ export default function VanListingHome({
     cardsRef.current[index] = el;
   }, []);
 
- 
-
   return (
     <section
       ref={sectionRef}
@@ -150,7 +149,9 @@ export default function VanListingHome({
           </div>
         ) : categories.length > 0 ? (
           <div>
-            <div className={`grid grid-cols-1 lg:grid-cols-${gridCols} gap-3 lg:gap-4`}>
+            <div
+              className={`grid grid-cols-1 lg:grid-cols-${gridCols} gap-3 lg:gap-4`}
+            >
               {categories.map((category, index) => (
                 <div key={category._id} ref={(el) => setCardRef(index, el)}>
                   <CategoryCard
@@ -263,14 +264,14 @@ function ReservationPanel({
   useEffect(() => {
     if (showDateRange) {
       // Only lock scroll on desktop (md breakpoint and above)
-      if (typeof window !== 'undefined' && window.innerWidth >= 768) {
-        document.body.style.overflow = 'hidden';
+      if (typeof window !== "undefined" && window.innerWidth >= 768) {
+        document.body.style.overflow = "hidden";
       }
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [showDateRange]);
 
@@ -1697,71 +1698,77 @@ function ReservationPanel({
                         : "Select dates"}
                     </button>
                     {showDateRange && (
-                      <div className="absolute z-50 mt-2 bg-slate-800 border border-white/20 rounded-xl p-4 shadow-2xl">
+                      <div className="absolute hidden md:block left-0 min-h-44 max-h-120 overflow-y-auto -top-44 z-50 bg-slate-800 backdrop-blur-xl border border-white/20 rounded-lg p-4 w-70 sm:w-75  ">
                         <DateRange
+                          className="w-full"
                           ranges={dateRange}
                           onChange={(item) => {
                             const { startDate, endDate } = item.selection;
-                            
-                            // Validate: max 40 days rental period
-                            let validEndDate = endDate;
-                            if (startDate && endDate) {
-                              const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-                              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                              if (diffDays > 40) {
-                                validEndDate = new Date(startDate);
-                                validEndDate.setDate(validEndDate.getDate() + 40);
-                              }
-                            }
-                            
-                            setDateRange([{
-                              ...item.selection,
-                              endDate: validEndDate
-                            }]);
-                            setFormData((prev) => ({
-                              ...prev,
-                              pickupDate: format(
-                                item.selection.startDate!,
-                                "yyyy-MM-dd",
-                              ),
-                              returnDate: format(
-                                item.selection.endDate!,
-                                "yyyy-MM-dd",
-                              ),
-                            }));
+                            setDateRange([
+                              {
+                                startDate: startDate || new Date(),
+                                endDate: endDate || new Date(),
+                                key: "selection",
+                              },
+                            ]);
                           }}
-                          // minDate پویا بر اساس زمان فعلی لندن
+                          // *** تغییر: minDate پویا بر اساس زمان انگلیس ***
                           minDate={(() => {
-                            const londonNow = getLondonTime();
-                            const hours = londonNow.getUTCHours();
+                            try {
+                              const londonNow = getLondonTime();
+                              const hours = londonNow.getUTCHours();
 
-                            let minDays = 1;
-                            if (hours >= 16) minDays = 2;
+                              let minDaysToAdd = 1;
+                              if (hours >= 16) minDaysToAdd = 2;
 
-                            const min = new Date(londonNow);
-                            min.setUTCDate(min.getUTCDate() + minDays);
-                            min.setUTCHours(0, 0, 0, 0);
-                            return min;
+                              const min = new Date(londonNow);
+                              min.setDate(min.getDate() + minDaysToAdd);
+                              min.setHours(0, 0, 0, 0);
+                              return min;
+                            } catch (err) {
+                              // fallback: فردا بر اساس زمان محلی
+                              const fallback = new Date();
+                              fallback.setDate(fallback.getDate() + 1);
+                              fallback.setHours(0, 0, 0, 0);
+                              return fallback;
+                            }
                           })()}
-                          // maxDate تا 40 روز آینده
+                          // *** جدید: maxDate تا پایان سال جاری ***
                           maxDate={(() => {
-                            const londonNow = getLondonTime();
-                            const hours = londonNow.getUTCHours();
-
-                            let minDaysToAdd = 1;
-                            if (hours >= 16) minDaysToAdd = 2;
-
-                            const max = new Date(londonNow);
-                            max.setDate(max.getDate() + minDaysToAdd + 40);
-                            max.setHours(23, 59, 59, 999);
-                            return max;
+                            try {
+                              const londonNow = getLondonTime();
+                              const endOfYear = new Date(
+                                londonNow.getFullYear(),
+                                11,
+                                31,
+                                23,
+                                59,
+                                59,
+                                999,
+                              );
+                              return endOfYear;
+                            } catch (err) {
+                              const fallback = new Date();
+                              fallback.setFullYear(
+                                fallback.getFullYear(),
+                                11,
+                                31,
+                              );
+                              fallback.setHours(23, 59, 59, 999);
+                              return fallback;
+                            }
                           })()}
-                          rangeColors={["#fe9a00"]}
-                          months={2}
-                          scroll={{ enabled: false }}
+                          rangeColors={["#fbbf24"]}
+                          months={12}
+                          scroll={{ enabled: true }}
+                          showMonthAndYearPickers={true}
+                          moveRangeOnFirstSelection={false}
+                          retainEndDateOnFirstSelection={false}
+                          editableDateInputs={true}
+                          dragSelectionEnabled={true}
                           disabledDates={
                             formData.office
-                              ? (Array.from({ length: 365 }, (_, i) => {
+                              ? (Array.from({ length: 400 }, (_, i) => {
                                   const date = new Date();
                                   date.setDate(date.getDate() + i);
                                   return isDateDisabled(date) ? date : null;
@@ -1772,11 +1779,79 @@ function ReservationPanel({
                         <button
                           type="button"
                           onClick={() => setShowDateRange(false)}
-                          className="w-full mt-3 px-4 py-2 bg-[#fe9a00] text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors"
+                          className="w-full sticky -bottom-1 mt-3 px-4 py-2 bg-amber-500 text-slate-900 font-semibold rounded-lg hover:bg-amber-400 transition-colors text-sm"
                         >
                           Done
                         </button>
                       </div>
+                    )}
+                    {showDateRange && (
+                      <FullScreenMobileCalendar
+                        dateRange={dateRange}
+                        onChange={(item) => {
+                          const { startDate, endDate } = item.selection;
+                          setDateRange([
+                            {
+                              startDate: startDate || new Date(),
+                              endDate: endDate || new Date(),
+                              key: "selection",
+                            },
+                          ]);
+                        }}
+                        minDate={(() => {
+                          try {
+                            const londonNow = getLondonTime();
+                            const hours = londonNow.getUTCHours();
+
+                            let minDaysToAdd = 1;
+                            if (hours >= 16) minDaysToAdd = 2;
+
+                            const min = new Date(londonNow);
+                            min.setDate(min.getDate() + minDaysToAdd);
+                            min.setHours(0, 0, 0, 0);
+                            return min;
+                          } catch (err) {
+                            const fallback = new Date();
+                            fallback.setDate(fallback.getDate() + 1);
+                            fallback.setHours(0, 0, 0, 0);
+                            return fallback;
+                          }
+                        })()}
+                        maxDate={(() => {
+                          try {
+                            const londonNow = getLondonTime();
+                            const endOfYear = new Date(
+                              londonNow.getFullYear(),
+                              11,
+                              31,
+                              23,
+                              59,
+                              59,
+                              999,
+                            );
+                            return endOfYear;
+                          } catch (err) {
+                            const fallback = new Date();
+                            fallback.setFullYear(
+                              fallback.getFullYear(),
+                              11,
+                              31,
+                            );
+                            fallback.setHours(23, 59, 59, 999);
+                            return fallback;
+                          }
+                        })()}
+                        disabledDates={
+                          formData.office
+                            ? (Array.from({ length: 400 }, (_, i) => {
+                                const date = new Date();
+                                date.setDate(date.getDate() + i);
+                                return isDateDisabled(date) ? date : null;
+                              }).filter(Boolean) as Date[])
+                            : []
+                        }
+                        onClose={() => setShowDateRange(false)}
+                      />
                     )}
                   </div>
                 </div>
