@@ -1128,3 +1128,42 @@ export const camdenFAQSchema = {
     },
   ],
 };
+
+export const cricklewoodFAQSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What are the age requirements for renting a van?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We accept drivers aged 25-70 years with a full clean licence. If you are 21-24, 70-76, or have certain endorsements it may still be possible to hire. Call our office on 020 3011 1198 for more details.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How do I book a van hire in Cricklewood?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "You can book by sending your request on our website at www.successvanhire.co.uk/reservation/, sending us an email, or giving us a call on 020 3011 1198. Our booking process is quick and simple.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What do I need to rent a van in Cricklewood?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "You need to provide: Your ID, a valid driving licences, proof of address, and your bank card. We accept full UK and EU driving licences with quick and easy verification.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Are your vans eco-friendly?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, all our vans meet EU6 emission standards and are part of our eco-friendly fleet. We are committed to environmental protection.",
+      },
+    },
+  ],
+};
