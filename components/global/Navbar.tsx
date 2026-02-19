@@ -55,7 +55,7 @@ const menuItems: MenuItem[] = [
         label: "Brent Cross",
         href: "/success-van-hire-van-rental-in-brent-cross-london-last-minute-bookings",
       },
-      { label: "Camden", href: "/van-hire-wembley-2-2" },
+      { label: "Camden", href: "/van-hire-camden" },
       { label: "Cricklewood", href: "/van-hire-cricklewood" },
       { label: "Golders Green", href: "/van-hire-golders-green" },
       { label: "Hampstead", href: "/van-hire-hampstead" },
