@@ -208,7 +208,7 @@ export default function CamdenVanHire() {
 
   // Service areas
   const serviceAreas = [
-    { name: "Cricklewood", link: "/van-hire-cricklewood" },
+    { name: "Cricklewood", link: "/van-hire-cricklewood" , featured: true},
     { name: "Hampstead", link: "/van-hire-hampstead" },
     { name: "Hendon", link: "/van-hire-hendon" },
     { name: "Golders Green", link: "/van-hire-golders-green" },
