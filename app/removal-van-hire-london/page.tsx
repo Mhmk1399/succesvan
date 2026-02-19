@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Script from "next/script";
 import {
   RemovalVanHireLondonHero,
   WhyChooseRemovalSection,
@@ -8,6 +9,7 @@ import {
   RemovalFinalCTA,
 } from "@/components/pillar/RemovalVanHireLondonPillar";
 import RemovalVanListing from "@/components/pillar/RemovalVanListing";
+import { removalVanSchema, removalFAQSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title: "Removal Van Hire London | Moving Van Hire from £78/Day",
@@ -43,99 +45,31 @@ export const metadata: Metadata = {
 };
 
 export default function RemovalVanHireLondonPage() {
-  const removalVanSchema = {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    name: "Removal Van Hire London",
-    description:
-      "Professional removal van hire London service for house moves, flat relocations, and office transfers. Spacious vans with insurance and unlimited mileage.",
-    provider: {
-      "@type": "LocalBusiness",
-      name: "Success Van Hire",
-      image: "https://successvanhire.com/logo.png",
-      telephone: "+44 20 3011 1198",
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: "London",
-        addressCountry: "GB",
-      },
-    },
-    areaServed: {
-      "@type": "City",
-      name: "London",
-    },
-    priceRange: "£78-£132",
-    offers: {
-      "@type": "Offer",
-      priceCurrency: "GBP",
-      price: "78",
-      priceSpecification: {
-        "@type": "UnitPriceSpecification",
-        price: "78",
-        priceCurrency: "GBP",
-        unitText: "DAY",
-      },
-    },
-  };
-
-  const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: "What size removal van do I need for my house move in London?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "For a studio or 1-bed flat, a Medium Van (MWB) is sufficient. A 2-bedroom property needs a Large Van (LWB), while 3-4 bedroom houses require a Luton van. Our removal van hire London team can help you choose the right size based on your inventory.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Is removal van hire London cheaper than hiring movers?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Yes, removal van hire London is significantly cheaper than full-service movers. You can save 60-70% by driving yourself. Our moving van hire London rates start from £78/day compared to £400-800 for professional movers.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Do I need a special licence to drive a Luton van in London?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "No, a standard UK driving licence is sufficient for our Luton vans. All our removal van hire London vehicles are under 3.5 tonnes, so you can drive them with a regular car licence.",
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Are your removal vans ULEZ compliant?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Yes, all our removal van hire London fleet is ULEZ compliant. You can drive anywhere in London without ULEZ charges, making your moving van hire London experience hassle-free.",
-        },
-      },
-    ],
-  };
-
   return (
-    <>
-      <script
+    <main className="min-h-screen bg-[#0a0e1a]">
+      <Script
+        id="removal-van-schema"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(removalVanSchema) }}
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(removalVanSchema),
+        }}
       />
-      <script
+      <Script
+        id="removal-faq-schema"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(removalFAQSchema),
+        }}
       />
-      <main className="min-h-screen bg-[#0a0e1a]">
-        <RemovalVanHireLondonHero />
-        <WhyChooseRemovalSection />
-        <VanSizesForMovingSection />
-        <RemovalVanListing />
-        <MovingTipsSection />
-        <RemovalFAQSection />
-        <RemovalFinalCTA />
-      </main>
-    </>
+      <RemovalVanHireLondonHero />
+      <WhyChooseRemovalSection />
+      <VanSizesForMovingSection />
+      <RemovalVanListing />
+      <MovingTipsSection />
+      <RemovalFAQSection />
+      <RemovalFinalCTA />
+    </main>
   );
 }

@@ -86,7 +86,7 @@ export function VanHireLondonHero() {
   ];
 
   return (
-    <section className="relative min-h-screen flex items-center pt-28 md:pt-20 pb-16 overflow-hidden">
+    <section className="relative min-h-screen flex items-center pt-28 md:pt-24  pb-16 overflow-hidden">
       {/* Layered Background */}
       <div className="absolute inset-0 bg-linear-to-br from-[#0a0e1a] via-[#0f1729] to-[#0a0e1a]" />
       <div className="absolute inset-0">

@@ -50,7 +50,7 @@ const menuItems: MenuItem[] = [
     label: "AREAS",
     href: "#AREAS",
     children: [
-      { label: "Explore Our Van Hire", href: "/van-hire-north-west-london" },
+      { label: "North west london", href: "/van-hire-north-west-london" },
       {
         label: "Brent Cross",
         href: "/success-van-hire-van-rental-in-brent-cross-london-last-minute-bookings",
