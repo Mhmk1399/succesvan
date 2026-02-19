@@ -116,7 +116,7 @@ Hard rules: ${IMAGE_RULES.globalMustNots.join(", ")}.
     prompt: imagePrompt,
     n: 1,
     size: "1792x1024",
-    quality: "standard",
+    quality: "medium",
     style: "natural",
   });
 
