@@ -24,6 +24,7 @@ import Head from "next/head";
 import FAQComponent from "../fAQSection";
 import { useCases } from "@/lib/areas";
 import { features } from "@/lib/areas";
+import VanListingHome from "@/components/global/vanListing.backup";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -108,7 +109,6 @@ const faqData = [
 export default function CamdenVanHire() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<(HTMLDivElement | null)[]>([]);
-  const fleetRef = useRef<(HTMLDivElement | null)[]>([]);
   const testimonialRef = useRef<(HTMLDivElement | null)[]>([]);
   const areaRef = useRef<(HTMLElement | null)[]>([]);
 
@@ -127,28 +127,6 @@ export default function CamdenVanHire() {
             ease: "power3.out",
             scrollTrigger: {
               trigger: feature,
-              start: "top 85%",
-              toggleActions: "play none none reverse",
-              once: true,
-            },
-            delay: index * 0.1,
-          }
-        );
-      });
-
-      // Animate fleet items
-      fleetRef.current.forEach((item, index) => {
-        if (!item) return;
-        gsap.fromTo(
-          item,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.5,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: item,
               start: "top 85%",
               toggleActions: "play none none reverse",
               once: true,
@@ -206,38 +184,6 @@ export default function CamdenVanHire() {
     return () => ctx.revert();
   }, []);
 
-  // Fleet data
-  const fleet = [
-    {
-      name: "Small Van",
-      capacity: "Up to 2 cubic metres",
-      ideal: "Perfect for small furniture, parcels, or IKEA trips",
-      image: "/assets/images/small-van.jpg", // Update with actual image path
-      link: "/small-van-hire-london",
-    },
-    {
-      name: "Medium Van",
-      capacity: "Up to 5 cubic metres",
-      ideal: "Ideal for one-bedroom flat moves, versatile cargo",
-      image: "/assets/images/medium-van.jpg",
-      link: "/medium-van-hire-london",
-    },
-    {
-      name: "Large Van with Tail Lift",
-      capacity: "Up to 10 cubic metres",
-      ideal: "Great for 2-3 bedroom house moves, heavy loads",
-      image: "/assets/images/large-van.jpg",
-      link: "/large-van-hire-london",
-    },
-    {
-      name: "Luton Van",
-      capacity: "Up to 15 cubic metres",
-      ideal: "For full house removals, maximum capacity",
-      image: "/assets/images/luton-van.jpg",
-      link: "/luton-van-hire-london",
-    },
-  ];
-
   // Testimonials
   const testimonials = [
     {
@@ -262,15 +208,14 @@ export default function CamdenVanHire() {
 
   // Service areas
   const serviceAreas = [
-    { name: "Camden Town", link: "/van-hire-camden", featured: true },
-    { name: "Kentish Town", link: "/van-hire-kentish-town" },
+    { name: "Cricklewood", link: "/van-hire-cricklewood" },
     { name: "Hampstead", link: "/van-hire-hampstead" },
-    { name: "Highgate", link: "/van-hire-highgate" },
-    { name: "Islington", link: "/van-hire-islington" },
-    { name: "King's Cross", link: "/van-hire-kings-cross" },
-    { name: "Euston", link: "/van-hire-euston" },
-    { name: "St John's Wood", link: "/van-hire-st-johns-wood" },
-    { name: "NW London", link: "/van-hire-london" },
+    { name: "Hendon", link: "/van-hire-hendon" },
+    { name: "Golders Green", link: "/van-hire-golders-green" },
+    { name: "Mill Hill", link: "/van-hire-mill-hill" },
+    { name: "Wembley", link: "/van-hire-wembley" },
+    { name: "Brent Cross", link: "/success-van-hire-van-rental-in-brent-cross-london-last-minute-bookings" },
+    { name: "NW London", link: "/van-hire-north-west-london" },
   ];
 
   return (
@@ -467,10 +412,8 @@ export default function CamdenVanHire() {
           </div>
         </section>
 
-        {/* Our Fleet Section */}
-        <section className="relative py-20 border-t border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
+        {/* Our Fleet Section - Van Listing */}
+         <div className="text-center mb-16">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4">
                 Our <span className="text-[#fe9a00]">Fleet</span> in Camden
               </h2>
@@ -478,40 +421,7 @@ export default function CamdenVanHire() {
                 Choose from a wide range of well-maintained vans for every need
               </p>
             </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {fleet.map((van, index) => (
-                <div
-                  key={index}
-                  ref={(el) => {
-                    fleetRef.current[index] = el;
-                  }}
-                  className="group bg-linear-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:border-[#fe9a00]/30 transition-all duration-300 hover:scale-105"
-                >
-                  <div className="w-full h-40 relative mb-4 rounded-lg overflow-hidden bg-gray-800 flex items-center justify-center">
-                    {/* Placeholder icon; replace with actual images */}
-                    <FiTruck className="text-5xl text-gray-600" />
-                  </div>
-                  <h3 className="text-lg font-black text-white mb-2">{van.name}</h3>
-                  <p className="text-[#fe9a00] font-semibold text-sm mb-2">{van.capacity}</p>
-                  <p className="text-gray-300 text-sm mb-4">{van.ideal}</p>
-                  <Link
-                    href={van.link}
-                    className="inline-block text-[#fe9a00] hover:text-white transition-colors text-sm font-bold"
-                  >
-                    View Details →
-                  </Link>
-                </div>
-              ))}
-            </div>
-            <div className="text-center mt-12">
-              <p className="text-gray-400">
-                All our vans are ULEZ compliant, equipped with GPS, and thoroughly cleaned. Need an automatic or a specific vehicle? 
-                <Link href="/contact" className="text-[#fe9a00] hover:underline ml-1">Contact us</Link> and we'll find the right van for you.
-              </p>
-            </div>
-          </div>
-        </section>
+        <VanListingHome showHeader={false} gridCols={3} />
 
         {/* Customer Testimonials */}
         <section className="relative py-20 border-t border-white/10">
