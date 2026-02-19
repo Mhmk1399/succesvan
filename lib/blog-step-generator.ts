@@ -19,6 +19,104 @@ import { generateId, getCurrentYear } from "./blog-utils";
 import { getOpenAI } from "./openai";
 
 // ============================================================================
+// BLOG LIST FOR INTERNAL LINKING
+// ============================================================================
+
+interface BlogListItem {
+  slug: string;
+  topic: string;
+  summary: string;
+  conclusion: string;
+}
+
+let cachedBlogList: BlogListItem[] | null = null;
+
+/**
+ * Fetch published blog list from API for internal linking
+ */
+async function fetchBlogList(): Promise<BlogListItem[]> {
+  if (cachedBlogList && cachedBlogList.length > 0) {
+    return cachedBlogList;
+  }
+
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const response = await fetch(`${baseUrl}/api/blog/list`, {
+      next: { revalidate: 300 }, // Cache for 5 minutes
+    });
+
+    if (!response.ok) {
+      console.error("Failed to fetch blog list:", response.statusText);
+      return [];
+    }
+
+    const data = await response.json();
+    cachedBlogList = data.blogs || [];
+    return cachedBlogList || [];
+  } catch (error) {
+    console.error("Error fetching blog list:", error);
+    return [];
+  }
+}
+
+/**
+ * Clear cached blog list (useful when blogs are updated)
+ */
+export function clearBlogListCache() {
+  cachedBlogList = null;
+}
+
+/**
+ * Build blog list context string for AI internal linking
+ */
+function buildBlogListContext(blogs: BlogListItem[]): string {
+  if (blogs.length === 0) {
+    return `
+INTERNAL LINKING CONTEXT:
+No existing blog posts available for linking.`;
+  }
+
+  const blogSummary = blogs
+    .map((blog) => {
+      // Strip HTML tags from summary and conclusion
+      const cleanSummary = (blog.summary || "")
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 200);
+      const cleanConclusion = (blog.conclusion || "")
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 200);
+
+      return `• ${blog.topic}
+  Slug: ${blog.slug}
+  Summary: ${cleanSummary}${cleanSummary.length === 200 ? "..." : ""}
+  Conclusion: ${cleanConclusion}${cleanConclusion.length === 200 ? "..." : ""}`;
+    })
+    .join("\n\n");
+
+  return `
+EXISTING BLOG POSTS (for internal linking):
+${blogSummary}
+
+INTERNAL LINKING RULES:
+- When content relates to another blog post topic, suggest a link using this format:
+  **link to (BLOG_TOPIC)**
+- The user will manually replace these markers with actual links
+- Only suggest links when the content genuinely relates to the other blog
+- Do NOT overuse - maximum 2-3 links per blog post
+- Example: If writing about "Van Hire Tips" and you see a blog about "Luton Van Hire", you might write:
+  "For larger moves, consider our **link to (Luton Van Hire)** guide."
+- Do NOT include links to the blog being currently generated
+
+LINK FORMAT (use exactly this):
+**link to (BLOG_TOPIC)**
+`.trim();
+}
+
+// ============================================================================
 // BRAND CONFIG (Success Van Hire)
 // ============================================================================
 
@@ -266,7 +364,8 @@ function isServiceRelatedTopic(topic: string): boolean {
   return keywords.some((k) => t.includes(k));
 }
 
-function buildBrandContext(allowContact: boolean): string {
+function buildBrandContext(allowContact: boolean, blogList: BlogListItem[] = []): string {
+  const blogListContext = buildBlogListContext(blogList);
   return `
 BRAND IDENTITY:
 - Brand name: ${BRAND.name}
@@ -290,6 +389,8 @@ USAGE RULES (STRICT):
 - If topic is NOT service-related: At most one brief mention of "${BRAND.name}".
 
 ${buildVanFleetContext()}
+
+${blogListContext}
 
 STYLE:
 - Human, conversational, professional.
@@ -318,7 +419,10 @@ export async function generateHeadingsTree(prompt: string) {
 
   const currentYear = getCurrentYear();
   const allowContact = isServiceRelatedTopic(prompt);
-  const brandContext = buildBrandContext(allowContact);
+  
+  // Fetch blog list for internal linking context
+  const blogList = await fetchBlogList();
+  const brandContext = buildBrandContext(allowContact, blogList);
   const systemMessage = buildSystemMessage(brandContext);
 
   const systemPrompt = `Create a comprehensive blog post outline.
@@ -434,7 +538,10 @@ export async function generateSectionContent(
 
   const wordCount = level === 2 ? "350-150" : "250-300";
   const allowContact = isServiceRelatedTopic(topic);
-  const brandContext = buildBrandContext(allowContact);
+  
+  // Fetch blog list for internal linking context
+  const blogList = await fetchBlogList();
+  const brandContext = buildBrandContext(allowContact, blogList);
   const systemMessage = buildSystemMessage(brandContext);
 
   // Build context about all headings for the AI to understand the full blog structure
@@ -568,7 +675,8 @@ export async function generateSummary(
   console.log(`📋 [Step Generator] Generating summary for: ${topic}`);
 
   const allowContact = isServiceRelatedTopic(topic);
-  const brandContext = buildBrandContext(allowContact);
+  const blogList = await fetchBlogList();
+  const brandContext = buildBrandContext(allowContact, blogList);
   const systemMessage = buildSystemMessage(brandContext);
 
   const systemPrompt = `Write an engaging introduction/summary.
@@ -637,7 +745,8 @@ export async function generateConclusion(
   console.log(`🎯 [Step Generator] Generating conclusion`);
 
   const allowContact = isServiceRelatedTopic(topic);
-  const brandContext = buildBrandContext(allowContact);
+  const blogList = await fetchBlogList();
+  const brandContext = buildBrandContext(allowContact, blogList);
   const systemMessage = buildSystemMessage(brandContext);
 
   const mainPoints = headings
@@ -717,7 +826,8 @@ export async function generateFAQs(
   );
 
   const allowContact = isServiceRelatedTopic(topic);
-  const brandContext = buildBrandContext(allowContact);
+  const blogList = await fetchBlogList();
+  const brandContext = buildBrandContext(allowContact, blogList);
   const systemMessage = buildSystemMessage(brandContext);
 
   const mainTopics = headings
@@ -835,7 +945,8 @@ export async function generateSEOMetadata(
   console.log(`🔍 [Step Generator] Generating SEO metadata`);
 
   const allowContact = isServiceRelatedTopic(topic);
-  const brandContext = buildBrandContext(allowContact);
+  const blogList = await fetchBlogList();
+  const brandContext = buildBrandContext(allowContact, blogList);
   const systemMessage = buildSystemMessage(brandContext);
 
   const systemPrompt = `You are an SEO expert. Generate SEO metadata.
