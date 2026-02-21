@@ -179,7 +179,7 @@ export default function ReservationHero({
 
             {/* Right: Glass Form */}
             <div
-              className={`transition-all duration-500 delay-400 ${
+              className={`transition-all duration-500 delay-400 mt-16 ${
                 isLoaded
                   ? "opacity-100 translate-x-0 scale-100"
                   : "opacity-0 translate-x-8 scale-98"

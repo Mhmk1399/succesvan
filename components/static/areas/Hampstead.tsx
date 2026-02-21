@@ -13,8 +13,12 @@ import {
   FiNavigation,
 } from "react-icons/fi";
 import Link from "next/link";
+import Image from "next/image";
+import Head from "next/head";
 import FAQComponent from "../fAQSection";
 import { features, useCases } from "@/lib/areas";
+import VanListingHome from "@/components/global/vanListing.backup";
+import { TbAutomaticGearbox } from "react-icons/tb";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -99,9 +103,12 @@ const faqData = [
 export default function HampsteadVanHire() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<(HTMLDivElement | null)[]>([]);
+  const testimonialRef = useRef<(HTMLDivElement | null)[]>([]);
+  const areaRef = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
+      // Animate features
       featuresRef.current.forEach((feature, index) => {
         if (!feature) return;
         gsap.fromTo(
@@ -122,12 +129,104 @@ export default function HampsteadVanHire() {
           }
         );
       });
+
+      // Animate testimonials
+      testimonialRef.current.forEach((testimonial, index) => {
+        if (!testimonial) return;
+        gsap.fromTo(
+          testimonial,
+          { opacity: 0, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: testimonial,
+              start: "top 85%",
+              toggleActions: "play none none reverse",
+              once: true,
+            },
+            delay: index * 0.15,
+          }
+        );
+      });
+
+      // Animate area cards
+      areaRef.current.forEach((area, index) => {
+        if (!area) return;
+        gsap.fromTo(
+          area,
+          { opacity: 0, scale: 0.9 },
+          {
+            opacity: 1,
+            scale: 1,
+            duration: 0.4,
+            ease: "back.out(1.2)",
+            scrollTrigger: {
+              trigger: area,
+              start: "top 90%",
+              toggleActions: "play none none reverse",
+              once: true,
+            },
+            delay: index * 0.05,
+          }
+        );
+      });
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
+  // Testimonials
+  const testimonials = [
+    {
+      name: "James P.",
+      rating: 5,
+      text: "Fantastic service! Hired a van for a house move in Hampstead. The van was spotless and the whole process was seamless. Success Van Hire made moving day stress-free!",
+      location: "Hampstead",
+    },
+    {
+      name: "Emma W.",
+      rating: 5,
+      text: "Excellent van hire service in NW London. Competitive prices, friendly team, and well-maintained vehicles. I've used them multiple times for business deliveries.",
+      location: "Golders Green",
+    },
+    {
+      name: "Michael B.",
+      rating: 5,
+      text: "Needed a large van urgently for a furniture delivery. Success Van Hire had availability and sorted me out quickly. Great value and reliable service!",
+      location: "Hendon",
+    },
+  ];
+
+  // Service areas
+  const serviceAreas = [
+    { name: "Golders Green", link: "/van-hire-golders-green", featured: true },
+    { name: "Camden", link: "/van-hire-camden" },
+    { name: "Hendon", link: "/van-hire-hendon" },
+    { name: "Cricklewood", link: "/van-hire-cricklewood" },
+    { name: "Mill Hill", link: "/van-hire-mill-hill" },
+    { name: "Wembley", link: "/van-hire-wembley" },
+    { name: "Brent Cross", link: "/success-van-hire-van-rental-in-brent-cross-london-last-minute-bookings" },
+    { name: "NW London", link: "/van-hire-north-west-london" },
+  ];
+
   return (
+    <>
+      <Head>
+        <title>Van Hire Hampstead | Success Van Hire - Cheap & Reliable NW London Van Rental</title>
+        <meta
+          name="description"
+          content="Need van hire in Hampstead? Success Van Hire offers affordable van rental near Hampstead Heath. ULEZ compliant, no hidden fees, 5-star service. Book online or call 020 3011 1198."
+        />
+        <meta
+          name="keywords"
+          content="van hire hampstead, van rental hampstead london, hampstead van hire, nw london van rental, success van hire hampstead"
+        />
+        <link rel="canonical" href="https://www.successvanhire.com/van-hire-hampstead" />
+      </Head>
+
     <div ref={sectionRef} className="relative w-full bg-[#0f172b] py-28">
       {" "}
       {/* Background Elements */}
@@ -137,60 +236,52 @@ export default function HampsteadVanHire() {
         <div className="absolute bottom-0 left-0 w-125 h-125 bg-blue-500/10 rounded-full blur-3xl"></div>
       </div>
       {/* Hero Section */}
-      <section className="relative  ">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <section className="relative">
+        {/* Full Screen Image */}
+        <div className="relative w-full h-[50vh] sm:h-[60vh] lg:h-[70vh] overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0f172b]/40 via-[#0f172b]/60 to-[#0f172b] z-10"></div>
+          <Image
+            src="/assets/images/hampstead van hire.jpg"
+            alt="Van Hire Hampstead - Success Van Hire modern fleet of vans in Hampstead"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 sm:-mt-40 lg:-mt-48 relative z-20">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
             {/* Left Column */}
-            <div>
-              {/* Main Heading */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white mb-6 leading-tight">
-                Cheap Van Hire in
-                <span className="text-transparent ml-1 bg-clip-text bg-linear-to-r from-[#fe9a00] to-orange-500">
-                  Hampstead, London
-                </span>
-              </h1>
-
-              <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-                Hire a van in Hampstead with Success Van Hire at highly
-                competitive rates. Perfect for removals, moving home, large
-                furniture, IKEA purchases, and more.
-              </p>
-
-              {/* Location Info */}
-              <div className="bg-linear-to-br from-blue-500/10 to-transparent border border-blue-500/20 rounded-xl p-4 mb-8">
-                <div className="flex items-start gap-3">
-                  <FiNavigation className="text-blue-400 text-xl mt-1 shrink-0" />
-                  <div>
-                    <div className="text-white font-bold mb-1">
-                      Convenient Location
-                    </div>
-                    <p className="text-gray-300 text-sm">
-                      Just off the A406 Staples Corner junction, near Brent
-                      Cross Shopping Centre
-                    </p>
-                  </div>
+            <div className="space-y-6 lg:space-y-8">
+              <div>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#fe9a00]/10 border border-[#fe9a00]/30 mb-4">
+                  <FiMapPin className="text-[#fe9a00] text-sm" />
+                  <span className="text-[#fe9a00] font-bold text-xs sm:text-sm">HAMPSTEAD</span>
                 </div>
+
+                <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white mb-6 leading-[1.1]">
+                  Cheap Van Hire in{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#fe9a00] via-orange-400 to-orange-500">
+                    Hampstead
+                  </span>
+                </h1>
               </div>
 
-              {/* CTA Buttons */}
-              <div className="flex flex-wrap gap-4">
-                <a
-                  href="tel:02030111198"
-                  className="group px-8 py-4 rounded-xl bg-linear-to-r from-[#fe9a00] to-orange-500 text-white font-bold shadow-lg shadow-[#fe9a00]/20 hover:shadow-[#fe9a00]/40 hover:scale-105 transition-all duration-300 flex items-center gap-2"
-                >
-                  <FiPhone className="text-lg group-hover:rotate-12 transition-transform" />
-                  Call 020 3011 1198
-                </a>
-                <Link
-                  href="/reservation"
-                  className="px-8 py-4 rounded-xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 hover:border-[#fe9a00]/30 transition-all duration-300 flex items-center gap-2"
-                >
-                  <FiTruck className="text-lg" />
-                  View Our Fleet
-                </Link>
-              </div>
-            </div>
+              <div className="space-y-4">
+                <p className="text-lg sm:text-xl text-gray-200 leading-relaxed">
+                  Premium <strong className="text-white">van hire in Hampstead</strong> with Success Van Hire at competitive rates. Ideal for house removals, furniture delivery, business logistics, and IKEA collections. Need <Link href="/van-hire-london" className="text-[#fe9a00] hover:underline font-semibold">van hire London</Link>? We deliver <Link href="/cheap-van-hire-london" className="text-[#fe9a00] hover:underline font-semibold">cheap van hire London</Link> with premium service.
+                </p>
 
+                <p className="text-base sm:text-lg text-gray-300 leading-relaxed">
+                  Perfectly positioned near Hampstead Heath, serving all NW London areas with easy access. From compact vans for local deliveries to <Link href="/luton-van-hire-london" className="text-[#fe9a00] hover:underline font-semibold">Luton van hire London</Link> for complete house moves, our fleet meets every requirement. Looking for <Link href="/removal-van-hire-london" className="text-[#fe9a00] hover:underline font-semibold">removal van hire London</Link>? We offer flexible hourly, daily, weekly, and monthly <strong>Hampstead van hire</strong> options.
+                </p>
+
+                <p className="text-base sm:text-lg text-gray-300 leading-relaxed">
+                  As your local <strong>NW London van rental</strong> expert, we operate a modern fleet that's fully ULEZ and LEZ compliant. All vehicles receive regular servicing and professional cleaning. Select <strong>success van hire hampstead</strong> for dependable, professional van rental across North West London.
+                </p>
+              </div>
+</div>
+             
             {/* Right Column - Use Cases */}
             <div className="relative">
               <div className="absolute inset-0 bg-linear-to-br from-[#fe9a00]/20 to-transparent rounded-3xl blur-2xl"></div>
@@ -225,6 +316,43 @@ export default function HampsteadVanHire() {
                     </div>
                   </div>
                 </div>
+                
+              </div>
+                <div className="grid-cols-2 gap-3 space-y-3 mt-4">
+                <div className="flex col-span-2 md:col-span-1 items-center gap-3 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:border-[#fe9a00]/40 transition-all duration-300">
+                  <div className="w-10 h-10 rounded-lg bg-[#fe9a00]/20 flex items-center justify-center shrink-0">
+                    <TbAutomaticGearbox className="text-[#fe9a00] text-lg" />
+                  </div>
+                  <span className="text-white text-sm sm:text-base font-bold">
+                    Automatic Vans Available
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:border-green-400/40 transition-all duration-300">
+                  <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0">
+                    <FiStar className="text-green-400 text-lg" />
+                  </div>
+                  <span className="text-white text-sm sm:text-base font-bold">
+                    5★ Google Rated
+                  </span>
+                </div>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="grid-cols-2 space-y-3 gap-4 mt-4">
+                <a
+                  href="tel:02030111198"
+                  className="group px-4 md:col-span-1 col-span-2  py-6 sm:py-6 rounded-xl bg-gradient-to-r from-[#fe9a00] to-orange-500 text-white font-bold text-base  shadow-2xl shadow-[#fe9a00]/30 hover:shadow-[#fe9a00]/50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3"
+                >
+                  <FiPhone className="text-xl group-hover:rotate-12 transition-transform" />
+                  <span>Call: 020 3011 1198</span>
+                </a>
+                <Link
+                  href="/reservation"
+                  className="px-5 py-6 sm:py-6 rounded-xl bg-white/10 backdrop-blur-sm border-2 border-white/20 text-white font-bold text-base  hover:bg-white/20 hover:border-[#fe9a00]/50 transition-all duration-300 flex items-center justify-center gap-3"
+                >
+                  <FiTruck className="text-xl" />
+                  <span>View Fleet & Book Online</span>
+                </Link>
               </div>
             </div>
           </div>
@@ -272,6 +400,97 @@ export default function HampsteadVanHire() {
           </div>
         </div>
       </section>
+      {/* Our Fleet Section - Van Listing */}
+      <VanListingHome showHeader={true} gridCols={3} />
+
+      {/* Customer Testimonials */}
+      <section className="relative py-20 border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4">
+              What Our <span className="text-[#fe9a00]">Customers Say</span>
+            </h2>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              Real feedback from satisfied van hire customers in Hampstead
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={index}
+                ref={(el) => {
+                  testimonialRef.current[index] = el;
+                }}
+                className="bg-linear-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:border-[#fe9a00]/30 transition-all duration-300"
+              >
+                <div className="flex text-[#fe9a00] mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <FiStar key={i} className="fill-current" />
+                  ))}
+                </div>
+                <p className="text-gray-300 text-sm italic mb-4">"{testimonial.text}"</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-white font-bold">{testimonial.name}</span>
+                  <span className="text-gray-400 text-xs">{testimonial.location}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <Link
+              href="/reviews"
+              className="inline-block text-[#fe9a00] hover:text-white transition-colors font-bold"
+            >
+              Read more reviews on Google →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Areas We Serve Section */}
+      <section className="relative py-20 border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-4">
+              Serving <span className="text-[#fe9a00]">Hampstead</span> & Beyond
+            </h2>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+              We cover all of NW London and surrounding areas
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+            {serviceAreas.map((area, index) => (
+              <Link
+                key={index}
+                href={area.link}
+                ref={(el) => {
+                  areaRef.current[index] = el;
+                }}
+                className={`group bg-linear-to-br from-white/10 to-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 hover:border-[#fe9a00]/30 transition-all duration-300 hover:scale-105 text-center ${
+                  area.featured ? "border-2 border-[#fe9a00]/30" : ""
+                }`}
+              >
+                <div className="w-10 h-10 rounded-lg bg-[#fe9a00]/20 flex items-center justify-center mx-auto mb-2">
+                  <FiMapPin className="text-[#fe9a00]" />
+                </div>
+                <h4 className={`text-sm font-bold ${area.featured ? "text-[#fe9a00]" : "text-white"} group-hover:text-[#fe9a00] transition-colors`}>
+                  {area.name}
+                </h4>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-12 bg-blue-500/10 border border-blue-500/20 rounded-2xl p-6 text-center max-w-3xl mx-auto">
+            <FiNavigation className="text-blue-400 text-3xl mx-auto mb-3" />
+            <p className="text-gray-300">
+              Our <strong>NW London van rental</strong> service extends across Hampstead, Golders Green, Hendon, Cricklewood, and all NW postcodes. Need a van in another area? Just ask – we offer delivery options and one-way rentals.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Google Rating Banner */}
       <section className="relative py-12 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -376,5 +595,6 @@ export default function HampsteadVanHire() {
         </div>
       </section>
     </div>
+    </>
   );
 }

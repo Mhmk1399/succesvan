@@ -1167,3 +1167,81 @@ export const cricklewoodFAQSchema = {
     },
   ],
 };
+
+export const millHillFAQSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What are the age requirements for renting a van in Mill Hill?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We accept drivers aged 25-70 years with a full clean licence. If you are 21-24, 70-76, or have certain endorsements it may still be possible to hire. Call our office on 020 3011 1198 for more details.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How do I book a van hire in Mill Hill?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "You can book by sending your request on our website at www.successvanhire.co.uk/reservation/, sending us an email, or giving us a call on 020 3011 1198. Our booking process is quick and simple.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What documents do I need to rent a van in Mill Hill?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "You need to provide: Your ID, a valid driving licence, proof of address, and your bank card. We accept full UK and EU driving licences with quick and easy verification.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Are your vans eco-friendly and ULEZ compliant?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, all our vans meet EU6 emission standards and are fully ULEZ compliant. We are committed to environmental protection and you can drive anywhere in London without ULEZ charges.",
+      },
+    },
+  ],
+};
+
+export const goldersGreenFAQSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "What are the age requirements for renting a van in Golders Green?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "We accept drivers aged 25-70 years with a full clean licence. If you are 21-24, 70-76, or have certain endorsements it may still be possible to hire. Call our office on 020 3011 1198 for more details.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How do I book a van hire in Golders Green?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "You can book by sending your request on our website at www.successvanhire.co.uk/reservation/, sending us an email, or giving us a call on 020 3011 1198. Our booking process is quick and simple.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What documents do I need to rent a van in Golders Green?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "You need to provide: Your ID, a valid driving licence, proof of address, and your bank card. We accept full UK and EU driving licences with quick and easy verification.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Do you have automatic vans available in Golders Green?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes! We have automatic vans available for hire in Golders Green. Perfect for drivers who prefer automatic transmission for a smooth and easy driving experience. Book online or call us for availability.",
+      },
+    },
+  ],
+};
