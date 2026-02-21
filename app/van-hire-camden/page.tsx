@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import CamdenVanHire from "@/components/static/areas/Camedan";
-import { camdenSchema } from "@/lib/schema";
+import { camdenSchema, camdenFAQSchema } from "@/lib/schema";
 import Script from "next/script";
 
 export const metadata: Metadata = {
@@ -20,13 +20,22 @@ export const metadata: Metadata = {
 export default function VanHireCamden() {
   return (
     <div>
-      {/* ✅ Schema.org JSON-LD */}
+      {/* Service Schema */}
       <Script
         id="camden-schema"
         type="application/ld+json"
         strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(camdenSchema),
+        }}
+      />
+      {/* FAQ Schema */}
+      <Script
+        id="camden-faq-schema"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(camdenFAQSchema),
         }}
       />
       <CamdenVanHire />
