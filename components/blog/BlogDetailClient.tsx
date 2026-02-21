@@ -32,7 +32,9 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
     Array<{ config: VanListConfig; index: number }>
   >([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const imageClickHandlers = useRef<Map<HTMLImageElement, () => void>>(new Map());
+  const imageClickHandlers = useRef<Map<HTMLImageElement, () => void>>(
+    new Map(),
+  );
 
   useEffect(() => {
     fetch("/api/categories?status=active")
@@ -173,40 +175,40 @@ export default function BlogDetailClient({ content }: BlogDetailClientProps) {
 
     // Clean up previous handlers
     imageClickHandlers.current.forEach((handler, img) => {
-      img.removeEventListener('click', handler);
+      img.removeEventListener("click", handler);
     });
     imageClickHandlers.current.clear();
 
     // Small delay to ensure GSAP animation completes
     const timer = setTimeout(() => {
-      const images = contentRef.current?.querySelectorAll('img');
-      
+      const images = contentRef.current?.querySelectorAll("img");
+
       images?.forEach((img) => {
         // Add loaded class when image loads
         if (img.complete) {
-          img.classList.add('loaded');
+          img.classList.add("loaded");
         } else {
-          img.addEventListener('load', function() {
-            img.classList.add('loaded');
+          img.addEventListener("load", function () {
+            img.classList.add("loaded");
           });
         }
-        
+
         const handler = () => {
           if (img.src) {
             setSelectedImage(img.src);
           }
         };
         imageClickHandlers.current.set(img, handler);
-        (img as HTMLElement).style.cursor = 'zoom-in';
-        img.addEventListener('click', handler);
+        (img as HTMLElement).style.cursor = "zoom-in";
+        img.addEventListener("click", handler);
       });
     }, 1000);
-    
+
     return () => {
       clearTimeout(timer);
       // Clean up handlers on unmount
       imageClickHandlers.current.forEach((handler, img) => {
-        img.removeEventListener('click', handler);
+        img.removeEventListener("click", handler);
       });
       imageClickHandlers.current.clear();
     };

@@ -158,7 +158,7 @@ function assembleContentFromObject(contentObj: any): string {
       contentObj.summary,
       anchors,
     );
-    
+
     parts.push(
       `<div class="bg-linear-to-r from-[#fe9a00] to-amber-600 p-8 rounded-2xl mb-8 border border-orange-500/20 backdrop-blur-sm">`,
     );
@@ -166,7 +166,7 @@ function assembleContentFromObject(contentObj: any): string {
 
     parts.push(`    <div class="flex-1">`);
     parts.push(
-      `      <h3 class="text-black font-bold text-lg mb-2">Quick Overview</h3>`,
+      `      <h3 class="text-black font-bold text-xs  md:text-lg mb-2">Quick Overview</h3>`,
     );
     parts.push(
       `      <p class="text-gray-300 text-xs leading-relaxed italic">${summaryWithAnchors}</p>`,
@@ -208,12 +208,14 @@ function assembleContentFromObject(contentObj: any): string {
         parts.push(
           `<div id="section-${h.id || ""}" class="van-list-block mt-8   p-1  "  >`,
         );
-        parts.push(`  <div class="text-center   bg-[#fe9a00] p-2 rounded-2xl  ">`);
         parts.push(
-          `    <h6 class="font-bold text-base md:text-2xl mt-4 text-white">${vanConfig.title}</h6>`,
+          `  <div class="text-center   bg-[#fe9a00] p-2 rounded-2xl -mb-6 ">`,
         );
         parts.push(
-          `    <span class="text-sm mb-2 bg-black/20 text-black px-2 rounded-2xl">${vanConfig.subtitle}</span>`,
+          `    <h6 class="font-bold text-base md:text-2xl mt-4 text-black/80">${vanConfig.title}</h6>`,
+        );
+        parts.push(
+          `    <span class="text-sm border-b border-gray-200 pb-1 px-2" style={color:white}>${vanConfig.subtitle}</span>`,
         );
         parts.push(`  </div>`);
         parts.push(
@@ -257,7 +259,7 @@ function assembleContentFromObject(contentObj: any): string {
     parts.push(
       `<div class="p-8 rounded-2xl my-16 border bg-[#fe9a00] border-slate-700 shadow-xl">`,
     );
-    parts.push(`<h2 class="font-bold text-2xl text-black"> Conclusion</h2>`);
+    parts.push(`<h2 class="font-bold text-xl text-black"> Conclusion</h2>`);
     parts.push(`  <div class="flex items-start gap-4">`);
 
     parts.push(`    <div class="flex-1">`);
