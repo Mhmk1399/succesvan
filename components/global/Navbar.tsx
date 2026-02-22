@@ -61,7 +61,6 @@ const menuItems: MenuItem[] = [
       { label: "Hampstead", href: "/van-hire-hampstead" },
       { label: "Hendon", href: "/van-hire-hendon" },
       { label: "Mill Hill", href: "/van-hire-mill-hill" },
-      { label: "London", href: "/car-hire-nw-london" },
       { label: "Wembley", href: "/van-hire-wembley" },
     ],
   },

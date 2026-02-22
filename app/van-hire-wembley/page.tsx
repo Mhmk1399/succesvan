@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import WembleyVanHire from "@/components/static/areas/wembley";
 import Script from "next/script";
-import { wembleySchema } from "@/lib/schema";
+import { wembleySchema, wembleyFAQSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title:
@@ -28,6 +28,14 @@ export default function VanHireWembley() {
         strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(wembleySchema),
+        }}
+      />
+      <Script
+        id="wembley-faq-schema"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(wembleyFAQSchema),
         }}
       />
       <WembleyVanHire />
