@@ -264,7 +264,7 @@ export default function CamdenVanHire() {
                     <span className="text-[#fe9a00] font-bold text-xs sm:text-sm">CAMDEN </span>
                   </div>
 
-                  <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white mb-6 leading-[1.1]">
+                  <h1 className="text-4xl sm:text-5xl lg:text-5xl font-black text-white mb-6 leading-[1.1]">
                     Cheap Van Hire in{" "}
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#fe9a00] via-orange-400 to-orange-500">
                       Camden

@@ -316,40 +316,23 @@ const faqRef = useRef<(HTMLDivElement | null)[]>([]);
                 </div>
 
                 {/* Key Points */}
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <div className="flex items-center gap-3 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:border-[#fe9a00]/40 transition-all duration-300">
-                    <div className="w-10 h-10 rounded-lg bg-[#fe9a00]/20 flex items-center justify-center shrink-0">
-                      <FiCheckCircle className="text-[#fe9a00] text-lg" />
-                    </div>
-                    <span className="text-white text-sm sm:text-base font-bold">
-                      Same Day Hire
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:border-green-400/40 transition-all duration-300">
-                    <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0">
-                      <FiStar className="text-green-400 text-lg" />
-                    </div>
-                    <span className="text-white text-sm sm:text-base font-bold">
-                      5★ Google Rating
-                    </span>
-                  </div>
-                </div>
+               
 
                 {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-4 pt-1">
                   <a
                     href="tel:02030111198"
-                    className="group px-8 py-4 sm:py-5 rounded-xl bg-gradient-to-r from-[#fe9a00] to-orange-500 text-white font-bold text-base sm:text-lg shadow-2xl shadow-[#fe9a00]/30 hover:shadow-[#fe9a00]/50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3"
+                    className="group px-6 py-4 sm:py-5 rounded-xl bg-gradient-to-r from-[#fe9a00] to-orange-500 text-white font-bold text-base sm:text-lg shadow-2xl shadow-[#fe9a00]/30 hover:shadow-[#fe9a00]/50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3"
                   >
                     <FiPhone className="text-xl group-hover:rotate-12 transition-transform" />
                     <span>Call: 020 3011 1198</span>
                   </a>
                   <Link
                     href="/reservation"
-                    className="px-8 py-4 sm:py-5 rounded-xl bg-white/10 backdrop-blur-sm border-2 border-white/20 text-white font-bold text-base sm:text-lg hover:bg-white/20 hover:border-[#fe9a00]/50 transition-all duration-300 flex items-center justify-center gap-3"
+                    className="px-[43px] py-4 sm:py-5 rounded-xl bg-white/10 backdrop-blur-sm border-2 border-white/20 text-white font-bold text-base  hover:bg-white/20 hover:border-[#fe9a00]/50 transition-all duration-300 flex items-center justify-center gap-3"
                   >
-                    <FiTruck className="text-xl" />
-                    <span>Book Online</span>
+                    <FiTruck className="text-2xl" />
+                    <span className="text-xl">Book Online</span>
                   </Link>
                 </div>
               </div>
@@ -405,6 +388,24 @@ const faqRef = useRef<(HTMLDivElement | null)[]>([]);
                     </p>
                   </div>
                 </div>
+                 <div className="grid sm:grid-cols-2 gap-3 mt-6">
+                  <div className="flex items-center gap-3 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:border-[#fe9a00]/40 transition-all duration-300">
+                    <div className="w-10 h-10 rounded-lg bg-[#fe9a00]/20 flex items-center justify-center shrink-0">
+                      <FiCheckCircle className="text-[#fe9a00] text-lg" />
+                    </div>
+                    <span className="text-white text-sm sm:text-base font-bold">
+                      Same Day Hire
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/20 hover:border-green-400/40 transition-all duration-300">
+                    <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0">
+                      <FiStar className="text-green-400 text-lg" />
+                    </div>
+                    <span className="text-white text-sm sm:text-base font-bold">
+                      5★ Google Rating
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -423,7 +424,7 @@ const faqRef = useRef<(HTMLDivElement | null)[]>([]);
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-8 lg:mb-16">
+            <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6 mb-8 lg:mb-16">
               {whyChooseUs.map((feature, index) => (
                 <div
                   key={index}

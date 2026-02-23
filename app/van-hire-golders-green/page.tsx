@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import GoldersGreenVanHire from "@/components/static/areas/GoldersGreen";
 import Script from "next/script";
-import { goldersGreen } from "@/lib/schema";
+import { goldersGreen, goldersGreenFAQSchema } from "@/lib/schema";
 
 export const metadata: Metadata = {
   title:
@@ -21,13 +21,22 @@ export const metadata: Metadata = {
 export default function VanHireGoldersGreen() {
   return (
     <div>
-      {/* ✅ Schema.org JSON-LD */}
+      {/* Service Schema */}
       <Script
-        id="about-us-schema"
+        id="golders-green-schema"
         type="application/ld+json"
         strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(goldersGreen),
+        }}
+      />
+      {/* FAQ Schema */}
+      <Script
+        id="golders-green-faq-schema"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(goldersGreenFAQSchema),
         }}
       />
       <GoldersGreenVanHire />

@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import GoldersGreenVanHire from "@/components/static/areas/GoldersGreen";
+import HampsteadVanHire from "@/components/static/areas/Hampstead";
 import Script from "next/script";
 import { hampstead } from "@/lib/schema";
 
@@ -30,7 +30,7 @@ export default function VanHireHampstead() {
           __html: JSON.stringify(hampstead),
         }}
       />
-      <GoldersGreenVanHire />
+      <HampsteadVanHire />
     </div>
   );
 }

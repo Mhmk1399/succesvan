@@ -13,6 +13,8 @@ import {
   FiNavigation,
 } from "react-icons/fi";
 import Link from "next/link";
+import Image from "next/image";
+import Head from "next/head";
 import FAQComponent from "../fAQSection";
 import { features, useCases } from "@/lib/areas";
 if (typeof window !== "undefined") {
@@ -127,6 +129,20 @@ export default function MillHillVanHire() {
   }, []);
 
   return (
+    <>
+      <Head>
+        <title>Van Hire Mill Hill | Success Van Hire - Cheap & Reliable North London Van Rental</title>
+        <meta
+          name="description"
+          content="Need van hire in Mill Hill? Success Van Hire offers affordable van rental near Mill Hill Broadway. ULEZ compliant, no hidden fees, 5-star service. Book online or call 020 3011 1198."
+        />
+        <meta
+          name="keywords"
+          content="van hire mill hill, van rental mill hill london, mill hill van hire, north london van rental, success van hire mill hill"
+        />
+        <link rel="canonical" href="https://www.successvanhire.com/van-hire-mill-hill" />
+      </Head>
+
     <div ref={sectionRef} className="relative w-full bg-[#0f172b] py-28">
       {" "}
       {/* Background Elements */}
@@ -136,8 +152,20 @@ export default function MillHillVanHire() {
         <div className="absolute bottom-0 left-0 w-125 h-125 bg-blue-500/10 rounded-full blur-3xl"></div>
       </div>
       {/* Hero Section */}
-      <section className="relative ">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative">
+        {/* Full Screen Image */}
+        <div className="relative w-full h-[50vh] sm:h-[60vh] lg:h-[70vh] overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0f172b]/40 via-[#0f172b]/60 to-[#0f172b] z-10"></div>
+          <Image
+            src="/assets/images/van hire mill hill.png"
+            alt="Van Hire Mill Hill - Success Van Hire modern fleet of vans in Mill Hill"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 sm:-mt-40 lg:-mt-48 relative z-20">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Column */}
             <div>
@@ -375,5 +403,6 @@ export default function MillHillVanHire() {
         </div>
       </section>
     </div>
+    </>
   );
 }
