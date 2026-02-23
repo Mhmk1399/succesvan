@@ -1037,8 +1037,15 @@ function ReservationPanel({
     }
     if (!formData.phone.trim()) newErrors.phone = "Phone is required";
     if (!formData.office) newErrors.office = "Office is required";
-    if (!formData.pickupDate) newErrors.pickupDate = "Pickup date is required";
-    if (!formData.returnDate) newErrors.returnDate = "Return date is required";
+    
+    // Validate dates from dateRange state
+    if (!dateRange[0].startDate) newErrors.pickupDate = "Pickup date is required";
+    if (!dateRange[0].endDate) newErrors.returnDate = "Return date is required";
+    
+    // Validate times
+    if (!formData.pickupTime) newErrors.pickupTime = "Pickup time is required";
+    if (!formData.returnTime) newErrors.returnTime = "Return time is required";
+    
     if (!formData.acceptTerms)
       newErrors.acceptTerms = "You must accept the terms";
 
@@ -1048,8 +1055,15 @@ function ReservationPanel({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log("=== RESERVATION SUBMISSION STARTED ===");
+    console.log("Form data:", formData);
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      console.log("❌ Form validation failed");
+      return;
+    }
+    console.log("✅ Form validation passed");
 
     // Validation: if pickup and return dates are the same, ensure minimum 6 hours
     if (
@@ -1058,7 +1072,9 @@ function ReservationPanel({
       dateRange[0].startDate.toDateString() ===
         dateRange[0].endDate.toDateString()
     ) {
+      console.log("⏰ Same day rental detected, checking 6-hour minimum");
       if (!formData.pickupTime || !formData.returnTime) {
+        console.log("❌ Missing pickup or return time");
         setErrors({
           submit: "Please select pickup and return times (minimum 6 hours)",
         });
@@ -1068,32 +1084,55 @@ function ReservationPanel({
       const [retH, retM] = formData.returnTime.split(":").map(Number);
       const pickMinutes = pickH * 60 + pickM;
       const retMinutes = retH * 60 + retM;
-      if (retMinutes - pickMinutes < 6 * 60) {
+      const duration = retMinutes - pickMinutes;
+      console.log(`Rental duration: ${duration} minutes (minimum: 360 minutes)`);
+      if (duration < 6 * 60) {
+        console.log("❌ Duration less than 6 hours");
         setErrors({ submit: "Minimum reservation on the same day is 6 hours" });
         return;
       }
+      console.log("✅ Same day rental meets minimum duration");
     }
 
     setIsSubmitting(true);
 
     try {
+      console.log("🔐 Checking authentication...");
       const token = localStorage.getItem("token");
       const user = localStorage.getItem("user")
         ? JSON.parse(localStorage.getItem("user")!)
         : null;
 
       if (!token || !user) {
+        console.log("❌ User not authenticated");
         setErrors({ submit: "Please login first" });
         setStep("auth");
         return;
       }
+      console.log("✅ User authenticated:", user._id);
 
-      const pickupDateTime = new Date(
-        `${formData.pickupDate}T${formData.pickupTime}:00`,
-      );
-      const returnDateTime = new Date(
-        `${formData.returnDate}T${formData.returnTime}:00`,
-      );
+      // Format dates from dateRange state
+      const pickupDate = dateRange[0].startDate;
+      const returnDate = dateRange[0].endDate;
+      
+      if (!pickupDate || !returnDate) {
+        console.log("❌ Missing date range");
+        setErrors({ submit: "Please select pickup and return dates" });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Combine date and time
+      const pickupDateTime = new Date(pickupDate);
+      const [pickupHours, pickupMinutes] = formData.pickupTime.split(':').map(Number);
+      pickupDateTime.setHours(pickupHours, pickupMinutes, 0, 0);
+      
+      const returnDateTime = new Date(returnDate);
+      const [returnHours, returnMinutes] = formData.returnTime.split(':').map(Number);
+      returnDateTime.setHours(returnHours, returnMinutes, 0, 0);
+      
+      console.log("📅 Pickup:", pickupDateTime.toISOString());
+      console.log("📅 Return:", returnDateTime.toISOString());
 
       const payload = {
         userData: {
@@ -1118,14 +1157,22 @@ function ReservationPanel({
         },
       };
 
+      console.log("📦 Reservation payload:", payload);
+      console.log("💰 Price calculation:", priceCalc);
+      console.log("🎁 Selected add-ons:", selectedAddOns);
+      console.log("🎫 Applied discount:", appliedDiscount);
+
       if (appliedDiscount) {
-        await fetch(`/api/discounts?id=${appliedDiscount._id}`, {
+        console.log("🎫 Updating discount usage...");
+        const discountRes = await fetch(`/api/discounts?id=${appliedDiscount._id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ addUserToUsedBy: user._id }),
         });
+        console.log("Discount update response:", discountRes.status);
       }
 
+      console.log("🚀 Sending reservation to API...");
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: {
@@ -1135,26 +1182,37 @@ function ReservationPanel({
         body: JSON.stringify(payload),
       });
 
+      console.log("📡 API Response status:", res.status);
       const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Reservation failed");
+      console.log("📡 API Response data:", data);
+      
+      if (!data.success) {
+        console.log("❌ API returned error:", data.error);
+        throw new Error(data.error || "Reservation failed");
+      }
 
+      console.log("✅ Reservation created successfully!");
       setIsSuccess(true);
 
       if (isNewUser) {
+        console.log("👤 New user - redirecting to dashboard for license upload");
         setTimeout(() => {
           window.location.href = "/customerDashboard?uploadLicense=true";
         }, 2000);
       } else {
+        console.log("👤 Existing user - closing panel");
         setTimeout(() => {
           onClose();
         }, 2000);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
-      console.log("Reservation error:", error);
+      console.error("❌ Reservation submission error:", error);
+      console.error("Error message:", message);
       setErrors({ submit: message || "Failed to create reservation" });
     } finally {
       setIsSubmitting(false);
+      console.log("=== RESERVATION SUBMISSION ENDED ===");
     }
   };
 
