@@ -46,6 +46,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       
     },
     {
+      url: `${baseUrl}/removal-van-hire-london`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
+      
+    },
+    {
+      url: `${baseUrl}/luton-van-hire-london`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
+      
+    },
+    {
+      url: `${baseUrl}/cheap-van-hire-london`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.9,
+      
+    },
+    {
       url: `${baseUrl}/aboutus`,
       lastModified: new Date(),
       changeFrequency: "monthly" as const,
@@ -136,12 +157,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.8,
     },
-    {
-      url: `${baseUrl}/car-hire-nw-london`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    },
+    
     {
       url: `${baseUrl}/success-van-hire-van-rental-in-brent-cross-london-last-minute-bookings`,
       lastModified: new Date(),
