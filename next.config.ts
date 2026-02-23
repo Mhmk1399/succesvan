@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // REDIRECTING
   async redirects() {
     return [
       // 301 (دائمی) برای SEO
@@ -30,6 +31,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // S3
   images: {
     remotePatterns: [
       {
