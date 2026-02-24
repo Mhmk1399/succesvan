@@ -719,6 +719,7 @@ export default function ReservationsManagement() {
               <div className="p-6">
                 <ReservationForm
                   isModal={true}
+                  isAdminMode={true}
                   onClose={() => setShowCreateReservation(false)}
                   onBookNow={() => {
                     setShowCreateReservation(false);
@@ -943,7 +944,6 @@ export default function ReservationsManagement() {
         ]}
         onEdit={handleViewDetails}
         onMutate={(mutate) => (mutateRef.current = mutate)}
-        hideDelete={true}
         hideViewBtn={true}
         hiddenColumns={["driverAge"] as (keyof Reservation)[]}
       />

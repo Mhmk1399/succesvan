@@ -44,6 +44,7 @@ export default function ReservationForm({
   isInline = false,
   onClose,
   onBookNow,
+  isAdminMode = false,
 }: ReservationFormProps) {
   const router = useRouter();
   const [showDateRange, setShowDateRange] = useState<boolean>(false);
@@ -106,7 +107,10 @@ export default function ReservationForm({
     console.log(hours, "london time");
 
     let minDaysToAdd = 1;
-    if (hours >= 16) {
+    // Admin can book from today, customers follow 2-day rule
+    if (isAdminMode) {
+      minDaysToAdd = 0;
+    } else if (hours >= 16) {
       minDaysToAdd = 2;
     }
 
@@ -124,7 +128,7 @@ export default function ReservationForm({
         key: "selection",
       },
     ]);
-  }, []);
+  }, [isAdminMode]);
 
   const [formData, setFormData] = useState<FormData>({
     office: "",
@@ -920,7 +924,7 @@ export default function ReservationForm({
             <FiMapPin className="text-amber-400 text-lg" /> Office
           </label>
           <CustomSelect
-            options={offices}
+            options={offices.filter((o): o is Office & { _id: string } => !!o._id)}
             value={formData.office}
             onChange={(val) =>
               setFormData((prev) => ({ ...prev, office: val }))
@@ -941,7 +945,7 @@ export default function ReservationForm({
             <FiTruck className="text-amber-400 text-lg relative" /> Type
           </label>
           <CustomSelect
-            options={filteredTypes}
+            options={filteredTypes.filter((t): t is Type & { _id: string } => !!t._id)}
             value={formData.type}
             onChange={(val) => setFormData((prev) => ({ ...prev, type: val }))}
             placeholder="Select Type"
@@ -992,13 +996,20 @@ export default function ReservationForm({
                     ]);
                   }}
                   // *** تغییر: minDate پویا بر اساس زمان انگلیس ***
-                  minDate={(() => {
+                  minDate={isAdminMode ? (() => {
+                    const today = new Date();
+                    today.setDate(today.getDate() - 30);
+                    today.setHours(0, 0, 0, 0);
+                    return today;
+                  })() : (() => {
                     try {
                       const londonNow = getLondonTime();
                       const hours = londonNow.getUTCHours();
 
                       let minDaysToAdd = 1;
-                      if (hours >= 16) minDaysToAdd = 2;
+                      if (hours >= 16) {
+                        minDaysToAdd = 2;
+                      }
 
                       const min = new Date(londonNow);
                       min.setDate(min.getDate() + minDaysToAdd);
@@ -1013,7 +1024,13 @@ export default function ReservationForm({
                     }
                   })()}
                   // *** جدید: maxDate تا پایان سال جاری ***
-                  maxDate={(() => {
+                  maxDate={isAdminMode ? (() => {
+                    const nextYear = new Date();
+                    nextYear.setFullYear(nextYear.getFullYear() + 1);
+                    nextYear.setMonth(11, 31);
+                    nextYear.setHours(23, 59, 59, 999);
+                    return nextYear;
+                  })() : (() => {
                     try {
                       const londonNow = getLondonTime();
                       const endOfYear = new Date(
@@ -1320,7 +1337,7 @@ export default function ReservationForm({
             <FiMapPin className="text-amber-400" /> Office
           </label>
           <CustomSelect
-            options={offices}
+            options={offices.filter((o): o is Office & { _id: string } => !!o._id)}
             value={formData.office}
             onChange={(val) =>
               setFormData((prev) => ({ ...prev, office: val }))
@@ -1336,7 +1353,7 @@ export default function ReservationForm({
             <FiTruck className="text-amber-400" /> Type
           </label>
           <CustomSelect
-            options={filteredTypes}
+            options={filteredTypes.filter((t): t is Type & { _id: string } => !!t._id)}
             value={formData.type}
             onChange={(val) => setFormData((prev) => ({ ...prev, type: val }))}
             placeholder="Select Type"
@@ -1380,13 +1397,20 @@ export default function ReservationForm({
                   },
                 ]);
               }}
-              minDate={(() => {
+              minDate={isAdminMode ? (() => {
+                const today = new Date();
+                today.setDate(today.getDate() - 7);
+                today.setHours(0, 0, 0, 0);
+                return today;
+              })() : (() => {
                 try {
                   const londonNow = getLondonTime();
                   const hours = londonNow.getUTCHours();
 
                   let minDaysToAdd = 1;
-                  if (hours >= 16) minDaysToAdd = 2;
+                  if (hours >= 16) {
+                    minDaysToAdd = 2;
+                  }
 
                   const min = new Date(londonNow);
                   min.setDate(min.getDate() + minDaysToAdd);
@@ -1399,7 +1423,13 @@ export default function ReservationForm({
                   return fallback;
                 }
               })()}
-              maxDate={(() => {
+              maxDate={isAdminMode ? (() => {
+                const nextYear = new Date();
+                nextYear.setFullYear(nextYear.getFullYear() + 1);
+                nextYear.setMonth(11, 31);
+                nextYear.setHours(23, 59, 59, 999);
+                return nextYear;
+              })() : (() => {
                 try {
                   const londonNow = getLondonTime();
                   const endOfYear = new Date(

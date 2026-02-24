@@ -24,6 +24,7 @@ import Image from "next/image";
 import { BsFuelPump } from "react-icons/bs";
 import { WorkingTime } from "@/types/type";
 import { MdDoorSliding } from "react-icons/md";
+import SearchableSelect from "../ui/SearchableSelect";
 
 interface Office {
   _id: string;
@@ -88,6 +89,8 @@ export default function ReservationModal({
     endTime: string;
   } | null>(null);
   const [selectedOfficeData, setSelectedOfficeData] = useState<any>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [useExistingCustomer, setUseExistingCustomer] = useState(false);
 
   const [formData, setFormData] = useState({
     office: "",
@@ -570,9 +573,25 @@ export default function ReservationModal({
     address,
   ]);
 
+  const handleSelectUser = (userId: string, user: any) => {
+    setSelectedUserId(userId);
+    setCustomerUserId(user._id);
+    setFormData((prev) => ({
+      ...prev,
+      name: user.name || "",
+      lastName: user.lastName || "",
+      email: user.emaildata?.emailAddress || user.emailData?.emailAddress || "",
+      phone: user.phoneData?.phoneNumber?.replace("+44", "") || user.phoneNumber?.replace("+44", "") || "",
+    }));
+  };
+
   const handleSendCode = async () => {
     if (!formData.phone.trim()) {
       setErrors({ phone: "Phone required" });
+      return;
+    }
+    if (!/^[0-9]{10}$/.test(formData.phone)) {
+      setErrors({ phone: "Please enter a valid 10-digit UK phone number" });
       return;
     }
     setIsSubmitting(true);
@@ -698,6 +717,7 @@ export default function ReservationModal({
           address: address,
           postalCode: postalCode,
           city: city,
+          isAdminMode: isAdminMode,
           ...(isAdminMode && {
             licenceAttached: { front: licenseFront, back: licenseBack },
           }),
@@ -1139,12 +1159,61 @@ export default function ReservationModal({
 
             {/* Step 2: Authentication */}
             {step === 2 && (
-              <div className="space-y-4">
+              <div className="space-y-4 p-6">
                 <h3 className="text-white font-bold text-lg mb-4">
-                  Reservation Request{" "}
+                  Customer Information
                 </h3>
 
-                {authStep === "phone" && (
+                {isAdminMode && authStep === "phone" && (
+                  <div className="mb-4">
+                    <div className="flex gap-2 mb-4">
+                      <button
+                        onClick={() => setUseExistingCustomer(false)}
+                        className={`flex-1 py-2 px-4 rounded-lg font-semibold text-sm transition-colors ${
+                          !useExistingCustomer
+                            ? "bg-[#fe9a00] text-white"
+                            : "bg-white/10 text-gray-400 hover:bg-white/20"
+                        }`}
+                      >
+                        New Customer
+                      </button>
+                      <button
+                        onClick={() => setUseExistingCustomer(true)}
+                        className={`flex-1 py-2 px-4 rounded-lg font-semibold text-sm transition-colors ${
+                          useExistingCustomer
+                            ? "bg-[#fe9a00] text-white"
+                            : "bg-white/10 text-gray-400 hover:bg-white/20"
+                        }`}
+                      >
+                        Existing Customer
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {isAdminMode && useExistingCustomer ? (
+                  <>
+                    <div>
+                      <label className="block text-sm font-semibold text-white mb-2">
+                        <FiUser className="inline mr-2 text-[#fe9a00]" />
+                        Select Customer
+                      </label>
+                      <SearchableSelect
+                        value={selectedUserId}
+                        onChange={handleSelectUser}
+                        placeholder="Search by phone or name..."
+                      />
+                    </div>
+                    {selectedUserId && (
+                      <button
+                        onClick={() => setStep(3)}
+                        className="w-full py-3 bg-[#fe9a00] hover:bg-[#e68a00] text-white font-bold rounded-lg transition-colors"
+                      >
+                        Continue with Selected Customer
+                      </button>
+                    )}
+                  </>
+                ) : authStep === "phone" && (
                   <div>
                     <label className="text-white text-sm font-semibold mb-2 flex items-center gap-2">
                       <FiPhone className="text-[#fe9a00]" />
@@ -1159,7 +1228,7 @@ export default function ReservationModal({
                         id="gtm-phone-input"
                         value={formData.phone}
                         onChange={(e) => {
-                          const digits = e.target.value.replace(/\D/g, "");
+                          const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
                           setFormData((prev) => ({
                             ...prev,
                             phone: digits,
@@ -1167,6 +1236,7 @@ export default function ReservationModal({
                         }}
                         className="w-full bg-white/5 border border-white/10 rounded-xl pl-14 pr-4 py-3 text-white focus:outline-none focus:border-[#fe9a00]"
                         placeholder="7400123456"
+                        maxLength={10}
                       />
                     </div>
                     {errors.phone && (
@@ -1176,11 +1246,11 @@ export default function ReservationModal({
                     )}
                     <button
                       id="gtm-send-code"
-                      onClick={handleSendCode}
+                      onClick={isAdminMode ? () => setAuthStep("register") : handleSendCode}
                       disabled={isSubmitting}
                       className="w-full mt-4 bg-[#fe9a00] text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition-all disabled:opacity-50"
                     >
-                      {isSubmitting ? "Sending..." : "Send Code"}
+                      {isSubmitting ? "Sending..." : isAdminMode ? "Continue" : "Send Code"}
                     </button>
                   </div>
                 )}

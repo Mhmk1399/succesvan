@@ -918,6 +918,10 @@ function ReservationPanel({
       setErrors({ phone: "Phone number required" });
       return;
     }
+    if (!/^[0-9]{10}$/.test(formData.phone)) {
+      setErrors({ phone: "Please enter a valid 10-digit UK phone number" });
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -1665,7 +1669,7 @@ function ReservationPanel({
                     Office
                   </label>
                   <CustomSelect
-                    options={offices}
+                    options={offices.filter((o): o is Office & { _id: string } => !!o._id)}
                     value={formData.office}
                     onChange={(value) =>
                       setFormData((prev) => ({ ...prev, office: value }))

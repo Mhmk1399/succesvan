@@ -9,8 +9,8 @@ import "react-date-range/dist/theme/default.css";
 interface FullScreenMobileCalendarProps {
   dateRange: Range[];
   onChange: (item: RangeKeyDict) => void;
-  minDate: Date;
-  maxDate: Date;
+  minDate?: Date;
+  maxDate?: Date;
   disabledDates: Date[];
   onClose: () => void;
   focusedRange?: RangeFocus;
@@ -31,10 +31,13 @@ export default function FullScreenMobileCalendar({
 
   // Calculate how many months to show from current date to end of year
   const monthsToShow = useMemo(() => {
-    const currentYear = minDate.getFullYear();
-    const currentMonth = minDate.getMonth();
-    const endYear = maxDate.getFullYear();
-    const endMonth = maxDate.getMonth();
+    const effectiveMinDate = minDate || new Date();
+    const effectiveMaxDate = maxDate || new Date(new Date().getFullYear(), 11, 31);
+    
+    const currentYear = effectiveMinDate.getFullYear();
+    const currentMonth = effectiveMinDate.getMonth();
+    const endYear = effectiveMaxDate.getFullYear();
+    const endMonth = effectiveMaxDate.getMonth();
 
     if (endYear === currentYear) {
       return endMonth - currentMonth + 1;
