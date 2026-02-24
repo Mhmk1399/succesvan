@@ -1,6 +1,37 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // REDIRECTING
+  async redirects() {
+    return [
+      // 301 (دائمی) برای SEO
+      {
+        source: "/contact",
+        destination: "/contact-us",
+        permanent: true,
+      },
+
+      {
+        source: "/faq",
+        destination: "/contact-us",
+        permanent: true,
+      },
+
+      {
+        source: "/last-minute-automatic-van-hire-brent-cross",
+        destination:
+          "/success-van-hire-van-rental-in-brent-cross-london-last-minute-bookings",
+        permanent: true,
+      },
+
+      {
+        source: "/our-vehicles",
+        destination: "/reservation",
+        permanent: true,
+      },
+    ];
+  },
+  // S3
   images: {
     remotePatterns: [
       {
@@ -35,7 +66,7 @@ const nextConfig: NextConfig = {
   },
   compress: true,
   poweredByHeader: false,
-  
+
   // Turbopack configuration (required for Next.js 16+)
   turbopack: {},
 };
@@ -44,7 +75,7 @@ const nextConfig: NextConfig = {
 const withPWA = (config: NextConfig): NextConfig => {
   // Dynamic import to avoid webpack-only code in Turbopack
   if (process.env.TURBOPACK) {
-    console.log('PWA disabled in Turbopack mode');
+    console.log("PWA disabled in Turbopack mode");
     return config;
   }
 
@@ -115,7 +146,7 @@ const withPWA = (config: NextConfig): NextConfig => {
       ],
     })(config);
   } catch (e) {
-    console.log('PWA not available:', e);
+    console.log("PWA not available:", e);
     return config;
   }
 };
