@@ -369,7 +369,7 @@ export default function VehiclesContent() {
               />
               <label className="text-gray-400 text-sm mb-2 block">office</label>
               <CustomSelect
-                options={offices}
+                options={offices.map(o => ({ _id: o._id ?? '', name: o.name }))}
                 value={formData.office}
                 onChange={(val) =>
                   setFormData((prev) => ({ ...prev, office: val }))
@@ -382,7 +382,7 @@ export default function VehiclesContent() {
                 category
               </label>
               <CustomSelect
-                options={categories}
+                options={categories.map(c => ({ _id: c._id ?? '', name: c.name }))}
                 value={formData.category}
                 onChange={(val) =>
                   setFormData((prev) => ({ ...prev, category: val }))

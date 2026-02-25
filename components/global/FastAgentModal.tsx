@@ -1071,13 +1071,12 @@ export default function FastAgentModal({
                     Location
                   </label>
                   <CustomSelect
-                    options={offices}
+                    options={offices.map(o => ({ _id: o._id ?? '', name: o.name }))}
                     value={bookingForm.officeId}
                     onChange={(officeId) =>
                       setBookingForm((p) => ({ ...p, officeId }))
                     }
                     placeholder="Select pickup office"
-                    icon={<FiMapPin className="text-orange-500" />}
                   />
                 </div>
 

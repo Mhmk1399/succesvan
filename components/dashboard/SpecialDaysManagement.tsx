@@ -157,7 +157,7 @@ export default function SpecialDaysManagement() {
             Select Office
           </label>
           <CustomSelect
-            options={offices?.data || []}
+            options={(offices?.data || []).map(o => ({ _id: o._id ?? '', name: o.name }))}
             value={selectedOffice}
             onChange={(val) => {
               setSelectedOffice(val);
