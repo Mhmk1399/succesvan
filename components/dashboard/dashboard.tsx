@@ -32,6 +32,7 @@ import {
 import { useStats } from "../../hooks/useStats";
 import { useRecentReservations } from "../../hooks/useRecentReservations";
 import { useFleetStatus } from "../../hooks/useFleetStatus";
+import { useOpenTicketsCount } from "../../hooks/useOpenTicketsCount";
 import OfficesContent from "./CreateOfficeForm";
 import VehiclesContent from "./CreateVehicleForm";
 import CategoriesContent from "./CreateCategoryForm";
@@ -167,6 +168,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const { pendingCount } = useRecentReservations();
+  const { openTicketsCount } = useOpenTicketsCount();
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -287,13 +289,23 @@ export default function Dashboard() {
                         {pendingCount}
                       </span>
                     )}
+                    {item.id === "tickets" && openTicketsCount > 0 && (
+                      <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-5 text-center">
+                        {openTicketsCount}
+                      </span>
+                    )}
                   </span>
                 )}
-                {sidebarCollapsed &&
-                  item.id === "reserves" &&
-                  pendingCount > 0 && (
-                    <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[#111827]"></span>
-                  )}
+                {sidebarCollapsed && (
+                  <>
+                    {item.id === "reserves" && pendingCount > 0 && (
+                      <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[#111827]"></span>
+                    )}
+                    {item.id === "tickets" && openTicketsCount > 0 && (
+                      <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#111827]"></span>
+                    )}
+                  </>
+                )}
               </button>
             </div>
           ))}
