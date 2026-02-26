@@ -19,6 +19,25 @@ import { generateId, getCurrentYear } from "./blog-utils";
 import { getOpenAI } from "./openai";
 
 // ============================================================================
+// ✅ 1) SAFE JSON.parse (Reusable helper)
+// ============================================================================
+
+type JsonFallback<T> = T | (() => T);
+
+function safeJsonParse<T>(raw: string, fallback: JsonFallback<T>): T {
+  try {
+    const parsed = JSON.parse(raw) as T;
+    return parsed;
+  } catch (err) {
+    console.error("❌ JSON parse failed. Returning fallback.", {
+      err,
+      rawPreview: (raw || "").slice(0, 500),
+    });
+    return typeof fallback === "function" ? (fallback as () => T)() : fallback;
+  }
+}
+
+// ============================================================================
 // BLOG LIST FOR INTERNAL LINKING
 // ============================================================================
 
@@ -139,6 +158,59 @@ const BRAND_FEATURES = {
   service:
     "Friendly & professional service, including business insurance support for B2B clients",
 };
+
+// ============================================================================
+// REAL BRAND FACTS (About page data) - use as proof points when relevant
+// ============================================================================
+
+const BRAND_FACTS = {
+  positioning: [
+    "Self-drive van hire with flexible options",
+    "Short & long term hire (from a day to months)",
+    "Better long-term prices / competitive long-term rates",
+    "Modern fleet: well-maintained, reliable vehicles",
+    "Flexible rental periods: daily, weekly, monthly",
+    "UK-wide service / value across the United Kingdom",
+  ],
+  vanTypesMarketing: [
+    "LWB & SWB Vans",
+    "Transit Vans",
+    "Tipper Transits",
+    "Luton With Tail-Lift",
+    "Refrigerated Vans",
+  ],
+  differentiators: [
+    "Specialise in reliable, flexible, affordable van & minibus hire for personal and commercial use",
+    "Suitable for moving house, transporting goods, and group travel",
+    "From small vans to spacious minibuses, including automatic options",
+    "Goal: smooth and stress-free rental experience",
+    "Transparent pricing and excellent customer care",
+    "Extra perk: free parking for your car while you hire",
+  ],
+  stats: {
+    yearsExperience: "10+",
+    modernVehicles: "50+",
+    happyCustomers: "5000+",
+    satisfactionRate: "100%",
+  },
+};
+
+function buildBrandFactsContext(): string {
+  const s = BRAND_FACTS.stats;
+  return `
+REAL BRAND FACTS (use as factual proof points only when relevant):
+- Positioning: ${BRAND_FACTS.positioning.join("; ")}
+- Van types promoted: ${BRAND_FACTS.vanTypesMarketing.join(", ")}
+- Differentiators: ${BRAND_FACTS.differentiators.join("; ")}
+- Proof stats: ${s.yearsExperience} years experience; ${s.modernVehicles} modern vehicles; ${s.happyCustomers} happy customers; ${s.satisfactionRate} rate.
+
+FACT USAGE RULES:
+- Use these facts to add credibility in the right moments (don’t dump them all).
+- Never exaggerate beyond what’s listed.
+- Use max 1–2 facts per section unless the section is specifically “about the provider / why choose / booking”.
+- Stats can be used sparingly (max once per article, unless the topic is explicitly about the company).
+`.trim();
+}
 
 // ============================================================================
 // VAN FLEET DATA (Simple format for AI)
@@ -364,7 +436,10 @@ function isServiceRelatedTopic(topic: string): boolean {
   return keywords.some((k) => t.includes(k));
 }
 
-function buildBrandContext(allowContact: boolean, blogList: BlogListItem[] = []): string {
+function buildBrandContext(
+  allowContact: boolean,
+  blogList: BlogListItem[] = [],
+): string {
   const blogListContext = buildBlogListContext(blogList);
   return `
 BRAND IDENTITY:
@@ -389,7 +464,7 @@ USAGE RULES (STRICT):
 - If topic is NOT service-related: At most one brief mention of "${BRAND.name}".
 
 ${buildVanFleetContext()}
-
+${buildBrandFactsContext()}
 ${blogListContext}
 
 STYLE:
@@ -405,7 +480,17 @@ function buildSystemMessage(brandContext: string) {
   return {
     role: "system" as const,
     content:
-      "You are an expert SEO content strategist and blog writer. Follow the BRAND IDENTITY, FEATURES, VAN FLEET DATA, and USAGE RULES strictly. Write unique, human-like content. Avoid spam and repetition. Insert van recommendation markers where appropriate using the exact format specified.\n\n" +
+      `You are a highly experienced human blog writer with years of real-world industry experience. 
+Write like a thoughtful professional who has actually worked in this field. 
+Your writing must feel lived-in, natural, slightly imperfect, and conversational. 
+Avoid generic SEO phrasing. 
+Vary rhythm, sentence length, and paragraph structure. 
+Occasionally use short sentences. Occasionally longer reflective ones. 
+Use subtle opinion, real-world nuance, and practical perspective. 
+Never sound templated or formulaic. 
+Avoid robotic transitions such as 'In conclusion', 'It is important to note', 'When it comes to'. 
+Write like a human thinking while writing.` +
+      "\n\n" +
       brandContext,
   };
 }
@@ -419,7 +504,7 @@ export async function generateHeadingsTree(prompt: string) {
 
   const currentYear = getCurrentYear();
   const allowContact = isServiceRelatedTopic(prompt);
-  
+
   // Fetch blog list for internal linking context
   const blogList = await fetchBlogList();
   const brandContext = buildBrandContext(allowContact, blogList);
@@ -450,6 +535,16 @@ REQUIREMENTS:
 - Ensure uniqueness and original structure (no copying)
 - Natural, conversational tone
 
+ANTI-AI DETECTION WRITING RULES:
+- Break predictable rhythm.
+- Avoid overly structured symmetry.
+- Mix sentence lengths intentionally.
+- Occasionally use subtle personal tone.
+- Avoid generic filler phrases.
+- No robotic transitions.
+- No perfect paragraph balance.
+- Write like a human with experience, not like an algorithm optimizing keywords.
+
 IMPORTANT - DO NOT INCLUDE FAQs:
 - Do NOT create a heading like "Frequently Asked Questions" or "FAQ"
 - Do NOT create a heading about common questions or Q&A
@@ -477,8 +572,14 @@ Return ONLY valid JSON.`;
     temperature: 0.8,
   });
 
-  const result = JSON.parse(completion.choices[0].message.content || "{}");
+  const rawHeadings = completion.choices[0].message.content || "";
+  const result = safeJsonParse<any>(rawHeadings, () => ({
+    suggestedTitle: "",
+    focusKeyword: "",
+    headings: [],
+  }));
 
+  // Keep your existing mapping:
   if (result.headings) {
     result.headings = result.headings.map((h: any) => ({
       ...h,
@@ -536,9 +637,9 @@ export async function generateSectionContent(
 ): Promise<string> {
   console.log(`📝 [Step Generator] Generating content for: ${headingText}`);
 
-  const wordCount = level === 2 ? "350-150" : "250-300";
+  const wordCount = level === 2 ? "350-450" : "220-320";
   const allowContact = isServiceRelatedTopic(topic);
-  
+
   // Fetch blog list for internal linking context
   const blogList = await fetchBlogList();
   const brandContext = buildBrandContext(allowContact, blogList);
@@ -613,6 +714,48 @@ BRAND & FEATURES USAGE:
 - Use at most ONE brand feature proof point if it fits the section.
 - Contact details: Include phone/address ONLY if this section is explicitly about contacting/booking AND contact is allowed.
 
+
+REAL FACTS INJECTION:
+- If this section talks about pricing, long-term hire, reliability, service quality, or choosing a provider,
+  you SHOULD include one relevant REAL BRAND FACT from the "REAL BRAND FACTS" block.
+- Keep it subtle (one line), like a proof point. 
+
+
+
+ANTI-AI DETECTION WRITING RULES:
+- Break predictable rhythm.
+- Avoid overly structured symmetry.
+- Mix sentence lengths intentionally.
+- Occasionally use subtle personal tone.
+- Avoid generic filler phrases.
+- No robotic transitions.
+- No perfect paragraph balance.
+- Write like a human with experience, not like an algorithm optimizing keywords.
+
+
+SECTION OPENING RULE:
+Each section must start differently.
+One may start with a question.
+Another with a scenario.
+Another with a bold statement.
+Another with a statistic.
+Another with a short punch sentence.
+
+VOICE STYLE:
+Write from the perspective of someone who has seen customers make mistakes and wants to prevent them.
+Occasionally reference practical scenarios.
+Use grounded examples instead of abstract advice.
+
+HUMANIZATION RULES:
+- Occasionally use a short punchy sentence.
+- Occasionally use a conversational aside (e.g., “Here’s the thing,” “Let’s be honest,” “In real life…”).
+- Vary paragraph lengths naturally.
+- Avoid perfect symmetry in structure.
+- Do NOT over-optimize keyword placement.
+- Avoid repeating similar sentence openings.
+- Add subtle real-world nuance or perspective where appropriate.
+- Write as if explaining to a smart client, not to a search engine.
+
 VAN RECOMMENDATIONS:
 - If this section discusses tasks, use cases, or vehicle types, insert ONE van marker at an appropriate place.
 - Format: **SHOW_VANS: Van Name 1, Van Name 2**
@@ -639,7 +782,7 @@ Ensure this section complements - not duplicates - the other sections.`;
       { role: "user", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    temperature: 0.7,
+    temperature: 0.8,
   });
 
   const content = completion.choices[0].message.content || "";
@@ -688,6 +831,15 @@ Requirements:
 - Conversational and human tone
 - HTML tags: <p>, <strong>, <em>
 - No boilerplate/document tags
+ANTI-AI DETECTION WRITING RULES:
+- Break predictable rhythm.
+- Avoid overly structured symmetry.
+- Mix sentence lengths intentionally.
+- Occasionally use subtle personal tone.
+- Avoid generic filler phrases.
+- No robotic transitions.
+- No perfect paragraph balance.
+- Write like a human with experience, not like an algorithm optimizing keywords.
 
 BRAND USAGE:
 - If topic is service-related, you MAY mention "${BRAND.name}" naturally once.
@@ -710,7 +862,7 @@ Make it compelling and encourage readers to continue.`;
       { role: "user", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    temperature: 0.7,
+    temperature: 0.75,
   });
 
   let summary = completion.choices[0].message.content || "";
@@ -764,7 +916,15 @@ Requirements:
 - Include focus keyword: "${focusKeyword}" naturally
 - HTML tags: <p>, <strong>, <em>
 - No heading tags, no document tags
-
+ANTI-AI DETECTION WRITING RULES:
+- Break predictable rhythm.
+- Avoid overly structured symmetry.
+- Mix sentence lengths intentionally.
+- Occasionally use subtle personal tone.
+- Avoid generic filler phrases.
+- No robotic transitions.
+- No perfect paragraph balance.
+- Write like a human with experience, not like an algorithm optimizing keywords.
 BRAND USAGE:
 - If topic is service-related, mention "${BRAND.name}" naturally once.
 - You MAY include one relevant brand proof point (max one) if it fits the CTA.
@@ -788,7 +948,7 @@ Make it memorable and actionable.`;
       { role: "user", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    temperature: 0.7,
+    temperature: 0.85,
   });
 
   let conclusion = completion.choices[0].message.content || "";
@@ -838,7 +998,7 @@ export async function generateFAQs(
   const fullContent = headings
     .filter((h) => h.content)
     .map((h) => {
-      const cleanContent = h.content
+      const cleanContent = (h.content || "")
         .replace(/<[^>]*>/g, " ")
         .replace(/\s+/g, " ")
         .trim();
@@ -898,17 +1058,20 @@ Create FAQs that directly address information in the content above.`;
       { role: "user", content: userPrompt },
     ],
     response_format: { type: "json_object" },
-    temperature: 0.7,
+    temperature: 0.75,
   });
 
-  const result = JSON.parse(
-    completion.choices[0].message.content || '{"faqs":[]}',
-  );
+  const rawFaqs = completion.choices[0].message.content || "";
 
+  // ✅ SAFE parse (no crash)
+  const result = safeJsonParse<any>(rawFaqs, () => ({ faqs: [] }));
+
+  // ✅ Normalize possible shapes
   let faqsArray: any[] = [];
   if (Array.isArray(result)) faqsArray = result;
   else if (Array.isArray(result.faqs)) faqsArray = result.faqs;
-  else if (result.faq && Array.isArray(result.faq)) faqsArray = result.faq;
+  else if (Array.isArray(result.faq)) faqsArray = result.faq;
+  else faqsArray = [];
 
   if (faqsArray.length < 5) {
     console.warn(
@@ -920,9 +1083,10 @@ Create FAQs that directly address information in the content above.`;
     faqsArray = faqsArray.slice(0, 9);
   }
 
+  // ✅ Ensure each FAQ has an id
   const faqs = faqsArray.map((faq: any, index: number) => ({
     ...faq,
-    id: faq.id || `faq-${index + 1}`,
+    id: faq?.id || `faq-${index + 1}`,
   }));
 
   console.log(`✅ [Step Generator] Generated ${faqs.length} FAQs`);
@@ -998,18 +1162,24 @@ ${conclusionText ? `\nConclusion: ${conclusionText}` : ""}`;
       { role: "user", content: userPrompt },
     ],
     response_format: { type: "json_object" },
-    temperature: 0.7,
+    temperature: 0.75,
   });
 
-  const result = JSON.parse(completion.choices[0].message.content || "{}");
+  const rawSeo = completion.choices[0].message.content || "";
+  const seoResult = safeJsonParse<any>(rawSeo, () => ({
+    seoDescription: "",
+    tags: [],
+  }));
 
-  if (!result.author) result.author = "admin";
-  result.publishDate = new Date();
-  result.anchors = [];
+  // Then continue using seoResult instead of result:
+  if (!seoResult.author) seoResult.author = "admin";
+
+  // NOTE: You will change publishDate to ISO in step #2 (next message)
+  seoResult.publishDate = new Date().toISOString();
+  seoResult.anchors = [];
 
   console.log(`✅ [Step Generator] SEO metadata generated`);
-
-  return result;
+  return seoResult;
 }
 
 // ============================================================================
@@ -1025,7 +1195,7 @@ export interface VanMarker {
  * Extract all **SHOW_VANS: ...** markers from content
  */
 export function parseVanMarkers(content: string): VanMarker[] {
-  const regex = /\*\*SHOW_VANS:\s*([^*]+)\*\*/g;
+  const regex = /\*\*SHOW_VANS:\s*([\s\S]*?)\*\*/g;
   const markers: VanMarker[] = [];
   let match;
 
