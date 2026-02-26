@@ -90,6 +90,13 @@ export default function ProfileContent({
   };
 
   const handleFileUpload = async (file: File, side: "front" | "back") => {
+    // Validate file size (max 15MB for images)
+    const maxSize = 15 * 1024 * 1024; // 15MB
+    if (file.size > maxSize) {
+      showToast.error("File size must be less than 15MB");
+      return;
+    }
+
     setUploading((prev) => ({ ...prev, [side]: true }));
     try {
       const formDataUpload = new FormData();
