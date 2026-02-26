@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { FiAlertCircle, FiExternalLink, FiChevronRight } from "react-icons/fi";
 import { useState, useEffect, createContext, useContext, useRef } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 interface Announcement {
   _id: string;
@@ -145,21 +146,24 @@ export default function AnnouncementBar() {
   const textContent = (
     <span className="flex items-center gap-2">
       {announcement.link ? (
-        <a
+        <Link
           href={announcement.link}
           id="gtm-announcement-learn-more"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={`Learn more about ${announcement.text}`}
           className="group inline-flex items-center gap-2 text-white text-sm md:text-base font-medium hover:text-white/90 transition-colors"
         >
           <span className="border-b border-white/30 group-hover:border-white/60 transition-colors">
-            {announcement.text}
+            {announcement.text.includes("successvanhire.co.uk")
+              ? "Visit our reservation page"
+              : announcement.text}
           </span>
           <FiExternalLink
             size={14}
             className="opacity-70 group-hover:opacity-100 transition-opacity"
           />
-        </a>
+        </Link>
       ) : (
         <span className="text-white text-sm md:text-base font-medium">
           {announcement.text}
@@ -229,7 +233,7 @@ export default function AnnouncementBar() {
           </div>
 
           {announcement.link && (
-            <a
+            <Link
               href={announcement.link}
               id="gtm-announcement-learn-more"
               target="_blank"
@@ -252,7 +256,7 @@ export default function AnnouncementBar() {
                 size={14}
                 className="group-hover:translate-x-0.5 transition-transform"
               />
-            </a>
+            </Link>
           )}
         </div>
 
