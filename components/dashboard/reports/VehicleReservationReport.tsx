@@ -172,7 +172,7 @@ export default function VehicleReservationReport() {
               Office
             </label>
             <CustomSelect
-              options={offices}
+              options={offices.map(o => ({ _id: o._id ?? '', name: o.name }))}
               value={filterOffice}
               onChange={setFilterOffice}
               placeholder="All Offices"

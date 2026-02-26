@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     await connect();
     const body = await req.json();
-    const { action, phoneNumber, code, name, lastName, emailAddress, licenceAttached, address, postalCode, city } = body;
+    const { action, phoneNumber, code, name, lastName, emailAddress, licenceAttached, address, postalCode, city, isAdminMode } = body;
 
     if (action === "send-code") {
       if (!phoneNumber) return errorResponse("Phone number required", 400);
@@ -76,11 +76,14 @@ export async function POST(req: NextRequest) {
       if (!phoneNumber || !name || !lastName || !emailAddress)
         return errorResponse("All fields required", 400);
 
-      const verification = await Verification.findOne({
-        phoneNumber,
-        verified: true,
-      });
-      if (!verification) return errorResponse("Phone not verified", 400);
+      // Skip phone verification check if admin is creating the user
+      if (!isAdminMode) {
+        const verification = await Verification.findOne({
+          phoneNumber,
+          verified: true,
+        });
+        if (!verification) return errorResponse("Phone not verified", 400);
+      }
 
       const existingUser = await User.findOne({
         "phoneData.phoneNumber": phoneNumber,

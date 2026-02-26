@@ -109,6 +109,10 @@ export default function AuthForm() {
       setErrors({ phoneNumber: "Phone number is required" });
       return;
     }
+    if (!/^[0-9]{10}$/.test(formData.phoneNumber)) {
+      setErrors({ phoneNumber: "Please enter a valid 10-digit UK phone number" });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -238,7 +242,7 @@ export default function AuthForm() {
     const { name, value } = e.target;
 
     if (name === "phoneNumber") {
-      const digits = value.replace(/\D/g, "");
+      const digits = value.replace(/\D/g, "").slice(0, 10);
       setFormData((prev) => ({
         ...prev,
         [name]: digits,

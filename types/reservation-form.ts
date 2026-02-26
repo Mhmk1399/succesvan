@@ -122,6 +122,7 @@ export interface ReservationFormProps {
   isInline?: boolean;
   onClose?: () => void;
   onBookNow?: () => void;
+  isAdminMode?: boolean;
 }
 
 // ============================================================================

@@ -632,7 +632,7 @@ export default function CategoriesContent() {
               <div>
                 <label className="text-gray-400 text-sm mb-2 block">Type</label>
                 <CustomSelect
-                  options={types}
+                  options={types.map(t => ({ _id: t._id ?? '', name: t.name }))}
                   value={formData.type}
                   onChange={(val) =>
                     setFormData((prev) => ({ ...prev, type: val }))
