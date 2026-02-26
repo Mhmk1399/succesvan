@@ -49,18 +49,18 @@ export const metadata: Metadata = {
     description: "Premium van hire and rental services in North West London",
     images: [
       {
-        url: "https://successvanhire.co.uk/android-chrome-192x192.png",
-        width: 1200,
-        height: 630,
+        url: "https://successvanhire.co.uk/icon.png",
+        width: 512,
+        height: 512,
         alt: "SuccessVan - Van Hire London",
       },
     ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "SuccessVan - Van Hire & Rental in London",
     description: "Premium van hire and rental services in North West London",
-    images: ["https://successvanhire.co.uk/android-chrome-192x192.png"],
+    images: ["https://successvanhire.co.uk/icon.png"],
   },
   manifest: "/site.webmanifest",
 };
@@ -133,3 +133,4 @@ export default function RootLayout({
     </html>
   );
 }
+

@@ -727,6 +727,7 @@ export const homeFAQSchema = {
   mainEntity: [
     {
       "@type": "Question",
+      
       name: "What types of vans do you offer for rental?",
       acceptedAnswer: {
         "@type": "Answer",

@@ -11,6 +11,14 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
 
+    // If this announcement is being set to active, deactivate all others
+    if (body.isActive === true) {
+      await Announcement.updateMany(
+        { _id: { $ne: id }, isActive: true },
+        { $set: { isActive: false } }
+      );
+    }
+
     const announcement = await Announcement.findByIdAndUpdate(id, body, {
       new: true,
     });

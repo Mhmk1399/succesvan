@@ -27,5 +27,17 @@ const announcementSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Pre-save hook to ensure only one announcement is active at a time
+announcementSchema.pre("save", async function (next) {
+  if (this.isActive) {
+    // Deactivate all other announcements
+    await mongoose.models.Announcement.updateMany(
+      { _id: { $ne: this._id }, isActive: true },
+      { $set: { isActive: false } }
+    );
+  }
+  next();
+});
+
 export default mongoose.models.Announcement ||
   mongoose.model("Announcement", announcementSchema);

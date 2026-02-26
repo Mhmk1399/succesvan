@@ -5,6 +5,18 @@ import Announcement from "@/model/announcement";
 export async function GET() {
   try {
     await connect();
+    
+    // First, fix any existing multiple active announcements
+    const activeAnnouncements = await Announcement.find({ isActive: true }).sort({ createdAt: -1 });
+    
+    if (activeAnnouncements.length > 1) {
+      // Keep only the most recent one active
+      const toDeactivate = activeAnnouncements.slice(1);
+      for (const ann of toDeactivate) {
+        await Announcement.findByIdAndUpdate(ann._id, { isActive: false });
+      }
+    }
+    
     const announcements = await Announcement.find().sort({ createdAt: -1 });
     return successResponse(announcements);
   } catch (error) {
@@ -21,6 +33,14 @@ export async function POST(req: Request) {
 
     if (!text?.trim()) {
       return errorResponse("Text is required");
+    }
+
+    // If this announcement is being set to active, deactivate all others
+    if (isActive === true) {
+      await Announcement.updateMany(
+        { isActive: true },
+        { $set: { isActive: false } }
+      );
     }
 
     const announcement = new Announcement({
